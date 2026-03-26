@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.bg-paper-texture {
+  background-color: #F4ECD8;
+  background-image:
+    radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.03) 1px, #F4ECD8 1px);
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+}
+
 :root {
   --foreground-rgb: 232, 232, 224;
   --background-start-rgb: 10, 10, 10;
