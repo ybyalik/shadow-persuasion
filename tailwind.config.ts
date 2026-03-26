@@ -4,11 +4,17 @@ export default {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    './app/v2/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
+        'sp-black': '#0C0C0C',
+        'sp-green-dark': '#0D1F0D',
+        'sp-green-light': '#1A2E1A',
+        'sp-amber': '#FF8C00',
+        'sp-amber-dark': '#D4A017',
+        'sp-red': '#8B0000',
         background: "var(--background)",
         foreground: "var(--foreground)",
         shadow: {
@@ -23,6 +29,7 @@ export default {
         },
       },
       fontFamily: {
+        'jetbrains-mono': ['JetBrains Mono', 'monospace'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['Monaco', 'Consolas', 'monospace'],
