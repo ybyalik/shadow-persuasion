@@ -27,10 +27,8 @@ const ExecutiveSummary = () => {
             The objective is to provide a comprehensive, asymmetric advantage in all negotiations, social engineering engagements, and strategic communications. Initial field tests show a <Highlight>412% increase in desired outcomes</Highlight> compared to traditional methods. The system is designed for rapid iteration, with operator feedback continuously improving the core engine's effectiveness. Access is provided on a need-to-know basis to qualified personnel only.
           </p>
         </div>
-        <div className="absolute top-1/4 -right-24 text-blue-700 italic transform -rotate-6">
-          <p className="text-lg">Note: effectiveness exceeds</p>
-          <p className="text-lg">projections — recommend</p>
-          <p className="text-lg">wider deployment.</p>
+        <div className="mt-6 ml-8 text-blue-700 italic transform -rotate-2 relative">
+          <p className="text-lg">↳ Note: effectiveness exceeds projections — recommend wider deployment.</p>
         </div>
       </div>
     </section>

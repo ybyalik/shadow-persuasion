@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+// Using regular img tags for external URLs
 
 const ProfileCard = ({ img, name, alias, role, description }) => (
   <div className="border border-gray-400 p-4 relative">
@@ -9,11 +9,9 @@ const ProfileCard = ({ img, name, alias, role, description }) => (
       <div className="absolute -bottom-1 -left-1 w-8 h-4 bg-white/70 transform rotate-45 z-10"></div>
       <div className="absolute -top-1 -right-1 w-8 h-4 bg-white/70 transform rotate-45 z-10"></div>
       <div className="absolute -bottom-1 -right-1 w-8 h-4 bg-white/70 transform -rotate-45 z-10"></div>
-      <Image
+      <img
         src={img}
         alt={`Mugshot of ${name}`}
-        width={200}
-        height={200}
         className="grayscale sepia-[25%] transform rotate-[-2deg] object-cover w-full h-full"
       />
     </div>
