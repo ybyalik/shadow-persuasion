@@ -24,13 +24,13 @@ const MarginNote = ({ children }) => (
 
 export default function ExecutiveSummary() {
   return (
-    <section className="relative p-8 border border-gray-400 bg-transparent">
+    <section className="relative p-8 pt-12 border border-gray-400 bg-transparent">
       <div className="absolute top-2 right-4 text-xs">
         <p>PAGE 1 of 12</p>
         <p>LEVEL: TOP SECRET // SCI</p>
       </div>
       
-      <h2 className="text-2xl font-bold uppercase tracking-wider mb-6">Executive Summary</h2>
+      <h2 className="text-2xl font-bold uppercase tracking-wider mb-6 mt-4">Executive Summary</h2>
 
       <div className="relative space-y-4 leading-relaxed">
         <MarginNote>Is this confirmed?</MarginNote>

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Terminal } from 'lucide-react';
 
 const StatusBar = () => (
-  <div className="border border-[#333] bg-black bg-opacity-50 p-2 text-xs font-semibold uppercase tracking-widest text-[#FF8C00]">
+  <div className="border border-[#333] bg-black bg-opacity-50 p-2 pr-4 text-xs font-semibold uppercase tracking-widest text-[#FF8C00]">
     <div className="container mx-auto flex justify-between">
       <span>SYSTEM STATUS: ACTIVE</span>
       <span>CLEARANCE: PENDING</span>
@@ -62,7 +62,7 @@ export default function Hero() {
           <h1 className="font-mono text-5xl font-bold uppercase tracking-[.3em] text-white">
             The Operator's Playbook
           </h1>
-          <h2 className="mt-2 font-sans text-xl uppercase tracking-wider text-[#0D1F0D]">
+          <h2 className="mt-2 font-sans text-xl uppercase tracking-wider text-[#0D1F0D] max-w-3xl mx-auto">
             Psychological Warfare Frameworks for High-Stakes Environments
           </h2>
         </motion.div>
@@ -83,7 +83,7 @@ export default function Hero() {
           </button>
         </motion.div>
       </div>
-      <div className="absolute bottom-4 right-4 animate-pulse">
+      <div className="absolute bottom-4 right-4 animate-pulse pl-2">
         <Terminal className="text-green-500" />
       </div>
     </section>

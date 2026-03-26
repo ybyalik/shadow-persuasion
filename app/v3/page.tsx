@@ -25,7 +25,7 @@ const inter = Inter({
 export default function V3Page() {
   return (
     <div className={`${libreBaskerville.variable} ${inter.variable} font-sans bg-bone text-navy-deep`}>
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12">
         <Hero />
         <Abstract />
         <TableOfContents />

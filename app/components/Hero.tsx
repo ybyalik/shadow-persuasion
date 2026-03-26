@@ -57,7 +57,7 @@ const Hero = () => {
   ]
 
   return (
-    <section className="min-h-screen flex items-center px-6 lg:px-12 py-16 relative">
+    <section className="min-h-screen flex items-center px-6 lg:px-12 py-20 lg:py-24 relative">
       <div className="max-w-7xl mx-auto w-full">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           
@@ -133,7 +133,8 @@ const Hero = () => {
                 }}
                 whileTap={{ scale: 0.98 }}
                 className="px-8 py-4 bg-[#8B0000] text-white font-semibold text-lg rounded-lg 
-                          hover:bg-[#A00000] transition-all duration-300 relative overflow-hidden group"
+                          hover:bg-[#A00000] transition-all duration-300 relative overflow-hidden group
+                          max-w-[300px] mx-auto sm:mx-0"
               >
                 <span className="relative z-10">Enter the Shadow</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#8B0000] to-[#C0392B] 
@@ -147,7 +148,8 @@ const Hero = () => {
                 }}
                 whileTap={{ scale: 0.98 }}
                 className="px-8 py-4 border-2 border-[#1E1E1E] text-[#E8E8E0] font-semibold text-lg 
-                          rounded-lg hover:border-[#D4A017] transition-all duration-300"
+                          rounded-lg hover:border-[#D4A017] transition-all duration-300
+                          max-w-[300px] mx-auto sm:mx-0"
               >
                 Explore the Framework
               </motion.button>
@@ -158,10 +160,10 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.2 }}
-              className="flex items-center gap-6 pt-8"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 pt-8"
             >
               {/* Overlapping portraits */}
-              <div className="flex -space-x-2">
+              <div className="flex -space-x-2 mx-auto sm:mx-0">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="w-10 h-10 rounded-full border-2 border-[#1A1A1A] overflow-hidden">
                     <img
@@ -173,14 +175,14 @@ const Hero = () => {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 mx-auto sm:mx-0">
                 <div className="flex text-[#D4A017] text-lg">
                   {'★'.repeat(5)}
                 </div>
                 <span className="text-sm font-mono text-[#E8E8E0]/60">4.9</span>
               </div>
 
-              <div className="text-sm font-mono text-[#E8E8E0]/60 border-l border-[#1E1E1E] pl-4">
+              <div className="text-sm font-mono text-[#E8E8E0]/60 border-l border-[#1E1E1E] pl-4 mx-auto sm:mx-0">
                 Used by 20K+ Operators, Closers, and Strategists
               </div>
             </motion.div>
@@ -226,14 +228,6 @@ const Hero = () => {
                   }}
                 >
                   <motion.div
-                    animate={{
-                      rotate: 360,
-                    }}
-                    transition={{
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
                     className="w-32 h-20 bg-[#1A1A1A] border border-[#8B0000]/20 rounded-lg 
                               flex items-center justify-center p-3 cursor-pointer group 
                               hover:bg-[#1E1E1E] hover:border-[#8B0000]/40 hover:shadow-lg 

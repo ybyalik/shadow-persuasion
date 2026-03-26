@@ -4,10 +4,10 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
-const Stamp = ({ text, color, rotation, overRotation, isDeclassified = false }) => {
+const Stamp = ({ text, color, rotation }) => {
   return (
     <div
-      className="relative border-2 p-1 font-black text-xl uppercase inline-block"
+      className="border-2 px-2 py-1 font-black text-lg uppercase inline-block"
       style={{
         borderColor: color,
         color: color,
@@ -15,14 +15,6 @@ const Stamp = ({ text, color, rotation, overRotation, isDeclassified = false }) 
       }}
     >
       {text}
-      {isDeclassified && (
-        <div
-          className="absolute inset-0 flex items-center justify-center font-black text-2xl"
-          style={{ transform: `rotate(${overRotation}deg)` }}
-        >
-          DECLASSIFIED
-        </div>
-      )}
     </div>
   );
 };
@@ -39,10 +31,13 @@ export default function Hero() {
   const [accepted, setAccepted] = useState(false);
 
   return (
-    <section className="relative min-h-[80vh] flex flex-col items-center justify-center text-center p-8 border-4 border-[#1A1A1A] bg-[#E8DCC8] overflow-hidden">
+    <section className="relative min-h-[70vh] flex flex-col items-center justify-center text-center p-6 pt-4 border-4 border-[#1A1A1A] bg-[#E8DCC8] overflow-hidden">
       <CoffeeStain />
-      <div className="absolute top-8 left-8 flex space-x-8">
-        <Stamp text="CLASSIFIED" color="#C0392B" rotation={-15} overRotation={20} isDeclassified />
+      <div className="absolute top-6 right-8 z-20">
+        <Stamp text="CLASSIFIED" color="#C0392B" rotation={-15} />
+      </div>
+      <div className="absolute top-12 right-4 z-30">
+        <Stamp text="DECLASSIFIED" color="#2C5F8A" rotation={25} />
       </div>
 
       <div className="z-10">
@@ -77,7 +72,7 @@ export default function Hero() {
               type="checkbox" 
               checked={accepted}
               onChange={() => setAccepted(!accepted)}
-              className="appearance-none w-6 h-6 border-2 border-[#1A1A1A] bg-transparent checked:bg-[#1A1A1A] checked:after:content-['✔'] checked:after:text-[#F4ECD8] checked:after:flex checked:after:items-center checked:after:justify-center"
+              className="appearance-none w-5 h-5 border-2 border-[#1A1A1A] bg-transparent checked:bg-[#1A1A1A] checked:relative checked:after:content-['✓'] checked:after:text-[#F4ECD8] checked:after:absolute checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
             />
             <span>I accept responsibility for the contents of this document</span>
           </label>

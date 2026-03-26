@@ -17,11 +17,11 @@ const Hero = () => {
       <p className="mt-6 max-w-2xl mx-auto text-lg text-navy leading-8">
         A systematic framework for understanding and deploying psychological influence in high-stakes professional environments.
       </p>
-      <div className="mt-10 flex items-center justify-center gap-x-6">
+      <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-x-8">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-navy-deep text-bone-light px-8 py-3 text-lg font-semibold shadow-md hover:bg-navy transition-colors duration-300"
+          className="bg-[#1A1A2E] text-[#FAF8F5] px-8 py-3 text-lg font-semibold rounded-lg shadow-md hover:bg-[#16213E] transition-all duration-300"
         >
           Access the Research
         </motion.button>
