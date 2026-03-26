@@ -5,10 +5,19 @@ export default {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     './app/v2/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/v3/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
+        'bone': '#F5F2EB',
+        'bone-light': '#FAF8F5',
+        'navy': '#1A1A2E',
+        'navy-deep': '#0D0D1A',
+        'clinical-red': '#B91C1C',
+        'clinical-red-dark': '#991B1B',
+        'steel-gray': '#C4C4C4',
+        'steel-gray-light': '#9CA3AF',
         'sp-black': '#0C0C0C',
         'sp-green-dark': '#0D1F0D',
         'sp-green-light': '#1A2E1A',
@@ -29,6 +38,7 @@ export default {
         },
       },
       fontFamily: {
+        'libre-baskerville': ['"Libre Baskerville"', 'serif'],
         'jetbrains-mono': ['JetBrains Mono', 'monospace'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
