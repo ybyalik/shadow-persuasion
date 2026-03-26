@@ -1,58 +1,61 @@
 'use client';
+
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 
-const PersonCard = ({ name, alias, role, status, imgId, rotation }) => {
+const ProfileCard = ({ img, name, alias, role, description }) => (
+  <div className="border border-gray-400 p-4 relative">
+    <div className="relative w-48 h-48 mx-auto mb-4">
+      <div className="absolute -top-1 -left-1 w-8 h-4 bg-white/70 transform -rotate-45 z-10"></div>
+      <div className="absolute -bottom-1 -left-1 w-8 h-4 bg-white/70 transform rotate-45 z-10"></div>
+      <div className="absolute -top-1 -right-1 w-8 h-4 bg-white/70 transform rotate-45 z-10"></div>
+      <div className="absolute -bottom-1 -right-1 w-8 h-4 bg-white/70 transform -rotate-45 z-10"></div>
+      <Image
+        src={img}
+        alt={`Mugshot of ${name}`}
+        width={200}
+        height={200}
+        className="grayscale sepia-[25%] transform rotate-[-2deg] object-cover w-full h-full"
+      />
+    </div>
+    <div className="text-left space-y-1 font-mono">
+      <p><span className="font-bold">NAME:</span> {name}</p>
+      <p><span className="font-bold">ALIAS:</span> {alias}</p>
+      <p><span className="font-bold">ROLE:</span> {role}</p>
+      <p><span className="font-bold">STATUS:</span> ACTIVE</p>
+    </div>
+    <p className="mt-4 text-lg leading-relaxed">{description}</p>
+  </div>
+);
+
+const PersonsOfInterest = () => {
   return (
-    <motion.div 
-      className="bg-[#E8DCC8] p-4 border border-gray-400 text-sm"
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true, amount: 0.5 }}
-      transition={{ duration: 0.4 }}
-    >
-      <div 
-        className="relative w-full h-48 mb-4 transform"
-        style={{ rotate: `${rotation}deg` }}
-      >
-        <div className="absolute -top-2 -left-2 w-16 h-8 bg-yellow-200/20 transform -rotate-45 z-10" />
-        <div className="absolute -bottom-2 -right-2 w-16 h-8 bg-yellow-200/20 transform -rotate-45 z-10" />
-        <Image 
-          src={`https://i.pravatar.cc/300?img=${imgId}`} 
-          alt={`Surveillance photo of ${name}`}
-          layout="fill"
-          objectFit="cover"
-          className="grayscale sepia-[20%]"
+    <section>
+      <h2 className="text-4xl font-bold uppercase tracking-wider mb-12 text-center">Persons of Interest</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <ProfileCard
+          img="https://i.pravatar.cc/200?img=32"
+          name="Dr. Alistair Finch"
+          alias="The Architect"
+          role="Lead Psychologist, Dark Psychology Engine"
+          description="Subject is the primary architect of the core persuasion model. Background in clinical psychology and behavioral engineering. Known for his unorthodox methods and an ability to model complex human motivations."
         />
-      </div>
-      <div>
-        <p><span className="font-bold">NAME:</span> {name}</p>
-        <p><span className="font-bold">ALIAS:</span> {alias}</p>
-        <p><span className="font-bold">ROLE:</span> {role}</p>
-        <p><span className="font-bold">STATUS:</span> <span className="text-green-800">{status}</span></p>
-      </div>
-    </motion.div>
-  );
-};
-
-export default function PersonsOfInterest() {
-  const people = [
-    { name: 'Dr. Alistair Finch', alias: '"The Architect"', role: 'Program Director', status: 'ACTIVE', imgId: 32, rotation: -2 },
-    { name: 'Isabella Rossi', alias: '"Echo"', role: 'Lead Field Operator', status: 'ACTIVE', imgId: 36, rotation: 1.5 },
-    { name: 'Marcus Thorne', alias: '"The Ghost"', role: 'Counter-Intel & Extraction', status: 'ACTIVE', imgId: 40, rotation: -1 },
-    { name: 'Subject Zero', alias: '"Patient Zero"', role: 'Original Case Study', status: 'CONTAINED', imgId: 44, rotation: 2.5 },
-  ];
-
-  return (
-    <section className="py-12">
-      <h2 className="text-2xl font-bold uppercase tracking-wider text-center mb-10">
-        Persons of Interest
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-        {people.map((person) => (
-          <PersonCard key={person.alias} {...person} />
-        ))}
+        <ProfileCard
+          img="https://i.pravatar.cc/200?img=36"
+          name="Isabella Rossi"
+          alias="Nyx"
+          role="Lead Engineer, AI Operator Console"
+          description="Subject is a prodigy in human-computer interaction. Responsible for translating the Architect's models into the operational interface. Obsessed with creating seamless, intuitive systems that feel like an extension of the user's will."
+        />
+        <ProfileCard
+          img="https://i.pravatar.cc/200?img=40"
+          name="[REDACTED]"
+          alias="Control"
+          role="Project Director"
+          description="Subject's background is classified. Assumed to have deep connections within intelligence and private military sectors. Oversees all operational deployments and strategic direction of the project. Extremely pragmatic."
+        />
       </div>
     </section>
   );
-}
+};
+
+export default PersonsOfInterest;

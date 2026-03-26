@@ -1,73 +1,45 @@
 'use client';
-import { motion } from 'framer-motion';
 
-const StatItem = ({ label, value, annotation }) => (
-  <div className="flex justify-between items-baseline py-2 border-b border-dotted border-gray-400">
-    <span>{label}</span>
-    <div className="flex items-baseline">
-      <span className="font-bold text-lg">{value}</span>
-      {annotation && (
-        <span className="ml-4 text-sm text-[#2C5F8A] italic transform -rotate-2">
-          {annotation.text} 
-          {annotation.circled && <span className="inline-block p-1 border-2 border-red-600 rounded-full ml-1 leading-none">circled</span>}
-        </span>
-      )}
-    </div>
-  </div>
+const TableRow = ({ metric, before, after, change, highlight = false }) => (
+  <tr className="border-b-2 border-gray-300">
+    <td className="p-3">{metric}</td>
+    <td className="p-3">{before}</td>
+    <td className="p-3">{after}</td>
+    <td className={`p-3 font-bold ${highlight ? 'relative' : ''}`}>
+      {change}
+      {highlight && <div className="absolute inset-0 border-2 border-red-600 rounded-full scale-125 opacity-70"></div>}
+      {highlight && <span className="absolute -top-4 -right-24 text-blue-700 italic transform -rotate-12 text-xl">significant ↑</span>}
+    </td>
+  </tr>
 );
 
-const CoffeeStain = () => (
-    <div className="absolute -top-8 -left-8 w-40 h-40">
-      <div className="absolute inset-0 border-2 border-[#a58d6f] rounded-full opacity-25" />
-      <div className="absolute inset-2 border border-[#a58d6f] rounded-full opacity-20" />
-    </div>
-);
-
-export default function Evidence() {
+const Evidence = () => {
   return (
-    <section className="py-12">
-      <motion.div 
-        className="relative max-w-2xl mx-auto p-8 bg-[#E8DCC8] border-2 border-black overflow-hidden"
-        initial={{ rotate: 0 }}
-        whileInView={{ rotate: 1 }}
-        viewport={{ once: true, amount: 0.5 }}
-        transition={{ type: 'spring', stiffness: 200 }}
-      >
-        <CoffeeStain />
-        <div className="z-10 relative">
-            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">
-              EXHIBIT A: OPERATIONAL EFFECTIVENESS DATA
-            </h2>
-            <p className='text-xs mb-6 text-gray-600'>CONFIDENTIAL - DO NOT DISTRIBUTE</p>
-            
-            <div className="space-y-4">
-              <StatItem 
-                label="Target Compliance Rate:" 
-                value="92.7%" 
-                annotation={{ text: '↑ 47% from Q2', circled: true }} 
-              />
-              <StatItem 
-                label="Mean Time to Influence:" 
-                value="14.3 Days" 
-                annotation={{ text: 'Significant reduction' }}
-              />
-              <StatItem 
-                label="Psychological Footprint:" 
-                value="< 0.8%" 
-                annotation={{ text: 'Undetectable' }}
-              />
-              <StatItem 
-                label="Message Resonance Score:" 
-                value="8.9/10" 
-              />
-              <StatItem 
-                label="Operator Burnout Rate:" 
-                value="4.2%" 
-                annotation={{ text: 'Monitor closely', circled: false }}
-              />
-            </div>
-        </div>
-      </motion.div>
+    <section>
+      <h2 className="text-4xl font-bold uppercase tracking-wider mb-8 text-center">Exhibit A: Operational Effectiveness Data</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-lg text-left border-collapse">
+          <thead>
+            <tr className="border-b-4 border-black">
+              <th className="p-3">Metric</th>
+              <th className="p-3">Before Protocol</th>
+              <th className="p-3">After Protocol</th>
+              <th className="p-3">Δ Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <TableRow metric="Negotiation Win Rate" before="28%" after="74%" change="+164%" />
+            <TableRow metric="Information Extraction Yield" before="1.2 units/hr" after="7.8 units/hr" change="+550%" highlight />
+            <TableRow metric="Subject Compliance Rate" before="41%" after="92%" change="+124%" />
+            <TableRow metric="Time-to-Conversion" before="14.2 days" after="3.1 days" change="-78%" />
+            <TableRow metric="Operator Confidence Score" before="5.6/10" after="9.8/10" change="+75%" />
+            <TableRow metric="Detected Deception Rate" before="18% accurate" after="89% accurate" change="+394%" />
+          </tbody>
+        </table>
+      </div>
+      <p className="text-center mt-8 text-sm text-gray-700">Note: Data collected across 20,847 active operators over 18-month period.</p>
     </section>
   );
-}
+};
+
+export default Evidence;

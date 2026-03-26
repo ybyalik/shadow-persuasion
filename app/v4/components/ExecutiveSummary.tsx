@@ -1,53 +1,40 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
-const Redacted = ({ children, width = 'w-24' }) => (
-  <motion.span
-    className={`${width} inline-block bg-black text-black select-none`}
-    whileHover={{ opacity: 0.85, transition: { duration: 0.05, repeat: 3, repeatType: 'reverse' } }}
-  >
-    {children}
-  </motion.span>
+const Redacted = ({ children }) => (
+  <span className="bg-black text-black inline-block px-1 transition-opacity duration-150 hover:opacity-80 cursor-pointer">{children}</span>
 );
 
 const Highlight = ({ children }) => (
-  <span className="bg-yellow-200/[.3] p-1 -m-1">{children}</span>
+  <span style={{ background: 'rgba(255, 241, 118, 0.3)' }}>{children}</span>
 );
 
-const MarginNote = ({ children }) => (
-  <div className="absolute -left-28 top-0 w-24 text-sm text-[#2C5F8A] italic transform -rotate-3">
-    {children}
-  </div>
-);
-
-export default function ExecutiveSummary() {
+const ExecutiveSummary = () => {
   return (
-    <section className="relative p-8 pt-12 border border-gray-400 bg-transparent">
-      <div className="absolute top-2 right-4 text-xs">
-        <p>PAGE 1 of 12</p>
-        <p>LEVEL: TOP SECRET // SCI</p>
+    <section>
+      <div className="border-b-2 border-t-2 border-black py-1 mb-12 text-sm text-center">
+        <p>PAGE 1 of 12 | CLASSIFICATION: DECLASSIFIED | DATE: MARCH 2026</p>
       </div>
-      
-      <h2 className="text-2xl font-bold uppercase tracking-wider mb-6 mt-4">Executive Summary</h2>
-
-      <div className="relative space-y-4 leading-relaxed">
-        <MarginNote>Is this confirmed?</MarginNote>
-        <p>
-          Project: Shadow Persuasion is a program focused on the study and application of 
-          advanced psychological techniques for the purpose of <Highlight>influence and behavioral modification</Highlight>. 
-          The primary subjects of this program are high-value individuals in corporate and political arenas. 
-          Our operatives have successfully infiltrated <Redacted width="w-32">several Fortune 500 companies</Redacted> and political campaigns, 
-          yielding significant intelligence and measurable outcomes.
-        </p>
-        <p>
-          Initial field tests, designated Operation <Redacted width="w-20">Mockingbird</Redacted>, confirmed the effectiveness 
-          of the core methodologies. Subsequent phases have focused on refining these techniques and expanding the network of 
-          operatives. The program utilizes a combination of <Redacted>neuro-linguistic programming</Redacted>, cognitive biases, and 
-          subliminal messaging, delivered through both digital and interpersonal vectors. The ethical implications are still 
-          under review by the <Redacted width="w-48">Oversight Committee</Redacted>, but operational effectiveness is undeniable.
-        </p>
+      <div className="relative">
+        <h2 className="text-4xl font-bold uppercase tracking-wider mb-8 text-center">Executive Summary</h2>
+        <div className="space-y-6 text-lg leading-relaxed">
+          <p>
+            Project SHADOW PERSUASION is an initiative to weaponize recent breakthroughs in artificial intelligence for the purpose of psychological influence. This document outlines a system that provides operators with a decisive edge in any human interaction. It is not a theoretical framework, but a live, operational toolkit designed to <Highlight>dismantle resistance and shape belief</Highlight> at scale.
+          </p>
+          <p>
+            The core of the system is the AI Operator Console, a conversational interface that provides real-time tactical guidance. Operators can input scenarios, <Redacted>upload conversation screenshots</Redacted>, or analyze body language from images to receive actionable persuasion strategies. The system leverages a proprietary model, the Dark Psychology Engine, trained on a restricted dataset of interrogation transcripts, <Redacted>hypnotherapy sessions</Redacted>, and high-stakes negotiation recordings.
+          </p>
+          <p>
+            The objective is to provide a comprehensive, asymmetric advantage in all negotiations, social engineering engagements, and strategic communications. Initial field tests show a <Highlight>412% increase in desired outcomes</Highlight> compared to traditional methods. The system is designed for rapid iteration, with operator feedback continuously improving the core engine's effectiveness. Access is provided on a need-to-know basis to qualified personnel only.
+          </p>
+        </div>
+        <div className="absolute top-1/4 -right-24 text-blue-700 italic transform -rotate-6">
+          <p className="text-lg">Note: effectiveness exceeds</p>
+          <p className="text-lg">projections — recommend</p>
+          <p className="text-lg">wider deployment.</p>
+        </div>
       </div>
     </section>
   );
-}
+};
+
+export default ExecutiveSummary;
