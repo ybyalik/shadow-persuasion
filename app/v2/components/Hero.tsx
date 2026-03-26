@@ -50,9 +50,9 @@ const TypewriterText = () => {
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen border border-[#333] bg-[#0C0C0C]">
+    <section className="relative min-h-screen border border-[#333] bg-[#0C0C0C] flex flex-col">
       <StatusBar />
-      <div className="flex h-full flex-col items-center justify-center text-center">
+      <div className="flex flex-1 flex-col items-center justify-center text-center px-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ export default function Hero() {
           <h1 className="font-mono text-5xl font-bold uppercase tracking-[.3em] text-white">
             The Operator's Playbook
           </h1>
-          <h2 className="mt-2 font-sans text-xl uppercase tracking-wider text-[#0D1F0D] max-w-3xl mx-auto">
+          <h2 className="mt-2 font-sans text-xl uppercase tracking-wider text-green-500/70 max-w-3xl mx-auto">
             Psychological Warfare Frameworks for High-Stakes Environments
           </h2>
         </motion.div>
