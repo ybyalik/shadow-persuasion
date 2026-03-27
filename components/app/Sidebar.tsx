@@ -1,0 +1,83 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
+
+const navItems = [
+  { href: '/app', icon: Home, label: 'Dashboard' },
+  { href: '/app/decode', icon: Eye, label: 'Decode' },
+  { href: '/app/chat', icon: MessageSquare, label: 'Chat' },
+  { href: '/app/scenarios', icon: FileText, label: 'Scenarios' },
+  { href: '/app/library', icon: BookOpen, label: 'Library' },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+
+  const isActive = (href: string) => {
+    return pathname === href;
+  };
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
+        <div className="flex-1">
+          <div className="mb-8">
+            <h1 className="text-xl font-bold text-center font-mono tracking-wider">SHADOW.OPS</h1>
+          </div>
+          <nav className="space-y-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
+                  ${
+                    isActive(item.href)
+                      ? 'bg-[#D4A017] dark:bg-[#D4A017] text-[#0A0A0A] dark:text-[#0A0A0A]'
+                      : 'hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+                  }
+                `}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="pt-4 border-t border-[#E5E2DB] dark:border-[#333333]">
+           <button
+             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors"
+           >
+             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+             <span className="font-medium">Toggle Theme</span>
+           </button>
+        </div>
+      </aside>
+
+      {/* Mobile Bottom Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5F2EB] dark:bg-[#1A1A1A] border-t border-[#E5E2DB] dark:border-[#333333] flex justify-around p-2 z-50">
+        {navItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={`flex flex-col items-center p-2 rounded-md
+              ${
+                isActive(item.href)
+                  ? 'text-[#B8860B] dark:text-[#D4A017]'
+                  : 'text-gray-500'
+              }
+            `}
+          >
+            <item.icon className="h-6 w-6" />
+            <span className="text-xs">{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+    </>
+  );
+}

@@ -1,27 +1,40 @@
+import { Inter, IBM_Plex_Mono } from 'next/font/google';
+import './globals.css';
+import { ThemeProvider } from '@/components/app/ThemeProvider';
 
-import type { Metadata } from "next";
-import { Cormorant_Garamond } from "next/font/google";
-import "./globals.css";
-
-const cormorant = Cormorant_Garamond({
-  weight: ['300', '400', '500', '600', '700'],
+const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',
+  variable: '--font-inter',
 });
 
-export const metadata: Metadata = {
-  title: "Shadow Persuasion",
-  description: "Influence, persuasion, and psychological leverage.",
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ibm-plex-mono',
+});
+
+export const metadata = {
+  title: 'Shadow Persuasion',
+  description: 'AI-Powered Dark Psychology Coaching',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className={cormorant.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${ibmPlexMono.variable} font-sans`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
