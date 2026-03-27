@@ -32,7 +32,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
         }}
         placeholder="Ask the Handler..."
         rows={1}
-        className="flex-1 p-2 bg-[#222222] rounded-lg border border-[#333333] focus:ring-2 focus:ring-[#D4A017] resize-none"
+        className="flex-1 p-2 bg-[#222222] text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
         disabled={isLoading}
       />
       <button
