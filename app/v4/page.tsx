@@ -28,7 +28,7 @@ export default function V4Page() {
   return (
     <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A]`}>
       <CoverPage />
-      <div className="max-w-6xl mx-auto px-6 md:px-12 space-y-20 py-16">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-20 py-16">
         <ExecutiveSummary />
         <SystemCapabilities />
         <SystemPreview />

@@ -13,8 +13,7 @@ const conversation = [
 
 const annotations = [
   { text: 'ANCHORING DETECTED', line: 0 },
-  { text: 'SCARCITY FRAME', line: 2 },
-  { text: 'SOCIAL PROOF', line: 2 },
+  { text: 'SOCIAL PROOF + SCARCITY FRAME', line: 2 },
   { text: 'VOID PULL', line: 3 },
 ];
 
@@ -36,7 +35,7 @@ const InfluenceDecoder = () => {
           {conversation.map((msg, index) => (
             <motion.div 
               key={index} 
-              className="grid grid-cols-[100px_1fr] gap-4 items-center relative"
+              className="grid grid-cols-[120px_1fr] gap-4 items-start"
               initial={{opacity: 0}}
               animate={inView ? {opacity: 1} : {}}
               transition={{duration: 0.5, delay: index * 0.5}}
@@ -47,7 +46,7 @@ const InfluenceDecoder = () => {
               {annotations.filter(a => a.line === index).map((a, aIndex) => (
                  <motion.div 
                     key={aIndex} 
-                    className="absolute -right-4 top-1/2 flex items-center"
+                    className="flex items-center mt-2 col-start-2"
                     initial={{opacity: 0, x: -20}}
                     animate={inView ? {opacity: 1, x: 0} : {}}
                     transition={{duration: 0.5, delay: (conversation.length + aIndex) * 0.5}}

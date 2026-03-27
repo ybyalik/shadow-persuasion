@@ -17,7 +17,7 @@ const Evidence = () => {
   return (
     <section>
       <h2 className="text-4xl font-bold uppercase tracking-wider mb-8 text-center">Exhibit A: Operational Effectiveness Data</h2>
-      <div className="overflow-x-auto">
+      <div className="">
         <table className="w-full text-lg text-left border-collapse">
           <thead>
             <tr className="border-b-4 border-black">
