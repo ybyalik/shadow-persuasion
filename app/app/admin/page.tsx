@@ -133,18 +133,28 @@ export default function AdminPage() {
       for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
         const batch = allChunks.slice(i, i + BATCH_SIZE);
         
-        const res = await fetch('/api/admin/ingest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chunks: batch, title, author }),
-        });
+        try {
+          const res = await fetch('/api/admin/ingest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chunks: batch, title, author }),
+          });
 
-        const data = await res.json();
-        
-        if (!res.ok) {
-          console.error('Batch error:', data.error);
-        } else {
-          processed += data.processed;
+          const text = await res.text();
+          try {
+            const data = JSON.parse(text);
+            if (res.ok && data.processed) {
+              processed += data.processed;
+            } else {
+              console.error('Batch error:', data.error || text);
+            }
+          } catch {
+            // Non-JSON response (Vercel error page, timeout, etc.) — skip batch, continue
+            console.error('Non-JSON response, skipping batch:', text.slice(0, 100));
+          }
+        } catch (fetchErr) {
+          // Network error — skip batch, continue
+          console.error('Fetch error, skipping batch:', fetchErr);
         }
 
         setBooks(prev => prev.map(b => 
