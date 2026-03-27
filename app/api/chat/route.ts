@@ -29,10 +29,15 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 // Search knowledge base for relevant chunks
-async function searchKnowledge(query: string, limit: number = 5): Promise<string> {
+type SearchResult = {
+  context: string;
+  sources: { book: string; author: string; technique: string; similarity: number }[];
+};
+
+async function searchKnowledge(query: string, limit: number = 5): Promise<SearchResult> {
   try {
     const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
+    if (embedding.length === 0) return { context: '', sources: [] };
 
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
@@ -40,16 +45,23 @@ async function searchKnowledge(query: string, limit: number = 5): Promise<string
       match_count: limit,
     });
 
-    if (error || !data || data.length === 0) return '';
+    if (error || !data || data.length === 0) return { context: '', sources: [] };
 
     const context = data.map((chunk: any) => 
       `[Source: "${chunk.book_title}" by ${chunk.author} | Technique: ${chunk.technique_name}]\n${chunk.content}`
     ).join('\n\n---\n\n');
 
-    return context;
+    const sources = data.map((chunk: any) => ({
+      book: chunk.book_title,
+      author: chunk.author,
+      technique: chunk.technique_name,
+      similarity: Math.round(chunk.similarity * 100),
+    }));
+
+    return { context, sources };
   } catch (e) {
     console.error('RAG search error:', e);
-    return '';
+    return { context: '', sources: [] };
   }
 }
 
@@ -62,14 +74,15 @@ export async function POST(req: NextRequest) {
     const lastUserMessage = [...recentMessages].reverse().find((m: any) => m.role === 'user');
     
     // Search knowledge base
-    let ragContext = '';
+    let ragResult: SearchResult = { context: '', sources: [] };
     if (lastUserMessage) {
-      ragContext = await searchKnowledge(lastUserMessage.content);
+      ragResult = await searchKnowledge(lastUserMessage.content);
     }
 
     // Build system prompt with RAG context
     let systemContent = HANDLER_SYSTEM_PROMPT;
-    if (ragContext) {
+    if (ragResult.context) {
+      const ragContext = ragResult.context;
       systemContent += `\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:
 The following passages are from your reference library of dark psychology books. You MUST:
 1. Use specific concepts, terminology, and frameworks from these excerpts in your response
@@ -134,6 +147,10 @@ ${ragContext}`;
         } catch (e) {
           console.error('Stream error:', e);
         } finally {
+          // Append sources as a special delimiter + JSON at the end
+          if (ragResult.sources.length > 0) {
+            controller.enqueue(encoder.encode(`\n\n<!--SOURCES:${JSON.stringify(ragResult.sources)}-->`));
+          }
           controller.close();
         }
       },

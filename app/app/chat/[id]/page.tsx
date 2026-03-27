@@ -6,10 +6,12 @@ import { ChatInput } from '@/components/app/ChatInput';
 import { ChatMessage } from '@/components/app/ChatMessage';
 
 // This would come from a database in a real app
+type Source = { book: string; author: string; technique: string; similarity: number };
 type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  sources?: Source[];
 };
 
 export default function ChatPage({ params }: { params: { id: string } }) {
@@ -56,18 +58,39 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     const decoder = new TextDecoder();
     
     let done = false;
+    let fullContent = '';
     while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+        fullContent += chunk;
+        
+        // Strip sources delimiter from displayed text
+        const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
+        
         setMessages(prev => {
             const lastMessage = prev[prev.length - 1];
             if (lastMessage.role === 'assistant') {
-                lastMessage.content += chunk;
-                return [...prev.slice(0, -1), lastMessage];
+                return [...prev.slice(0, -1), { ...lastMessage, content: displayContent }];
             }
             return prev;
         });
+    }
+    
+    // Parse sources from the end of stream
+    const sourcesMatch = fullContent.match(/<!--SOURCES:(.*?)-->/);
+    if (sourcesMatch) {
+        try {
+            const sources = JSON.parse(sourcesMatch[1]);
+            const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
+            setMessages(prev => {
+                const lastMessage = prev[prev.length - 1];
+                if (lastMessage.role === 'assistant') {
+                    return [...prev.slice(0, -1), { ...lastMessage, content: displayContent, sources }];
+                }
+                return prev;
+            });
+        } catch {}
     }
     
     setIsLoading(false);
@@ -77,7 +100,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
+          <ChatMessage key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
         ))}
         {isLoading && messages[messages.length-1].role === 'user' && (
              <ChatMessage role="assistant" content="Thinking..." isLoading={true} />
