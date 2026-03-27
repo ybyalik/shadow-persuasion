@@ -70,7 +70,14 @@ export async function POST(req: NextRequest) {
     // Build system prompt with RAG context
     let systemContent = HANDLER_SYSTEM_PROMPT;
     if (ragContext) {
-      systemContent += `\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\nThe following passages are from your reference library. Use them to ground your advice in specific frameworks and techniques. Cite the source when referencing them.\n\n${ragContext}`;
+      systemContent += `\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:
+The following passages are from your reference library of dark psychology books. You MUST:
+1. Use specific concepts, terminology, and frameworks from these excerpts in your response
+2. Cite the source in this format: (Source: "Book Title" by Author)
+3. Prioritize information from these excerpts over your general knowledge
+4. If the excerpts contain specific techniques, steps, or frameworks, reference them by name
+
+${ragContext}`;
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
