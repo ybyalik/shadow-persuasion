@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon } from 'lucide-react';
+import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/app/chat', icon: MessageSquare, label: 'Chat' },
   { href: '/app/scenarios', icon: FileText, label: 'Scenarios' },
   { href: '/app/library', icon: BookOpen, label: 'Library' },
+  { href: '/app/admin', icon: Upload, label: 'Admin' },
 ];
 
 export function Sidebar() {
