@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         'X-Title': 'Shadow Persuasion',
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4',
         messages: [systemMessage, ...recentMessages],
         stream: true,
       }),
