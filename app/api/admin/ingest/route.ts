@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const maxDuration = 300; // 5 min max for book processing
+export const maxDuration = 300;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,26 +9,6 @@ const supabase = createClient(
 );
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-
-// --- Text extraction ---
-
-async function extractTextFromFile(file: File): Promise<string> {
-  const name = file.name.toLowerCase();
-  
-  if (name.endsWith('.txt') || name.endsWith('.md')) {
-    return await file.text();
-  }
-  
-  if (name.endsWith('.pdf')) {
-    // Use pdf-parse via dynamic import
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const pdfParse = (await import('pdf-parse')).default;
-    const data = await pdfParse(buffer);
-    return data.text;
-  }
-  
-  throw new Error('Unsupported file format. Use .pdf, .txt, or .md');
-}
 
 // --- Chunking ---
 
@@ -62,7 +42,7 @@ async function getEmbedding(text: string): Promise<number[]> {
     },
     body: JSON.stringify({
       model: 'openai/text-embedding-3-small',
-      input: text.slice(0, 8000), // Limit to avoid token overflow
+      input: text.slice(0, 8000),
     }),
   });
   
@@ -126,40 +106,31 @@ function defaultMetadata() {
   };
 }
 
-// --- POST: Ingest a book ---
+// --- POST: Ingest book (receives extracted text from client) ---
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const title = formData.get('title') as string;
-    const author = formData.get('author') as string;
+    const { text, title, author } = await req.json();
 
-    if (!file || !title || !author) {
-      return NextResponse.json({ error: 'File, title, and author required' }, { status: 400 });
+    if (!text || !title || !author) {
+      return NextResponse.json({ error: 'Text, title, and author required' }, { status: 400 });
     }
 
-    // 1. Extract text
-    const text = await extractTextFromFile(file);
     if (text.length < 100) {
-      return NextResponse.json({ error: 'File appears empty or too short' }, { status: 400 });
+      return NextResponse.json({ error: 'Text appears too short' }, { status: 400 });
     }
 
-    // 2. Chunk
+    // Chunk
     const chunks = chunkText(text);
-    
-    // 3. Process each chunk
     let successCount = 0;
     
     for (const chunk of chunks) {
       try {
-        // Extract metadata + embedding in parallel
         const [metadata, embedding] = await Promise.all([
           extractMetadata(chunk, title, author),
           getEmbedding(chunk),
         ]);
 
-        // Insert
         const { error } = await supabase.from('knowledge_chunks').insert({
           book_title: title,
           author: author,
@@ -178,11 +149,9 @@ export async function POST(req: NextRequest) {
         });
 
         if (!error) successCount++;
-        
-        // Small delay to avoid rate limits
         await new Promise(r => setTimeout(r, 200));
       } catch (e) {
-        console.error('Chunk processing error:', e);
+        console.error('Chunk error:', e);
       }
     }
 
@@ -190,8 +159,6 @@ export async function POST(req: NextRequest) {
       success: true, 
       chunks: successCount,
       total: chunks.length,
-      title,
-      author,
     });
 
   } catch (error: any) {
@@ -200,19 +167,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// --- DELETE: Remove a book's chunks ---
+// --- DELETE ---
 
 export async function DELETE(req: NextRequest) {
   try {
     const { title } = await req.json();
-    
     const { error } = await supabase
       .from('knowledge_chunks')
       .delete()
       .eq('book_title', title);
-
     if (error) throw error;
-    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

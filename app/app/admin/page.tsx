@@ -14,6 +14,26 @@ type Book = {
   error?: string;
 };
 
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items
+      .map((item: any) => item.str)
+      .join(' ');
+    fullText += pageText + '\n\n';
+  }
+  
+  return fullText;
+}
+
 export default function AdminPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [title, setTitle] = useState('');
@@ -21,6 +41,7 @@ export default function AdminPage() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusText, setStatusText] = useState('');
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -34,7 +55,7 @@ export default function AdminPage() {
     e.stopPropagation();
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && (file.type === 'application/pdf' || file.name.endsWith('.txt') || file.name.endsWith('.md'))) {
+    if (file) {
       setSelectedFile(file);
       if (!title) {
         setTitle(file.name.replace(/\.(pdf|txt|md)$/i, '').replace(/[-_]/g, ' '));
@@ -69,16 +90,29 @@ export default function AdminPage() {
     setBooks(prev => [newBook, ...prev]);
 
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('title', title);
-      formData.append('author', author);
+      // Step 1: Extract text client-side
+      setStatusText('Extracting text from file...');
+      setBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'uploading' } : b));
 
+      let text = '';
+      if (selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        text = await extractPdfText(selectedFile);
+      } else {
+        text = await selectedFile.text();
+      }
+
+      if (text.length < 100) {
+        throw new Error('Could not extract enough text from file. Try a different format.');
+      }
+
+      setStatusText(`Extracted ${text.length.toLocaleString()} characters. Processing chunks...`);
       setBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'processing' } : b));
 
+      // Step 2: Send extracted text to API
       const res = await fetch('/api/admin/ingest', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, title, author }),
       });
 
       const data = await res.json();
@@ -90,10 +124,12 @@ export default function AdminPage() {
       setBooks(prev => prev.map(b => 
         b.id === bookId ? { ...b, status: 'done', chunks: data.chunks } : b
       ));
+      setStatusText('');
     } catch (err: any) {
       setBooks(prev => prev.map(b => 
         b.id === bookId ? { ...b, status: 'error', error: err.message } : b
       ));
+      setStatusText('');
     }
 
     setIsProcessing(false);
@@ -126,11 +162,9 @@ export default function AdminPage() {
         <p className="text-gray-400 mt-1">Upload books to train the AI knowledge base</p>
       </header>
 
-      {/* Upload Section */}
       <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
         <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider mb-4">Upload a Book</h2>
         
-        {/* File Drop Zone */}
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -164,7 +198,6 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Title & Author */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-xs font-mono text-gray-400 uppercase mb-1">Book Title</label>
@@ -188,7 +221,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Upload Button */}
         <button
           onClick={handleUpload}
           disabled={!selectedFile || !title || !author || isProcessing}
@@ -197,26 +229,23 @@ export default function AdminPage() {
             flex items-center justify-center gap-2"
         >
           {isProcessing ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Processing...
-            </>
+            <><Loader2 className="h-5 w-5 animate-spin" /> Processing...</>
           ) : (
-            <>
-              <Upload className="h-5 w-5" />
-              Ingest Book
-            </>
+            <><Upload className="h-5 w-5" /> Ingest Book</>
           )}
         </button>
 
+        {statusText && (
+          <p className="text-[#D4A017] text-sm text-center mt-2 font-mono">{statusText}</p>
+        )}
+
         {isProcessing && (
-          <p className="text-gray-500 text-sm text-center mt-2">
-            This may take 1-5 minutes depending on book length. Don't close this page.
+          <p className="text-gray-500 text-sm text-center mt-1">
+            This may take a few minutes. Don't close this page.
           </p>
         )}
       </div>
 
-      {/* Ingested Books List */}
       <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
         <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider mb-4">Ingested Books</h2>
         
