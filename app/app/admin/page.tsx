@@ -127,7 +127,7 @@ export default function AdminPage() {
       setStatusText(`${pageCount ? pageCount + ' pages → ' : ''}${totalChunks} chunks. Processing...`);
 
       // Step 3: Send in batches of 3
-      const BATCH_SIZE = 3;
+      const BATCH_SIZE = 2;
       let processed = 0;
 
       for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {

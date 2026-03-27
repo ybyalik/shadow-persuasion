@@ -35,7 +35,7 @@ async function extractMetadata(chunk: string, bookTitle: string, author: string)
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-sonnet-4',
+      model: 'openai/gpt-4o-mini',
       messages: [
         { role: 'system', content: 'Extract metadata from book text. Respond ONLY with valid JSON, no markdown.' },
         { role: 'user', content: `From "${bookTitle}" by ${author}. Extract:
