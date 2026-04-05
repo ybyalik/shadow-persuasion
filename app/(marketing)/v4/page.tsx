@@ -27,6 +27,7 @@ import LiveAnalysisDemo from './components/LiveAnalysisDemo';
 import CaseFileBrowser from './components/CaseFileBrowser';
 import DossierAnalysis from './components/DossierAnalysis';
 import ConversationBreakdown from './components/ConversationBreakdown';
+import MeasuredImpact from './components/MeasuredImpact';
 
 const specialElite = Special_Elite({ subsets: ['latin'], weight: '400' });
 
@@ -83,6 +84,7 @@ export default function V4Page() {
       <Evidence />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-16 md:space-y-20 py-16">
+        <MeasuredImpact />
         <ConversationBreakdown />
         <Statements />
         <Architects />

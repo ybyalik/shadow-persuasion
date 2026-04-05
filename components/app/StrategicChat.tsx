@@ -1,0 +1,311 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { ChatInput } from '@/components/app/ChatInput';
+import { ChatMessage } from '@/components/app/ChatMessage';
+import { Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft } from 'lucide-react';
+
+interface Goal {
+    id: string;
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    color: string;
+    examples: string[];
+}
+
+interface Message {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    sources?: any[];
+}
+
+interface StrategicChatProps {
+    goal: Goal;
+    onBack: () => void;
+}
+
+export function StrategicChat({ goal, onBack }: StrategicChatProps) {
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [tacticalGuidance, setTacticalGuidance] = useState<any>(null);
+    const [progressScore, setProgressScore] = useState(0);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+    
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // Initialize conversation with goal-specific introduction
+    useEffect(() => {
+        const initMessage: Message = {
+            id: 'init',
+            role: 'assistant',
+            content: `I'm your Strategic Communication Coach, focused on: **${goal.title}**\n\nI'll provide specific tactics, exact scripts, and real-time guidance to help you achieve your objective.\n\n**To get started, describe your specific situation:**\n\n• Who are you dealing with?\n• What's the context?\n• What outcome do you want?\n• What challenges are you facing?\n\nThe more specific you are, the more targeted my tactical guidance will be.`
+        };
+        setMessages([initMessage]);
+    }, [goal]);
+
+    const handleSend = async (input: string) => {
+        const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+        setMessages(prev => [...prev, userMessage]);
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/strategic-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    messages: [...messages, userMessage],
+                    goal: goal.id,
+                    goalTitle: goal.title 
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            if (!response.body) {
+                throw new Error('No response body');
+            }
+            
+            setMessages(prev => [...prev, { id: 'assistant-placeholder', role: 'assistant', content: '' }]);
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let done = false;
+            let buffer = '';
+            let fullContent = '';
+            
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+                
+                if (value) {
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+                    
+                    // Process complete lines
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed) continue;
+                        
+                        // Handle server-sent events format
+                        if (trimmed.startsWith('data: ')) {
+                            const data = trimmed.slice(6);
+                            if (data === '[DONE]') continue;
+                            
+                            try {
+                                const json = JSON.parse(data);
+                                const content = json.choices?.[0]?.delta?.content || '';
+                                if (content) {
+                                    fullContent += content;
+                                }
+                            } catch (e) {
+                                // If it's not JSON, treat as plain content
+                                if (!data.includes('{"id":') && !data.includes('"object":"chat.completion.chunk"')) {
+                                    fullContent += data;
+                                }
+                            }
+                        } else if (!trimmed.includes('{"id":') && !trimmed.includes('"object":"chat.completion.chunk"')) {
+                            // Plain text content
+                            fullContent += trimmed + '\n';
+                        }
+                    }
+                    
+                    // Parse tactical guidance if present
+                    const guidanceMatch = fullContent.match(/<!--GUIDANCE:(.*?)-->/);
+                    if (guidanceMatch) {
+                        try {
+                            const guidance = JSON.parse(guidanceMatch[1]);
+                            setTacticalGuidance(guidance);
+                        } catch {}
+                    }
+                    
+                    // Strip guidance from displayed content
+                    const displayContent = fullContent.replace(/\n\n<!--GUIDANCE:.*?-->/, '');
+                    
+                    setMessages(prev => {
+                        const lastMessage = prev[prev.length - 1];
+                        if (lastMessage.role === 'assistant') {
+                            return [...prev.slice(0, -1), { ...lastMessage, content: displayContent }];
+                        }
+                        return prev;
+                    });
+                }
+            }
+            
+        } catch (error) {
+            console.error('Strategic chat error:', error);
+            setMessages(prev => [...prev, { 
+                id: 'error-' + Date.now(), 
+                role: 'assistant', 
+                content: 'Sorry, I encountered an error processing your request. Please try again.' 
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex h-[calc(100vh-4rem)] gap-6">
+            {/* Main Chat Area */}
+            <div className="flex-1 flex flex-col">
+                {/* Header */}
+                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 mb-4 flex items-center gap-4">
+                    <button
+                        onClick={onBack}
+                        className="p-2 hover:bg-[#333333] rounded transition-colors"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    
+                    <div className={`w-10 h-10 ${goal.color} rounded-lg flex items-center justify-center text-white`}>
+                        {goal.icon}
+                    </div>
+                    
+                    <div className="flex-1">
+                        <h2 className="font-mono uppercase text-[#D4A017] font-bold">
+                            {goal.title}
+                        </h2>
+                        <p className="text-sm text-gray-400">{goal.description}</p>
+                    </div>
+
+                    {progressScore > 0 && (
+                        <div className="text-right">
+                            <div className="text-lg font-bold text-green-400">{progressScore}%</div>
+                            <div className="text-xs text-gray-400 font-mono uppercase">Progress</div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                    {messages.map((msg) => (
+                        <ChatMessage key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
+                    ))}
+                    {isLoading && messages[messages.length-1]?.role === 'user' && (
+                        <ChatMessage role="assistant" content="Analyzing your situation and preparing tactical guidance..." isLoading={true} />
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="mt-4">
+                    <ChatInput 
+                        onSend={handleSend} 
+                        isLoading={isLoading} 
+                        placeholder="Describe your situation or ask for specific tactical guidance..."
+                    />
+                </div>
+            </div>
+
+            {/* Tactical Guidance Panel */}
+            <div className="w-80 space-y-4">
+                {/* Live Guidance */}
+                {tacticalGuidance && (
+                    <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Target className="h-5 w-5 text-[#D4A017]" />
+                            <h3 className="font-mono uppercase text-[#D4A017] font-bold">Live Tactical Guidance</h3>
+                        </div>
+
+                        {tacticalGuidance.nextMove && (
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-mono uppercase text-green-400">Recommended Next Move</h4>
+                                <div className="bg-[#0A0A0A] p-3 rounded border-l-4 border-green-400">
+                                    <p className="text-sm text-gray-300">{tacticalGuidance.nextMove}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {tacticalGuidance.riskLevel && (
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-mono uppercase text-yellow-400">Risk Assessment</h4>
+                                <div className={`bg-[#0A0A0A] p-3 rounded border-l-4 ${
+                                    tacticalGuidance.riskLevel === 'HIGH' ? 'border-red-400' :
+                                    tacticalGuidance.riskLevel === 'MEDIUM' ? 'border-yellow-400' : 'border-green-400'
+                                }`}>
+                                    <p className="text-sm text-gray-300">{tacticalGuidance.riskLevel} - {tacticalGuidance.riskExplanation}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {tacticalGuidance.techniques && (
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-mono uppercase text-blue-400">Active Techniques</h4>
+                                <div className="flex flex-wrap gap-1">
+                                    {tacticalGuidance.techniques.map((technique: string, index: number) => (
+                                        <span key={index} className="text-xs bg-blue-400/10 text-blue-400 px-2 py-1 rounded">
+                                            {technique}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Goal Progress */}
+                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-[#D4A017]" />
+                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Session Progress</h3>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Goal Completion</span>
+                            <span className="font-bold">{progressScore}%</span>
+                        </div>
+                        <div className="h-2 bg-[#333333] rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-[#D4A017] transition-all duration-500"
+                                style={{ width: `${progressScore}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Tips */}
+                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-[#D4A017]" />
+                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Quick Tips</h3>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-400">
+                        <p>• Be specific about your situation for better guidance</p>
+                        <p>• Ask for exact scripts when you need them</p>
+                        <p>• Describe the other person's behavior patterns</p>
+                        <p>• Share what tactics you've already tried</p>
+                    </div>
+                </div>
+
+                {/* Warnings */}
+                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-400" />
+                        <h3 className="font-mono uppercase text-red-400 font-bold">Important</h3>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-red-200">
+                        <p>• Use influence ethically and responsibly</p>
+                        <p>• Respect others' boundaries and autonomy</p>
+                        <p>• Focus on win-win outcomes when possible</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload } from 'lucide-react';
+import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload, Edit, Brain, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const navItems = [
   { href: '/app', icon: Home, label: 'Dashboard' },
-  { href: '/app/decode', icon: Eye, label: 'Decode' },
-  { href: '/app/chat', icon: MessageSquare, label: 'Chat' },
-  { href: '/app/scenarios', icon: FileText, label: 'Scenarios' },
-  { href: '/app/library', icon: BookOpen, label: 'Library' },
+  { href: '/app/decode', icon: Eye, label: 'Conversation Intelligence' },
+  { href: '/app/chat', icon: MessageSquare, label: 'Strategic Coach' },
+  { href: '/app/rewrite', icon: Edit, label: 'Message Optimizer' },
+  { href: '/app/conversations', icon: Brain, label: 'Relationship Memory' },
+  { href: '/app/scenarios', icon: FileText, label: 'Practice Scenarios' },
+  { href: '/app/library', icon: BookOpen, label: 'Technique Library' },
   { href: '/app/admin', icon: Upload, label: 'Admin' },
 ];
 

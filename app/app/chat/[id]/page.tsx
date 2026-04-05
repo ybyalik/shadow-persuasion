@@ -40,60 +40,110 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
-    });
+    try {
+      const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [...messages, userMessage] }),
+      });
 
-    if (!response.body) {
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+          throw new Error('No response body');
+      }
+      
+      setMessages(prev => [...prev, { id: 'assistant-placeholder', role: 'assistant', content: '' }]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      let done = false;
+      let buffer = '';
+      let fullContent = '';
+      
+      while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          
+          if (value) {
+              const chunk = decoder.decode(value, { stream: true });
+              buffer += chunk;
+              
+              // Process complete lines
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // Keep incomplete line in buffer
+              
+              for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (!trimmed) continue;
+                  
+                  // Handle server-sent events format
+                  if (trimmed.startsWith('data: ')) {
+                      const data = trimmed.slice(6);
+                      if (data === '[DONE]') continue;
+                      
+                      try {
+                          const json = JSON.parse(data);
+                          const content = json.choices?.[0]?.delta?.content || '';
+                          if (content) {
+                              fullContent += content;
+                          }
+                      } catch (e) {
+                          // If it's not JSON, treat as plain content
+                          if (!data.includes('{"id":') && !data.includes('"object":"chat.completion.chunk"')) {
+                              fullContent += data;
+                          }
+                      }
+                  } else if (!trimmed.includes('{"id":') && !trimmed.includes('"object":"chat.completion.chunk"')) {
+                      // Plain text content
+                      fullContent += trimmed + '\n';
+                  }
+              }
+              
+              // Update UI with accumulated content (excluding sources)
+              const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
+              
+              setMessages(prev => {
+                  const lastMessage = prev[prev.length - 1];
+                  if (lastMessage.role === 'assistant') {
+                      return [...prev.slice(0, -1), { ...lastMessage, content: displayContent }];
+                  }
+                  return prev;
+              });
+          }
+      }
+      
+      // Parse sources from the end of stream
+      const sourcesMatch = fullContent.match(/<!--SOURCES:(.*?)-->/);
+      if (sourcesMatch) {
+          try {
+              const sources = JSON.parse(sourcesMatch[1]);
+              const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
+              setMessages(prev => {
+                  const lastMessage = prev[prev.length - 1];
+                  if (lastMessage.role === 'assistant') {
+                      return [...prev.slice(0, -1), { ...lastMessage, content: displayContent, sources }];
+                  }
+                  return prev;
+              });
+          } catch (e) {
+              console.error('Error parsing sources:', e);
+          }
+      }
+      
+    } catch (error) {
+        console.error('Chat API error:', error);
+        setMessages(prev => [...prev, { 
+            id: 'error-' + Date.now(), 
+            role: 'assistant', 
+            content: 'Sorry, I encountered an error processing your request. Please try again.' 
+        }]);
+    } finally {
         setIsLoading(false);
-        // Handle error state
-        return;
     }
-    
-    setMessages(prev => [...prev, { id: 'assistant-placeholder', role: 'assistant', content: '' }]);
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    
-    let done = false;
-    let fullContent = '';
-    while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        const chunk = decoder.decode(value, { stream: true });
-        fullContent += chunk;
-        
-        // Strip sources delimiter from displayed text
-        const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
-        
-        setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage.role === 'assistant') {
-                return [...prev.slice(0, -1), { ...lastMessage, content: displayContent }];
-            }
-            return prev;
-        });
-    }
-    
-    // Parse sources from the end of stream
-    const sourcesMatch = fullContent.match(/<!--SOURCES:(.*?)-->/);
-    if (sourcesMatch) {
-        try {
-            const sources = JSON.parse(sourcesMatch[1]);
-            const displayContent = fullContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
-            setMessages(prev => {
-                const lastMessage = prev[prev.length - 1];
-                if (lastMessage.role === 'assistant') {
-                    return [...prev.slice(0, -1), { ...lastMessage, content: displayContent, sources }];
-                }
-                return prev;
-            });
-        } catch {}
-    }
-    
-    setIsLoading(false);
   };
 
   return (

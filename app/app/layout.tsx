@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Sidebar } from '@/components/app/Sidebar';
+import { MessageRewriterFAB } from '@/components/app/MessageRewriterFAB';
 
 export default function AppLayout({
   children,
@@ -16,6 +17,7 @@ export default function AppLayout({
           {children}
         </div>
       </main>
+      <MessageRewriterFAB />
     </div>
   );
 }

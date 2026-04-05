@@ -1,7 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DECODE_SYSTEM_PROMPT } from '@/lib/prompts';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const maxDuration = 60;
+
+// Get embedding for conversation analysis
+async function getEmbedding(text: string): Promise<number[]> {
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'openai/text-embedding-3-small',
+        input: text.slice(0, 8000),
+      }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data?.[0]?.embedding || [];
+  } catch (e) {
+    console.error('Embedding error:', e);
+    return [];
+  }
+}
+
+// Search knowledge base for conversation analysis techniques
+async function searchConversationKnowledge(): Promise<string> {
+  try {
+    const embedding = await getEmbedding('conversation analysis power dynamics influence techniques psychological patterns');
+    if (embedding.length === 0) return '';
+
+    const { data, error } = await supabase.rpc('match_chunks', {
+      query_embedding: embedding,
+      match_threshold: 0.35,
+      match_count: 4,
+    });
+
+    if (error || !data || data.length === 0) return '';
+
+    const context = data.map((chunk: any) => 
+      `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
+    ).join('\n\n---\n\n');
+
+    return `\n\nRELEVANT ANALYSIS TECHNIQUES FROM KNOWLEDGE BASE:
+${context}
+
+Apply these specific concepts and frameworks in your conversation analysis and response recommendations.`;
+  } catch (e) {
+    console.error('Knowledge search error:', e);
+    return '';
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +73,10 @@ export async function POST(req: NextRequest) {
     const imageBase64 = Buffer.from(imageBuffer).toString('base64');
     const imageDataUrl = `data:${image.type};base64,${imageBase64}`;
 
+    // Get relevant knowledge for conversation analysis
+    const knowledgeContext = await searchConversationKnowledge();
+    const enhancedPrompt = DECODE_SYSTEM_PROMPT + knowledgeContext;
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -27,7 +88,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'openai/gpt-4o',
         messages: [
-          { role: 'system', content: DECODE_SYSTEM_PROMPT },
+          { role: 'system', content: enhancedPrompt },
           {
             role: 'user',
             content: [
@@ -48,11 +109,18 @@ export async function POST(req: NextRequest) {
     const data = await response.json();
     const content = data.choices[0].message.content;
 
-    return NextResponse.json({ 
-      analysis: content,
-      suggestions: [],
-      techniques_identified: [] 
-    });
+    // Try to parse as JSON for enhanced analysis, fall back to legacy format
+    try {
+      const enhancedAnalysis = JSON.parse(content);
+      return NextResponse.json(enhancedAnalysis);
+    } catch (parseError) {
+      // Fallback to legacy format if JSON parsing fails
+      return NextResponse.json({ 
+        analysis: content,
+        suggestions: [],
+        techniques_identified: [] 
+      });
+    }
 
   } catch (error) {
     console.error('[DECODE API] Error:', error);
