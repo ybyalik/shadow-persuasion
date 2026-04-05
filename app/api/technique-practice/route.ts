@@ -138,7 +138,10 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const rawContent = data.choices[0].message.content;
+
+    // Strip markdown code block wrappers if present
+    const content = rawContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
     // Parse the JSON response
     try {
