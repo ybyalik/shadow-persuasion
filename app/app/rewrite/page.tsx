@@ -99,7 +99,7 @@ export default function RewritePage() {
                         value={originalMessage}
                         onChange={(e) => setOriginalMessage(e.target.value)}
                         placeholder="Hey, how was your day? I had a pretty good day today. What are you up to?"
-                        className="w-full h-32 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                        className="w-full h-32 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                     />
                 </div>
 

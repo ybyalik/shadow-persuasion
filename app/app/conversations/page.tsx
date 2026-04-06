@@ -189,14 +189,14 @@ export default function ConversationsPage() {
                         placeholder="Search conversations, names, or tags..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white focus:outline-none focus:border-[#D4A017]"
+                        className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                     />
                 </div>
                 
                 <select
                     value={filterRelationship}
                     onChange={(e) => setFilterRelationship(e.target.value)}
-                    className="px-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white focus:outline-none focus:border-[#D4A017]"
+                    className="px-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                 >
                     <option value="">All Relationships</option>
                     <option value="Professional">Professional</option>

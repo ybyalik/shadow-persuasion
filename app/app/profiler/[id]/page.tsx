@@ -854,7 +854,7 @@ function LogInteractionModal({
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               rows={4}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
               placeholder="Describe the interaction in detail..."
             />
           </div>
@@ -936,7 +936,7 @@ function LogInteractionModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
               placeholder="Additional observations..."
             />
           </div>

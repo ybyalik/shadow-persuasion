@@ -169,7 +169,7 @@ export default function StackingPage() {
             value={saveLabel}
             onChange={(e) => setSaveLabel(e.target.value)}
             placeholder={stack.name}
-            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors"
+            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSave(stack);
@@ -295,7 +295,7 @@ export default function StackingPage() {
             value={customGoal}
             onChange={(e) => setCustomGoal(e.target.value)}
             placeholder="Describe your goal..."
-            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors"
+            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customGoal.trim()) generateStack();

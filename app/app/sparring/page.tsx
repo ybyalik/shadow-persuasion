@@ -429,7 +429,7 @@ export default function SparringPage() {
             onKeyDown={handleKeyDown}
             placeholder="Your response..."
             disabled={phase === 'grading'}
-            className="w-full h-24 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors resize-none disabled:opacity-50"
+            className="w-full h-24 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none disabled:opacity-50"
             autoFocus
           />
 

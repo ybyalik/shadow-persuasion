@@ -696,7 +696,7 @@ export default function JournalPage() {
             placeholder="Search reports, techniques, people..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white focus:outline-none focus:border-[#D4A017]"
+            className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
           />
         </div>
         <div className="flex gap-2">

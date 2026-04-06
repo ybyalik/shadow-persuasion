@@ -157,7 +157,7 @@ export default function ScannerPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste any message, email, or sales pitch..."
-            className="w-full h-48 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
+            className="w-full h-48 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
             autoFocus
           />
 

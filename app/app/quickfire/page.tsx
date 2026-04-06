@@ -85,7 +85,7 @@ export default function QuickfirePage() {
             onChange={(e) => setSituation(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="I'm in a meeting and my boss just..."
-            className="w-full h-32 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white text-lg placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
+            className="w-full h-32 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white text-lg placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
             autoFocus
           />
 
@@ -106,7 +106,7 @@ export default function QuickfirePage() {
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 placeholder="e.g. My manager Sarah, tends to be passive-aggressive"
-                className="w-full mt-2 bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#D4A017] transition-colors"
+                className="w-full mt-2 bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
               />
             )}
           </div>

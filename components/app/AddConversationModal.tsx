@@ -147,7 +147,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                                 required
                                 value={formData.personName}
                                 onChange={(e) => setFormData(prev => ({ ...prev, personName: e.target.value }))}
-                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                                 placeholder="John Doe"
                             />
                         </div>
@@ -159,7 +159,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                             <select
                                 value={formData.relationship}
                                 onChange={(e) => setFormData(prev => ({ ...prev, relationship: e.target.value as any }))}
-                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                             >
                                 <option value="Professional">Professional</option>
                                 <option value="Personal">Personal</option>
@@ -177,7 +177,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                         <textarea
                             value={formData.context}
                             onChange={(e) => setFormData(prev => ({ ...prev, context: e.target.value }))}
-                            className="w-full h-24 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                            className="w-full h-24 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                             placeholder="Describe the context of your interactions..."
                         />
                     </div>
@@ -189,7 +189,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                         <textarea
                             value={formData.lastInteraction}
                             onChange={(e) => setFormData(prev => ({ ...prev, lastInteraction: e.target.value }))}
-                            className="w-full h-20 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                            className="w-full h-20 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                             placeholder="Brief summary of your most recent interaction..."
                         />
                     </div>
@@ -212,7 +212,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                                             sensoryPreference: e.target.value as any
                                         }
                                     }))}
-                                    className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                    className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                                 >
                                     <option value="Visual">Visual (sees, looks, pictures)</option>
                                     <option value="Auditory">Auditory (hears, sounds, tells)</option>
@@ -260,7 +260,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                                         emotionalPattern: e.target.value
                                     }
                                 }))}
-                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                                 placeholder="e.g., Anxious when pressured, confident in expertise areas..."
                             />
                         </div>
@@ -295,7 +295,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                                 type="text"
                                 value={newTechnique.name}
                                 onChange={(e) => setNewTechnique(prev => ({ ...prev, name: e.target.value }))}
-                                className="flex-1 bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="flex-1 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                                 placeholder="Technique name..."
                             />
                             <input
@@ -326,7 +326,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                             <select
                                 value={formData.riskLevel}
                                 onChange={(e) => setFormData(prev => ({ ...prev, riskLevel: e.target.value as any }))}
-                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                             >
                                 <option value="LOW">Low Risk</option>
                                 <option value="MEDIUM">Medium Risk</option>
@@ -342,7 +342,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                         <textarea
                             value={formData.nextRecommendedAction}
                             onChange={(e) => setFormData(prev => ({ ...prev, nextRecommendedAction: e.target.value }))}
-                            className="w-full h-20 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                            className="w-full h-20 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                             placeholder="What should you do next in this relationship?"
                         />
                     </div>
@@ -376,7 +376,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                                 value={newTag}
                                 onChange={(e) => setNewTag(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                className="flex-1 bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                                className="flex-1 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                                 placeholder="Add tags..."
                             />
                             <button
@@ -397,7 +397,7 @@ export function AddConversationModal({ isOpen, onClose, onAdd }: AddConversation
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                            className="w-full h-24 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                            className="w-full h-24 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                             placeholder="Additional notes about this person or relationship..."
                         />
                     </div>

@@ -57,29 +57,29 @@ export default function DashboardPage() {
           <Link
             key={card.title}
             href={card.href}
-            className="group block p-6 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333] transition-all
-             hover:shadow-lg dark:hover:border-[#D4A017] dark:hover:glow-sm light:hover:-translate-y-1"
+            className="group block p-6 bg-[#1A1A1A] rounded-xl border border-[#333333] transition-all
+             hover:shadow-lg hover:border-[#D4A017]"
           >
-              <card.icon className="h-8 w-8 mb-4 text-[#B8860B] dark:text-[#D4A017]" />
+              <card.icon className="h-8 w-8 mb-4 text-[#D4A017]" />
               <h2 className="text-lg font-bold font-mono uppercase">{card.title}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{card.description}</p>
+              <p className="text-sm text-gray-400">{card.description}</p>
           </Link>
         ))}
       </div>
       
       <div className="grid grid-cols-3 gap-4 text-center">
             {stats.map((stat) => (
-                <div key={stat.label} className="p-4 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-lg border border-[#E5E2DB] dark:border-[#333333]">
+                <div key={stat.label} className="p-4 bg-[#1A1A1A] rounded-lg border border-[#333333]">
                     <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
+                    <p className="text-sm text-gray-400">{stat.label}</p>
                 </div>
             ))}
       </div>
 
       <div>
         <h2 className="text-xl font-bold font-mono mb-4">Recent Activity</h2>
-        <div className="p-10 text-center bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-lg border border-dashed border-[#E5E2DB] dark:border-[#333333]">
-           <p className="text-gray-500 dark:text-gray-400">No recent activity. Start an operation.</p>
+        <div className="p-10 text-center bg-[#1A1A1A] rounded-lg border border-dashed border-[#333333]">
+           <p className="text-gray-400">No recent activity. Start an operation.</p>
         </div>
       </div>
     </div>

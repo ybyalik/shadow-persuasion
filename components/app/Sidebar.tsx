@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload, Edit, Brain, Users, Zap, Shield, Target, Swords, Layers, Trophy, UserSearch, ClipboardList, LogOut } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { Home, Eye, MessageSquare, FileText, BookOpen, Upload, Edit, Brain, Zap, Shield, Target, Swords, Layers, Trophy, UserSearch, ClipboardList, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 const ADMIN_EMAILS = ['ybyalik@gmail.com'];
@@ -31,7 +30,6 @@ const newFeatureItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
 
   const isActive = (href: string) => {
@@ -41,7 +39,7 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
+      <aside className="hidden md:flex flex-col w-[260px] bg-[#1A1A1A] p-4 border-r border-[#333333]">
         <div className="flex-1">
           <div className="mb-8">
             <h1 className="text-xl font-bold text-center font-mono tracking-wider">SHADOW.OPS</h1>
@@ -54,8 +52,8 @@ export function Sidebar() {
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
                   ${
                     isActive(item.href)
-                      ? 'bg-[#D4A017] dark:bg-[#D4A017] text-[#0A0A0A] dark:text-[#0A0A0A]'
-                      : 'hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+                      ? 'bg-[#D4A017] text-[#0A0A0A]'
+                      : 'hover:bg-[#222222]'
                   }
                 `}
               >
@@ -69,8 +67,8 @@ export function Sidebar() {
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
                   ${
                     isActive('/app/admin')
-                      ? 'bg-[#D4A017] dark:bg-[#D4A017] text-[#0A0A0A] dark:text-[#0A0A0A]'
-                      : 'hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+                      ? 'bg-[#D4A017] text-[#0A0A0A]'
+                      : 'hover:bg-[#222222]'
                   }
                 `}
               >
@@ -79,7 +77,7 @@ export function Sidebar() {
               </Link>
             )}
           </nav>
-          <div className="mt-6 pt-4 border-t border-[#E5E2DB] dark:border-[#333333]">
+          <div className="mt-6 pt-4 border-t border-[#333333]">
             <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-[#D4A017]">New Features</p>
             <nav className="space-y-1">
               {newFeatureItems.map((item) => (
@@ -89,8 +87,8 @@ export function Sidebar() {
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
                     ${
                       isActive(item.href)
-                        ? 'bg-[#D4A017] dark:bg-[#D4A017] text-[#0A0A0A] dark:text-[#0A0A0A]'
-                        : 'hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+                        ? 'bg-[#D4A017] text-[#0A0A0A]'
+                        : 'hover:bg-[#222222]'
                     }
                   `}
                 >
@@ -101,7 +99,7 @@ export function Sidebar() {
             </nav>
           </div>
         </div>
-        <div className="pt-4 border-t border-[#E5E2DB] dark:border-[#333333] space-y-2">
+        <div className="pt-4 border-t border-[#333333] space-y-2">
            {user && (
              <div className="flex items-center space-x-3 px-3 py-2">
                {user.photoURL ? (
@@ -115,15 +113,8 @@ export function Sidebar() {
              </div>
            )}
            <button
-             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors"
-           >
-             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-             <span className="font-medium">Toggle Theme</span>
-           </button>
-           <button
              onClick={signOut}
-             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors text-red-400 hover:text-red-300"
+             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#222222] transition-colors text-red-400 hover:text-red-300"
            >
              <LogOut className="h-5 w-5" />
              <span className="font-medium">Sign Out</span>
@@ -132,7 +123,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#F5F2EB] dark:bg-[#1A1A1A] border-t border-[#E5E2DB] dark:border-[#333333] flex justify-around p-2 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1A1A1A] border-t border-[#333333] flex justify-around p-2 z-50">
         {navItems.map((item) => (
           <Link
             key={item.label}
@@ -140,7 +131,7 @@ export function Sidebar() {
             className={`flex flex-col items-center p-2 rounded-md
               ${
                 isActive(item.href)
-                  ? 'text-[#B8860B] dark:text-[#D4A017]'
+                  ? 'text-[#D4A017]'
                   : 'text-gray-500'
               }
             `}
