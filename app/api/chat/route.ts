@@ -1,40 +1,18 @@
 import { NextRequest } from 'next/server';
-import { HANDLER_SYSTEM_PROMPT } from '@/lib/prompts';
-import { createClient } from '@supabase/supabase-js';
+import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
+import { searchKnowledge, getEmbedding, supabase } from '@/lib/rag';
 
 export const maxDuration = 60;
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
-// Get embedding for the user's question
-async function getEmbedding(text: string): Promise<number[]> {
-  const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'openai/text-embedding-3-small',
-      input: text.slice(0, 8000),
-    }),
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data?.[0]?.embedding || [];
-}
-
-// Search knowledge base for relevant chunks
+// Search knowledge base for relevant chunks with source metadata
 type SearchResult = {
   context: string;
   sources: { book: string; author: string; technique: string; similarity: number }[];
 };
 
-async function searchKnowledge(query: string, limit: number = 5): Promise<SearchResult> {
+async function searchKnowledgeWithSources(query: string, limit: number = 5): Promise<SearchResult> {
   try {
     const embedding = await getEmbedding(query);
     if (embedding.length === 0) return { context: '', sources: [] };
@@ -47,7 +25,7 @@ async function searchKnowledge(query: string, limit: number = 5): Promise<Search
 
     if (error || !data || data.length === 0) return { context: '', sources: [] };
 
-    const context = data.map((chunk: any) => 
+    const context = data.map((chunk: any) =>
       `[Source: "${chunk.book_title}" by ${chunk.author} | Technique: ${chunk.technique_name}]\n${chunk.content}`
     ).join('\n\n---\n\n');
 
@@ -76,21 +54,14 @@ export async function POST(req: NextRequest) {
     // Search knowledge base
     let ragResult: SearchResult = { context: '', sources: [] };
     if (lastUserMessage) {
-      ragResult = await searchKnowledge(lastUserMessage.content);
+      ragResult = await searchKnowledgeWithSources(lastUserMessage.content);
     }
 
     // Build system prompt with RAG context
-    let systemContent = HANDLER_SYSTEM_PROMPT;
+    let systemContent = HANDLER_VOICE + HANDLER_SYSTEM_PROMPT;
     if (ragResult.context) {
       const ragContext = ragResult.context;
-      systemContent += `\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:
-The following passages are from your reference library of dark psychology books. You MUST:
-1. Use specific concepts, terminology, and frameworks from these excerpts in your response
-2. Cite the source in this format: (Source: "Book Title" by Author)
-3. Prioritize information from these excerpts over your general knowledge
-4. If the excerpts contain specific techniques, steps, or frameworks, reference them by name
-
-${ragContext}`;
+      systemContent += `\n\n${RAG_ENFORCEMENT}\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}`;
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {

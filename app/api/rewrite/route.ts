@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 const REWRITE_SYSTEM_PROMPT = `You are a message optimization expert specializing in psychological influence and persuasion. Your task is to transform weak, boring, or ineffective messages into psychologically optimized communications.
 
@@ -41,57 +37,6 @@ Respond in this exact JSON format:
 
 Focus on legitimate influence techniques - authority, social proof, scarcity, reciprocity, consistency, and liking. Avoid obvious manipulation that would trigger resistance.`;
 
-// Get embedding for the user's message
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-// Search knowledge base for relevant techniques
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query + ' message rewrite communication influence');
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.35,
-      match_count: 3,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data.map((chunk: any) => 
-      `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:
-${context}
-
-Use specific concepts and terminology from these sources in your rewrite suggestions.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
-
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
@@ -107,7 +52,11 @@ export async function POST(req: NextRequest) {
       : '';
 
     // Search knowledge base for relevant techniques
-    const knowledgeContext = await searchKnowledge(message + (goal ? ` ${goal}` : ''));
+    const ragContext = await searchKnowledge(
+      `${message}${goal ? ` ${goal}` : ''} message rewrite communication influence`,
+      { threshold: 0.35, count: 3 }
+    );
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
     const goalInstruction = goal
       ? `\n\nIMPORTANT: The user's primary goal is "${goal}". Prioritize and emphasize this goal across ALL rewrite versions. Each version should be optimized to support "${goal}" while still applying its respective category strategy. The best version for achieving "${goal}" should be listed first.`
       : '';

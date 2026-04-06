@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { searchKnowledge, supabase } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
 const STRATEGIC_CHAT_SYSTEM_PROMPT = `You are a Strategic Communication Coach specializing in influence, persuasion, and tactical conversation guidance. You provide specific, actionable advice focused on achieving concrete outcomes.
 
@@ -36,58 +32,6 @@ At the end of each response, include tactical guidance metadata in this format:
 <!--GUIDANCE:{"nextMove":"Brief next recommended action","riskLevel":"LOW|MEDIUM|HIGH","riskExplanation":"Brief risk explanation","techniques":["Array","of","active","techniques"],"progressScore":0-100}-->
 
 Focus on practical, implementable advice that drives real results while maintaining ethical standards.`;
-
-// Get embedding for strategic coaching
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-// Search knowledge base for strategic coaching
-async function searchStrategicKnowledge(userMessage: string, goal: string): Promise<string> {
-  try {
-    const searchQuery = `${userMessage} ${goal} strategic coaching tactical advice influence`;
-    const embedding = await getEmbedding(searchQuery);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.32,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data.map((chunk: any) => 
-      `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    return `\n\nRELEVANT STRATEGIC TECHNIQUES FROM KNOWLEDGE BASE:
-${context}
-
-Draw from these specific concepts, frameworks, and techniques in your tactical guidance.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
 
 export const maxDuration = 60;
 
@@ -132,15 +76,16 @@ export async function POST(req: NextRequest) {
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === 'user');
     
     // Search knowledge base for relevant techniques
-    const knowledgeContext = lastUserMessage 
-      ? await searchStrategicKnowledge(lastUserMessage.content, goalTitle)
+    const searchQuery = lastUserMessage
+      ? `${lastUserMessage.content} ${goalTitle} strategic coaching tactical advice influence`
       : '';
+    const knowledgeContext = searchQuery ? await searchKnowledge(searchQuery, { threshold: 0.32 }) : '';
 
     // Add goal context to the system prompt
-    const contextualPrompt = `${STRATEGIC_CHAT_SYSTEM_PROMPT}
+    const contextualPrompt = `${HANDLER_VOICE}\n${STRATEGIC_CHAT_SYSTEM_PROMPT}
 
 CURRENT SESSION GOAL: "${goalTitle}" (${goal})
-Tailor all advice and tactics specifically to support this objective. Consider the unique challenges and opportunities associated with this goal type.${knowledgeContext}`;
+Tailor all advice and tactics specifically to support this objective. Consider the unique challenges and opportunities associated with this goal type.${knowledgeContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT STRATEGIC TECHNIQUES FROM KNOWLEDGE BASE:\n${knowledgeContext}` : ''}`;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

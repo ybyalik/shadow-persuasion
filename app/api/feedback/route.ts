@@ -1,68 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const SYSTEM_PROMPT = `${HANDLER_VOICE}
+You are an expert persuasion coach analyzing feedback on advice that was given to a user. Based on whether the advice worked, partially worked, or failed, provide actionable analysis.
 
-const SYSTEM_PROMPT = `You are an expert persuasion coach analyzing feedback on advice that was given to a user. Based on whether the advice worked, partially worked, or failed, provide actionable analysis.
+ROOT-CAUSE ANALYSIS FRAMEWORK:
+Before providing feedback, classify the failure mode:
+1. WRONG_TECHNIQUE: The technique chosen was not appropriate for this situation type. Identify what technique would have been better and why.
+2. POOR_EXECUTION: The right technique was chosen but executed poorly (bad timing, too obvious, wrong tone, missing setup steps). Identify the specific execution error.
+3. CONTEXT_MISMATCH: The technique was sound but the context changed (audience shifted, new information emerged, emotional state was misjudged).
+4. RESISTANCE_UNDERESTIMATED: The target's resistance or counter-technique was not anticipated.
 
 Respond in this exact JSON format:
 {
-  "analysis": "Brief overall analysis of what happened",
+  "failureMode": "WRONG_TECHNIQUE | POOR_EXECUTION | CONTEXT_MISMATCH | RESISTANCE_UNDERESTIMATED | N/A (if it worked)",
+  "analysis": "Brief overall analysis of what happened, citing knowledge base sources",
   "whatWorked": "What aspects of the approach were effective (even if overall it failed)",
-  "whatToImprove": "Specific things to change or improve next time",
-  "adjustedApproach": "A concrete revised approach for next time"
+  "whatToImprove": "Specific things to change or improve next time, grounded in book knowledge",
+  "adjustedApproach": "A concrete revised approach for next time with specific technique names and scripts",
+  "recommendedReading": "Which book/technique from the knowledge base to study for this situation type"
 }
 
-Be specific and tactical. Reference psychological principles where relevant.`;
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.35,
-      match_count: 3,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    return data
-      .map((chunk: any) =>
-        `[${chunk.book_title} by ${chunk.author}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
+Be specific and tactical. Reference psychological principles and cite sources from the knowledge base.`;
 
 export const maxDuration = 60;
 
@@ -75,15 +35,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Search for relevant knowledge to improve the advice
-    const knowledgeContext = await searchKnowledge(
-      `${originalAdvice} ${outcome === 'failed' ? 'what went wrong' : 'improvement'}`
+    const ragContext = await searchKnowledge(
+      `${originalAdvice} ${outcome === 'failed' ? 'what went wrong' : 'improvement'}`,
+      { threshold: 0.35, count: 3 }
     );
 
     const userMessage = `FEATURE TYPE: ${type || 'general'}
 ORIGINAL ADVICE GIVEN: "${originalAdvice}"
 OUTCOME: ${outcome}
 ${notes ? `USER NOTES: "${notes}"` : ''}
-${knowledgeContext ? `\nRELEVANT KNOWLEDGE:\n${knowledgeContext}` : ''}
+${ragContext ? `\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE:\n${ragContext}` : ''}
 
 Analyze this outcome and provide specific improvement suggestions.`;
 

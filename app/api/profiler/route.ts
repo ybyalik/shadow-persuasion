@@ -1,61 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 export const maxDuration = 60;
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.32,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data
-      .map(
-        (chunk: any) =>
-          `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${context}`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,7 +36,8 @@ async function handleAnalyzeInteraction(body: any) {
   }
 
   const searchQuery = `${interaction.summary} psychological analysis personality assessment communication style ${profile.relationshipType}`;
-  const knowledgeContext = await searchKnowledge(searchQuery);
+  const ragContext = await searchKnowledge(searchQuery, { threshold: 0.32 });
+  const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
 
   const systemPrompt = `You are an expert psychologist and behavioral analyst. Given a person's profile and a new interaction, provide an updated psychological assessment.
 
@@ -204,7 +152,8 @@ async function handleGeneratePlaybook(body: any) {
   }
 
   const searchQuery = `strategy playbook influence tactics ${profile.relationshipType} relationship management persuasion approach`;
-  const knowledgeContext = await searchKnowledge(searchQuery);
+  const ragContext2 = await searchKnowledge(searchQuery, { threshold: 0.32 });
+  const knowledgeContext = ragContext2 ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext2}` : '';
 
   const systemPrompt = `You are a strategic relationship advisor and behavioral expert. Generate a comprehensive, personalized strategy playbook for dealing with a specific person based on their psychological profile and interaction history.
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, UserSearch, Brain, Calendar, MessageSquare, X, AlertTriangle, Target } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const RELATIONSHIP_TYPES = ['Boss', 'Client', 'Partner', 'Ex', 'Friend', 'Rival', 'Family', 'Other'] as const;
 type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
@@ -73,8 +74,6 @@ interface ProfilerData {
   profiles: Profile[];
 }
 
-const STORAGE_KEY = 'shadow-profiler-data';
-
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -109,49 +108,52 @@ function getRiskColor(risk: string) {
 
 export default function PeoplePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const getHeaders = useCallback(async () => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
+
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const loadProfiles = async () => {
       try {
-        const data: ProfilerData = JSON.parse(stored);
-        setProfiles(data.profiles || []);
+        const headers = await getHeaders();
+        const res = await fetch('/api/profiler/people', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setProfiles(data.profiles || []);
+        }
       } catch (e) {
         console.error('Failed to load profiler data:', e);
       }
-    }
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      const data: ProfilerData = { profiles };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
-  }, [profiles, isLoading]);
-
-  const handleAddProfile = (name: string, relationshipType: RelationshipType) => {
-    const newProfile: Profile = {
-      id: Date.now().toString(),
-      name,
-      relationshipType,
-      traits: {},
-      interactions: [],
-      confidenceScore: 0,
-      keyTraitTags: [],
-      riskLevel: 'LOW',
-      tags: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      setIsLoading(false);
     };
-    setProfiles((prev) => [newProfile, ...prev]);
-    setIsAddModalOpen(false);
-    router.push(`/app/people/${newProfile.id}`);
+    loadProfiles();
+  }, [getHeaders]);
+
+  const handleAddProfile = async (name: string, relationshipType: RelationshipType) => {
+    try {
+      const headers = await getHeaders();
+      const res = await fetch('/api/profiler/people', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ name, relationshipType }),
+      });
+      if (res.ok) {
+        const newProfile = await res.json();
+        setProfiles((prev) => [newProfile, ...prev]);
+        setIsAddModalOpen(false);
+        router.push(`/app/people/${newProfile.id}`);
+      }
+    } catch (e) {
+      console.error('Failed to create profile:', e);
+    }
   };
 
   const filteredProfiles = profiles.filter((p) => {

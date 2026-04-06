@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 const PRACTICE_SYSTEM_PROMPT = `You are a psychology instructor creating interactive practice scenarios for influence techniques. Generate realistic practice scenarios that test understanding of specific psychological principles.
 
@@ -49,51 +45,6 @@ Make scenarios:
 - Test both positive and defensive applications
 - Reference specific psychology principles from your knowledge base`;
 
-// Search knowledge base for technique-specific information
-async function searchTechniqueKnowledge(techniqueName: string): Promise<string> {
-  try {
-    const searchTerms = `${techniqueName} technique examples application psychology practice scenarios`;
-    
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: searchTerms,
-      }),
-    });
-    
-    if (!res.ok) return '';
-    const data = await res.json();
-    const embedding = data.data?.[0]?.embedding || [];
-    
-    if (embedding.length === 0) return '';
-
-    const { data: chunks, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 3,
-    });
-
-    if (error || !chunks || chunks.length === 0) return '';
-
-    const context = chunks.map((chunk: any) => 
-      `[${chunk.book_title} by ${chunk.author}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    return `\n\nRELEVANT KNOWLEDGE BASE CONTENT:
-${context}
-
-Use concepts and examples from these sources to create realistic practice scenarios.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
-
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
@@ -105,7 +56,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Search knowledge base for relevant content
-    const knowledgeContext = await searchTechniqueKnowledge(techniqueName);
+    const ragContext = await searchKnowledge(
+      `${techniqueName} technique examples application psychology practice scenarios`,
+      { count: 3 }
+    );
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTENT:\n${ragContext}` : '';
     const enhancedPrompt = PRACTICE_SYSTEM_PROMPT + knowledgeContext;
 
     console.log('[TECHNIQUE-PRACTICE API] Generating scenarios for:', techniqueName);

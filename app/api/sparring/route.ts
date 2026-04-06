@@ -1,59 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data
-      .map(
-        (chunk: any) =>
-          `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${context}\n\nUse these techniques to craft realistic challenges.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
 const GENERATE_SYSTEM_PROMPT = `You are a sparring coach for influence and persuasion training. Generate realistic conversational challenges that test the user's ability to respond under pressure.
 
@@ -106,9 +53,10 @@ export async function POST(req: NextRequest) {
         'Emotional Provocations': 'Someone is trying to provoke an emotional reaction. The user must stay composed and respond strategically.',
       };
 
-      const knowledgeContext = await searchKnowledge(
+      const ragContext = await searchKnowledge(
         `${sparringType} persuasion techniques tactical response`
       );
+      const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${ragContext}` : '';
 
       const timeLimit = difficulty === 'Advanced' ? 8 : 15;
 
@@ -154,6 +102,12 @@ export async function POST(req: NextRequest) {
     if (action === 'grade') {
       const { challenge, userResponse, idealTechniques, timeUsed } = body;
 
+      // RAG search for grading context
+      const gradeRagContext = await searchKnowledge(
+        `${challenge} ${idealTechniques?.join(' ') || ''} technique evaluation`
+      );
+      const gradeKnowledge = gradeRagContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUE KNOWLEDGE FOR GRADING:\n${gradeRagContext}` : '';
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -165,7 +119,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: 'openai/gpt-4o',
           messages: [
-            { role: 'system', content: GRADE_SYSTEM_PROMPT },
+            { role: 'system', content: GRADE_SYSTEM_PROMPT + gradeKnowledge },
             {
               role: 'user',
               content: `CHALLENGE: "${challenge}"\n\nUSER RESPONSE: "${userResponse || '[TIME EXPIRED - NO RESPONSE]'}"\n\nIDEAL TECHNIQUES: ${idealTechniques?.join(', ') || 'any'}\n\nTIME USED: ${timeUsed !== undefined ? `${timeUsed}s` : 'unknown'}`,

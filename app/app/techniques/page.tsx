@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Clock, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { techniques } from '@/lib/techniques';
 import { TechniqueCard } from '@/components/app/TechniqueCard';
-import { getDueCards, getAllCards, getNextReviewDate, type SRCard } from '@/lib/spaced-repetition';
+import { type SRCard } from '@/lib/spaced-repetition';
+import { useAuth } from '@/lib/auth-context';
 
 // ── Library constants ──
 const categories = ['All', 'Influence', 'Negotiation', 'Rapport', 'Framing', 'Defense'];
@@ -43,22 +44,6 @@ const PRESET_GOALS = [
   'Handle Conflict',
 ];
 
-const STORAGE_KEY = 'shadow-stacks-data';
-
-function loadSavedStacks(): SavedStack[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSavedStacks(stacks: SavedStack[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stacks));
-}
-
 function techniqueSlug(name: string): string {
   return name
     .toLowerCase()
@@ -71,7 +56,13 @@ function techniqueSlug(name: string): string {
 // ══════════════════════════════════════════════════════════════════════
 
 export default function TechniquesPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'library' | 'stacking'>('library');
+
+  const getHeaders = useCallback(async () => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -99,7 +90,7 @@ export default function TechniquesPage() {
         </button>
       </div>
 
-      {activeTab === 'library' ? <LibraryTab /> : <StackingTab />}
+      {activeTab === 'library' ? <LibraryTab getHeaders={getHeaders} /> : <StackingTab getHeaders={getHeaders} />}
     </div>
   );
 }
@@ -108,7 +99,7 @@ export default function TechniquesPage() {
 // Library Tab
 // ══════════════════════════════════════════════════════════════════════
 
-function LibraryTab() {
+function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, string>> }) {
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [dueCards, setDueCards] = useState<SRCard[]>([]);
@@ -117,18 +108,44 @@ function LibraryTab() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const due = getDueCards();
-    setDueCards(due);
-    setNextReview(getNextReviewDate());
-
-    const allCards = getAllCards();
-    const statusMap: Record<string, SRCard['status']> = {};
-    for (const card of allCards) {
-      statusMap[card.techniqueId] = card.status;
-    }
-    setCardStatusMap(statusMap);
-  }, []);
+    const loadCards = async () => {
+      setMounted(true);
+      try {
+        const headers = await getHeaders();
+        const [dueRes, allRes] = await Promise.all([
+          fetch('/api/spaced-repetition?due=true', { headers }),
+          fetch('/api/spaced-repetition', { headers }),
+        ]);
+        if (dueRes.ok) {
+          const dueData = await dueRes.json();
+          setDueCards(dueData.cards || []);
+        }
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          const allCards: SRCard[] = allData.cards || [];
+          const statusMap: Record<string, SRCard['status']> = {};
+          for (const card of allCards) {
+            statusMap[card.techniqueId] = card.status;
+          }
+          setCardStatusMap(statusMap);
+          // Find next review date
+          const today = new Date().toISOString().split('T')[0];
+          let earliest: string | null = null;
+          for (const card of allCards) {
+            if (card.nextReviewDate > today) {
+              if (!earliest || card.nextReviewDate < earliest) {
+                earliest = card.nextReviewDate;
+              }
+            }
+          }
+          setNextReview(earliest);
+        }
+      } catch (e) {
+        console.error('Failed to load spaced repetition data:', e);
+      }
+    };
+    loadCards();
+  }, [getHeaders]);
 
   const filteredTechniques = techniques
     .filter(t => filter === 'All' || t.category === filter)
@@ -250,7 +267,7 @@ function LibraryTab() {
 // Stacking Tab
 // ══════════════════════════════════════════════════════════════════════
 
-function StackingTab() {
+function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, string>> }) {
   const [goal, setGoal] = useState('');
   const [customGoal, setCustomGoal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -266,8 +283,20 @@ function StackingTab() {
   const [currentGoal, setCurrentGoal] = useState('');
 
   useEffect(() => {
-    setSavedStacks(loadSavedStacks());
-  }, []);
+    const loadSaved = async () => {
+      try {
+        const headers = await getHeaders();
+        const res = await fetch('/api/stacking/saved', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setSavedStacks(data.stacks || []);
+        }
+      } catch (e) {
+        console.error('Failed to load saved stacks:', e);
+      }
+    };
+    loadSaved();
+  }, [getHeaders]);
 
   const generateStack = async () => {
     const finalGoal = goal === 'custom' ? customGoal.trim() : goal;
@@ -299,7 +328,7 @@ function StackingTab() {
     }
   };
 
-  const handleSave = (stack: Stack) => {
+  const handleSave = async (stack: Stack) => {
     const label = saveLabel.trim() || stack.name;
     const newSaved: SavedStack = {
       id: Date.now().toString(),
@@ -308,17 +337,32 @@ function StackingTab() {
       stack,
       savedAt: new Date().toISOString(),
     };
-    const updated = [newSaved, ...savedStacks];
-    setSavedStacks(updated);
-    saveSavedStacks(updated);
+    setSavedStacks((prev) => [newSaved, ...prev]);
     setShowSaveInput(false);
     setSaveLabel('');
+    try {
+      const headers = await getHeaders();
+      await fetch('/api/stacking/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(newSaved),
+      });
+    } catch (e) {
+      console.error('Failed to save stack:', e);
+    }
   };
 
-  const handleDeleteSaved = (id: string) => {
-    const updated = savedStacks.filter((s) => s.id !== id);
-    setSavedStacks(updated);
-    saveSavedStacks(updated);
+  const handleDeleteSaved = async (id: string) => {
+    setSavedStacks((prev) => prev.filter((s) => s.id !== id));
+    try {
+      const headers = await getHeaders();
+      await fetch(`/api/stacking/saved?id=${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+    } catch (e) {
+      console.error('Failed to delete stack:', e);
+    }
   };
 
   const loadSavedStack = (saved: SavedStack) => {

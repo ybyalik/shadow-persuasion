@@ -1,59 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(goal: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(goal);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data
-      .map(
-        (chunk: any) =>
-          `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${context}\n\nGround your technique recommendations in this knowledge. Reference specific techniques by name.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 const SYSTEM_PROMPT = `You are a tactical influence strategist. Given a goal, create technique stacking sequences that combine multiple persuasion/influence techniques in optimal order for maximum impact.
 
@@ -104,7 +51,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const knowledgeContext = await searchKnowledge(goal);
+    const ragContext = await searchKnowledge(goal);
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${ragContext}` : '';
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

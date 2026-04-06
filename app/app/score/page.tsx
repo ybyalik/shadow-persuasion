@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Trophy, TrendingUp, Flame, BookOpen, FileText, Swords, Target, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 /* ────────────────────────────────────────────
    Types
@@ -13,64 +14,11 @@ type ActivityEntry = {
   ts: number; // epoch ms
 };
 
-type MissionsData = {
-  completions?: { date: string; missionId: string; xpEarned?: number; techniqueId?: string }[];
-  currentStreak?: number;
-  totalXP?: number;
-};
-
-type JournalEntry = {
-  id: string;
-  createdAt: string;
-  techniques?: string[];
-  interactions?: { id: string }[];
-};
-
-type SparringSession = {
-  id: string;
-  completedAt: string;
-  score: number; // 0-100
-  techniqueId?: string;
-};
-
-type ProfilerEntry = {
-  id: string;
-  createdAt: string;
-};
-
 type SubScoreKey = 'rapport' | 'negotiation' | 'persuasion' | 'conflict' | 'defense' | 'reading';
 
 /* ────────────────────────────────────────────
    Technique → Category mapping
    ──────────────────────────────────────────── */
-
-const TECHNIQUE_CATEGORY_MAP: Record<string, SubScoreKey> = {
-  // Rapport
-  mirroring: 'rapport',
-  labeling: 'rapport',
-  'tactical-empathy': 'rapport',
-  'void-pull': 'rapport',
-  'strategic-vulnerability': 'rapport',
-  // Negotiation
-  anchoring: 'negotiation',
-  'door-in-the-face': 'negotiation',
-  'contrast-principle': 'negotiation',
-  'the-takeaway': 'negotiation',
-  // Persuasion (Influence)
-  reciprocity: 'persuasion',
-  'scarcity-frame': 'persuasion',
-  'social-proof': 'persuasion',
-  'commitment-consistency': 'persuasion',
-  'emotional-hijacking': 'persuasion',
-  'cognitive-overload': 'persuasion',
-  // Conflict (Framing)
-  'frame-control': 'conflict',
-  'pattern-interruption': 'conflict',
-  reframing: 'conflict',
-  'authority-positioning': 'conflict',
-  // Defense
-  'accusation-audit': 'defense',
-};
 
 const SUB_SCORE_META: { key: SubScoreKey; label: string; icon: typeof Trophy }[] = [
   { key: 'rapport', label: 'Rapport', icon: Trophy },
@@ -112,15 +60,7 @@ function clamp(v: number, min: number, max: number) {
   return Math.min(max, Math.max(min, v));
 }
 
-function safeParse<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
+// Data is now fetched from /api/user/progress
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -214,6 +154,7 @@ function SubScoreBar({ label, value, icon: Icon }: { label: string; value: numbe
    ──────────────────────────────────────────── */
 
 export default function ScorePage() {
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [totalXP, setTotalXP] = useState(0);
   const [score, setScore] = useState(0);
@@ -243,167 +184,39 @@ export default function ScorePage() {
     recommendation: 'Complete your first activity to get personalized recommendations.',
   });
 
-  const computeScores = useCallback(() => {
-    const missions: MissionsData = safeParse('shadow-missions-data', { completions: [], currentStreak: 0, totalXP: 0 });
-    const journalRaw = safeParse<JournalEntry[] | { reports?: JournalEntry[] }>('shadow-journal-data', []);
-    const journal: JournalEntry[] = Array.isArray(journalRaw) ? journalRaw : (journalRaw.reports ?? []);
-    const sparring: SparringSession[] = safeParse('shadow-sparring-data', []);
-    const profilerData = safeParse<{ profiles?: ProfilerEntry[] } | ProfilerEntry[]>('shadow-profiler-data', { profiles: [] });
-    const profiles: ProfilerEntry[] = Array.isArray(profilerData) ? profilerData : (profilerData.profiles ?? []);
+  const getHeaders = useCallback(async () => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
 
-    const completedMissions = missions.completions ?? [];
-    const streak = missions.currentStreak ?? 0;
+  const loadProgress = useCallback(async () => {
+    try {
+      const headers = await getHeaders();
+      const res = await fetch('/api/user/progress', { headers });
+      if (!res.ok) return;
+      const data = await res.json();
 
-    // ── Calculate total XP ──
-    let xp = 0;
-    const feed: ActivityEntry[] = [];
-    const subXP: Record<SubScoreKey, number> = {
-      rapport: 0,
-      negotiation: 0,
-      persuasion: 0,
-      conflict: 0,
-      defense: 0,
-      reading: 0,
-    };
-
-    // Missions: +5 XP each
-    for (const m of completedMissions) {
-      const pts = m.xpEarned ?? 5;
-      xp += pts;
-      feed.push({ label: 'Completed Daily Mission', xp: pts, ts: new Date(m.date).getTime() });
-      if (m.techniqueId && TECHNIQUE_CATEGORY_MAP[m.techniqueId]) {
-        subXP[TECHNIQUE_CATEGORY_MAP[m.techniqueId]] += pts;
-      }
+      setTotalXP(data.totalXP ?? 0);
+      setScore(data.score ?? 0);
+      setSubScores(data.subScores ?? { rapport: 0, negotiation: 0, persuasion: 0, conflict: 0, defense: 0, reading: 0 });
+      setActivityFeed(data.activityFeed ?? []);
+      setStats(data.stats ?? { totalXP: 0, streak: 0, techniquesMastered: 0, fieldReports: 0, sparringSessions: 0, missionsCompleted: 0 });
+      setMonthlyReport(data.monthlyReport ?? {
+        thisMonthXP: 0,
+        lastMonthXP: 0,
+        strongestTechnique: 'None yet',
+        weakestArea: 'None yet',
+        recommendation: 'Complete your first activity to get personalized recommendations.',
+      });
+    } catch (e) {
+      console.error('Failed to load progress:', e);
     }
-
-    // Journal / Field reports: +10 XP each
-    for (const entry of journal) {
-      const pts = 10;
-      xp += pts;
-      feed.push({ label: 'Field Report logged', xp: pts, ts: new Date(entry.createdAt).getTime() });
-      // Map technique tags to sub-scores
-      if (entry.techniques) {
-        for (const t of entry.techniques) {
-          const cat = TECHNIQUE_CATEGORY_MAP[t];
-          if (cat) subXP[cat] += 3;
-        }
-      }
-      // Interactions logged: +3 XP each
-      if (entry.interactions) {
-        for (const _int of entry.interactions) {
-          xp += 3;
-          feed.push({ label: 'Interaction logged', xp: 3, ts: new Date(entry.createdAt).getTime() });
-        }
-      }
-    }
-
-    // Sparring: score/10 XP each
-    for (const s of sparring) {
-      const pts = Math.round(s.score / 10);
-      xp += pts;
-      feed.push({ label: `Sparring session (${s.score}/100)`, xp: pts, ts: new Date(s.completedAt).getTime() });
-      if (s.techniqueId && TECHNIQUE_CATEGORY_MAP[s.techniqueId]) {
-        subXP[TECHNIQUE_CATEGORY_MAP[s.techniqueId]] += pts;
-      }
-    }
-
-    // Profiles: +5 XP each
-    for (const p of profiles) {
-      const pts = 5;
-      xp += pts;
-      feed.push({ label: 'Profile created', xp: pts, ts: new Date(p.createdAt).getTime() });
-      subXP.reading += pts;
-    }
-
-    // Streak bonus
-    if (streak > 0) {
-      const bonus = streak * 2;
-      xp += bonus;
-      feed.push({ label: `Streak bonus (${streak} days)`, xp: bonus, ts: Date.now() });
-    }
-
-    // Sort feed by time descending, take last 10
-    feed.sort((a, b) => b.ts - a.ts);
-    const recentFeed = feed.slice(0, 10);
-
-    // Score: XP maps to 0-100 (1000 XP = 100)
-    const finalScore = clamp(Math.round((xp / 1000) * 100), 0, 100);
-
-    // Sub-scores: normalize each to 0-100 (200 sub-XP = 100 in that category)
-    const normalizedSub: Record<SubScoreKey, number> = { rapport: 0, negotiation: 0, persuasion: 0, conflict: 0, defense: 0, reading: 0 };
-    for (const key of Object.keys(subXP) as SubScoreKey[]) {
-      normalizedSub[key] = clamp(Math.round((subXP[key] / 200) * 100), 0, 100);
-    }
-
-    // Unique techniques used
-    const allTechniques = new Set<string>();
-    for (const m of completedMissions) {
-      if (m.techniqueId) allTechniques.add(m.techniqueId);
-    }
-    for (const j of journal) {
-      if (j.techniques) j.techniques.forEach((t) => allTechniques.add(t));
-    }
-    for (const s of sparring) {
-      if (s.techniqueId) allTechniques.add(s.techniqueId);
-    }
-
-    // Monthly report
-    const now = new Date();
-    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-
-    let thisMonthXP = 0;
-    let lastMonthXP = 0;
-    for (const f of feed) {
-      if (f.ts >= thisMonthStart) thisMonthXP += f.xp;
-      else if (f.ts >= lastMonthStart) lastMonthXP += f.xp;
-    }
-
-    // Strongest / weakest
-    const subEntries = Object.entries(normalizedSub) as [SubScoreKey, number][];
-    const sorted = [...subEntries].sort((a, b) => b[1] - a[1]);
-    const strongest = sorted[0][1] > 0 ? (SUB_SCORE_META.find((m) => m.key === sorted[0][0])?.label ?? 'None yet') : 'None yet';
-    const weakest = sorted[sorted.length - 1][1] < 100
-      ? (SUB_SCORE_META.find((m) => m.key === sorted[sorted.length - 1][0])?.label ?? 'None yet')
-      : 'None yet';
-
-    const recommendations: Record<SubScoreKey, string> = {
-      rapport: 'Focus on Rapport techniques this month -- try mirroring and labeling exercises.',
-      negotiation: 'Focus on Negotiation techniques this month -- practice anchoring and contrast.',
-      persuasion: 'Focus on Persuasion techniques this month -- study reciprocity and social proof.',
-      conflict: 'Focus on Conflict techniques this month -- work on frame control and reframing.',
-      defense: 'Focus on Defense techniques this month -- practice the accusation audit.',
-      reading: 'Focus on Reading People this month -- create more person profiles.',
-    };
-
-    const weakestKey = sorted[sorted.length - 1][0];
-    const rec = xp > 0 ? recommendations[weakestKey] : 'Complete your first activity to get personalized recommendations.';
-
-    setTotalXP(xp);
-    setScore(finalScore);
-    setSubScores(normalizedSub);
-    setActivityFeed(recentFeed);
-    setStats({
-      totalXP: xp,
-      streak,
-      techniquesMastered: allTechniques.size,
-      fieldReports: journal.length,
-      sparringSessions: sparring.length,
-      missionsCompleted: completedMissions.length,
-    });
-    setMonthlyReport({
-      thisMonthXP,
-      lastMonthXP,
-      strongestTechnique: strongest,
-      weakestArea: weakest,
-      recommendation: rec,
-    });
-  }, []);
+  }, [getHeaders]);
 
   useEffect(() => {
     setMounted(true);
-    computeScores();
-  }, [computeScores]);
+    loadProgress();
+  }, [loadProgress]);
 
   if (!mounted) {
     return (

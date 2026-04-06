@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { ChatInput } from '@/components/app/ChatInput';
 import { ChatMessage } from '@/components/app/ChatMessage';
-import { Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft } from 'lucide-react';
+import { Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Users } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 interface Goal {
     id: string;
@@ -26,17 +27,58 @@ interface StrategicChatProps {
     onBack: () => void;
 }
 
+interface PersonProfile {
+    id: string;
+    name: string;
+    relationshipType?: string;
+    analysis_data?: any;
+    keyTraitTags?: string[];
+    communicationStyle?: string;
+    notes?: string;
+}
+
 export function StrategicChat({ goal, onBack }: StrategicChatProps) {
+    const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [tacticalGuidance, setTacticalGuidance] = useState<any>(null);
     const [progressScore, setProgressScore] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // People integration state
+    const [peopleProfiles, setPeopleProfiles] = useState<PersonProfile[]>([]);
+    const [selectedPerson, setSelectedPerson] = useState<PersonProfile | null>(null);
+    const [loadingPeople, setLoadingPeople] = useState(false);
+
+    const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
+        const token = await user?.getIdToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    }, [user]);
+
+    // Fetch people profiles on mount
+    useEffect(() => {
+        const fetchPeople = async () => {
+            setLoadingPeople(true);
+            try {
+                const headers = await getHeaders();
+                const res = await fetch('/api/profiler/people', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    setPeopleProfiles(data.profiles || []);
+                }
+            } catch (e) {
+                console.error('Failed to load people profiles:', e);
+            } finally {
+                setLoadingPeople(false);
+            }
+        };
+        fetchPeople();
+    }, [getHeaders]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
-    
+
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -52,18 +94,31 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
     }, [goal]);
 
     const handleSend = async (input: string) => {
-        const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
-        setMessages(prev => [...prev, userMessage]);
+        // If a person is selected, prepend their profile context to the message
+        let enrichedInput = input;
+        if (selectedPerson) {
+            const traits = selectedPerson.keyTraitTags?.join(', ') || 'unknown';
+            const commStyle = selectedPerson.communicationStyle || 'not profiled yet';
+            const analysisInfo = selectedPerson.analysis_data
+                ? `Threat score: ${selectedPerson.analysis_data.threat_score || 'N/A'}, Communication style: ${JSON.stringify(selectedPerson.analysis_data.communication_style || {})}`
+                : '';
+            enrichedInput = `[Context: I'm dealing with ${selectedPerson.name}. Their profile: traits=${traits}, communication style=${commStyle}. ${analysisInfo} ${selectedPerson.notes ? 'Notes: ' + selectedPerson.notes : ''}]\n\n${input}`;
+        }
+
+        const userMessage: Message = { id: Date.now().toString(), role: 'user', content: enrichedInput };
+        // Show the original (non-enriched) input in the UI
+        const displayMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+        setMessages(prev => [...prev, displayMessage]);
         setIsLoading(true);
 
         try {
             const response = await fetch('/api/strategic-chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     messages: [...messages, userMessage],
                     goal: goal.id,
-                    goalTitle: goal.title 
+                    goalTitle: goal.title
                 }),
             });
 
@@ -275,6 +330,57 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                             />
                         </div>
                     </div>
+                </div>
+
+                {/* People Profiles */}
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-[#D4A017]" />
+                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Person Context</h3>
+                    </div>
+
+                    <select
+                        value={selectedPerson?.id || ''}
+                        onChange={(e) => {
+                            const person = peopleProfiles.find(p => p.id === e.target.value) || null;
+                            setSelectedPerson(person);
+                        }}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
+                    >
+                        <option value="">No person selected</option>
+                        {peopleProfiles.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+
+                    {loadingPeople && (
+                        <p className="text-xs text-gray-500">Loading profiles...</p>
+                    )}
+
+                    {selectedPerson && (
+                        <div className="bg-gray-50 dark:bg-[#0A0A0A] rounded p-2 space-y-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <span className="text-[#D4A017]">{selectedPerson.name}</span>
+                                {selectedPerson.relationshipType && ` - ${selectedPerson.relationshipType}`}
+                            </p>
+                            {selectedPerson.keyTraitTags && selectedPerson.keyTraitTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                    {selectedPerson.keyTraitTags.map((tag, i) => (
+                                        <span key={i} className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-1.5 py-0.5 rounded">{tag}</span>
+                                    ))}
+                                </div>
+                            )}
+                            <p className="text-xs text-gray-500 italic">
+                                Their profile data will be included as context in your next message.
+                            </p>
+                        </div>
+                    )}
+
+                    {!loadingPeople && peopleProfiles.length === 0 && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            No profiles yet. Add people in the Profiler section.
+                        </p>
+                    )}
                 </div>
 
                 {/* Quick Tips */}

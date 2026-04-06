@@ -4,8 +4,9 @@ import { scenarios } from '@/lib/scenarios';
 import { techniques } from '@/lib/techniques';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Send, ChevronDown, ChevronUp, Award, Target, AlertTriangle, Lightbulb, TrendingUp, StopCircle } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 type CoachingData = {
   feedback: string;
@@ -229,6 +230,7 @@ export default function TrainingScenarioPage() {
   const params = useParams();
   const id = params.id as string;
   const scenario = scenarios.find(s => s.id === id);
+  const { user } = useAuth();
 
   const [mode, setMode] = useState<'briefing' | 'practice'>('briefing');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -236,7 +238,42 @@ export default function TrainingScenarioPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [debrief, setDebrief] = useState<DebriefData | null>(null);
   const [isDebriefing, setIsDebriefing] = useState(false);
+  const [scoreSaved, setScoreSaved] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
+
+  // Save debrief score to practice_results when debrief is received
+  useEffect(() => {
+    if (!debrief || scoreSaved) return;
+    const saveScore = async () => {
+      try {
+        const headers = await getHeaders();
+        await fetch('/api/practice-results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({
+            type: 'scenario',
+            reference_id: id,
+            score: debrief.score,
+            techniques_used: debrief.techniquesUsed.map(t => t.name),
+            feedback: {
+              suggestions: debrief.suggestions,
+              missedOpportunities: debrief.missedOpportunities,
+              turningPoints: debrief.turningPoints,
+            },
+          }),
+        });
+        setScoreSaved(true);
+      } catch (e) {
+        console.error('Failed to save practice result:', e);
+      }
+    };
+    saveScore();
+  }, [debrief, scoreSaved, id, getHeaders]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -426,7 +463,7 @@ export default function TrainingScenarioPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); }}
+            onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); setScoreSaved(false); }}
             className="px-4 py-2 text-xs font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
           >
             Restart

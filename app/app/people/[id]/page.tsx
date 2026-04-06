@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Tag,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,8 +108,6 @@ interface Profile {
   updatedAt: string;
 }
 
-const STORAGE_KEY = 'shadow-profiler-data';
-
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -146,6 +145,7 @@ function getRiskColor(risk: string) {
 export default function ProfileDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const profileId = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -155,54 +155,60 @@ export default function ProfileDetailPage() {
   const [isGeneratingPlaybook, setIsGeneratingPlaybook] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const getHeaders = useCallback(async () => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
+
   // Load profile
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const loadProfile = async () => {
       try {
-        const data = JSON.parse(stored);
-        const found = (data.profiles || []).find((p: Profile) => p.id === profileId);
-        if (found) {
-          setProfile(found);
+        const headers = await getHeaders();
+        const res = await fetch('/api/profiler/people', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          const found = (data.profiles || []).find((p: Profile) => p.id === profileId);
+          if (found) {
+            setProfile(found);
+          }
         }
       } catch (e) {
         console.error('Failed to load profile:', e);
       }
-    }
-    setIsLoading(false);
-  }, [profileId]);
+      setIsLoading(false);
+    };
+    loadProfile();
+  }, [profileId, getHeaders]);
 
   // Save profile changes
   const saveProfile = useCallback(
-    (updated: Profile) => {
+    async (updated: Profile) => {
       setProfile(updated);
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          data.profiles = (data.profiles || []).map((p: Profile) =>
-            p.id === profileId ? updated : p
-          );
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (e) {
-          console.error('Failed to save profile:', e);
-        }
+      try {
+        const headers = await getHeaders();
+        await fetch('/api/profiler/people', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify(updated),
+        });
+      } catch (e) {
+        console.error('Failed to save profile:', e);
       }
     },
-    [profileId]
+    [getHeaders]
   );
 
-  const handleDeleteProfile = () => {
+  const handleDeleteProfile = async () => {
     if (!confirm('Delete this profile? This cannot be undone.')) return;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        data.profiles = (data.profiles || []).filter((p: Profile) => p.id !== profileId);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) {
-        console.error('Failed to delete profile:', e);
-      }
+    try {
+      const headers = await getHeaders();
+      await fetch(`/api/profiler/people?id=${profileId}`, {
+        method: 'DELETE',
+        headers,
+      });
+    } catch (e) {
+      console.error('Failed to delete profile:', e);
     }
     router.push('/app/people');
   };
@@ -228,9 +234,10 @@ export default function ProfileDetailPage() {
     // Then run AI analysis
     setIsAnalyzing(true);
     try {
+      const authHeaders = await getHeaders();
       const res = await fetch('/api/profiler', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'analyze-interaction',
           interaction: newInteraction,
@@ -269,9 +276,10 @@ export default function ProfileDetailPage() {
     if (!profile) return;
     setIsGeneratingPlaybook(true);
     try {
+      const authHeaders = await getHeaders();
       const res = await fetch('/api/profiler', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'generate-playbook',
           profile,

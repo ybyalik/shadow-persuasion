@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { ArrowLeft, Play, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Play, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
+import { scenarios } from '@/lib/scenarios';
+import { techniques as allTechniques } from '@/lib/techniques';
 
 interface Technique {
   id: string;
@@ -24,6 +27,77 @@ interface PracticeScenario {
     explanation: string;
     techniqueApplication: string;
   }[];
+}
+
+function PracticeAndRelated({ technique }: { technique: Technique }) {
+  // Find scenarios that use this technique
+  const relevantScenarios = useMemo(
+    () => scenarios.filter(s => s.techniques.includes(technique.name)),
+    [technique.name]
+  );
+
+  // Find related techniques in the same category
+  const relatedTechniques = useMemo(
+    () => allTechniques.filter(t => t.id !== technique.id && t.category === technique.category),
+    [technique.id, technique.category]
+  );
+
+  return (
+    <>
+      {/* Practice This Technique */}
+      {relevantScenarios.length > 0 && (
+        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
+          <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4 flex items-center gap-2">
+            <Swords className="h-5 w-5" />
+            Practice This Technique
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            These training scenarios use {technique.name} as a key technique:
+          </p>
+          <div className="space-y-2">
+            {relevantScenarios.map((s) => (
+              <NextLink
+                key={s.id}
+                href={`/app/training/${s.id}`}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] transition-colors group"
+              >
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#D4A017] transition-colors">
+                    {s.title}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-2">{s.category}</span>
+                </div>
+                <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                  {'*'.repeat(s.difficulty)}
+                </span>
+              </NextLink>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related Techniques */}
+      {relatedTechniques.length > 0 && (
+        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
+          <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4 flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Related Techniques
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {relatedTechniques.map((t) => (
+              <NextLink
+                key={t.id}
+                href={`/app/techniques/${t.id}`}
+                className="px-3 py-2 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] transition-colors text-sm text-gray-900 dark:text-white hover:text-[#D4A017]"
+              >
+                {t.name}
+              </NextLink>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function TechniqueDetailClient({ technique }: { technique: Technique }) {
@@ -373,6 +447,9 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
               <p className="text-sm text-gray-600 dark:text-gray-300">{technique.whenNotToUse}</p>
             </div>
           </div>
+
+          {/* Practice This Technique in Training Arena */}
+          <PracticeAndRelated technique={technique} />
 
           {/* Practice CTA */}
           <div className="text-center p-8 bg-gradient-to-r from-[#2A2520] to-[#1A1A1A] rounded-lg border border-[#D4A017]/30">

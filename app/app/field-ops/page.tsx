@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Flame, Clock, Trophy, Target, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronUp, Star, Plus, Search, Calendar, TrendingUp, X,
 } from 'lucide-react';
 import { techniques } from '@/lib/techniques';
+import { useAuth } from '@/lib/auth-context';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -115,8 +116,7 @@ const MISSION_POOL: Mission[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const MISSIONS_KEY = 'shadow-missions-data';
-const JOURNAL_KEY = 'shadow-journal-data';
+// API endpoints replace localStorage keys
 
 function getDefaultMissionsData(): MissionsData {
   return {
@@ -631,7 +631,7 @@ function ReportCard({ report }: { report: JournalReport }) {
 
 // ── Weekly Review Section ────────────────────────────────────────────────────
 
-function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
+function WeeklyReviewSection({ reports, getHeaders }: { reports: JournalReport[]; getHeaders: () => Promise<Record<string, string>> }) {
   const [expanded, setExpanded] = useState(false);
   const [review, setReview] = useState<WeeklyReview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -648,9 +648,10 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
     if (weekReports.length === 0) return;
     setLoading(true);
     try {
+      const authHeaders = await getHeaders();
       const res = await fetch('/api/journal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ action: 'weekly-review', reports: weekReports }),
       });
       const data = await res.json();
@@ -764,6 +765,13 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function FieldOpsPage() {
+  const { user } = useAuth();
+
+  const getHeaders = useCallback(async () => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
+
   // ── Mission state ──
   const [missionsData, setMissionsData] = useState<MissionsData>(getDefaultMissionsData());
   const [showCompletionForm, setShowCompletionForm] = useState(false);
@@ -821,40 +829,36 @@ export default function FieldOpsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Load from localStorage ──
+  // ── Load from API ──
   useEffect(() => {
-    const storedMissions = localStorage.getItem(MISSIONS_KEY);
-    if (storedMissions) {
+    const loadData = async () => {
       try {
-        setMissionsData(JSON.parse(storedMissions));
+        const headers = await getHeaders();
+        const [missionsRes, reportsRes] = await Promise.all([
+          fetch('/api/missions/completions', { headers }),
+          fetch('/api/journal/reports?period=all', { headers }),
+        ]);
+        if (missionsRes.ok) {
+          const data = await missionsRes.json();
+          setMissionsData({
+            completions: data.completions || [],
+            currentStreak: data.currentStreak || 0,
+            longestStreak: data.longestStreak || 0,
+            totalXP: data.totalXP || 0,
+            lastCompletedDate: data.lastCompletedDate || null,
+          });
+        }
+        if (reportsRes.ok) {
+          const data = await reportsRes.json();
+          setReports(data.reports || []);
+        }
       } catch (e) {
-        console.error('Failed to load missions data:', e);
+        console.error('Failed to load field ops data:', e);
       }
-    }
-    const storedReports = localStorage.getItem(JOURNAL_KEY);
-    if (storedReports) {
-      try {
-        setReports(JSON.parse(storedReports));
-      } catch (e) {
-        console.error('Failed to load journal data:', e);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-
-  // ── Save missions to localStorage ──
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem(MISSIONS_KEY, JSON.stringify(missionsData));
-    }
-  }, [missionsData, isLoading]);
-
-  // ── Save reports to localStorage ──
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem(JOURNAL_KEY, JSON.stringify(reports));
-    }
-  }, [reports, isLoading]);
+      setIsLoading(false);
+    };
+    loadData();
+  }, [getHeaders]);
 
   // ── Handle mission completion (+ auto-create field report) ──
   const handleComplete = async (completionData: {
@@ -866,9 +870,10 @@ export default function FieldOpsPage() {
     setShowCompletionForm(false);
 
     try {
+      const authHeaders = await getHeaders();
       const res = await fetch('/api/missions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'grade',
           mission: todayMission,
@@ -906,6 +911,28 @@ export default function FieldOpsPage() {
           };
         });
 
+        // Persist mission completion to API
+        fetch('/api/missions/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify(newCompletion),
+        }).catch((e) => console.error('Failed to save mission completion:', e));
+
+        // Save to practice_results for Persuasion Score integration
+        const missionScore = result.grade === 'A+' ? 100 : result.grade === 'A' ? 90 : result.grade === 'B+' ? 85 : result.grade === 'B' ? 80 : result.grade === 'C+' ? 75 : result.grade === 'C' ? 70 : result.grade === 'D' ? 50 : 40;
+        fetch('/api/practice-results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            type: 'mission',
+            reference_id: `mission-${todayMission.id}`,
+            score: missionScore,
+            xp_earned: result.xpEarned || 0,
+            techniques_used: [todayMission.technique],
+            feedback: { grade: result.grade, feedback: result.feedback, insight: result.insight },
+          }),
+        }).catch((e) => console.error('Failed to save practice result:', e));
+
         // ── Auto-create a field report from the mission completion ──
         const outcomeScore = completionData.didItWork === 'Yes' ? 5 : completionData.didItWork === 'Somewhat' ? 3 : 1;
         const autoReport: JournalReport = {
@@ -940,11 +967,18 @@ export default function FieldOpsPage() {
         };
         setReports((prev) => [autoReport, ...prev]);
 
+        // Persist auto-report to API
+        fetch('/api/journal/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify(autoReport),
+        }).catch((e) => console.error('Failed to save auto-report:', e));
+
         // Also request a full AI debrief for the auto-created report
         try {
           const debriefRes = await fetch('/api/journal', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
             body: JSON.stringify({
               action: 'debrief',
               report: {
@@ -981,6 +1015,7 @@ export default function FieldOpsPage() {
     reportData: Omit<JournalReport, 'id' | 'date' | 'aiAnalysis'>
   ) => {
     setSubmitting(true);
+    const authHeaders = await getHeaders();
     const newReport: JournalReport = {
       ...reportData,
       id: Date.now().toString(),
@@ -991,10 +1026,31 @@ export default function FieldOpsPage() {
     setReports((prev) => [newReport, ...prev]);
     setShowForm(false);
 
+    // Persist report to API
+    fetch('/api/journal/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(newReport),
+    }).catch((e) => console.error('Failed to save report:', e));
+
+    // Save to practice_results for Persuasion Score integration
+    const fieldReportScore = reportData.outcome * 20; // 1-5 outcome mapped to 20-100
+    fetch('/api/practice-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({
+        type: 'field_report',
+        reference_id: newReport.id,
+        score: fieldReportScore,
+        techniques_used: reportData.techniques || [],
+        feedback: { situation: reportData.situation, outcome: reportData.outcome },
+      }),
+    }).catch((e) => console.error('Failed to save field report practice result:', e));
+
     try {
       const res = await fetch('/api/journal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ action: 'debrief', report: reportData }),
       });
       const analysis = await res.json();
@@ -1336,7 +1392,7 @@ export default function FieldOpsPage() {
       </div>
 
       {/* ── Section 4: Weekly Review (collapsible) ── */}
-      <WeeklyReviewSection reports={reports} />
+      <WeeklyReviewSection reports={reports} getHeaders={getHeaders} />
 
       {/* ── New Report Form Modal ── */}
       {showForm && (

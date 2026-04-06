@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Copy, TrendingUp, AlertTriangle, Target, Zap, HelpCircle, Shield } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Copy, TrendingUp, AlertTriangle, Target, Zap, HelpCircle, Shield, UserPlus, X, Check } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -137,7 +138,14 @@ function highlightText(original: string, tactics: Tactic[]): React.ReactNode[] {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+interface PersonProfile {
+  id: string;
+  name: string;
+  relationshipType?: string;
+}
+
 export default function AnalyzePage() {
+  const { user } = useAuth();
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -147,6 +155,99 @@ export default function AnalyzePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Save to Person Profile state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [peopleProfiles, setPeopleProfiles] = useState<PersonProfile[]>([]);
+  const [selectedPersonId, setSelectedPersonId] = useState<string>('');
+  const [newPersonName, setNewPersonName] = useState('');
+  const [savingToProfile, setSavingToProfile] = useState(false);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await user?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, [user]);
+
+  // Fetch people profiles when modal opens
+  useEffect(() => {
+    if (!showSaveModal) return;
+    const fetchPeople = async () => {
+      try {
+        const headers = await getHeaders();
+        const res = await fetch('/api/profiler/people', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setPeopleProfiles(data.profiles || []);
+        }
+      } catch (e) {
+        console.error('Failed to load people profiles:', e);
+      }
+    };
+    fetchPeople();
+  }, [showSaveModal, getHeaders]);
+
+  const handleSaveToProfile = async () => {
+    if (!result) return;
+    setSavingToProfile(true);
+
+    const analysisData = {
+      communication_style: result.communicationStyle,
+      detected_tactics: result.tactics.map(t => t.tactic),
+      threat_score: result.threatScore,
+      power_dynamics: result.powerDynamics,
+      overall_assessment: result.overallAssessment,
+      techniques_identified: result.techniques_identified,
+    };
+
+    try {
+      const headers = await getHeaders();
+
+      if (selectedPersonId) {
+        // Update existing profile
+        const person = peopleProfiles.find(p => p.id === selectedPersonId);
+        const res = await fetch('/api/profiler/people', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({
+            id: selectedPersonId,
+            analysis_data: analysisData,
+            last_analysis_date: new Date().toISOString(),
+          }),
+        });
+        if (res.ok) {
+          setSaveToast(`Saved to ${person?.name || 'profile'}'s profile`);
+        } else {
+          setSaveToast('Failed to save to profile');
+        }
+      } else if (newPersonName.trim()) {
+        // Create new profile
+        const res = await fetch('/api/profiler/people', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({
+            name: newPersonName.trim(),
+            analysis_data: analysisData,
+            last_analysis_date: new Date().toISOString(),
+          }),
+        });
+        if (res.ok) {
+          setSaveToast(`Saved to ${newPersonName.trim()}'s profile`);
+        } else {
+          setSaveToast('Failed to create profile');
+        }
+      }
+    } catch (e) {
+      console.error('Error saving to profile:', e);
+      setSaveToast('Failed to save to profile');
+    } finally {
+      setSavingToProfile(false);
+      setShowSaveModal(false);
+      setSelectedPersonId('');
+      setNewPersonName('');
+      setTimeout(() => setSaveToast(null), 3000);
+    }
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -679,13 +780,89 @@ export default function AnalyzePage() {
             </div>
           </div>
 
-          {/* Reset Button */}
-          <button
-            onClick={handleReset}
-            className="w-full py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
-          >
-            Analyze Another Conversation
-          </button>
+          {/* Save to Person Profile + Reset */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="flex-1 py-3 bg-white dark:bg-[#1A1A1A] border border-[#D4A017] text-[#D4A017] font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-[#D4A017] hover:text-[#0A0A0A] transition-all flex items-center justify-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Save to Person Profile
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex-1 py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
+            >
+              Analyze Another Conversation
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Save to Profile Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 p-4">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-mono text-lg uppercase text-[#D4A017]">Save to Person Profile</h3>
+              <button onClick={() => setShowSaveModal(false)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {peopleProfiles.length > 0 && (
+              <div>
+                <label className="block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+                  Select Existing Person
+                </label>
+                <select
+                  value={selectedPersonId}
+                  onChange={(e) => { setSelectedPersonId(e.target.value); setNewPersonName(''); }}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
+                >
+                  <option value="">-- Select a person --</option>
+                  {peopleProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200 dark:bg-[#333333]" />
+              <span className="text-xs text-gray-500 uppercase">or create new</span>
+              <div className="flex-1 h-px bg-gray-200 dark:bg-[#333333]" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+                New Person Name
+              </label>
+              <input
+                type="text"
+                value={newPersonName}
+                onChange={(e) => { setNewPersonName(e.target.value); setSelectedPersonId(''); }}
+                placeholder="Enter name..."
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveToProfile}
+              disabled={savingToProfile || (!selectedPersonId && !newPersonName.trim())}
+              className="w-full py-3 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#E8B830] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              {savingToProfile ? 'Saving...' : 'Save Analysis'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {saveToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-green-900/90 border border-green-700 text-green-200 px-4 py-3 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
+          <Check className="h-4 w-4" />
+          <span className="text-sm font-mono">{saveToast}</span>
         </div>
       )}
     </div>

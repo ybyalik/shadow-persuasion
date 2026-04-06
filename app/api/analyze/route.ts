@@ -1,62 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DECODE_SYSTEM_PROMPT } from '@/lib/prompts';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { DECODE_SYSTEM_PROMPT, RAG_ENFORCEMENT } from '@/lib/prompts';
+import { searchKnowledge } from '@/lib/rag';
 
 export const maxDuration = 60;
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data
-      .map(
-        (chunk: any) =>
-          `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-
-    return `\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${context}\n\nApply these specific concepts and frameworks in your analysis and recommendations.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
 
 async function extractTextFromImage(base64Image: string): Promise<string> {
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -170,8 +116,8 @@ export async function POST(req: NextRequest) {
     }
 
     // RAG search using the actual content
-    const knowledgeContext = await searchKnowledge(textContent);
-    const enhancedPrompt = COMPREHENSIVE_SYSTEM_PROMPT + knowledgeContext;
+    const ragContext = await searchKnowledge(textContent);
+    const enhancedPrompt = COMPREHENSIVE_SYSTEM_PROMPT + (ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : '');
 
     // Build the analysis message
     const userContent: any[] = [];

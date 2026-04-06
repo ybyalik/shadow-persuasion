@@ -1,55 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
 export const maxDuration = 60;
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'openai/text-embedding-3-small',
-      input: text.slice(0, 8000),
-    }),
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data?.[0]?.embedding || [];
-}
-
-async function searchKnowledge(query: string, limit: number = 4) {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: limit,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    return data
-      .map(
-        (chunk: any) =>
-          `[Source: "${chunk.book_title}" by ${chunk.author} | Technique: ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-  } catch (e) {
-    console.error('RAG search error:', e);
-    return '';
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,11 +28,12 @@ async function handleDebrief(body: any) {
   const { report } = body;
 
   const searchQuery = `${report.techniques?.join(' ')} ${report.situation} ${report.goal}`;
-  const ragContext = await searchKnowledge(searchQuery);
+  const ragContext = await searchKnowledge(searchQuery, { count: 4 });
 
-  const systemPrompt = `You are an elite influence and persuasion coach analyzing a field report from a student practicing social influence techniques. You provide direct, tactical feedback.
+  const systemPrompt = `${HANDLER_VOICE}
+You are an elite influence and persuasion coach analyzing a field report from a student practicing social influence techniques. You provide direct, tactical feedback.
 
-${ragContext ? `RELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}\n\n---\n` : ''}
+${ragContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}\n\n---\n` : ''}
 
 Respond with a JSON object containing exactly these keys:
 - "verdict": A one-line tactical assessment (e.g., "Strong frame control but you lost initiative in the close")
@@ -148,12 +104,13 @@ async function handleWeeklyReview(body: any) {
   }
 
   const techniquesList = reports.flatMap((r: any) => r.techniques || []);
-  const searchQuery = `improving ${[...new Set(techniquesList)].join(' ')} persuasion techniques weekly review`;
-  const ragContext = await searchKnowledge(searchQuery);
+  const weeklySearchQuery = `improving ${[...new Set(techniquesList)].join(' ')} persuasion techniques weekly review`;
+  const weeklyRagContext = await searchKnowledge(weeklySearchQuery, { count: 4 });
 
-  const systemPrompt = `You are an elite influence and persuasion coach conducting a weekly performance review. Analyze the student's field reports from this week and provide strategic guidance.
+  const systemPrompt = `${HANDLER_VOICE}
+You are an elite influence and persuasion coach conducting a weekly performance review. Analyze the student's field reports from this week and provide strategic guidance.
 
-${ragContext ? `RELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}\n\n---\n` : ''}
+${weeklyRagContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${weeklyRagContext}\n\n---\n` : ''}
 
 Respond with a JSON object containing exactly these keys:
 - "summary": A 2-3 sentence overview of the week's performance

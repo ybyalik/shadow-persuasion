@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { techniques } from '@/lib/techniques';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 const SYSTEM_PROMPT = `You are an expert persuasion coach. Given a user's goal, their recently practiced techniques, and their weak areas, recommend 3-5 techniques they should focus on next.
 
@@ -33,52 +29,6 @@ Respond in this exact JSON format:
 
 Only recommend techniques from the provided library. Prioritize techniques that address weak areas and align with the user's goal.`;
 
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(query: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.35,
-      match_count: 4,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    return data
-      .map((chunk: any) =>
-        `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
-
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
@@ -95,9 +45,11 @@ export async function POST(req: NextRequest) {
       .join('\n');
 
     // RAG search
-    const knowledgeContext = await searchKnowledge(
-      `${userGoal} persuasion techniques for ${weakAreas.join(', ')}`
+    const ragContext = await searchKnowledge(
+      `${userGoal} persuasion techniques for ${weakAreas.join(', ')}`,
+      { threshold: 0.35, count: 4 }
     );
+    const knowledgeContext = ragContext || '';
 
     const userMessage = `USER GOAL: ${userGoal}
 
@@ -108,7 +60,7 @@ WEAK AREAS: ${weakAreas.length > 0 ? weakAreas.join(', ') : 'None identified yet
 AVAILABLE TECHNIQUES:
 ${techniqueList}
 
-${knowledgeContext ? `\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${knowledgeContext}` : ''}
+${knowledgeContext ? `\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${knowledgeContext}` : ''}
 
 Based on the user's goal and current skill gaps, recommend 3-5 techniques and create a learning path.`;
 

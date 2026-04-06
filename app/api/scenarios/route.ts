@@ -1,65 +1,11 @@
 import { NextRequest } from 'next/server';
-import { HANDLER_SYSTEM_PROMPT } from '@/lib/prompts';
+import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 import { scenarios } from '@/lib/scenarios';
-import { createClient } from '@supabase/supabase-js';
+import { searchKnowledge } from '@/lib/rag';
 
 export const maxDuration = 60;
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchScenarioKnowledge(userMessage: string, scenario: { title: string; description: string; objective: string; techniques: string[] }): Promise<string> {
-  try {
-    const searchQuery = `${userMessage} ${scenario.description} ${scenario.objective} ${scenario.techniques.join(' ')}`;
-    const embedding = await getEmbedding(searchQuery);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data.map((chunk: any) =>
-      `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:
-${context}
-
-Incorporate these specific techniques and frameworks into your role-play responses. Reference them naturally as part of the scenario guidance.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,9 +20,11 @@ export async function POST(req: NextRequest) {
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === 'user');
 
     // Search knowledge base with scenario context + user message
-    const knowledgeContext = lastUserMessage
-      ? await searchScenarioKnowledge(lastUserMessage.content, scenario)
-      : await searchScenarioKnowledge(scenario.objective, scenario);
+    const searchQuery = lastUserMessage
+      ? `${lastUserMessage.content} ${scenario.description} ${scenario.objective} ${scenario.techniques.join(' ')}`
+      : `${scenario.objective} ${scenario.description} ${scenario.techniques.join(' ')}`;
+    const ragContext = await searchKnowledge(searchQuery);
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
 
     const scenarioPrompt = `You are role-playing a SCENARIO SIMULATION. The scenario is: "${scenario.title}".
 Description: ${scenario.description}
@@ -96,7 +44,7 @@ After EACH of your in-character responses, append a coaching annotation on a new
 
 The coaching annotation must be valid JSON inside the COACHING comment. Score 1-10 where 10 is masterful. If this is the opening message (no user input yet), still include a coaching annotation with general guidance.`;
 
-    const systemContent = `${HANDLER_SYSTEM_PROMPT}\n\n${scenarioPrompt}${knowledgeContext}`;
+    const systemContent = `${HANDLER_VOICE}\n${HANDLER_SYSTEM_PROMPT}\n\n${scenarioPrompt}${knowledgeContext}`;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

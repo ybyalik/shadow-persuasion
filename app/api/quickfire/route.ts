@@ -1,66 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const SYSTEM_PROMPT = `${HANDLER_VOICE}
+You are a tactical influence advisor. The user is in a LIVE situation and needs an answer in seconds. Be direct, specific, give exact words. No preamble, no disclaimers.
 
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledge(situation: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(situation);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 3,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data
-      .map(
-        (chunk: any) =>
-          `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-      )
-      .join('\n\n---\n\n');
-
-    return `\n\nRELEVANT TACTICAL TECHNIQUES:\n${context}\n\nApply these techniques in your response.`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
-
-const SYSTEM_PROMPT = `You are a tactical influence advisor. The user is in a LIVE situation and needs an answer in seconds. Be direct, specific, give exact words. No preamble, no disclaimers.
+Before responding, classify the situation: FRAME_CONTEST | NEGOTIATION | RAPPORT_CRISIS | EMOTIONAL_HIJACK | STATUS_CHALLENGE | COMPLIANCE_REQUEST
+Select the optimal counter-technique, then generate the script.
 
 You MUST respond with valid JSON in this exact format:
 {
+  "classification": "FRAME_CONTEST|NEGOTIATION|RAPPORT_CRISIS|EMOTIONAL_HIJACK|STATUS_CHALLENGE|COMPLIANCE_REQUEST",
+  "technique": "Name of the technique being applied (from knowledge base if available)",
   "sayThis": "Exact words the user should say right now",
-  "why": "One sentence explaining the psychology behind it",
+  "why": "One sentence explaining the psychology behind it, citing source if from knowledge base",
   "avoid": "One specific thing NOT to say or do",
   "ifBackfires": "One fallback line if the first approach doesn't work"
 }`;
@@ -78,7 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const knowledgeContext = await searchKnowledge(situation);
+    const ragContext = await searchKnowledge(situation, { count: 3 });
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TACTICAL TECHNIQUES:\n${ragContext}` : '';
 
     const userContent = context
       ? `SITUATION: ${situation}\n\nCONTEXT (who this is about): ${context}`

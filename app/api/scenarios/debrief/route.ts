@@ -1,61 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { scenarios } from '@/lib/scenarios';
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 export const maxDuration = 60;
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/text-embedding-3-small',
-        input: text.slice(0, 8000),
-      }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.[0]?.embedding || [];
-  } catch (e) {
-    console.error('Embedding error:', e);
-    return [];
-  }
-}
-
-async function searchKnowledgeForDebrief(scenarioContext: string): Promise<string> {
-  try {
-    const embedding = await getEmbedding(scenarioContext);
-    if (embedding.length === 0) return '';
-
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: 5,
-    });
-
-    if (error || !data || data.length === 0) return '';
-
-    const context = data.map((chunk: any) =>
-      `[${chunk.book_title} by ${chunk.author} - ${chunk.technique_name}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    return `\n\nKNOWLEDGE BASE REFERENCE (use these to ground your evaluation):
-${context}`;
-  } catch (e) {
-    console.error('Knowledge search error:', e);
-    return '';
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,7 +23,8 @@ export async function POST(req: NextRequest) {
     // Build context for RAG search from user messages + scenario
     const userMessages = messages.filter((m: any) => m.role === 'user').map((m: any) => m.content).join(' ');
     const searchContext = `${scenario.title} ${scenario.objective} ${scenario.techniques.join(' ')} ${userMessages.slice(0, 2000)}`;
-    const knowledgeContext = await searchKnowledgeForDebrief(searchContext);
+    const ragContext = await searchKnowledge(searchContext);
+    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nKNOWLEDGE BASE REFERENCE (use these to ground your evaluation):\n${ragContext}` : '';
 
     // Strip coaching annotations from conversation for clean analysis
     const cleanMessages = messages.map((m: any) => ({

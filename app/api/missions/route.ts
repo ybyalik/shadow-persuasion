@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { searchKnowledge } from '@/lib/rag';
+import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 
 export const maxDuration = 60;
 
@@ -23,7 +25,14 @@ export async function POST(req: NextRequest) {
 async function handleGrade(body: any) {
   const { mission, completion } = body;
 
-  const systemPrompt = `You are an elite influence and persuasion coach grading a student's completion of a daily mission. Be encouraging but honest.
+  // RAG search for the mission's technique
+  const ragContext = await searchKnowledge(
+    `${mission.technique} technique application execution examples`,
+    { count: 4 }
+  );
+
+  const systemPrompt = `${HANDLER_VOICE}
+You are an elite influence and persuasion coach grading a student's completion of a daily mission. Be encouraging but honest.
 
 The mission was:
 Title: ${mission.title}
@@ -32,11 +41,21 @@ Technique: ${mission.technique}
 Difficulty: ${mission.difficulty}
 Max XP: ${mission.xpReward}
 
+${ragContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE — USE THIS TO EVALUATE TECHNIQUE EXECUTION:\n${ragContext}\n` : ''}
+
+GRADING RUBRIC:
+- A+/A: Used the technique correctly AND adapted it creatively. Shows deep understanding.
+- B+/B: Used the technique correctly but mechanically. Textbook execution.
+- C+/C: Attempted but with execution errors (wrong timing, too obvious, missed setup).
+- D: Misidentified when/how to use the technique.
+- F: Did not attempt or completely wrong approach.
+
 Respond with a JSON object containing exactly these keys:
 - "grade": A letter grade (A+/A/B+/B/C+/C/D/F)
-- "feedback": 2-3 sentences of specific, tactical feedback on their execution
+- "feedback": 2-3 sentences of specific, tactical feedback on their execution. Reference specific concepts from the knowledge base.
 - "xpEarned": A number between 0 and ${mission.xpReward} based on how well they did. A+ = full XP, F = 0. Factor in the self-reported outcome.
-- "insight": One sentence of deeper insight or a tip for next time`;
+- "insight": One sentence of deeper insight or a tip for next time, citing a source from the knowledge base if applicable
+- "techniqueAccuracy": "correct_and_creative" | "correct_but_mechanical" | "attempted_with_errors" | "misapplied" | "not_attempted"`;
 
   const userContent = `MISSION COMPLETION REPORT:
 What happened: ${completion.whatHappened}
