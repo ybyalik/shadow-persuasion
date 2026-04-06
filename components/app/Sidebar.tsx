@@ -6,6 +6,8 @@ import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Uplo
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
 
+const ADMIN_EMAILS = ['ybyalik@gmail.com'];
+
 const navItems = [
   { href: '/app', icon: Home, label: 'Dashboard' },
   { href: '/app/decode', icon: Eye, label: 'Conversation Intelligence' },
@@ -14,7 +16,6 @@ const navItems = [
   { href: '/app/conversations', icon: Brain, label: 'Relationship Memory' },
   { href: '/app/scenarios', icon: FileText, label: 'Practice Scenarios' },
   { href: '/app/library', icon: BookOpen, label: 'Technique Library' },
-  { href: '/app/admin', icon: Upload, label: 'Admin' },
 ];
 
 const newFeatureItems = [
@@ -62,6 +63,21 @@ export function Sidebar() {
                 <span className="font-medium">{item.label}</span>
               </Link>
             ))}
+            {user?.email && ADMIN_EMAILS.includes(user.email) && (
+              <Link
+                href="/app/admin"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
+                  ${
+                    isActive('/app/admin')
+                      ? 'bg-[#D4A017] dark:bg-[#D4A017] text-[#0A0A0A] dark:text-[#0A0A0A]'
+                      : 'hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+                  }
+                `}
+              >
+                <Upload className="h-5 w-5" />
+                <span className="font-medium">Admin</span>
+              </Link>
+            )}
           </nav>
           <div className="mt-6 pt-4 border-t border-[#E5E2DB] dark:border-[#333333]">
             <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-[#D4A017]">New Features</p>

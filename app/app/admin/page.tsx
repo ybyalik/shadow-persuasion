@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Upload, BookOpen, Trash2, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+
+const ADMIN_EMAILS = ['ybyalik@gmail.com'];
 
 type BookStatus = 'extracting' | 'processing' | 'done' | 'error';
 type UploadBook = {
@@ -64,6 +68,15 @@ function chunkText(text: string, maxWords: number = 800): string[] {
 }
 
 export default function AdminPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && (!user?.email || !ADMIN_EMAILS.includes(user.email))) {
+      router.replace('/app');
+    }
+  }, [user, loading, router]);
+
   const [uploads, setUploads] = useState<UploadBook[]>([]);
   const [dbBooks, setDbBooks] = useState<DBBook[]>([]);
   const [title, setTitle] = useState('');
@@ -298,6 +311,10 @@ export default function AdminPage() {
     nlp: 'bg-pink-500/20 text-pink-300',
     power_strategy: 'bg-amber-500/20 text-amber-300',
   };
+
+  if (loading || !user?.email || !ADMIN_EMAILS.includes(user.email)) {
+    return null;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
