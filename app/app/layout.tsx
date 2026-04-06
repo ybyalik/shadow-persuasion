@@ -3,7 +3,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/app/Sidebar';
-import { MessageRewriterFAB } from '@/components/app/MessageRewriterFAB';
 import { useAuth } from '@/lib/auth-context';
 
 export default function AppLayout({
@@ -38,7 +37,6 @@ export default function AppLayout({
           {children}
         </div>
       </main>
-      <MessageRewriterFAB />
     </div>
   );
 }
