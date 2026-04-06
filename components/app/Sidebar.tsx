@@ -44,7 +44,7 @@ export function Sidebar() {
       <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
         <div className="flex-1">
           <div className="mb-8">
-            <h1 className="text-xl font-bold text-center font-mono tracking-wider text-white dark:text-white">SHADOW.OPS</h1>
+            <h1 className="text-xl font-bold text-center font-mono tracking-wider text-gray-900 dark:text-white">SHADOW.OPS</h1>
           </div>
           <nav className="space-y-2">
             {navItems.map((item) => (
@@ -55,7 +55,7 @@ export function Sidebar() {
                   ${
                     isActive(item.href)
                       ? 'bg-[#D4A017] text-[#0A0A0A]'
-                      : 'text-gray-300 hover:bg-[#222222] dark:hover:bg-[#222222] hover:bg-[#E5E2DB]'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
                   }
                 `}
               >
@@ -70,7 +70,7 @@ export function Sidebar() {
                   ${
                     isActive('/app/admin')
                       ? 'bg-[#D4A017] text-[#0A0A0A]'
-                      : 'text-gray-300 hover:bg-[#222222] dark:hover:bg-[#222222] hover:bg-[#E5E2DB]'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
                   }
                 `}
               >
@@ -81,7 +81,7 @@ export function Sidebar() {
           </nav>
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-[#333333]">
             <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-[#D4A017]">New Features</p>
-            <nav className="space-y-1">
+            <nav className="space-y-2">
               {newFeatureItems.map((item) => (
                 <Link
                   key={item.label}
@@ -90,12 +90,12 @@ export function Sidebar() {
                     ${
                       isActive(item.href)
                         ? 'bg-[#D4A017] text-[#0A0A0A]'
-                        : 'hover:bg-[#222222]'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
                     }
                   `}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -111,19 +111,19 @@ export function Sidebar() {
                    {(user.displayName || user.email || '?')[0].toUpperCase()}
                  </div>
                )}
-               <span className="text-sm truncate text-[#888888]">{user.displayName || user.email}</span>
+               <span className="text-sm truncate text-gray-500 dark:text-[#888888]">{user.displayName || user.email}</span>
              </div>
            )}
            <button
              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#222222] dark:hover:bg-[#222222] hover:bg-[#E5E2DB] transition-colors"
+             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors text-gray-700 dark:text-gray-300"
            >
              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
              <span className="font-medium">Toggle Theme</span>
            </button>
            <button
              onClick={signOut}
-             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#222222] transition-colors text-red-400 hover:text-red-300"
+             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors text-red-500 dark:text-red-400 hover:text-red-400 dark:hover:text-red-300"
            >
              <LogOut className="h-5 w-5" />
              <span className="font-medium">Sign Out</span>
