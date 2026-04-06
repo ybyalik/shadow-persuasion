@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload, Edit, Brain, Users, Zap, Shield, Target, Swords, Layers, Trophy, UserSearch, ClipboardList } from 'lucide-react';
+import { Home, Eye, MessageSquare, FileText, BookOpen, Settings, Sun, Moon, Upload, Edit, Brain, Users, Zap, Shield, Target, Swords, Layers, Trophy, UserSearch, ClipboardList, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/lib/auth-context';
 
 const navItems = [
   { href: '/app', icon: Home, label: 'Dashboard' },
@@ -30,6 +31,7 @@ const newFeatureItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   const isActive = (href: string) => {
     return pathname === href;
@@ -83,13 +85,32 @@ export function Sidebar() {
             </nav>
           </div>
         </div>
-        <div className="pt-4 border-t border-[#E5E2DB] dark:border-[#333333]">
+        <div className="pt-4 border-t border-[#E5E2DB] dark:border-[#333333] space-y-2">
+           {user && (
+             <div className="flex items-center space-x-3 px-3 py-2">
+               {user.photoURL ? (
+                 <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full" />
+               ) : (
+                 <div className="w-7 h-7 rounded-full bg-[#D4A017] flex items-center justify-center text-[#0A0A0A] text-xs font-bold">
+                   {(user.displayName || user.email || '?')[0].toUpperCase()}
+                 </div>
+               )}
+               <span className="text-sm truncate text-[#888888]">{user.displayName || user.email}</span>
+             </div>
+           )}
            <button
              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
              className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors"
            >
              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
              <span className="font-medium">Toggle Theme</span>
+           </button>
+           <button
+             onClick={signOut}
+             className="w-full flex items-center justify-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#E5E2DB] dark:hover:bg-[#222222] transition-colors text-red-400 hover:text-red-300"
+           >
+             <LogOut className="h-5 w-5" />
+             <span className="font-medium">Sign Out</span>
            </button>
         </div>
       </aside>

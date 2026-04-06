@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getUserFromRequest } from '@/lib/auth-api';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,6 +10,7 @@ const supabase = createClient(
 // GET: List practice results, filterable by type and date range
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const from = searchParams.get('from');
@@ -18,6 +20,10 @@ export async function GET(req: NextRequest) {
       .from('practice_results')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
 
     if (type) {
       query = query.eq('type', type);
@@ -48,6 +54,7 @@ export async function GET(req: NextRequest) {
 // POST: Save a practice result
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const { type, reference_id, score, xp_earned, techniques_used, feedback } = await req.json();
 
     if (!type) {
@@ -63,6 +70,7 @@ export async function POST(req: NextRequest) {
         xp_earned: xp_earned ?? 0,
         techniques_used: techniques_used || [],
         feedback: feedback || {},
+        user_id: userId,
       })
       .select()
       .single();

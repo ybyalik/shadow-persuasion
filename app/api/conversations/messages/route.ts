@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getUserFromRequest } from '@/lib/auth-api';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
 // POST: Save a message to a session
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const { session_id, role, content, metadata } = await req.json();
 
     if (!session_id || !role || !content) {
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
         role,
         content,
         metadata: metadata || {},
+        user_id: userId,
       })
       .select()
       .single();

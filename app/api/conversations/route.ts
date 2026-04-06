@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getUserFromRequest } from '@/lib/auth-api';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,6 +10,7 @@ const supabase = createClient(
 // GET: List all chat sessions with last message preview
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const search = searchParams.get('search');
@@ -17,6 +19,10 @@ export async function GET(req: NextRequest) {
       .from('chat_sessions')
       .select('*')
       .order('updated_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
 
     if (type) {
       query = query.eq('session_type', type);
@@ -63,6 +69,7 @@ export async function GET(req: NextRequest) {
 // POST: Create a new chat session
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const body = await req.json();
     const { title, goal, goal_title, session_type, scenario_id } = body;
 
@@ -74,6 +81,7 @@ export async function POST(req: NextRequest) {
         goal_title: goal_title || null,
         session_type: session_type || 'general',
         scenario_id: scenario_id || null,
+        user_id: userId,
       })
       .select()
       .single();
