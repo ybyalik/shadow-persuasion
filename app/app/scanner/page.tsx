@@ -31,7 +31,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function getCategoryStyle(category: string): string {
-  return CATEGORY_COLORS[category] || 'bg-gray-900/40 text-gray-300 border-gray-700';
+  return CATEGORY_COLORS[category] || 'bg-gray-900/40 text-gray-600 dark:text-gray-300 border-gray-700';
 }
 
 function getThreatColor(score: number): string {
@@ -146,7 +146,7 @@ export default function ScannerPage() {
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider flex items-center gap-3">
           <span className="text-[#D4A017]">&#128737;</span> Manipulation Scanner
         </h1>
-        <p className="text-gray-400 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           Paste any message, email, or sales pitch. Every manipulation tactic will be detected and neutralized.
         </p>
       </header>
@@ -157,7 +157,7 @@ export default function ScannerPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste any message, email, or sales pitch..."
-            className="w-full h-48 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
+            className="w-full h-48 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
             autoFocus
           />
 
@@ -189,16 +189,16 @@ export default function ScannerPage() {
       {result && (
         <div className="space-y-6">
           {/* Threat Score */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-5">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold">
+              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
                 Threat Level
               </span>
               <span className={`font-mono text-2xl font-bold ${getThreatTextColor(result.threatScore)}`}>
                 {result.threatScore}/10
               </span>
             </div>
-            <div className="w-full h-3 bg-[#333333] rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${getThreatColor(result.threatScore)}`}
                 style={{ width: `${result.threatScore * 10}%` }}
@@ -210,11 +210,11 @@ export default function ScannerPage() {
           </div>
 
           {/* Highlighted Original Text */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-5">
-            <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold block mb-3">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
+            <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block mb-3">
               Analyzed Text
             </span>
-            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
               {highlightText(text, result.tactics)}
             </p>
           </div>
@@ -222,28 +222,28 @@ export default function ScannerPage() {
           {/* Tactics Found */}
           {result.tactics.length > 0 && (
             <div className="space-y-3">
-              <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold">
+              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
                 Tactics Detected
               </span>
               {result.tactics.map((tactic, i) => (
-                <div key={i} className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-3">
+                <div key={i} className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-mono text-white font-bold">{tactic.tactic}</h3>
+                    <h3 className="font-mono text-gray-900 dark:text-white font-bold">{tactic.tactic}</h3>
                     <span
                       className={`text-xs font-mono px-2 py-1 rounded border whitespace-nowrap ${getCategoryStyle(tactic.category)}`}
                     >
                       {tactic.category}
                     </span>
                   </div>
-                  <blockquote className="border-l-2 border-[#D4A017] pl-3 text-sm text-gray-400 italic">
+                  <blockquote className="border-l-2 border-[#D4A017] pl-3 text-sm text-gray-500 dark:text-gray-400 italic">
                     &ldquo;{tactic.quote}&rdquo;
                   </blockquote>
-                  <p className="text-sm text-gray-300">{tactic.explanation}</p>
-                  <div className="bg-[#0A0A0A] border border-[#333333] rounded p-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{tactic.explanation}</p>
+                  <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded p-3">
                     <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold block mb-1">
                       Counter:
                     </span>
-                    <p className="text-sm text-white">&ldquo;{tactic.counterResponse}&rdquo;</p>
+                    <p className="text-sm text-gray-900 dark:text-white">&ldquo;{tactic.counterResponse}&rdquo;</p>
                   </div>
                 </div>
               ))}
@@ -251,24 +251,24 @@ export default function ScannerPage() {
           )}
 
           {/* Counter-Script */}
-          <div className="bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
             <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold block mb-3">
               Full Counter-Script
             </span>
-            <p className="text-white leading-relaxed">{result.counterScript}</p>
+            <p className="text-gray-900 dark:text-white leading-relaxed">{result.counterScript}</p>
           </div>
 
           {/* Overall Assessment */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-5">
-            <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold block mb-3">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
+            <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block mb-3">
               Overall Assessment
             </span>
-            <p className="text-gray-300 text-sm leading-relaxed">{result.overallAssessment}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{result.overallAssessment}</p>
           </div>
 
           <button
             onClick={handleReset}
-            className="w-full py-3 bg-[#1A1A1A] border border-[#333333] text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
+            className="w-full py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
           >
             Scan Another Text
           </button>

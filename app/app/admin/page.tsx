@@ -320,15 +320,15 @@ export default function AdminPage() {
     <div className="max-w-5xl mx-auto space-y-8">
       <header>
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Knowledge Base — Admin</h1>
-        <p className="text-gray-400 mt-1">Upload books and manage the AI knowledge base</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Upload books and manage the AI knowledge base</p>
       </header>
 
       {/* Upload Section */}
-      <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
+      <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
         <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider mb-4">Upload a Book</h2>
         <div onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-            ${dragActive ? 'border-[#D4A017] bg-[#D4A017]/10' : 'border-[#444] hover:border-[#666]'}
+            ${dragActive ? 'border-[#D4A017] bg-[#D4A017]/10' : 'border-gray-300 dark:border-[#444] hover:border-[#666]'}
             ${selectedFile ? 'border-green-500/50 bg-green-500/5' : ''}`}
           onClick={() => document.getElementById('file-input')?.click()}>
           <input id="file-input" type="file" accept=".pdf,.txt,.md" onChange={handleFileSelect} className="hidden" />
@@ -339,19 +339,19 @@ export default function AdminPage() {
               <span className="text-gray-500 text-sm">({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)</span>
             </div>
           ) : (
-            <><Upload className="h-8 w-8 text-gray-500 mx-auto mb-2" /><p className="text-gray-400">Drop a PDF, TXT, or MD file here</p><p className="text-gray-600 text-sm mt-1">or click to browse</p></>
+            <><Upload className="h-8 w-8 text-gray-500 mx-auto mb-2" /><p className="text-gray-500 dark:text-gray-400">Drop a PDF, TXT, or MD file here</p><p className="text-gray-600 text-sm mt-1">or click to browse</p></>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-xs font-mono text-gray-400 uppercase mb-1">Book Title</label>
+            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">Book Title</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Influence"
-              className="w-full p-2.5 bg-[#222] text-[#E8E8E0] border border-[#444] rounded-lg focus:ring-2 focus:ring-[#D4A017] focus:outline-none placeholder-gray-600" />
+              className="w-full p-2.5 bg-gray-50 dark:bg-[#222] text-gray-800 dark:text-[#E8E8E0] border border-gray-300 dark:border-[#444] rounded-lg focus:ring-2 focus:ring-[#D4A017] focus:outline-none placeholder-gray-600" />
           </div>
           <div>
-            <label className="block text-xs font-mono text-gray-400 uppercase mb-1">Author</label>
+            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">Author</label>
             <input type="text" value={author} onChange={e => setAuthor(e.target.value)} placeholder="e.g. Robert Cialdini"
-              className="w-full p-2.5 bg-[#222] text-[#E8E8E0] border border-[#444] rounded-lg focus:ring-2 focus:ring-[#D4A017] focus:outline-none placeholder-gray-600" />
+              className="w-full p-2.5 bg-gray-50 dark:bg-[#222] text-gray-800 dark:text-[#E8E8E0] border border-gray-300 dark:border-[#444] rounded-lg focus:ring-2 focus:ring-[#D4A017] focus:outline-none placeholder-gray-600" />
           </div>
         </div>
         <button onClick={handleUpload} disabled={!selectedFile || !title || !author || isProcessing}
@@ -363,19 +363,19 @@ export default function AdminPage() {
 
       {/* Recent Uploads (with skipped tracking) */}
       {uploads.length > 0 && (
-        <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
+        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
           <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider mb-4">Recent Uploads</h2>
           <div className="space-y-3">
             {uploads.map(upload => (
-              <div key={upload.id} className="p-4 bg-[#222] rounded-lg border border-[#333]">
+              <div key={upload.id} className="p-4 bg-gray-50 dark:bg-[#222] rounded-lg border border-gray-200 dark:border-[#333]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {upload.status === 'extracting' && <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />}
+                    {upload.status === 'extracting' && <Loader2 className="h-5 w-5 text-gray-500 dark:text-gray-400 animate-spin" />}
                     {upload.status === 'processing' && <Loader2 className="h-5 w-5 text-[#D4A017] animate-spin" />}
                     {upload.status === 'done' && <CheckCircle className="h-5 w-5 text-green-400" />}
                     {upload.status === 'error' && <AlertCircle className="h-5 w-5 text-red-400" />}
                     <div>
-                      <p className="text-[#E8E8E0] font-medium">{upload.title}</p>
+                      <p className="text-gray-800 dark:text-[#E8E8E0] font-medium">{upload.title}</p>
                       <p className="text-gray-500 text-sm">{upload.author} · {upload.fileName}</p>
                     </div>
                   </div>
@@ -383,11 +383,11 @@ export default function AdminPage() {
 
                 {upload.status === 'processing' && upload.totalChunks > 0 && (
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                       <span>Processing chunks</span>
                       <span>{upload.chunks}/{upload.totalChunks}{upload.skipped.length > 0 && ` · ${upload.skipped.length} skipped`}</span>
                     </div>
-                    <div className="w-full bg-[#333] rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-[#333] rounded-full h-2">
                       <div className="bg-[#D4A017] h-2 rounded-full transition-all duration-300"
                         style={{ width: `${((upload.chunks + upload.skipped.length) / upload.totalChunks) * 100}%` }} />
                     </div>
@@ -411,7 +411,7 @@ export default function AdminPage() {
                     {expandedSkipped === upload.id && (
                       <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                         {upload.skipped.map((s, i) => (
-                          <div key={i} className="text-xs p-2 bg-[#1A1A1A] rounded border border-[#333]">
+                          <div key={i} className="text-xs p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333]">
                             <span className="text-yellow-400">Chunk #{s.index + 1}:</span>{' '}
                             <span className="text-red-400">{s.reason}</span>
                             <p className="text-gray-500 mt-1 truncate">{s.text.slice(0, 120)}...</p>
@@ -434,10 +434,10 @@ export default function AdminPage() {
       )}
 
       {/* Existing Books in DB */}
-      <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
+      <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider">Knowledge Base</h2>
-          <button onClick={loadBooks} className="text-xs text-gray-400 hover:text-[#D4A017] flex items-center gap-1">
+          <button onClick={loadBooks} className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#D4A017] flex items-center gap-1">
             <RefreshCw className="h-3 w-3" /> Refresh
           </button>
         </div>
@@ -447,14 +447,14 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-2">
             {dbBooks.map(book => (
-              <div key={book.title} className="flex items-center justify-between p-3 bg-[#222] rounded-lg border border-[#333]">
+              <div key={book.title} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#222] rounded-lg border border-gray-200 dark:border-[#333]">
                 <div>
-                  <p className="text-[#E8E8E0] font-medium">{book.title}</p>
+                  <p className="text-gray-800 dark:text-[#E8E8E0] font-medium">{book.title}</p>
                   <p className="text-gray-500 text-sm">{book.author} · {book.chunks} chunks</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => loadChunks(book.title)}
-                    className="p-2 text-gray-400 hover:text-[#D4A017] transition-colors" title="View chunks">
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors" title="View chunks">
                     <Eye className="h-4 w-4" />
                   </button>
                   <button onClick={() => handleDelete(book.title)}
@@ -470,13 +470,13 @@ export default function AdminPage() {
 
       {/* Chunk Browser */}
       {viewingBook && (
-        <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333]">
+        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider">
               Chunks: {viewingBook} ({chunkTotal} total)
             </h2>
             <button onClick={() => { setViewingBook(null); setChunks([]); }}
-              className="text-xs text-gray-400 hover:text-white">✕ Close</button>
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">✕ Close</button>
           </div>
 
           {loadingChunks ? (
@@ -485,23 +485,23 @@ export default function AdminPage() {
             <>
               <div className="space-y-2">
                 {chunks.map(chunk => (
-                  <div key={chunk.id} className="p-3 bg-[#222] rounded-lg border border-[#333]">
+                  <div key={chunk.id} className="p-3 bg-gray-50 dark:bg-[#222] rounded-lg border border-gray-200 dark:border-[#333]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[#E8E8E0] font-medium text-sm">{chunk.technique_name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${categoryColors[chunk.category] || 'bg-gray-500/20 text-gray-300'}`}>
+                        <span className="text-gray-800 dark:text-[#E8E8E0] font-medium text-sm">{chunk.technique_name}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${categoryColors[chunk.category] || 'bg-gray-500/20 text-gray-600 dark:text-gray-300'}`}>
                           {chunk.category}
                         </span>
                         <span className="text-xs text-gray-500">{chunk.chunk_type}</span>
                         <span className="text-xs text-gray-600">{chunk.token_count} tokens</span>
                       </div>
                       <button onClick={() => setExpandedChunk(expandedChunk === chunk.id ? null : chunk.id)}
-                        className="text-gray-400 hover:text-[#D4A017]">
+                        className="text-gray-500 dark:text-gray-400 hover:text-[#D4A017]">
                         {expandedChunk === chunk.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </button>
                     </div>
                     {expandedChunk === chunk.id && (
-                      <div className="mt-3 p-3 bg-[#1A1A1A] rounded text-sm text-gray-300 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+                      <div className="mt-3 p-3 bg-white dark:bg-[#1A1A1A] rounded text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
                         {chunk.content}
                       </div>
                     )}
@@ -513,10 +513,10 @@ export default function AdminPage() {
               {chunkPages > 1 && (
                 <div className="flex items-center justify-center gap-4 mt-4">
                   <button onClick={() => loadChunks(viewingBook, chunkPage - 1)} disabled={chunkPage <= 1}
-                    className="p-1 text-gray-400 hover:text-[#D4A017] disabled:opacity-30"><ChevronLeft className="h-5 w-5" /></button>
-                  <span className="text-sm text-gray-400 font-mono">Page {chunkPage} of {chunkPages}</span>
+                    className="p-1 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] disabled:opacity-30"><ChevronLeft className="h-5 w-5" /></button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">Page {chunkPage} of {chunkPages}</span>
                   <button onClick={() => loadChunks(viewingBook, chunkPage + 1)} disabled={chunkPage >= chunkPages}
-                    className="p-1 text-gray-400 hover:text-[#D4A017] disabled:opacity-30"><ChevronRight className="h-5 w-5" /></button>
+                    className="p-1 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] disabled:opacity-30"><ChevronRight className="h-5 w-5" /></button>
                 </div>
               )}
             </>

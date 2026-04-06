@@ -74,7 +74,7 @@ export default function RewritePage() {
             case 'LOW': return 'text-green-400 bg-green-400/10';
             case 'MEDIUM': return 'text-yellow-400 bg-yellow-400/10';
             case 'HIGH': return 'text-red-400 bg-red-400/10';
-            default: return 'text-gray-400 bg-gray-400/10';
+            default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10';
         }
     };
 
@@ -84,13 +84,13 @@ export default function RewritePage() {
                 <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
                     Message Rewriter — Influence Optimization
                 </h1>
-                <p className="text-gray-400 mt-2">
+                <p className="text-gray-500 dark:text-gray-400 mt-2">
                     Transform weak messages into psychologically optimized communications
                 </p>
             </header>
 
             {/* Input Section */}
-            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333] space-y-4">
+            <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
                 <div>
                     <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
                         Original Message
@@ -99,7 +99,7 @@ export default function RewritePage() {
                         value={originalMessage}
                         onChange={(e) => setOriginalMessage(e.target.value)}
                         placeholder="Hey, how was your day? I had a pretty good day today. What are you up to?"
-                        className="w-full h-32 bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
+                        className="w-full h-32 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
                     />
                 </div>
 
@@ -110,7 +110,7 @@ export default function RewritePage() {
                     <select
                         value={goal}
                         onChange={(e) => setGoal(e.target.value)}
-                        className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+                        className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
                     >
                         <option value="">Select your objective...</option>
                         {goals.map((g) => (
@@ -146,17 +146,17 @@ export default function RewritePage() {
             {result && (
                 <div className="space-y-6">
                     {/* Metrics */}
-                    <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+                    <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
                         <div className="grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <div className="text-2xl font-bold text-[#D4A017]">{result.confidence}%</div>
-                                <div className="text-sm font-mono uppercase text-gray-400">Processing Confidence</div>
+                                <div className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">Processing Confidence</div>
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-green-400">
                                     +{Math.max(...result.versions.map(v => v.powerIncrease))}%
                                 </div>
-                                <div className="text-sm font-mono uppercase text-gray-400">Max Power Increase</div>
+                                <div className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">Max Power Increase</div>
                             </div>
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function RewritePage() {
                         </h2>
                         
                         {result.versions.map((version, index) => (
-                            <div key={index} className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333] space-y-4">
+                            <div key={index} className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
                                 {/* Header */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -179,30 +179,30 @@ export default function RewritePage() {
                                             {version.riskLevel} RISK
                                         </span>
                                     </div>
-                                    <div className="text-sm font-mono text-gray-400">
+                                    <div className="text-sm font-mono text-gray-500 dark:text-gray-400">
                                         Power: +{version.powerIncrease}%
                                     </div>
                                 </div>
 
                                 {/* Description */}
-                                <p className="text-sm text-gray-300">{version.description}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">{version.description}</p>
 
                                 {/* Rewritten Message */}
-                                <div className="bg-[#222222] p-4 rounded-md relative group">
-                                    <p className="text-white font-medium">{version.message}</p>
+                                <div className="bg-gray-50 dark:bg-[#222222] p-4 rounded-md relative group">
+                                    <p className="text-gray-900 dark:text-white font-medium">{version.message}</p>
                                     <button
                                         onClick={() => handleCopy(version.message)}
-                                        className="absolute top-3 right-3 p-2 bg-[#333333] rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#444444]"
+                                        className="absolute top-3 right-3 p-2 bg-gray-200 dark:bg-[#333333] rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-300 dark:hover:bg-[#444444]"
                                     >
                                         <Copy className="h-4 w-4" />
                                     </button>
                                 </div>
 
                                 {/* Explanation */}
-                                <div className="flex items-start gap-2 bg-[#0A0A0A] p-3 rounded-md">
+                                <div className="flex items-start gap-2 bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded-md">
                                     <Lightbulb className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
                                     <div>
-                                        <p className="text-sm text-gray-300">{version.explanation}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">{version.explanation}</p>
                                     </div>
                                 </div>
                             </div>

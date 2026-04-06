@@ -196,14 +196,14 @@ function SubScoreBar({ label, value, icon: Icon }: { label: string; value: numbe
   return (
     <div className="flex items-center gap-3">
       <Icon className="h-4 w-4 shrink-0 text-gray-500" />
-      <span className="w-28 text-sm font-medium text-gray-300 truncate">{label}</span>
-      <div className="flex-1 h-2 rounded-full bg-[#1A1A1A] overflow-hidden">
+      <span className="w-28 text-sm font-medium text-gray-600 dark:text-gray-300 truncate">{label}</span>
+      <div className="flex-1 h-2 rounded-full bg-white dark:bg-[#1A1A1A] overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
-      <span className="w-8 text-right text-xs font-mono tabular-nums text-gray-400">{pct}</span>
+      <span className="w-8 text-right text-xs font-mono tabular-nums text-gray-500 dark:text-gray-400">{pct}</span>
     </div>
   );
 }
@@ -440,7 +440,7 @@ export default function ScorePage() {
 
       {/* ── Sub-Scores ── */}
       <section className="p-6 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333]">
-        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-5 text-gray-400">Skill Breakdown</h2>
+        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-5 text-gray-500 dark:text-gray-400">Skill Breakdown</h2>
         <div className="space-y-4">
           {SUB_SCORE_META.map((s) => (
             <SubScoreBar key={s.key} label={s.label} value={subScores[s.key]} icon={s.icon} />
@@ -450,7 +450,7 @@ export default function ScorePage() {
 
       {/* ── Activity Feed ── */}
       <section className="p-6 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333]">
-        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-4 text-gray-400">Recent Activity</h2>
+        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-4 text-gray-500 dark:text-gray-400">Recent Activity</h2>
         {activityFeed.length === 0 ? (
           <div className="py-8 text-center">
             <Zap className="h-8 w-8 mx-auto mb-3 text-gray-600" />
@@ -465,7 +465,7 @@ export default function ScorePage() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-mono font-bold text-[#D4A017]">+{entry.xp} XP</span>
-                  <span className="text-sm text-gray-300">{entry.label}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">{entry.label}</span>
                 </div>
                 <span className="text-xs text-gray-600">{timeAgo(entry.ts)}</span>
               </div>
@@ -501,7 +501,7 @@ export default function ScorePage() {
           onClick={() => setMonthlyOpen((o) => !o)}
           className="w-full flex items-center justify-between p-6 text-left hover:bg-[#E5E2DB]/50 dark:hover:bg-[#252525] transition-colors"
         >
-          <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-400">Monthly Report Card</h2>
+          <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">Monthly Report Card</h2>
           {monthlyOpen ? (
             <ChevronUp className="h-5 w-5 text-gray-500" />
           ) : (
@@ -541,7 +541,7 @@ export default function ScorePage() {
             {/* AI Recommendation */}
             <div className="p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-dashed border-[#E5E2DB] dark:border-[#333333]">
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">AI Recommendation</p>
-              <p className="text-sm text-gray-300">{monthlyReport.recommendation}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{monthlyReport.recommendation}</p>
             </div>
           </div>
         </div>

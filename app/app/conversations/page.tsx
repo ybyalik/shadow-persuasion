@@ -123,7 +123,7 @@ export default function ConversationsPage() {
                     <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
                         Conversation Intelligence
                     </h1>
-                    <p className="text-gray-400 mt-2">
+                    <p className="text-gray-500 dark:text-gray-400 mt-2">
                         Track relationship dynamics, communication patterns, and influence strategies
                     </p>
                 </div>
@@ -139,41 +139,41 @@ export default function ConversationsPage() {
 
             {/* Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+                <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-2xl font-bold text-white">{totalConversations}</p>
-                            <p className="text-sm text-gray-400 font-mono uppercase">Total Contacts</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalConversations}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Total Contacts</p>
                         </div>
                         <Eye className="h-8 w-8 text-[#D4A017]" />
                     </div>
                 </div>
 
-                <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+                <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-2xl font-bold text-green-400">{activeConversations}</p>
-                            <p className="text-sm text-gray-400 font-mono uppercase">Active (7 days)</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Active (7 days)</p>
                         </div>
                         <Target className="h-8 w-8 text-green-400" />
                     </div>
                 </div>
 
-                <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+                <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-2xl font-bold text-blue-400">{avgReceptivity}%</p>
-                            <p className="text-sm text-gray-400 font-mono uppercase">Avg Receptivity</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Avg Receptivity</p>
                         </div>
                         <Brain className="h-8 w-8 text-blue-400" />
                     </div>
                 </div>
 
-                <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+                <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-2xl font-bold text-purple-400">{Object.keys(stats).length}</p>
-                            <p className="text-sm text-gray-400 font-mono uppercase">Relationship Types</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Relationship Types</p>
                         </div>
                         <Filter className="h-8 w-8 text-purple-400" />
                     </div>
@@ -183,20 +183,20 @@ export default function ConversationsPage() {
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search conversations, names, or tags..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                     />
                 </div>
                 
                 <select
                     value={filterRelationship}
                     onChange={(e) => setFilterRelationship(e.target.value)}
-                    className="px-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+                    className="px-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
                 >
                     <option value="">All Relationships</option>
                     <option value="Professional">Professional</option>
@@ -223,7 +223,7 @@ export default function ConversationsPage() {
                 <div className="text-center py-12">
                     {searchTerm || filterRelationship ? (
                         <div>
-                            <p className="text-gray-400 text-lg">No conversations match your filters</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-lg">No conversations match your filters</p>
                             <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter criteria</p>
                         </div>
                     ) : (
@@ -233,7 +233,7 @@ export default function ConversationsPage() {
                                 <h3 className="text-xl font-bold text-[#D4A017] mb-2">
                                     Start Building Your Conversation Intelligence
                                 </h3>
-                                <p className="text-gray-400 max-w-md mx-auto">
+                                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
                                     Track important relationships, communication patterns, and influence strategies 
                                     to improve your success rate over time.
                                 </p>

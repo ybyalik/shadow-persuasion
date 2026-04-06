@@ -264,7 +264,7 @@ export default function SparringPage() {
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider flex items-center gap-3">
           <span className="text-[#D4A017]">{'\u{1F94A}'}</span> Sparring Mode
         </h1>
-        <p className="text-gray-400 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           Rapid-fire conversational drills. Respond under pressure. Sharpen your edge.
         </p>
       </header>
@@ -280,7 +280,7 @@ export default function SparringPage() {
         <div className="space-y-6">
           {/* Sparring Type */}
           <div>
-            <label className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold block mb-3">
+            <label className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block mb-3">
               Sparring Type
             </label>
             <div className="grid grid-cols-1 gap-2">
@@ -291,7 +291,7 @@ export default function SparringPage() {
                   className={`text-left px-4 py-3 rounded-lg border transition-all font-mono text-sm ${
                     sparringType === type
                       ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                      : 'border-[#333333] bg-[#1A1A1A] text-gray-300 hover:border-[#555]'
+                      : 'border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A] text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-[#555]'
                   }`}
                 >
                   <span className="mr-2">{TYPE_ICONS[type]}</span>
@@ -303,7 +303,7 @@ export default function SparringPage() {
 
           {/* Difficulty */}
           <div>
-            <label className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold block mb-3">
+            <label className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block mb-3">
               Difficulty
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -314,7 +314,7 @@ export default function SparringPage() {
                   className={`px-4 py-3 rounded-lg border transition-all font-mono text-sm ${
                     difficulty === d
                       ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                      : 'border-[#333333] bg-[#1A1A1A] text-gray-300 hover:border-[#555]'
+                      : 'border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A] text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-[#555]'
                   }`}
                 >
                   {d}
@@ -327,7 +327,7 @@ export default function SparringPage() {
           </div>
 
           {personalBest > 0 && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-center">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 text-center">
               <span className="font-mono text-xs uppercase tracking-wider text-gray-500">
                 Personal Best:
               </span>
@@ -363,7 +363,7 @@ export default function SparringPage() {
         <div className="space-y-5">
           {/* Round counter */}
           <div className="flex items-center justify-between">
-            <span className="font-mono text-sm text-gray-400 uppercase tracking-wider">
+            <span className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Round {currentRound + 1}/10
             </span>
             <span className="font-mono text-xs text-gray-600">
@@ -415,8 +415,8 @@ export default function SparringPage() {
           )}
 
           {/* Challenge */}
-          <div className="bg-[#1A1A1A] border border-[#D4A017]/50 rounded-lg p-5">
-            <p className="text-white text-lg leading-relaxed">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/50 rounded-lg p-5">
+            <p className="text-gray-900 dark:text-white text-lg leading-relaxed">
               &ldquo;{rounds[currentRound].challenge}&rdquo;
             </p>
           </div>
@@ -429,7 +429,7 @@ export default function SparringPage() {
             onKeyDown={handleKeyDown}
             placeholder="Your response..."
             disabled={phase === 'grading'}
-            className="w-full h-24 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none disabled:opacity-50"
+            className="w-full h-24 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none disabled:opacity-50"
             autoFocus
           />
 
@@ -444,7 +444,7 @@ export default function SparringPage() {
           </div>
 
           <p className="text-center text-xs text-gray-600">
-            Press <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333333] rounded text-gray-400 text-xs">Enter</kbd> to submit
+            Press <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded text-gray-500 dark:text-gray-400 text-xs">Enter</kbd> to submit
           </p>
         </div>
       )}
@@ -463,8 +463,8 @@ export default function SparringPage() {
           >
             {feedbackData.score}/10
           </div>
-          <p className="text-gray-300 text-sm max-w-md mx-auto">{feedbackData.feedback}</p>
-          <div className="w-8 h-0.5 bg-[#333333] mx-auto" />
+          <p className="text-gray-600 dark:text-gray-300 text-sm max-w-md mx-auto">{feedbackData.feedback}</p>
+          <div className="w-8 h-0.5 bg-gray-200 dark:bg-[#333333] mx-auto" />
           <p className="text-gray-600 text-xs font-mono animate-pulse">Next round loading...</p>
         </div>
       )}
@@ -473,8 +473,8 @@ export default function SparringPage() {
       {phase === 'results' && results.length > 0 && (
         <div className="space-y-6">
           {/* Total Score */}
-          <div className="text-center p-8 bg-[#1A1A1A] border border-[#D4A017] rounded-lg">
-            <p className="font-mono text-xs uppercase tracking-wider text-gray-400 mb-2">
+          <div className="text-center p-8 bg-white dark:bg-[#1A1A1A] border border-[#D4A017] rounded-lg">
+            <p className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
               Total Score
             </p>
             <p className="text-5xl font-mono font-bold text-[#D4A017]">{totalScore}/100</p>
@@ -485,31 +485,31 @@ export default function SparringPage() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-center">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 text-center">
               <p className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">
                 Avg Response Time
               </p>
-              <p className="text-xl font-mono text-white">{avgTime}s</p>
+              <p className="text-xl font-mono text-gray-900 dark:text-white">{avgTime}s</p>
             </div>
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-center">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 text-center">
               <p className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">
                 Rounds Timed Out
               </p>
-              <p className="text-xl font-mono text-white">
+              <p className="text-xl font-mono text-gray-900 dark:text-white">
                 {results.filter((r) => r.timedOut).length}
               </p>
             </div>
           </div>
 
           {/* Best Round */}
-          <div className="bg-[#1A1A1A] border border-green-900/50 rounded-lg p-4">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-green-900/50 rounded-lg p-4">
             <p className="font-mono text-xs uppercase tracking-wider text-green-400 font-bold mb-2">
               Best Round (#{bestRound.roundNumber})
             </p>
-            <p className="text-gray-400 text-sm italic mb-1">
+            <p className="text-gray-500 dark:text-gray-400 text-sm italic mb-1">
               &ldquo;{bestRound.challenge}&rdquo;
             </p>
-            <p className="text-white text-sm">
+            <p className="text-gray-900 dark:text-white text-sm">
               Your response: &ldquo;{bestRound.userResponse || '[no response]'}&rdquo;
             </p>
             <p className="text-green-400 text-xs mt-1 font-mono">
@@ -518,14 +518,14 @@ export default function SparringPage() {
           </div>
 
           {/* Worst Round */}
-          <div className="bg-[#1A1A1A] border border-red-900/50 rounded-lg p-4">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-red-900/50 rounded-lg p-4">
             <p className="font-mono text-xs uppercase tracking-wider text-red-400 font-bold mb-2">
               Weakest Round (#{worstRound.roundNumber})
             </p>
-            <p className="text-gray-400 text-sm italic mb-1">
+            <p className="text-gray-500 dark:text-gray-400 text-sm italic mb-1">
               &ldquo;{worstRound.challenge}&rdquo;
             </p>
-            <p className="text-white text-sm">
+            <p className="text-gray-900 dark:text-white text-sm">
               Your response: &ldquo;{worstRound.userResponse || '[no response]'}&rdquo;
             </p>
             <p className="text-red-400 text-xs mt-1 font-mono">
@@ -535,8 +535,8 @@ export default function SparringPage() {
 
           {/* Techniques Detected */}
           {allTechniques.length > 0 && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-              <p className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold mb-3">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
+              <p className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">
                 Techniques Detected in Your Responses
               </p>
               <div className="flex flex-wrap gap-2">
@@ -553,8 +553,8 @@ export default function SparringPage() {
           )}
 
           {/* Round-by-Round */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-            <p className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold mb-3">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
+            <p className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">
               All Rounds
             </p>
             <div className="space-y-2">
@@ -564,7 +564,7 @@ export default function SparringPage() {
                   className="flex items-center justify-between text-sm py-1 border-b border-[#222] last:border-0"
                 >
                   <span className="text-gray-500 font-mono">R{r.roundNumber}</span>
-                  <span className="text-gray-400 truncate flex-1 mx-3 text-xs">
+                  <span className="text-gray-500 dark:text-gray-400 truncate flex-1 mx-3 text-xs">
                     {r.feedback}
                   </span>
                   <span
@@ -592,7 +592,7 @@ export default function SparringPage() {
                 setCurrentRound(0);
                 setRounds([]);
               }}
-              className="py-3 bg-[#1A1A1A] border border-[#333333] text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
+              className="py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
             >
               Try Different Mode
             </button>

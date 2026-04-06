@@ -162,10 +162,10 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 mb-4 flex items-center gap-4">
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 mb-4 flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className="p-2 hover:bg-[#333333] rounded transition-colors"
+                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </button>
@@ -178,19 +178,19 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                         <h2 className="font-mono uppercase text-[#D4A017] font-bold">
                             {goal.title}
                         </h2>
-                        <p className="text-sm text-gray-400">{goal.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{goal.description}</p>
                     </div>
 
                     {progressScore > 0 && (
                         <div className="text-right">
                             <div className="text-lg font-bold text-green-400">{progressScore}%</div>
-                            <div className="text-xs text-gray-400 font-mono uppercase">Progress</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono uppercase">Progress</div>
                         </div>
                     )}
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg">
                     {messages.map((msg) => (
                         <ChatMessage key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
                     ))}
@@ -214,7 +214,7 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
             <div className="w-80 space-y-4">
                 {/* Live Guidance */}
                 {tacticalGuidance && (
-                    <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-4">
+                    <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-4">
                         <div className="flex items-center gap-2">
                             <Target className="h-5 w-5 text-[#D4A017]" />
                             <h3 className="font-mono uppercase text-[#D4A017] font-bold">Live Tactical Guidance</h3>
@@ -223,8 +223,8 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                         {tacticalGuidance.nextMove && (
                             <div className="space-y-2">
                                 <h4 className="text-sm font-mono uppercase text-green-400">Recommended Next Move</h4>
-                                <div className="bg-[#0A0A0A] p-3 rounded border-l-4 border-green-400">
-                                    <p className="text-sm text-gray-300">{tacticalGuidance.nextMove}</p>
+                                <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-green-400">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{tacticalGuidance.nextMove}</p>
                                 </div>
                             </div>
                         )}
@@ -232,11 +232,11 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                         {tacticalGuidance.riskLevel && (
                             <div className="space-y-2">
                                 <h4 className="text-sm font-mono uppercase text-yellow-400">Risk Assessment</h4>
-                                <div className={`bg-[#0A0A0A] p-3 rounded border-l-4 ${
+                                <div className={`bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 ${
                                     tacticalGuidance.riskLevel === 'HIGH' ? 'border-red-400' :
                                     tacticalGuidance.riskLevel === 'MEDIUM' ? 'border-yellow-400' : 'border-green-400'
                                 }`}>
-                                    <p className="text-sm text-gray-300">{tacticalGuidance.riskLevel} - {tacticalGuidance.riskExplanation}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{tacticalGuidance.riskLevel} - {tacticalGuidance.riskExplanation}</p>
                                 </div>
                             </div>
                         )}
@@ -257,7 +257,7 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                 )}
 
                 {/* Goal Progress */}
-                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-3">
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-[#D4A017]" />
                         <h3 className="font-mono uppercase text-[#D4A017] font-bold">Session Progress</h3>
@@ -265,10 +265,10 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                     
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Goal Completion</span>
+                            <span className="text-gray-500 dark:text-gray-400">Goal Completion</span>
                             <span className="font-bold">{progressScore}%</span>
                         </div>
-                        <div className="h-2 bg-[#333333] rounded-full overflow-hidden">
+                        <div className="h-2 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
                             <div 
                                 className="h-full bg-[#D4A017] transition-all duration-500"
                                 style={{ width: `${progressScore}%` }}
@@ -278,13 +278,13 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                 </div>
 
                 {/* Quick Tips */}
-                <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-3">
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-2">
                         <Lightbulb className="h-5 w-5 text-[#D4A017]" />
                         <h3 className="font-mono uppercase text-[#D4A017] font-bold">Quick Tips</h3>
                     </div>
                     
-                    <div className="space-y-2 text-sm text-gray-400">
+                    <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                         <p>• Be specific about your situation for better guidance</p>
                         <p>• Ask for exact scripts when you need them</p>
                         <p>• Describe the other person's behavior patterns</p>

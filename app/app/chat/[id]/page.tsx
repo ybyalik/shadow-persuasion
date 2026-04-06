@@ -179,7 +179,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t border-[#333333]">
+      <div className="p-4 border-t border-gray-200 dark:border-[#333333]">
         <ChatInput onSend={handleSend} isLoading={isLoading} />
       </div>
     </div>

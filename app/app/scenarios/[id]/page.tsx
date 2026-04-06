@@ -43,14 +43,14 @@ function parseCoaching(raw: string): { content: string; coaching?: CoachingData 
 
 function parseMarkdown(text: string): string {
   return text
-    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-[#E8E8E0] mt-4 mb-1">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-[#E8E8E0] mt-4 mb-1">$1</h2>')
+    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
     .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#E8E8E0] font-semibold">$1</strong>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800 dark:text-[#E8E8E0] font-semibold">$1</strong>')
     .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-xs font-mono font-bold mt-1 mb-1">$1</span>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-[#ccc]">$2</span></div>')
-    .replace(/^[-] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">&rarr;</span><span class="text-[#ccc]">$1</span></div>')
+    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
+    .replace(/^[-] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">&rarr;</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
     .replace(/\n\n/g, '<div class="h-3"></div>')
     .replace(/\n/g, '<br/>');
 }
@@ -60,10 +60,10 @@ function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
   const scoreColor = coaching.score >= 7 ? 'text-green-400' : coaching.score >= 4 ? 'text-yellow-400' : 'text-red-400';
 
   return (
-    <div className="mt-2 border border-[#333] rounded-lg overflow-hidden bg-[#111]">
+    <div className="mt-2 border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden bg-gray-50 dark:bg-[#111]">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-[#1a1a1a] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-white dark:bg-[#1a1a1a] transition-colors"
       >
         <div className="flex items-center gap-2">
           <Lightbulb className="h-3 w-3 text-[#D4A017]" />
@@ -78,13 +78,13 @@ function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
       {expanded && (
         <div className="px-3 pb-3 space-y-2 text-xs border-t border-[#222]">
           <div className="pt-2">
-            <span className="text-gray-400">Feedback:</span>
-            <p className="text-[#ccc] mt-0.5">{coaching.feedback}</p>
+            <span className="text-gray-500 dark:text-gray-400">Feedback:</span>
+            <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{coaching.feedback}</p>
           </div>
           {coaching.tip && (
             <div>
               <span className="text-[#D4A017]">Tip:</span>
-              <p className="text-[#ccc] mt-0.5">{coaching.tip}</p>
+              <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{coaching.tip}</p>
             </div>
           )}
         </div>
@@ -120,15 +120,15 @@ function ScoreRing({ score }: { score: number }) {
 
 function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="bg-[#0f0f0f] border border-[#333] rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 p-4">
+      <div className="bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-[#333] rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center gap-6">
             <ScoreRing score={debrief.score} />
             <div>
-              <h2 className="text-xl font-bold text-[#E8E8E0] tracking-wider">Mission Debrief</h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-[#E8E8E0] tracking-wider">Mission Debrief</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {debrief.score >= 70 ? 'Strong performance. You deployed techniques effectively.' :
                  debrief.score >= 40 ? 'Decent showing. Room for improvement on technique application.' :
                  'Needs work. Review the missed opportunities below.'}
@@ -144,12 +144,12 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
               </h3>
               <div className="space-y-2">
                 {debrief.techniquesUsed.map((t, i) => (
-                  <div key={i} className="p-3 bg-[#1a1a1a] rounded-lg border border-green-500/20">
+                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-green-500/20">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-[#E8E8E0]">{t.name}</span>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-[#E8E8E0]">{t.name}</span>
                       <span className="text-xs font-mono text-green-400">{t.effectiveness}/10</span>
                     </div>
-                    <p className="text-xs text-gray-400 italic">&quot;{t.example}&quot;</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">&quot;{t.example}&quot;</p>
                   </div>
                 ))}
               </div>
@@ -164,10 +164,10 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
               </h3>
               <div className="space-y-2">
                 {debrief.missedOpportunities.map((m, i) => (
-                  <div key={i} className="p-3 bg-[#1a1a1a] rounded-lg border border-yellow-500/20">
-                    <p className="text-sm text-[#ccc] mb-1">{m.moment}</p>
+                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-yellow-500/20">
+                    <p className="text-sm text-gray-600 dark:text-[#ccc] mb-1">{m.moment}</p>
                     <p className="text-xs text-yellow-400">Should have used: <strong>{m.technique}</strong></p>
-                    <p className="text-xs text-gray-400 mt-1 italic">&quot;{m.suggestedResponse}&quot;</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&quot;{m.suggestedResponse}&quot;</p>
                   </div>
                 ))}
               </div>
@@ -182,14 +182,14 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
               </h3>
               <div className="space-y-2">
                 {debrief.turningPoints.map((tp, i) => (
-                  <div key={i} className="p-3 bg-[#1a1a1a] rounded-lg border border-[#D4A017]/20">
+                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-[#D4A017]/20">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs font-mono uppercase ${tp.impact === 'positive' ? 'text-green-400' : 'text-red-400'}`}>
                         {tp.impact}
                       </span>
                     </div>
-                    <p className="text-sm text-[#ccc]">{tp.moment}</p>
-                    <p className="text-xs text-gray-400 mt-1">{tp.explanation}</p>
+                    <p className="text-sm text-gray-600 dark:text-[#ccc]">{tp.moment}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{tp.explanation}</p>
                   </div>
                 ))}
               </div>
@@ -204,7 +204,7 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
               </h3>
               <ul className="space-y-1.5">
                 {debrief.suggestions.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-[#ccc]">
+                  <li key={i} className="flex gap-2 text-sm text-gray-600 dark:text-[#ccc]">
                     <span className="text-blue-400 mt-0.5">&rarr;</span>
                     <span>{s}</span>
                   </li>
@@ -385,13 +385,13 @@ export default function ScenarioDetailPage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+          <div className="md:col-span-2 p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
             <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-2">Briefing</h2>
-            <p className="text-gray-300">{scenario.description}</p>
+            <p className="text-gray-600 dark:text-gray-300">{scenario.description}</p>
             <h2 className="font-mono text-lg text-[#D4A017] uppercase mt-4 mb-2">Objective</h2>
-            <p className="text-gray-300">{scenario.objective}</p>
+            <p className="text-gray-600 dark:text-gray-300">{scenario.objective}</p>
           </div>
-          <div className="p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
             <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-2">Key Techniques</h2>
             <ul className="space-y-2">
               {relevantTechniques.map(t => (
@@ -419,7 +419,7 @@ export default function ScenarioDetailPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
       {/* Header bar */}
-      <div className="flex items-center justify-between p-4 border-b border-[#333]">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#333]">
         <div>
           <span className="font-mono text-xs text-[#D4A017] uppercase">{scenario.category}</span>
           <h1 className="text-lg font-bold tracking-wider">{scenario.title}</h1>
@@ -427,7 +427,7 @@ export default function ScenarioDetailPage() {
         <div className="flex gap-3">
           <button
             onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); }}
-            className="px-4 py-2 text-xs font-mono uppercase border border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
+            className="px-4 py-2 text-xs font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
           >
             Restart
           </button>
@@ -435,7 +435,7 @@ export default function ScenarioDetailPage() {
             <button
               onClick={requestDebrief}
               disabled={isDebriefing}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase bg-red-600/80 text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase bg-red-600/80 text-gray-900 dark:text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
             >
               <StopCircle className="h-3.5 w-3.5" />
               {isDebriefing ? 'Analyzing...' : 'End & Debrief'}
@@ -452,7 +452,7 @@ export default function ScenarioDetailPage() {
               <div className={`max-w-2xl rounded-lg ${
                 msg.role === 'user'
                   ? 'p-4 bg-[#D4A017] text-[#0A0A0A]'
-                  : 'bg-[#1A1A1A] border border-[#333333]'
+                  : 'bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'
               }`}>
                 {msg.role === 'assistant' && (
                   <div className="px-4 pt-3 pb-1">
@@ -478,7 +478,7 @@ export default function ScenarioDetailPage() {
         ))}
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
           <div className="flex justify-start">
-            <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-4">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -491,7 +491,7 @@ export default function ScenarioDetailPage() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-[#333333]">
+      <div className="p-4 border-t border-gray-200 dark:border-[#333333]">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex items-center space-x-2"
@@ -507,7 +507,7 @@ export default function ScenarioDetailPage() {
             }}
             placeholder="Your response..."
             rows={1}
-            className="flex-1 p-2 bg-[#222222] text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
+            className="flex-1 p-2 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
             disabled={isLoading}
           />
           <button

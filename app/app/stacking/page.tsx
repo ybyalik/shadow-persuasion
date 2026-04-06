@@ -143,7 +143,7 @@ export default function StackingPage() {
       {/* Stack header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-mono text-lg font-bold text-white">{stack.name}</h3>
+          <h3 className="font-mono text-lg font-bold text-gray-900 dark:text-white">{stack.name}</h3>
           <p className="text-gray-500 text-xs italic">{stack.philosophy}</p>
         </div>
         {isCurrent && (
@@ -155,7 +155,7 @@ export default function StackingPage() {
                 setShowSaveInput(true);
               }
             }}
-            className="text-xs font-mono text-gray-500 hover:text-[#D4A017] transition-colors border border-[#333] hover:border-[#D4A017] px-3 py-1.5 rounded"
+            className="text-xs font-mono text-gray-500 hover:text-[#D4A017] transition-colors border border-gray-200 dark:border-[#333] hover:border-[#D4A017] px-3 py-1.5 rounded"
           >
             {showSaveInput ? 'Confirm Save' : 'Save Stack'}
           </button>
@@ -169,7 +169,7 @@ export default function StackingPage() {
             value={saveLabel}
             onChange={(e) => setSaveLabel(e.target.value)}
             placeholder={stack.name}
-            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
+            className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSave(stack);
@@ -184,7 +184,7 @@ export default function StackingPage() {
           <div key={step.stepNumber} className="relative">
             {/* Connecting line */}
             {idx < stack.steps.length - 1 && (
-              <div className="absolute left-[18px] top-[44px] bottom-0 w-px bg-[#333333]" />
+              <div className="absolute left-[18px] top-[44px] bottom-0 w-px bg-gray-200 dark:bg-[#333333]" />
             )}
 
             <div className="flex gap-4 pb-6">
@@ -196,7 +196,7 @@ export default function StackingPage() {
               </div>
 
               {/* Step content */}
-              <div className="flex-1 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 hover:border-[#D4A017]/30 transition-colors">
+              <div className="flex-1 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 hover:border-[#D4A017]/30 transition-colors">
                 {/* Technique name */}
                 <Link
                   href={`/app/library/${techniqueSlug(step.technique)}`}
@@ -206,7 +206,7 @@ export default function StackingPage() {
                 </Link>
 
                 {/* Action */}
-                <p className="text-white text-sm mt-2 leading-relaxed">
+                <p className="text-gray-900 dark:text-white text-sm mt-2 leading-relaxed">
                   {step.action}
                 </p>
 
@@ -244,7 +244,7 @@ export default function StackingPage() {
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider flex items-center gap-3">
           <span className="text-[#D4A017]">{'\u{1F9E9}'}</span> Technique Stacking
         </h1>
-        <p className="text-gray-400 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           Combine techniques in sequence for maximum impact. Visual flowcharts with branching paths.
         </p>
       </header>
@@ -257,7 +257,7 @@ export default function StackingPage() {
 
       {/* Goal Selector */}
       <div className="space-y-4">
-        <label className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold block">
+        <label className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block">
           What are you trying to do?
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -271,7 +271,7 @@ export default function StackingPage() {
               className={`px-3 py-2.5 rounded-lg border transition-all text-sm ${
                 goal === g
                   ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                  : 'border-[#333333] bg-[#1A1A1A] text-gray-300 hover:border-[#555]'
+                  : 'border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A] text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-[#555]'
               }`}
             >
               {g}
@@ -282,7 +282,7 @@ export default function StackingPage() {
             className={`px-3 py-2.5 rounded-lg border transition-all text-sm ${
               goal === 'custom'
                 ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                : 'border-[#333333] bg-[#1A1A1A] text-gray-300 hover:border-[#555]'
+                : 'border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A] text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-[#555]'
             }`}
           >
             Custom...
@@ -295,7 +295,7 @@ export default function StackingPage() {
             value={customGoal}
             onChange={(e) => setCustomGoal(e.target.value)}
             placeholder="Describe your goal..."
-            className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
+            className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customGoal.trim()) generateStack();
@@ -328,7 +328,7 @@ export default function StackingPage() {
 
       {/* Primary Stack */}
       {primaryStack && !isLoading && (
-        <div className="bg-[#111] border border-[#D4A017]/30 rounded-lg p-5">
+        <div className="bg-gray-50 dark:bg-[#111] border border-[#D4A017]/30 rounded-lg p-5">
           <p className="font-mono text-xs uppercase tracking-wider text-[#D4A017] mb-4">
             Primary Stack for: {currentGoal}
           </p>
@@ -341,7 +341,7 @@ export default function StackingPage() {
         <div>
           <button
             onClick={() => setShowAlternatives(!showAlternatives)}
-            className="w-full py-3 bg-[#1A1A1A] border border-[#333333] text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
+            className="w-full py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
           >
             {showAlternatives ? 'Hide Alternatives' : 'Want a different approach?'}
           </button>
@@ -357,7 +357,7 @@ export default function StackingPage() {
                     className={`flex-1 py-2 rounded-lg border transition-all font-mono text-xs uppercase tracking-wider ${
                       activeAlternative === idx
                         ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                        : 'border-[#333333] bg-[#1A1A1A] text-gray-500 hover:border-[#555]'
+                        : 'border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A] text-gray-500 hover:border-gray-400 dark:hover:border-[#555]'
                     }`}
                   >
                     {alt.name}
@@ -366,7 +366,7 @@ export default function StackingPage() {
               </div>
 
               {/* Active alternative */}
-              <div className="bg-[#111] border border-[#333333] rounded-lg p-5">
+              <div className="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
                 {renderStack(alternatives[activeAlternative], false)}
               </div>
             </div>
@@ -396,13 +396,13 @@ export default function StackingPage() {
             {savedStacks.map((saved) => (
               <div
                 key={saved.id}
-                className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 flex items-center justify-between hover:border-[#555] transition-colors"
+                className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 flex items-center justify-between hover:border-gray-400 dark:hover:border-[#555] transition-colors"
               >
                 <button
                   onClick={() => loadSavedStack(saved)}
                   className="text-left flex-1"
                 >
-                  <p className="text-white text-sm font-mono">{saved.label}</p>
+                  <p className="text-gray-900 dark:text-white text-sm font-mono">{saved.label}</p>
                   <p className="text-gray-600 text-xs">
                     {saved.goal} -- {new Date(saved.savedAt).toLocaleDateString()}
                   </p>

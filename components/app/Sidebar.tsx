@@ -79,7 +79,7 @@ export function Sidebar() {
               </Link>
             )}
           </nav>
-          <div className="mt-6 pt-4 border-t border-[#333333]">
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-[#333333]">
             <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-[#D4A017]">New Features</p>
             <nav className="space-y-1">
               {newFeatureItems.map((item) => (
@@ -101,7 +101,7 @@ export function Sidebar() {
             </nav>
           </div>
         </div>
-        <div className="pt-4 border-t border-[#333333] space-y-2">
+        <div className="pt-4 border-t border-gray-200 dark:border-[#333333] space-y-2">
            {user && (
              <div className="flex items-center space-x-3 px-3 py-2">
                {user.photoURL ? (
@@ -132,7 +132,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1A1A1A] border-t border-[#333333] flex justify-around p-2 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1A1A1A] border-t border-gray-200 dark:border-[#333333] flex justify-around p-2 z-50">
         {navItems.map((item) => (
           <Link
             key={item.label}

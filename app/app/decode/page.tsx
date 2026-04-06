@@ -84,21 +84,21 @@ export default function DecodePage() {
                 <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
                     Conversation Intelligence — Screenshot Analysis
                 </h1>
-                <p className="text-gray-400 mt-2 max-w-3xl">
+                <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-3xl">
                     Upload a screenshot of any conversation and get instant psychological insights. 
                     We'll analyze who has power, how they communicate, and give you exact responses 
                     that increase your influence using psychology principles from your knowledge base.
                 </p>
                 
                 {/* Quick explainer */}
-                <div className="mt-4 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
+                <div className="mt-4 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
                     <div className="flex items-start gap-3">
                         <div className="bg-[#D4A017] text-[#0A0A0A] rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
                             💡
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-white mb-1">How it works:</p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">How it works:</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Upload → We analyze power dynamics & communication style → Get 4 psychology-backed response options → Copy & send
                             </p>
                         </div>

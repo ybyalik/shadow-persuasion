@@ -118,7 +118,7 @@ export default function ChatListPage() {
       <div className="space-y-6">
         <button
           onClick={handleBackToList}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Sessions
@@ -145,7 +145,7 @@ export default function ChatListPage() {
             </button>
             <button
               onClick={handleNewGeneralChat}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-[#333333] text-white rounded-lg font-semibold hover:bg-[#444444] transition-colors"
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
             >
               <span>New Chat</span>
             </button>
@@ -159,7 +159,7 @@ export default function ChatListPage() {
       ) : conversations.length > 0 ? (
         <div className="space-y-4">
           {conversations.map(convo => (
-            <Link href={`/app/chat/${convo.id}`} key={convo.id} className="block p-4 bg-[#1A1A1A] rounded-lg border border-[#333333] hover:border-[#D4A017] relative group">
+            <Link href={`/app/chat/${convo.id}`} key={convo.id} className="block p-4 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] relative group">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export default function ChatListPage() {
                       <p className="text-xs text-[#D4A017] mt-0.5">{convo.goal_title}</p>
                     )}
                     {convo.lastMessage && (
-                      <p className="text-sm text-gray-400 truncate mt-1">{convo.lastMessage}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">{convo.lastMessage}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-2">{formatTimestamp(convo.updated_at)}</p>
                   </div>
@@ -192,7 +192,7 @@ export default function ChatListPage() {
           {/* Strategic Session CTA */}
           <div
             onClick={() => setShowGoalSelector(true)}
-            className="p-8 text-center rounded-lg border-2 border-dashed border-[#D4A017] hover:border-[#F4D03F] hover:bg-[#2A2520] transition-all cursor-pointer group"
+            className="p-8 text-center rounded-lg border-2 border-dashed border-[#D4A017] hover:border-[#F4D03F] hover:bg-amber-50 dark:hover:bg-[#2A2520] transition-all cursor-pointer group"
           >
             <div className="space-y-4">
               <div className="text-6xl">🎯</div>
@@ -200,7 +200,7 @@ export default function ChatListPage() {
                 <h3 className="text-xl font-bold text-[#D4A017] group-hover:text-[#F4D03F] transition-colors">
                   Start Your First Strategic Session
                 </h3>
-                <p className="text-gray-400 mt-2 max-w-md mx-auto">
+                <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
                   Get goal-focused coaching with specific tactics, exact scripts, and real-time guidance
                   for negotiations, influence, relationships, and more.
                 </p>
@@ -212,13 +212,13 @@ export default function ChatListPage() {
           </div>
 
           {/* General Chat Option */}
-          <div className="p-6 text-center rounded-lg border border-[#333333] bg-[#1A1A1A]">
-            <p className="text-gray-400 mb-4">
+          <div className="p-6 text-center rounded-lg border border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1A1A1A]">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               Or continue with the general-purpose chat for open-ended conversations
             </p>
             <button
               onClick={handleNewGeneralChat}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-[#333333] text-white rounded-lg font-semibold hover:bg-[#444444] transition-colors"
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
             >
               <span>Open General Chat</span>
             </button>

@@ -10,7 +10,7 @@ interface ScenarioCardProps {
 
 export function ScenarioCard({ scenario }: ScenarioCardProps) {
   return (
-    <Link href={`/app/scenarios/${scenario.id}`} className="block p-5 bg-[#1A1A1A] rounded-xl border border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1">
+    <Link href={`/app/scenarios/${scenario.id}`} className="block p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1">
       <div className="flex justify-between items-start">
         <span className="text-xs font-mono uppercase bg-[#D4A017]/20 text-[#D4A017] px-2 py-1 rounded-full">{scenario.category}</span>
         <div className="flex">
@@ -20,7 +20,7 @@ export function ScenarioCard({ scenario }: ScenarioCardProps) {
         </div>
       </div>
       <h3 className="text-lg font-bold mt-3">{scenario.title}</h3>
-      <p className="text-sm text-gray-400 mt-1">{scenario.description}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{scenario.description}</p>
     </Link>
   );
 }

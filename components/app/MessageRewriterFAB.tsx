@@ -77,7 +77,7 @@ export function MessageRewriterFAB() {
             case 'LOW': return 'text-green-400 bg-green-400/10';
             case 'MEDIUM': return 'text-yellow-400 bg-yellow-400/10';
             case 'HIGH': return 'text-red-400 bg-red-400/10';
-            default: return 'text-gray-400 bg-gray-400/10';
+            default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10';
         }
     };
 
@@ -88,24 +88,24 @@ export function MessageRewriterFAB() {
 
     if (isOpen) {
         return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-[#1A1A1A] rounded-lg border border-[#333333] w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
                         <div>
                             <h2 className="text-xl font-mono uppercase text-[#D4A017]">Quick Rewriter</h2>
-                            <p className="text-sm text-gray-400 mt-1">Optimize your message instantly</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Optimize your message instantly</p>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={openFullPage}
-                                className="px-3 py-1 text-xs bg-[#333333] text-white rounded hover:bg-[#444444]"
+                                className="px-3 py-1 text-xs bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-[#444444]"
                             >
                                 Full Page
                             </button>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-[#333333] rounded transition-colors"
+                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors"
                             >
                                 <X className="h-5 w-5" />
                             </button>
@@ -120,7 +120,7 @@ export function MessageRewriterFAB() {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder="Enter your message to optimize..."
-                                className="w-full h-24 bg-[#222222] border border-[#333333] rounded-md p-3 text-white resize-none focus:outline-none focus:border-[#D4A017]"
+                                className="w-full h-24 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white resize-none focus:outline-none focus:border-[#D4A017]"
                             />
                         </div>
 
@@ -128,7 +128,7 @@ export function MessageRewriterFAB() {
                             <select
                                 value={goal}
                                 onChange={(e) => setGoal(e.target.value)}
-                                className="flex-1 bg-[#222222] border border-[#333333] rounded-md p-2 text-white text-sm focus:outline-none focus:border-[#D4A017]"
+                                className="flex-1 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-2 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-[#D4A017]"
                             >
                                 <option value="">Select goal...</option>
                                 {goals.map((g) => (
@@ -156,7 +156,7 @@ export function MessageRewriterFAB() {
                         {result && (
                             <div className="space-y-4 max-h-96 overflow-y-auto">
                                 {result.versions.slice(0, 2).map((version, index) => (
-                                    <div key={index} className="bg-[#222222] p-4 rounded-lg space-y-3">
+                                    <div key={index} className="bg-gray-50 dark:bg-[#222222] p-4 rounded-lg space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-mono text-sm text-[#D4A017] uppercase">
@@ -166,14 +166,14 @@ export function MessageRewriterFAB() {
                                                     {version.riskLevel}
                                                 </span>
                                             </div>
-                                            <span className="text-xs text-gray-400">+{version.powerIncrease}%</span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">+{version.powerIncrease}%</span>
                                         </div>
                                         
-                                        <div className="bg-[#333333] p-3 rounded relative group">
-                                            <p className="text-white text-sm">{version.message}</p>
+                                        <div className="bg-gray-200 dark:bg-[#333333] p-3 rounded relative group">
+                                            <p className="text-gray-900 dark:text-white text-sm">{version.message}</p>
                                             <button
                                                 onClick={() => handleCopy(version.message)}
-                                                className="absolute top-2 right-2 p-1 bg-[#444444] rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-2 right-2 p-1 bg-gray-300 dark:bg-[#444444] rounded opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 <Copy className="h-3 w-3" />
                                             </button>
@@ -181,7 +181,7 @@ export function MessageRewriterFAB() {
 
                                         <div className="flex items-start gap-2">
                                             <Lightbulb className="h-3 w-3 text-[#D4A017] mt-0.5 flex-shrink-0" />
-                                            <p className="text-xs text-gray-400">{version.explanation}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{version.explanation}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -189,7 +189,7 @@ export function MessageRewriterFAB() {
                                 {result.versions.length > 2 && (
                                     <button
                                         onClick={openFullPage}
-                                        className="w-full py-2 text-sm text-[#D4A017] hover:text-[#F4D03F] border border-[#333333] rounded hover:border-[#D4A017] transition-colors"
+                                        className="w-full py-2 text-sm text-[#D4A017] hover:text-[#F4D03F] border border-gray-200 dark:border-[#333333] rounded hover:border-[#D4A017] transition-colors"
                                     >
                                         View All {result.versions.length} Versions
                                     </button>
@@ -208,7 +208,7 @@ export function MessageRewriterFAB() {
             className="fixed bottom-6 right-6 bg-[#D4A017] text-[#0A0A0A] p-4 rounded-full shadow-lg hover:bg-[#F4D03F] transition-colors z-40 group"
         >
             <Edit className="h-6 w-6" />
-            <div className="absolute bottom-full right-0 mb-2 bg-[#1A1A1A] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 Quick Message Rewriter
             </div>
         </button>

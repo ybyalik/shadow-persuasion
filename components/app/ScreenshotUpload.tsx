@@ -25,7 +25,7 @@ export function ScreenshotUpload({ onUpload }: ScreenshotUploadProps) {
     <div
       {...getRootProps()}
       className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors
-        ${isDragActive ? 'border-[#D4A017] bg-[#1A1A1A]' : 'border-gray-600 hover:border-gray-500'}
+        ${isDragActive ? 'border-[#D4A017] bg-white dark:bg-[#1A1A1A]' : 'border-gray-600 hover:border-gray-500'}
       `}
     >
       <input {...getInputProps()} />

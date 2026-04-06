@@ -85,10 +85,10 @@ export function RecommendationPanel() {
   // Goal picker
   if (!goal) {
     return (
-      <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333333]">
+      <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333]">
         <div className="flex items-center gap-2 mb-4">
           <Target className="h-5 w-5 text-[#D4A017]" />
-          <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-400">
+          <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Set Your Goal
           </h3>
         </div>
@@ -100,7 +100,7 @@ export function RecommendationPanel() {
             <button
               key={cat}
               onClick={() => selectGoal(cat)}
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-[#333333] text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-[#333333] text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-colors"
             >
               {cat}
             </button>
@@ -111,11 +111,11 @@ export function RecommendationPanel() {
   }
 
   return (
-    <div className="p-6 bg-[#1A1A1A] rounded-xl border border-[#333333]">
+    <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333]">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-[#D4A017]" />
-          <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-400">
+          <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Recommended for You
           </h3>
         </div>
@@ -125,7 +125,7 @@ export function RecommendationPanel() {
             setGoal(null);
             setRecommendations([]);
           }}
-          className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+          className="text-xs text-gray-600 hover:text-gray-500 dark:text-gray-400 transition-colors"
         >
           Change goal
         </button>
@@ -159,7 +159,7 @@ export function RecommendationPanel() {
             <Link
               key={rec.techniqueId || i}
               href={`/app/library/${rec.techniqueId}`}
-              className="block p-4 rounded-lg bg-[#0A0A0A] border border-[#252525] hover:border-[#D4A017]/50 transition-all group"
+              className="block p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#252525] hover:border-[#D4A017]/50 transition-all group"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ export function RecommendationPanel() {
                       className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
                         rec.priority === 'High'
                           ? 'bg-[#D4A017]/20 text-[#D4A017]'
-                          : 'bg-gray-700/50 text-gray-400'
+                          : 'bg-gray-700/50 text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       {rec.priority}

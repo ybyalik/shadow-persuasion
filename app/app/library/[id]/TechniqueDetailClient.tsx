@@ -164,7 +164,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4A017] mx-auto"></div>
-            <p className="mt-4 text-gray-400">Generating practice scenarios...</p>
+            <p className="mt-4 text-gray-500 dark:text-gray-400">Generating practice scenarios...</p>
           </div>
         </div>
       );
@@ -174,10 +174,10 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
       return (
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
-            <p className="text-gray-400">No practice scenarios available for this technique yet.</p>
+            <p className="text-gray-500 dark:text-gray-400">No practice scenarios available for this technique yet.</p>
             <button 
               onClick={() => setMode('learn')}
-              className="mt-4 px-6 py-2 bg-[#333333] text-white rounded-lg hover:bg-[#444444]"
+              className="mt-4 px-6 py-2 bg-gray-200 dark:bg-[#333333] text-white rounded-lg hover:bg-[#444444]"
             >
               Back to Learning
             </button>
@@ -194,25 +194,25 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
         <div className="flex items-center justify-between">
           <button
             onClick={() => setMode('learn')}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to {technique.name}
           </button>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Question {currentScenario + 1} of {practiceScenarios.length} | Score: {score}/{practiceScenarios.length}
           </div>
         </div>
 
         {/* Scenario */}
-        <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center gap-2 mb-4">
             <Target className="h-5 w-5 text-[#D4A017]" />
             <h2 className="font-mono uppercase text-[#D4A017]">Practice Scenario</h2>
           </div>
           
-          <div className="bg-[#0A0A0A] p-4 rounded-lg mb-4">
-            <p className="text-gray-300">{scenario.situation}</p>
+          <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-4 rounded-lg mb-4">
+            <p className="text-gray-600 dark:text-gray-300">{scenario.situation}</p>
           </div>
 
           <p className="text-white font-medium mb-4">{scenario.yourMessage}</p>
@@ -230,7 +230,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
                         ? 'border-green-500 bg-green-900/20'
                         : 'border-red-500 bg-red-900/20'
                       : 'border-[#D4A017] bg-[#2A2520]'
-                    : 'border-[#333333] bg-[#222222] hover:border-[#444444]'
+                    : 'border-gray-200 dark:border-[#333333] bg-gray-50 dark:bg-[#222222] hover:border-[#444444]'
                 } ${showFeedback ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 <div className="flex items-start gap-3">
@@ -247,11 +247,11 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
                     <p className="text-white">{option.text}</p>
                     
                     {showFeedback && (selectedOption === index || option.isCorrect) && (
-                      <div className="mt-3 pt-3 border-t border-[#333333] space-y-2">
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-[#333333] space-y-2">
                         <div className="flex items-start gap-2">
                           <Lightbulb className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="text-sm text-gray-300">{option.explanation}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{option.explanation}</p>
                             <p className="text-xs text-[#D4A017] mt-1 font-mono uppercase">
                               Technique Application: {option.techniqueApplication}
                             </p>
@@ -287,7 +287,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
       <header>
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Library
@@ -296,20 +296,20 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
         <div className="flex items-center gap-3 mb-2">
           <p className="font-mono text-sm text-[#D4A017] uppercase">{technique.category}</p>
           <span className="text-gray-500">•</span>
-          <p className="text-sm text-gray-400">Master this technique</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Master this technique</p>
         </div>
         <h1 className="text-3xl font-bold tracking-wider">{technique.name}</h1>
-        <p className="text-lg text-gray-400 mt-2">{technique.description}</p>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mt-2">{technique.description}</p>
       </header>
 
       {/* Mode Tabs */}
-      <div className="flex space-x-1 bg-[#222222] p-1 rounded-lg">
+      <div className="flex space-x-1 bg-gray-50 dark:bg-[#222222] p-1 rounded-lg">
         <button
           onClick={() => setMode('learn')}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             mode === 'learn' 
               ? 'bg-[#D4A017] text-[#0A0A0A]' 
-              : 'text-gray-400 hover:text-white'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           <BookOpen className="h-4 w-4 inline mr-2" />
@@ -320,7 +320,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             mode === 'practice' 
               ? 'bg-[#D4A017] text-[#0A0A0A]' 
-              : 'text-gray-400 hover:text-white'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           <Target className="h-4 w-4 inline mr-2" />
@@ -331,7 +331,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             mode === 'examples' 
               ? 'bg-[#D4A017] text-[#0A0A0A]' 
-              : 'text-gray-400 hover:text-white'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           <MessageSquare className="h-4 w-4 inline mr-2" />
@@ -342,7 +342,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
       {mode === 'learn' && (
         <>
           {/* How to Use It */}
-          <div className="p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
             <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">How to Use It</h2>
             <ul className="space-y-3">
               {technique.howTo.map((step, index) => (
@@ -350,7 +350,7 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
                   <span className="bg-[#D4A017] text-[#0A0A0A] w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
                     {index + 1}
                   </span>
-                  <span className="text-gray-300">{step}</span>
+                  <span className="text-gray-600 dark:text-gray-300">{step}</span>
                 </li>
               ))}
             </ul>
@@ -358,26 +358,26 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
 
           {/* When to Use / When NOT to Use */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
               <h3 className="font-mono text-md text-green-400 uppercase mb-3 flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
                 When to Use It
               </h3>
-              <p className="text-sm text-gray-300">{technique.whenToUse}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{technique.whenToUse}</p>
             </div>
-            <div className="p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
               <h3 className="font-mono text-md text-red-400 uppercase mb-3 flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
                 When NOT to Use It
               </h3>
-              <p className="text-sm text-gray-300">{technique.whenNotToUse}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{technique.whenNotToUse}</p>
             </div>
           </div>
 
           {/* Practice CTA */}
           <div className="text-center p-8 bg-gradient-to-r from-[#2A2520] to-[#1A1A1A] rounded-lg border border-[#D4A017]/30">
             <h3 className="text-xl font-bold mb-2">Ready to Master This Technique?</h3>
-            <p className="text-gray-400 mb-4">Test your understanding with interactive scenarios</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Test your understanding with interactive scenarios</p>
             <button 
               onClick={startPractice}
               className="inline-flex items-center gap-2 px-8 py-3 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] transition-all hover:scale-105"
@@ -390,9 +390,9 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
       )}
 
       {mode === 'examples' && (
-        <div className="p-6 bg-[#1A1A1A] rounded-lg border border-[#333333]">
+        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
           <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Real-World Examples</h2>
-          <p className="text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400">
             Examples section coming soon - this will show real conversations and scripts demonstrating {technique.name} in action.
           </p>
         </div>

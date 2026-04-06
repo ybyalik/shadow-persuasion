@@ -93,7 +93,7 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0A0A0A] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -102,28 +102,28 @@ export default function LoginPage() {
   if (user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0A0A0A] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold font-mono tracking-[0.3em] text-[#E8E8E0]">
+          <h1 className="text-3xl font-bold font-mono tracking-[0.3em] text-gray-800 dark:text-[#E8E8E0]">
             SHADOW<span className="text-[#D4A017]">.</span>OPS
           </h1>
-          <p className="mt-2 text-sm text-[#888888] tracking-wide">
+          <p className="mt-2 text-sm text-gray-500 dark:text-[#888888] tracking-wide">
             AI-Powered Dark Psychology Coaching
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-[#1A1A1A] border border-[#333333] rounded-xl p-8">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl p-8">
           {/* Tabs */}
-          <div className="flex mb-8 border-b border-[#333333]">
+          <div className="flex mb-8 border-b border-gray-200 dark:border-[#333333]">
             <button
               onClick={() => { setTab('signin'); setError(''); }}
               className={`flex-1 pb-3 text-sm font-semibold tracking-wider transition-colors ${
                 tab === 'signin'
                   ? 'text-[#D4A017] border-b-2 border-[#D4A017]'
-                  : 'text-[#888888] hover:text-[#E8E8E0]'
+                  : 'text-gray-500 dark:text-[#888888] hover:text-gray-800 dark:hover:text-[#E8E8E0]'
               }`}
             >
               SIGN IN
@@ -133,7 +133,7 @@ export default function LoginPage() {
               className={`flex-1 pb-3 text-sm font-semibold tracking-wider transition-colors ${
                 tab === 'signup'
                   ? 'text-[#D4A017] border-b-2 border-[#D4A017]'
-                  : 'text-[#888888] hover:text-[#E8E8E0]'
+                  : 'text-gray-500 dark:text-[#888888] hover:text-gray-800 dark:hover:text-[#E8E8E0]'
               }`}
             >
               SIGN UP
@@ -151,7 +151,7 @@ export default function LoginPage() {
           {tab === 'signin' && (
             <form onSubmit={handleSignIn} className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-[#888888] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-[#888888] uppercase tracking-wider mb-2">
                   Email
                 </label>
                 <input
@@ -159,12 +159,12 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#888888] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-[#888888] uppercase tracking-wider mb-2">
                   Password
                 </label>
                 <input
@@ -172,7 +172,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
                   placeholder="Enter your password"
                 />
               </div>
@@ -190,7 +190,7 @@ export default function LoginPage() {
           {tab === 'signup' && (
             <form onSubmit={handleSignUp} className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-[#888888] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-[#888888] uppercase tracking-wider mb-2">
                   Email
                 </label>
                 <input
@@ -198,12 +198,12 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#888888] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-[#888888] uppercase tracking-wider mb-2">
                   Password
                 </label>
                 <input
@@ -211,12 +211,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
                   placeholder="At least 6 characters"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#888888] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-[#888888] uppercase tracking-wider mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -224,7 +224,7 @@ export default function LoginPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#333333] rounded-lg text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
                   placeholder="Confirm your password"
                 />
               </div>
@@ -240,16 +240,16 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-[#333333]" />
-            <span className="px-4 text-xs text-[#555555] uppercase tracking-wider">or</span>
-            <div className="flex-1 border-t border-[#333333]" />
+            <div className="flex-1 border-t border-gray-200 dark:border-[#333333]" />
+            <span className="px-4 text-xs text-gray-400 dark:text-[#555555] uppercase tracking-wider">or</span>
+            <div className="flex-1 border-t border-gray-200 dark:border-[#333333]" />
           </div>
 
           {/* Google Sign In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={submitting}
-            className="w-full py-3 bg-[#0A0A0A] border border-[#333333] hover:border-[#555555] text-[#E8E8E0] font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="w-full py-3 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] hover:border-gray-400 dark:hover:border-[#555555] text-gray-800 dark:text-[#E8E8E0] font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -274,7 +274,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="mt-8 text-center text-xs text-[#555555]">
+        <p className="mt-8 text-center text-xs text-gray-400 dark:text-[#555555]">
           Influence is a skill. Master it responsibly.
         </p>
       </div>

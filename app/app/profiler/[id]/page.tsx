@@ -118,7 +118,7 @@ function getRelationshipColor(type: string): string {
     Friend: 'bg-green-500/20 text-green-400 border-green-500/30',
     Rival: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     Family: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    Other: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    Other: 'bg-gray-500/20 text-gray-500 dark:text-gray-400 border-gray-500/30',
   };
   return colors[type] || colors.Other;
 }
@@ -290,7 +290,7 @@ export default function ProfileDetailPage() {
   if (!profile) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400 text-lg">Profile not found</p>
+        <p className="text-gray-500 dark:text-gray-400 text-lg">Profile not found</p>
         <button
           onClick={() => router.push('/app/profiler')}
           className="mt-4 text-[#D4A017] hover:underline"
@@ -312,7 +312,7 @@ export default function ProfileDetailPage() {
       {/* Back + Header */}
       <button
         onClick={() => router.push('/app/profiler')}
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         <span className="text-sm font-mono uppercase">Back to Profiles</span>
@@ -326,7 +326,7 @@ export default function ProfileDetailPage() {
             </span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
             <div className="flex items-center gap-3 mt-1">
               <span
                 className={`px-2 py-0.5 text-xs font-mono border rounded ${getRelationshipColor(
@@ -371,7 +371,7 @@ export default function ProfileDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-[#333333]">
+      <div className="border-b border-gray-200 dark:border-[#333333]">
         <div className="flex gap-0">
           {tabs.map((tab) => (
             <button
@@ -380,7 +380,7 @@ export default function ProfileDetailPage() {
               className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-[#D4A017] text-[#D4A017]'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-300'
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -435,7 +435,7 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
     return (
       <div className="text-center py-16 space-y-3">
         <Brain className="h-12 w-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400">No psychological data yet</p>
+        <p className="text-gray-500 dark:text-gray-400">No psychological data yet</p>
         <p className="text-gray-500 text-sm max-w-md mx-auto">
           Log interactions to build a psychological profile. The AI will analyze patterns and generate
           assessments.
@@ -448,10 +448,10 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
     <div className="space-y-8">
       {/* Communication Style */}
       {traits.communication && (
-        <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
           <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Communication Style</h3>
           {traits.communication.summary && (
-            <p className="text-gray-300 text-sm mb-5">{traits.communication.summary}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">{traits.communication.summary}</p>
           )}
           <div className="space-y-4">
             <ScaleBar label="Indirect" labelRight="Direct" value={traits.communication.directness ?? 50} />
@@ -468,7 +468,7 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
 
       {/* Big Five Personality - Radar Chart */}
       {traits.personality && (
-        <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
           <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Big Five Personality Traits</h3>
           <div className="flex flex-col lg:flex-row gap-8 items-center">
             <RadarChart personality={traits.personality} />
@@ -502,12 +502,12 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
       {/* Triggers */}
       {traits.triggers && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
             <h3 className="text-sm font-mono uppercase text-red-400 mb-4">Defensive Triggers</h3>
             {(traits.triggers.defensive || []).length > 0 ? (
               <ul className="space-y-2">
                 {traits.triggers.defensive!.map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <span className="text-red-400 mt-0.5">*</span>
                     {t}
                   </li>
@@ -517,12 +517,12 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
               <p className="text-gray-500 text-sm">Not yet identified</p>
             )}
           </div>
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
             <h3 className="text-sm font-mono uppercase text-green-400 mb-4">Opens Them Up</h3>
             {(traits.triggers.openUp || []).length > 0 ? (
               <ul className="space-y-2">
                 {traits.triggers.openUp!.map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <span className="text-green-400 mt-0.5">*</span>
                     {t}
                   </li>
@@ -538,11 +538,11 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
       {/* Motivations & Fears */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {(traits.motivations || []).length > 0 && (
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
             <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Motivations</h3>
             <ul className="space-y-2">
               {traits.motivations!.map((m, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                   <ChevronRight className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
                   {m}
                 </li>
@@ -551,11 +551,11 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
           </div>
         )}
         {(traits.fears || []).length > 0 && (
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
             <h3 className="text-sm font-mono uppercase text-orange-400 mb-4">Fears</h3>
             <ul className="space-y-2">
               {traits.fears!.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                   <ChevronRight className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
                   {f}
                 </li>
@@ -567,10 +567,10 @@ function PsychologicalProfileTab({ profile }: { profile: Profile }) {
 
       {/* Attachment Style */}
       {traits.attachmentStyle?.style && (
-        <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
           <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Attachment Style</h3>
           <div className="flex items-center gap-4">
-            <span className="text-2xl font-bold text-white">{traits.attachmentStyle.style}</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">{traits.attachmentStyle.style}</span>
             {(traits.attachmentStyle.confidence ?? 0) > 0 && (
               <span className="text-sm text-gray-500 font-mono">
                 {traits.attachmentStyle.confidence}% confidence
@@ -602,7 +602,7 @@ function InteractionLogTab({
     return (
       <div className="text-center py-16 space-y-3">
         <MessageSquare className="h-12 w-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400">No interactions logged yet</p>
+        <p className="text-gray-500 dark:text-gray-400">No interactions logged yet</p>
         <button
           onClick={onLogInteraction}
           className="mt-2 bg-[#D4A017] text-[#0A0A0A] px-5 py-2 rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
@@ -618,7 +618,7 @@ function InteractionLogTab({
       {sorted.map((interaction) => (
         <div
           key={interaction.id}
-          className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-5 space-y-3"
+          className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5 space-y-3"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -630,7 +630,7 @@ function InteractionLogTab({
                   day: 'numeric',
                 })}
               </p>
-              <p className="text-white mt-1">{interaction.summary}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{interaction.summary}</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="flex items-center gap-0.5">
@@ -663,12 +663,12 @@ function InteractionLogTab({
             </div>
           )}
 
-          {interaction.notes && <p className="text-sm text-gray-400">{interaction.notes}</p>}
+          {interaction.notes && <p className="text-sm text-gray-500 dark:text-gray-400">{interaction.notes}</p>}
 
           {interaction.aiAnalysis && (
-            <div className="bg-[#0A0A0A] p-3 rounded border-l-4 border-[#D4A017]">
+            <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-[#D4A017]">
               <p className="text-xs font-mono uppercase text-[#D4A017] mb-1">AI Analysis</p>
-              <p className="text-sm text-gray-300">{interaction.aiAnalysis}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{interaction.aiAnalysis}</p>
             </div>
           )}
         </div>
@@ -717,14 +717,14 @@ function PlaybookTab({
       {isGenerating && (
         <div className="text-center py-16 space-y-3">
           <Loader2 className="h-10 w-10 text-[#D4A017] animate-spin mx-auto" />
-          <p className="text-gray-400">Generating personalized strategy...</p>
+          <p className="text-gray-500 dark:text-gray-400">Generating personalized strategy...</p>
         </div>
       )}
 
       {!isGenerating && !playbook && (
         <div className="text-center py-16 space-y-3">
           <Target className="h-12 w-12 text-gray-600 mx-auto" />
-          <p className="text-gray-400">No strategy generated yet</p>
+          <p className="text-gray-500 dark:text-gray-400">No strategy generated yet</p>
           <p className="text-gray-500 text-sm max-w-md mx-auto">
             Log some interactions first, then generate a personalized strategy playbook for this person.
           </p>
@@ -734,38 +734,38 @@ function PlaybookTab({
       {!isGenerating && playbook && (
         <div className="space-y-6">
           {playbook.bestApproach && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
               <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Best Approach</h3>
-              <p className="text-gray-300 text-sm whitespace-pre-line">{playbook.bestApproach}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{playbook.bestApproach}</p>
             </div>
           )}
 
           {playbook.timingPatterns && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
               <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Timing Patterns</h3>
-              <p className="text-gray-300 text-sm whitespace-pre-line">{playbook.timingPatterns}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{playbook.timingPatterns}</p>
             </div>
           )}
 
           {(playbook.effectiveTactics || []).length > 0 && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
               <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Effective Tactics</h3>
               <div className="space-y-3">
                 {playbook.effectiveTactics!.map((t, i) => (
-                  <div key={i} className="bg-[#0A0A0A] p-4 rounded space-y-2">
+                  <div key={i} className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-4 rounded space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">{t.tactic}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{t.tactic}</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-[#333333] rounded-full h-2">
+                        <div className="w-20 bg-gray-200 dark:bg-[#333333] rounded-full h-2">
                           <div
                             className="bg-[#D4A017] h-2 rounded-full transition-all"
                             style={{ width: `${t.effectiveness}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-400 font-mono w-8">{t.effectiveness}%</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono w-8">{t.effectiveness}%</span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-400">{t.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>
                   </div>
                 ))}
               </div>
@@ -773,11 +773,11 @@ function PlaybookTab({
           )}
 
           {(playbook.leveragePoints || []).length > 0 && (
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6">
+            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
               <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Leverage Points</h3>
               <ul className="space-y-2">
                 {playbook.leveragePoints!.map((lp, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <ChevronRight className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
                     {lp}
                   </li>
@@ -789,7 +789,7 @@ function PlaybookTab({
           {playbook.nextMove && (
             <div className="bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg p-6">
               <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Recommended Next Move</h3>
-              <p className="text-white text-sm">{playbook.nextMove}</p>
+              <p className="text-gray-900 dark:text-white text-sm">{playbook.nextMove}</p>
             </div>
           )}
         </div>
@@ -825,11 +825,11 @@ function LogInteractionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1A1A1A] rounded-lg border border-[#333333] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
           <h2 className="text-xl font-mono uppercase text-[#D4A017]">Log Interaction</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[#333333] rounded transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -841,7 +841,7 @@ function LogInteractionModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
             />
           </div>
 
@@ -854,7 +854,7 @@ function LogInteractionModal({
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               rows={4}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
               placeholder="Describe the interaction in detail..."
             />
           </div>
@@ -882,12 +882,12 @@ function LogInteractionModal({
             <button
               type="button"
               onClick={() => setShowTechniqueList(!showTechniqueList)}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               {showTechniqueList ? 'Hide techniques' : '+ Select techniques'}
             </button>
             {showTechniqueList && (
-              <div className="mt-2 grid grid-cols-2 gap-1 max-h-48 overflow-y-auto bg-[#0A0A0A] rounded-lg p-3">
+              <div className="mt-2 grid grid-cols-2 gap-1 max-h-48 overflow-y-auto bg-[#FAFAF8] dark:bg-[#0A0A0A] rounded-lg p-3">
                 {TECHNIQUE_LIBRARY.map((t) => (
                   <button
                     key={t}
@@ -896,7 +896,7 @@ function LogInteractionModal({
                     className={`text-left text-xs px-2 py-1.5 rounded transition-colors ${
                       techniques.includes(t)
                         ? 'bg-[#D4A017]/20 text-[#D4A017]'
-                        : 'text-gray-400 hover:bg-[#222222] hover:text-white'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#222222] hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     {techniques.includes(t) ? '* ' : ''}
@@ -936,16 +936,16 @@ function LogInteractionModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
               placeholder="Additional observations..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#333333]">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#333333]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-[#333333] text-white rounded-lg hover:bg-[#444444] transition-colors"
+              className="px-6 py-3 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
             >
               Cancel
             </button>
@@ -971,7 +971,7 @@ function ScaleBar({ label, labelRight, value }: { label: string; labelRight: str
         <span>{label}</span>
         <span>{labelRight}</span>
       </div>
-      <div className="relative h-2 bg-[#333333] rounded-full">
+      <div className="relative h-2 bg-gray-200 dark:bg-[#333333] rounded-full">
         <div
           className="absolute top-0 left-0 h-2 bg-gradient-to-r from-blue-500 to-[#D4A017] rounded-full transition-all"
           style={{ width: `${value}%` }}
@@ -988,8 +988,8 @@ function ScaleBar({ label, labelRight, value }: { label: string; labelRight: str
 function TraitBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs text-gray-400 w-32 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-[#333333] rounded-full">
+      <span className="text-xs text-gray-500 dark:text-gray-400 w-32 flex-shrink-0">{label}</span>
+      <div className="flex-1 h-2 bg-gray-200 dark:bg-[#333333] rounded-full">
         <div
           className={`h-2 rounded-full transition-all ${color.replace('text-', 'bg-')}`}
           style={{ width: `${value}%` }}

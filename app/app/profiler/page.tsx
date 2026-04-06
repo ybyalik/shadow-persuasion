@@ -84,7 +84,7 @@ function getRelationshipColor(type: string): string {
     Friend: 'bg-green-500/20 text-green-400 border-green-500/30',
     Rival: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     Family: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    Other: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    Other: 'bg-gray-500/20 text-gray-500 dark:text-gray-400 border-gray-500/30',
   };
   return colors[type] || colors.Other;
 }
@@ -156,7 +156,7 @@ export default function ProfilerPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Person Profiler</h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             Build psychological dossiers, log interactions, and generate personalized strategies
           </p>
         </div>
@@ -171,27 +171,27 @@ export default function ProfilerPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-5 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-white">{profiles.length}</p>
-              <p className="text-sm text-gray-400 font-mono uppercase">Profiles</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{profiles.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Profiles</p>
             </div>
             <UserSearch className="h-7 w-7 text-[#D4A017]" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-5 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-blue-400">
                 {profiles.reduce((sum, p) => sum + p.interactions.length, 0)}
               </p>
-              <p className="text-sm text-gray-400 font-mono uppercase">Interactions</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Interactions</p>
             </div>
             <MessageSquare className="h-7 w-7 text-blue-400" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-5 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-green-400">
@@ -202,18 +202,18 @@ export default function ProfilerPage() {
                   : 0}
                 %
               </p>
-              <p className="text-sm text-gray-400 font-mono uppercase">Avg Confidence</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Avg Confidence</p>
             </div>
             <Brain className="h-7 w-7 text-green-400" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-5 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-purple-400">
                 {profiles.filter((p) => p.playbook?.generatedAt).length}
               </p>
-              <p className="text-sm text-gray-400 font-mono uppercase">Playbooks</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Playbooks</p>
             </div>
             <Calendar className="h-7 w-7 text-purple-400" />
           </div>
@@ -223,19 +223,19 @@ export default function ProfilerPage() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             placeholder="Search profiles or traits..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
           />
         </div>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+          className="px-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
         >
           <option value="">All Types</option>
           {RELATIONSHIP_TYPES.map((t) => (
@@ -258,7 +258,7 @@ export default function ProfilerPage() {
               <button
                 key={profile.id}
                 onClick={() => router.push(`/app/profiler/${profile.id}`)}
-                className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6 text-left hover:border-[#D4A017]/50 transition-colors space-y-4"
+                className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6 text-left hover:border-[#D4A017]/50 transition-colors space-y-4"
               >
                 {/* Top row */}
                 <div className="flex items-start gap-4">
@@ -268,7 +268,7 @@ export default function ProfilerPage() {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-white truncate">{profile.name}</h3>
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate">{profile.name}</h3>
                     <span
                       className={`inline-block mt-1 px-2 py-0.5 text-xs font-mono border rounded ${getRelationshipColor(
                         profile.relationshipType
@@ -289,7 +289,7 @@ export default function ProfilerPage() {
                 {(profile.keyTraitTags || []).length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {profile.keyTraitTags!.slice(0, 5).map((tag, i) => (
-                      <span key={i} className="text-xs bg-[#333333] text-gray-300 px-2 py-0.5 rounded">
+                      <span key={i} className="text-xs bg-gray-200 dark:bg-[#333333] text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">
                         {tag}
                       </span>
                     ))}
@@ -297,7 +297,7 @@ export default function ProfilerPage() {
                 )}
 
                 {/* Bottom stats */}
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-[#333333]">
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200 dark:border-[#333333]">
                   <span className="font-mono">
                     {profile.interactions.length} interaction{profile.interactions.length !== 1 ? 's' : ''}
                   </span>
@@ -315,7 +315,7 @@ export default function ProfilerPage() {
         <div className="text-center py-12">
           {searchTerm || filterType ? (
             <div>
-              <p className="text-gray-400 text-lg">No profiles match your filters</p>
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No profiles match your filters</p>
               <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
@@ -323,7 +323,7 @@ export default function ProfilerPage() {
               <UserSearch className="h-16 w-16 text-[#D4A017]/40 mx-auto" />
               <div>
                 <h3 className="text-xl font-bold text-[#D4A017] mb-2">Start Building Psychological Profiles</h3>
-                <p className="text-gray-400 max-w-md mx-auto">
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
                   Create profiles for people in your life. Log interactions and let AI build deep psychological
                   assessments and personalized strategies.
                 </p>
@@ -364,11 +364,11 @@ function AddProfileModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1A1A1A] rounded-lg border border-[#333333] w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-md">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
           <h2 className="text-xl font-mono uppercase text-[#D4A017]">New Profile</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[#333333] rounded transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -380,7 +380,7 @@ function AddProfileModal({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
               placeholder="Full name"
               autoFocus
             />
@@ -390,7 +390,7 @@ function AddProfileModal({
             <select
               value={type}
               onChange={(e) => setType(e.target.value as RelationshipType)}
-              className="w-full bg-[#222222] border border-[#333333] rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
             >
               {RELATIONSHIP_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -399,11 +399,11 @@ function AddProfileModal({
               ))}
             </select>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#333333]">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#333333]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-[#333333] text-white rounded-lg hover:bg-[#444444] transition-colors"
+              className="px-6 py-3 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
             >
               Cancel
             </button>

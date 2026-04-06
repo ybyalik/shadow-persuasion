@@ -73,7 +73,7 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                 <h1 className="text-3xl font-bold uppercase font-mono tracking-wider text-[#D4A017] mb-4">
                     Strategic Communication Coach
                 </h1>
-                <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                     Select your objective to receive tailored strategies, techniques, and exact scripts 
                     for maximum influence and success.
                 </p>
@@ -84,20 +84,20 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                     <button
                         key={goal.id}
                         onClick={() => onSelectGoal(goal)}
-                        className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-6 text-left hover:border-[#D4A017] hover:bg-[#222222] transition-all duration-200 group"
+                        className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6 text-left hover:border-[#D4A017] hover:bg-gray-100 dark:hover:bg-[#222222] transition-all duration-200 group"
                     >
                         {/* Icon */}
-                        <div className={`w-12 h-12 ${goal.color} rounded-lg flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>
+                        <div className={`w-12 h-12 ${goal.color} rounded-lg flex items-center justify-center text-gray-900 dark:text-white mb-4 group-hover:scale-110 transition-transform`}>
                             {goal.icon}
                         </div>
 
                         {/* Content */}
                         <div className="space-y-3">
-                            <h3 className="font-mono text-xl uppercase font-bold text-white group-hover:text-[#D4A017] transition-colors">
+                            <h3 className="font-mono text-xl uppercase font-bold text-gray-900 dark:text-white group-hover:text-[#D4A017] transition-colors">
                                 {goal.title}
                             </h3>
                             
-                            <p className="text-gray-400 text-sm leading-relaxed">
+                            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
                                 {goal.description}
                             </p>
                             
@@ -108,7 +108,7 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                                     {goal.examples.map((example, index) => (
                                         <span
                                             key={index}
-                                            className="text-xs bg-[#333333] text-gray-300 px-2 py-1 rounded"
+                                            className="text-xs bg-gray-200 dark:bg-[#333333] text-gray-600 dark:text-gray-300 px-2 py-1 rounded"
                                         >
                                             {example}
                                         </span>

@@ -14,14 +14,14 @@ interface ChatMessageProps {
 
 function parseMarkdown(text: string): string {
   return text
-    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-[#E8E8E0] mt-4 mb-1">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-[#E8E8E0] mt-4 mb-1">$1</h2>')
+    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
     .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#E8E8E0] font-semibold">$1</strong>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800 dark:text-[#E8E8E0] font-semibold">$1</strong>')
     .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-xs font-mono font-bold mt-1 mb-1">$1</span>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-[#ccc]">$2</span></div>')
-    .replace(/^[-•] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">→</span><span class="text-[#ccc]">$1</span></div>')
+    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
+    .replace(/^[-•] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">→</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
     .replace(/\(Source: "(.*?)" by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full cursor-help" title="From: $1 by $2">📚 $1</span>')
     .replace(/\n\n/g, '<div class="h-3"></div>')
     .replace(/\n/g, '<br/>');
@@ -42,7 +42,7 @@ export function ChatMessage({ role, content, isLoading, sources }: ChatMessagePr
       <div className={`max-w-2xl rounded-lg ${
           isUser
             ? 'p-4 bg-[#D4A017] text-[#0A0A0A]'
-            : 'bg-[#1A1A1A] border border-[#333333]'
+            : 'bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'
         }`}
       >
         {!isUser && (
@@ -63,13 +63,13 @@ export function ChatMessage({ role, content, isLoading, sources }: ChatMessagePr
 
         {/* Sources panel */}
         {!isUser && showSources && uniqueSources && uniqueSources.length > 0 && (
-          <div className="mx-4 mb-2 p-3 bg-[#111] rounded-lg border border-blue-500/20">
+          <div className="mx-4 mb-2 p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-blue-500/20">
             <div className="text-xs font-mono text-blue-400 uppercase mb-2">Knowledge Base Sources</div>
             <div className="space-y-1.5">
               {uniqueSources.map((source, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-[#E8E8E0]">{source.technique}</span>
+                    <span className="text-gray-800 dark:text-[#E8E8E0]">{source.technique}</span>
                     <span className="text-gray-500 ml-2">from "{source.book}" by {source.author}</span>
                   </div>
                   <span className="text-blue-400 font-mono ml-3">{source.similarity}%</span>
@@ -88,7 +88,7 @@ export function ChatMessage({ role, content, isLoading, sources }: ChatMessagePr
             </div>
           ) : (
             <div 
-              className="text-sm text-[#ccc] leading-relaxed" 
+              className="text-sm text-gray-600 dark:text-[#ccc] leading-relaxed" 
               dangerouslySetInnerHTML={{ __html: formattedContent }} 
             />
           )}

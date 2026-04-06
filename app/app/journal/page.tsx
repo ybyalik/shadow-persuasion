@@ -79,7 +79,7 @@ function StarRating({
         >
           <Star
             className={`h-5 w-5 ${
-              star <= value ? 'text-[#D4A017] fill-[#D4A017]' : 'text-[#555555]'
+              star <= value ? 'text-[#D4A017] fill-[#D4A017]' : 'text-gray-400 dark:text-[#555555]'
             }`}
           />
         </button>
@@ -126,20 +126,20 @@ function NewReportForm({
   };
 
   const inputCls =
-    'w-full px-3 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]';
-  const labelCls = 'block text-sm font-mono uppercase tracking-wider text-gray-400 mb-1';
+    'w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]';
+  const labelCls = 'block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto bg-black/40 dark:bg-black/70 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl bg-[#1A1A1A] border border-[#333333] rounded-xl p-6 space-y-5 mx-4"
+        className="w-full max-w-2xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl p-6 space-y-5 mx-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold font-mono uppercase tracking-wider text-[#D4A017]">
             New Field Report
           </h2>
-          <button type="button" onClick={onCancel} className="text-gray-400 hover:text-white">
+          <button type="button" onClick={onCancel} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -197,7 +197,7 @@ function NewReportForm({
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                     selected
                       ? 'bg-[#D4A017] text-[#0A0A0A] border-[#D4A017]'
-                      : 'bg-[#222222] text-gray-300 border-[#444444] hover:border-[#D4A017]'
+                      : 'bg-gray-50 dark:bg-[#222222] text-gray-600 dark:text-gray-300 border-gray-300 dark:border-[#444444] hover:border-[#D4A017]'
                   }`}
                 >
                   {t.name}
@@ -255,7 +255,7 @@ function NewReportForm({
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 border border-[#333333] rounded-lg text-gray-300 hover:bg-[#222222] transition-colors"
+            className="px-6 py-2.5 border border-gray-200 dark:border-[#333333] rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
           >
             Cancel
           </button>
@@ -277,11 +277,11 @@ function ReportCard({ report }: { report: JournalReport }) {
   });
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#333333] rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl overflow-hidden">
       {/* Collapsed view */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 hover:bg-[#222222] transition-colors"
+        className="w-full text-left p-4 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -289,7 +289,7 @@ function ReportCard({ report }: { report: JournalReport }) {
               <span className="text-xs font-mono text-gray-500">{dateStr}</span>
               <StarRating value={report.outcome} readonly />
             </div>
-            <p className="text-white font-medium truncate">{report.situation}</p>
+            <p className="text-gray-900 dark:text-white font-medium truncate">{report.situation}</p>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {report.techniques.map((t) => (
                 <span
@@ -301,7 +301,7 @@ function ReportCard({ report }: { report: JournalReport }) {
               ))}
             </div>
             {report.aiAnalysis?.verdict && (
-              <p className="text-sm text-gray-400 mt-2 italic">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">
                 &quot;{report.aiAnalysis.verdict}&quot;
               </p>
             )}
@@ -316,37 +316,37 @@ function ReportCard({ report }: { report: JournalReport }) {
 
       {/* Expanded view */}
       {expanded && (
-        <div className="border-t border-[#333333] p-4 space-y-4">
+        <div className="border-t border-gray-200 dark:border-[#333333] p-4 space-y-4">
           {report.who && (
             <div>
               <span className="text-xs font-mono text-gray-500 uppercase">Who</span>
-              <p className="text-gray-300 text-sm">{report.who}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{report.who}</p>
             </div>
           )}
           <div>
             <span className="text-xs font-mono text-gray-500 uppercase">Goal</span>
-            <p className="text-gray-300 text-sm">{report.goal || 'Not specified'}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">{report.goal || 'Not specified'}</p>
           </div>
           <div>
             <span className="text-xs font-mono text-gray-500 uppercase">What You Did</span>
-            <p className="text-gray-300 text-sm whitespace-pre-wrap">{report.whatIDid}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-wrap">{report.whatIDid}</p>
           </div>
           {report.theirResponse && (
             <div>
               <span className="text-xs font-mono text-gray-500 uppercase">Their Response</span>
-              <p className="text-gray-300 text-sm whitespace-pre-wrap">{report.theirResponse}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-wrap">{report.theirResponse}</p>
             </div>
           )}
           {report.notes && (
             <div>
               <span className="text-xs font-mono text-gray-500 uppercase">Notes</span>
-              <p className="text-gray-300 text-sm whitespace-pre-wrap">{report.notes}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-wrap">{report.notes}</p>
             </div>
           )}
 
           {/* AI Analysis */}
           {report.aiAnalysis && (
-            <div className="mt-4 pt-4 border-t border-[#333333] space-y-3">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-[#333333] space-y-3">
               <h4 className="text-sm font-bold font-mono uppercase tracking-wider text-[#D4A017]">
                 AI Debrief
               </h4>
@@ -381,7 +381,7 @@ function ReportCard({ report }: { report: JournalReport }) {
                   <div className="mt-1 space-y-1">
                     {Object.entries(report.aiAnalysis.techniqueGrade).map(([name, info]) => (
                       <div key={name} className="flex items-center gap-2 text-sm">
-                        <span className="font-bold text-white w-8">{info.grade}</span>
+                        <span className="font-bold text-gray-900 dark:text-white w-8">{info.grade}</span>
                         <span className="text-[#D4A017]">{name}</span>
                         <span className="text-gray-500">- {info.reason}</span>
                       </div>
@@ -390,9 +390,9 @@ function ReportCard({ report }: { report: JournalReport }) {
                 </div>
               )}
 
-              <div className="bg-[#222222] rounded-lg p-3 border border-[#333333]">
+              <div className="bg-gray-50 dark:bg-[#222222] rounded-lg p-3 border border-gray-200 dark:border-[#333333]">
                 <span className="text-xs font-mono text-gray-500 uppercase">Pattern Insight</span>
-                <p className="text-sm text-gray-300 mt-1">{report.aiAnalysis.patternInsight}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{report.aiAnalysis.patternInsight}</p>
               </div>
             </div>
           )}
@@ -436,18 +436,18 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
   };
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#D4A017]/30 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/30 rounded-xl overflow-hidden">
       <button
         onClick={() => {
           setExpanded(!expanded);
           if (!expanded && !review && weekReports.length > 0) fetchReview();
         }}
-        className="w-full text-left p-4 hover:bg-[#222222] transition-colors"
+        className="w-full text-left p-4 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <TrendingUp className="h-5 w-5 text-[#D4A017]" />
-            <h3 className="font-bold font-mono uppercase tracking-wider text-white">
+            <h3 className="font-bold font-mono uppercase tracking-wider text-gray-900 dark:text-white">
               Weekly Review
             </h3>
             <span className="text-xs text-gray-500">
@@ -463,19 +463,19 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
       </button>
 
       {expanded && (
-        <div className="border-t border-[#333333] p-4 space-y-4">
+        <div className="border-t border-gray-200 dark:border-[#333333] p-4 space-y-4">
           {/* Quick stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">{weekReports.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekReports.length}</p>
               <p className="text-xs font-mono text-gray-500 uppercase">Reports</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">{uniqueTechniques.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{uniqueTechniques.length}</p>
               <p className="text-xs font-mono text-gray-500 uppercase">Techniques</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">{avgOutcome}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgOutcome}</p>
               <p className="text-xs font-mono text-gray-500 uppercase">Avg Outcome</p>
             </div>
           </div>
@@ -484,14 +484,14 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
           {loading && (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="h-6 w-6 text-[#D4A017] animate-spin" />
-              <span className="ml-2 text-gray-400 text-sm">Generating weekly review...</span>
+              <span className="ml-2 text-gray-500 dark:text-gray-400 text-sm">Generating weekly review...</span>
             </div>
           )}
 
           {review && !loading && (
             <div className="space-y-3 pt-2">
-              <div className="bg-[#222222] rounded-lg p-3 border border-[#333333]">
-                <p className="text-sm text-gray-300">{review.summary}</p>
+              <div className="bg-gray-50 dark:bg-[#222222] rounded-lg p-3 border border-gray-200 dark:border-[#333333]">
+                <p className="text-sm text-gray-600 dark:text-gray-300">{review.summary}</p>
               </div>
 
               {review.strengths?.length > 0 && (
@@ -519,7 +519,7 @@ function WeeklyReviewSection({ reports }: { reports: JournalReport[] }) {
               {review.recommendation && (
                 <div className="bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg p-3">
                   <span className="text-xs font-mono text-[#D4A017] uppercase">Recommendation</span>
-                  <p className="text-sm text-gray-300 mt-1">{review.recommendation}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{review.recommendation}</p>
                 </div>
               )}
             </div>
@@ -651,7 +651,7 @@ export default function JournalPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Field Reports</h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             Log real-world interactions, track techniques, and get AI tactical feedback.
           </p>
         </div>
@@ -666,19 +666,19 @@ export default function JournalPage() {
 
       {/* Stats Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
-          <p className="text-2xl font-bold text-white">{reports.length}</p>
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{reports.length}</p>
           <p className="text-xs font-mono text-gray-500 uppercase">Total Reports</p>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <p className="text-2xl font-bold text-blue-400">{weekReports.length}</p>
           <p className="text-xs font-mono text-gray-500 uppercase">This Week</p>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <p className="text-2xl font-bold text-green-400">{winRate}%</p>
           <p className="text-xs font-mono text-gray-500 uppercase">Win Rate (4-5 stars)</p>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <p className="text-2xl font-bold text-[#D4A017] truncate">{mostUsed}</p>
           <p className="text-xs font-mono text-gray-500 uppercase">Most Used</p>
         </div>
@@ -690,13 +690,13 @@ export default function JournalPage() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             placeholder="Search reports, techniques, people..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
           />
         </div>
         <div className="flex gap-2">
@@ -707,7 +707,7 @@ export default function JournalPage() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 timeFilter === f
                   ? 'bg-[#D4A017] text-[#0A0A0A]'
-                  : 'bg-[#222222] text-gray-300 border border-[#333333] hover:border-[#D4A017]'
+                  : 'bg-gray-50 dark:bg-[#222222] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#333333] hover:border-[#D4A017]'
               }`}
             >
               {f === 'all' ? 'All' : f === 'week' ? 'This Week' : 'This Month'}
@@ -735,7 +735,7 @@ export default function JournalPage() {
         <div className="text-center py-12">
           {searchTerm || timeFilter !== 'all' ? (
             <div>
-              <p className="text-gray-400 text-lg">No reports match your filters</p>
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No reports match your filters</p>
               <p className="text-gray-500 text-sm mt-2">Try adjusting your search or time filter</p>
             </div>
           ) : (
@@ -743,7 +743,7 @@ export default function JournalPage() {
               <Calendar className="h-16 w-16 text-[#333333] mx-auto" />
               <div>
                 <h3 className="text-xl font-bold text-[#D4A017] mb-2">Start Logging Field Reports</h3>
-                <p className="text-gray-400 max-w-md mx-auto">
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
                   After every real-world interaction where you used influence techniques, log it here.
                   The AI will debrief you and track your progress over time.
                 </p>

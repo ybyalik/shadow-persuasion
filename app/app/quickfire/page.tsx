@@ -73,7 +73,7 @@ export default function QuickfirePage() {
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider flex items-center gap-3">
           <span className="text-[#D4A017]">&#9889;</span> Quick-Fire Mode
         </h1>
-        <p className="text-gray-400 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           Real-time tactical responses. Type your situation, get exact words in seconds.
         </p>
       </header>
@@ -85,7 +85,7 @@ export default function QuickfirePage() {
             onChange={(e) => setSituation(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="I'm in a meeting and my boss just..."
-            className="w-full h-32 bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 text-white text-lg placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
+            className="w-full h-32 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 text-gray-900 dark:text-white text-lg placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-none"
             autoFocus
           />
 
@@ -106,7 +106,7 @@ export default function QuickfirePage() {
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 placeholder="e.g. My manager Sarah, tends to be passive-aggressive"
-                className="w-full mt-2 bg-[#1A1A1A] border border-[#333333] rounded-lg p-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
+                className="w-full mt-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
               />
             )}
           </div>
@@ -120,7 +120,7 @@ export default function QuickfirePage() {
           </button>
 
           <p className="text-center text-xs text-gray-600">
-            Press <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333333] rounded text-gray-400 text-xs">Cmd+Enter</kbd> to submit
+            Press <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded text-gray-500 dark:text-gray-400 text-xs">Cmd+Enter</kbd> to submit
           </p>
         </div>
       )}
@@ -143,7 +143,7 @@ export default function QuickfirePage() {
       {response && (
         <div className="space-y-4">
           {/* SAY THIS */}
-          <div className="bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">
                 Say This:
@@ -155,38 +155,38 @@ export default function QuickfirePage() {
                 {copied ? '[ COPIED ]' : '[ COPY ]'}
               </button>
             </div>
-            <p className="text-white text-xl leading-relaxed">
+            <p className="text-gray-900 dark:text-white text-xl leading-relaxed">
               &ldquo;{response.sayThis}&rdquo;
             </p>
           </div>
 
           {/* WHY */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-            <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
+            <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
               Why:
             </span>
-            <p className="text-gray-300 mt-1 text-sm">{response.why}</p>
+            <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">{response.why}</p>
           </div>
 
           {/* AVOID */}
-          <div className="bg-[#1A1A1A] border border-red-900/50 rounded-lg p-4">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-red-900/50 rounded-lg p-4">
             <span className="font-mono text-xs uppercase tracking-wider text-red-400 font-bold">
               Avoid:
             </span>
-            <p className="text-gray-300 mt-1 text-sm">{response.avoid}</p>
+            <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">{response.avoid}</p>
           </div>
 
           {/* IF IT BACKFIRES */}
-          <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
             <span className="font-mono text-xs uppercase tracking-wider text-yellow-600 font-bold">
               If It Backfires:
             </span>
-            <p className="text-gray-300 mt-1 text-sm">&ldquo;{response.ifBackfires}&rdquo;</p>
+            <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">&ldquo;{response.ifBackfires}&rdquo;</p>
           </div>
 
           <button
             onClick={handleReset}
-            className="w-full py-3 bg-[#1A1A1A] border border-[#333333] text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
+            className="w-full py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 font-mono text-sm uppercase tracking-wider rounded-lg hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
           >
             New Situation
           </button>

@@ -180,12 +180,12 @@ function CompletionForm({
   };
 
   const inputCls =
-    'w-full px-3 py-2 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]';
+    'w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4 pt-4 border-t border-[#333333]">
+    <form onSubmit={handleSubmit} className="space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-[#333333]">
       <div>
-        <label className="block text-sm font-mono uppercase tracking-wider text-gray-400 mb-1">
+        <label className="block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
           What happened? <span className="text-red-400">*</span>
         </label>
         <textarea
@@ -198,7 +198,7 @@ function CompletionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-mono uppercase tracking-wider text-gray-400 mb-2">
+        <label className="block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
           Did it work?
         </label>
         <div className="flex gap-3">
@@ -214,7 +214,7 @@ function CompletionForm({
                     : option === 'Somewhat'
                       ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50'
                       : 'bg-red-400/20 text-red-400 border-red-400/50'
-                  : 'bg-[#222222] text-gray-400 border-[#333333] hover:border-[#555555]'
+                  : 'bg-gray-50 dark:bg-[#222222] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-[#333333] hover:border-gray-400 dark:hover:border-[#555555]'
               }`}
             >
               {option}
@@ -224,7 +224,7 @@ function CompletionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-mono uppercase tracking-wider text-gray-400 mb-1">
+        <label className="block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
           Quick Notes
         </label>
         <textarea
@@ -245,7 +245,7 @@ function CompletionForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2.5 border border-[#333333] rounded-lg text-gray-300 hover:bg-[#222222] transition-colors"
+          className="px-6 py-2.5 border border-gray-200 dark:border-[#333333] rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
         >
           Cancel
         </button>
@@ -397,14 +397,14 @@ export default function MissionsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Daily Missions</h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             Personalized daily challenges to sharpen your influence skills in the real world.
           </p>
         </div>
-        <div className="flex items-center gap-3 bg-[#1A1A1A] border border-[#D4A017]/30 rounded-xl px-5 py-3">
+        <div className="flex items-center gap-3 bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/30 rounded-xl px-5 py-3">
           <Flame className="h-7 w-7 text-orange-500" />
           <div>
-            <p className="text-2xl font-bold text-white leading-none">{streakInfo.current}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{streakInfo.current}</p>
             <p className="text-xs font-mono text-gray-500 uppercase">Day Streak</p>
           </div>
         </div>
@@ -412,7 +412,7 @@ export default function MissionsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-orange-400">{streakInfo.current}</p>
@@ -421,7 +421,7 @@ export default function MissionsPage() {
             <Flame className="h-6 w-6 text-orange-400" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-purple-400">{streakInfo.longest}</p>
@@ -430,7 +430,7 @@ export default function MissionsPage() {
             <Star className="h-6 w-6 text-purple-400" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-[#D4A017]">{data.totalXP}</p>
@@ -439,7 +439,7 @@ export default function MissionsPage() {
             <Trophy className="h-6 w-6 text-[#D4A017]" />
           </div>
         </div>
-        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333333]">
+        <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-lg border border-gray-200 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-green-400">{totalCompleted}</p>
@@ -451,7 +451,7 @@ export default function MissionsPage() {
       </div>
 
       {/* Today's Mission */}
-      <div className="bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl overflow-hidden">
         <div className="bg-gradient-to-r from-[#D4A017]/10 to-transparent p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -467,8 +467,8 @@ export default function MissionsPage() {
                 </span>
               </div>
 
-              <h2 className="text-xl font-bold text-white mb-2">{todayMission.title}</h2>
-              <p className="text-gray-300 leading-relaxed">{todayMission.description}</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{todayMission.title}</h2>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{todayMission.description}</p>
 
               <div className="flex items-center gap-4 mt-4 text-sm">
                 <span className="text-gray-500">
@@ -501,13 +501,13 @@ export default function MissionsPage() {
             <div className="mt-6 space-y-3">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-green-400" />
-                <span className="font-bold text-white text-lg">Grade: {gradeResult.grade}</span>
+                <span className="font-bold text-gray-900 dark:text-white text-lg">Grade: {gradeResult.grade}</span>
                 <span className="text-[#D4A017] font-bold">+{gradeResult.xpEarned} XP</span>
               </div>
-              <p className="text-gray-300 text-sm">{gradeResult.feedback}</p>
-              <div className="bg-[#222222] rounded-lg p-3 border border-[#333333]">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{gradeResult.feedback}</p>
+              <div className="bg-gray-50 dark:bg-[#222222] rounded-lg p-3 border border-gray-200 dark:border-[#333333]">
                 <span className="text-xs font-mono text-gray-500 uppercase">Insight</span>
-                <p className="text-sm text-gray-300 mt-1">{gradeResult.insight}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{gradeResult.insight}</p>
               </div>
             </div>
           ) : showCompletionForm ? (
@@ -529,13 +529,13 @@ export default function MissionsPage() {
       </div>
 
       {/* Previous Missions */}
-      <div className="bg-[#1A1A1A] border border-[#333333] rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl overflow-hidden">
         <button
           onClick={() => setShowPrevious(!showPrevious)}
-          className="w-full text-left p-4 hover:bg-[#222222] transition-colors"
+          className="w-full text-left p-4 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
         >
           <div className="flex items-center justify-between">
-            <h3 className="font-bold font-mono uppercase tracking-wider text-white">
+            <h3 className="font-bold font-mono uppercase tracking-wider text-gray-900 dark:text-white">
               Previous Missions (Last 7 Days)
             </h3>
             {showPrevious ? (
@@ -547,7 +547,7 @@ export default function MissionsPage() {
         </button>
 
         {showPrevious && (
-          <div className="border-t border-[#333333]">
+          <div className="border-t border-gray-200 dark:border-[#333333]">
             {previousMissions.map(({ date, mission, completion }) => {
               const dateObj = new Date(date + 'T12:00:00');
               const dayStr = dateObj.toLocaleDateString('en-US', {
@@ -559,7 +559,7 @@ export default function MissionsPage() {
               return (
                 <div
                   key={date}
-                  className="flex items-center justify-between px-4 py-3 border-b border-[#333333] last:border-b-0"
+                  className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#333333] last:border-b-0"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {completion ? (
@@ -568,14 +568,14 @@ export default function MissionsPage() {
                       <XCircle className="h-5 w-5 text-gray-600 shrink-0" />
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm text-white truncate">{mission.title}</p>
+                      <p className="text-sm text-gray-900 dark:text-white truncate">{mission.title}</p>
                       <p className="text-xs text-gray-500">{dayStr}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {completion ? (
                       <>
-                        <span className="text-sm font-bold text-white">{completion.grade}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{completion.grade}</span>
                         <span className="text-xs text-[#D4A017]">+{completion.xpEarned} XP</span>
                       </>
                     ) : (
