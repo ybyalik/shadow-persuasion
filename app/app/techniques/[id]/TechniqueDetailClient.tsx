@@ -467,11 +467,100 @@ export default function TechniqueDetailClient({ technique }: { technique: Techni
       )}
 
       {mode === 'examples' && (
-        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-          <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Real-World Examples</h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Examples section coming soon - this will show real conversations and scripts demonstrating {technique.name} in action.
-          </p>
+        <div className="space-y-6">
+          <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Real-World Examples
+          </h2>
+
+          {/* Example 1: derived from whenToUse */}
+          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono uppercase">Scenario 1</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Professional Setting</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">The Situation</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {technique.whenToUse} You&apos;re in a meeting where you need to shift the dynamic in your favor using <strong className="text-[#D4A017]">{technique.name}</strong>.
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-[#0A0A0A] rounded-lg p-4 border-l-2 border-[#D4A017]">
+              <h3 className="text-xs font-mono uppercase text-[#D4A017] mb-2">What You Say</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-200 italic">
+                &ldquo;{technique.howTo[0]?.replace(/\.$/, '')} &mdash; {technique.howTo.length > 1 ? technique.howTo[1].charAt(0).toLowerCase() + technique.howTo[1].slice(1).replace(/\.$/, '') : 'and observe their response'}.&rdquo;
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xs font-mono uppercase text-green-400 mb-1">Why It Works</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {technique.description} By applying this at the right moment, you take control of the interaction before the other party can establish their own frame.
+              </p>
+            </div>
+          </div>
+
+          {/* Example 2: derived from howTo steps */}
+          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono uppercase">Scenario 2</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Everyday Conversation</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">The Situation</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                A friend is trying to convince you of something you disagree with. Instead of arguing, you deploy <strong className="text-[#D4A017]">{technique.name}</strong> to redirect the conversation.
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-[#0A0A0A] rounded-lg p-4 border-l-2 border-[#D4A017]">
+              <h3 className="text-xs font-mono uppercase text-[#D4A017] mb-2">What You Say</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-200 italic">
+                &ldquo;I hear what you&apos;re saying. Let me try something &mdash; {technique.howTo[technique.howTo.length - 1]?.charAt(0).toLowerCase()}{technique.howTo[technique.howTo.length - 1]?.slice(1).replace(/\.$/, '')}. See how that changes things?&rdquo;
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xs font-mono uppercase text-green-400 mb-1">Why It Works</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Rather than creating resistance through direct opposition, {technique.name.toLowerCase()} lets you influence the conversation subtly. The other person feels heard while you guide the direction.
+              </p>
+            </div>
+          </div>
+
+          {/* Example 3: high-stakes derived from whenNotToUse (showing boundary awareness) */}
+          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono uppercase">Scenario 3</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">High-Stakes Negotiation</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">The Situation</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                You&apos;re negotiating terms with a potential client who is pushing back hard. You need to close this deal, but you also need to deploy <strong className="text-[#D4A017]">{technique.name}</strong> carefully &mdash; remember, {technique.whenNotToUse.charAt(0).toLowerCase()}{technique.whenNotToUse.slice(1)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-[#0A0A0A] rounded-lg p-4 border-l-2 border-[#D4A017]">
+              <h3 className="text-xs font-mono uppercase text-[#D4A017] mb-2">What You Say</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-200 italic">
+                &ldquo;I understand your concerns. {technique.howTo[0]} Then, {technique.howTo.length > 2 ? technique.howTo[2].charAt(0).toLowerCase() + technique.howTo[2].slice(1).replace(/\.$/, '') : technique.howTo[0].charAt(0).toLowerCase() + technique.howTo[0].slice(1).replace(/\.$/, '')}.&rdquo;
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xs font-mono uppercase text-green-400 mb-1">Why It Works</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                In high-pressure situations, {technique.name.toLowerCase()} is most effective when paired with genuine empathy. You acknowledge their position while systematically advancing your own. The key is timing &mdash; deploy it after you&apos;ve established rapport, not before.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA to practice */}
+          <div className="text-center pt-2">
+            <button
+              onClick={startPractice}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg text-sm uppercase tracking-wider hover:bg-[#E8B030] transition-all hover:scale-105"
+            >
+              <Play className="h-4 w-4" />
+              Practice {technique.name} Now
+            </button>
+          </div>
         </div>
       )}
     </div>

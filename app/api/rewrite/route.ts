@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       : '';
     const enhancedPrompt = REWRITE_SYSTEM_PROMPT + goalInstruction + knowledgeContext;
 
-    console.log('[REWRITE API] Calling OpenRouter with model: openai/gpt-4o');
+    console.log('[REWRITE]', 'Calling OpenRouter');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -86,32 +86,24 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-    console.log('[REWRITE API] OpenRouter response status:', response.status);
-    console.log('[REWRITE API] Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('[REWRITE]', 'OpenRouter response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[REWRITE API] OpenRouter error:', response.status, errorText);
+      console.error('[REWRITE]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
     const data = await response.json();
-    console.log('[REWRITE API] OpenRouter response structure:', {
-      choices: data.choices?.length || 0,
-      hasContent: !!data.choices?.[0]?.message?.content
-    });
-    
     const content = data.choices[0].message.content;
-    console.log('[REWRITE API] Raw AI content (first 200 chars):', content.slice(0, 200));
 
     // Parse the JSON response
     try {
       const result = JSON.parse(content);
-      console.log('[REWRITE API] Successfully parsed JSON, versions count:', result.versions?.length || 0);
       return NextResponse.json(result);
     } catch (parseError) {
-      console.error('[REWRITE API] Failed to parse AI response as JSON. Full content:', content);
-      console.error('[REWRITE API] Parse error:', parseError);
+      console.error('[REWRITE]', 'Failed to parse AI response as JSON:', content);
+      console.error('[REWRITE]', 'Parse error:', parseError);
       
       // Return a fallback response
       return NextResponse.json({
@@ -124,7 +116,7 @@ export async function POST(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error('[REWRITE API] Error:', error);
+    console.error('[REWRITE]', error);
     return NextResponse.json({ error: 'Failed to rewrite message.' }, { status: 500 });
   }
 }

@@ -28,13 +28,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[PROFILER PEOPLE GET] Error:', error);
+      console.error('[PROFILER_PEOPLE]', 'Error fetching profiles:', error);
       return NextResponse.json({ error: 'Failed to fetch people profiles' }, { status: 500 });
     }
 
     return NextResponse.json({ profiles: data || [] });
   } catch (error) {
-    console.error('[PROFILER PEOPLE GET] Error:', error);
+    console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -52,13 +52,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[PROFILER PEOPLE POST] Error:', error);
+      console.error('[PROFILER_PEOPLE]', 'Error creating profile:', error);
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
     }
 
     return NextResponse.json({ profile: data });
   } catch (error) {
-    console.error('[PROFILER PEOPLE POST] Error:', error);
+    console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -85,13 +85,13 @@ export async function PUT(req: NextRequest) {
     const { data, error } = await query.select().single();
 
     if (error) {
-      console.error('[PROFILER PEOPLE PUT] Error:', error);
+      console.error('[PROFILER_PEOPLE]', 'Error updating profile:', error);
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
     }
 
     return NextResponse.json({ profile: data });
   } catch (error) {
-    console.error('[PROFILER PEOPLE PUT] Error:', error);
+    console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -118,13 +118,13 @@ export async function DELETE(req: NextRequest) {
     const { error } = await query;
 
     if (error) {
-      console.error('[PROFILER PEOPLE DELETE] Error:', error);
+      console.error('[PROFILER_PEOPLE]', 'Error deleting profile:', error);
       return NextResponse.json({ error: 'Failed to delete profile' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[PROFILER PEOPLE DELETE] Error:', error);
+    console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

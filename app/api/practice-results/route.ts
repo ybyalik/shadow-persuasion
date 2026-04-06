@@ -40,13 +40,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching practice results:', error);
+      console.error('[PRACTICE_RESULTS]', 'Error fetching practice results:', error);
       return NextResponse.json({ error: 'Failed to fetch practice results' }, { status: 500 });
     }
 
     return NextResponse.json({ results: data || [] });
   } catch (error) {
-    console.error('[PRACTICE RESULTS GET] Error:', error);
+    console.error('[PRACTICE_RESULTS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -76,13 +76,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error saving practice result:', error);
+      console.error('[PRACTICE_RESULTS]', 'Error saving practice result:', error);
       return NextResponse.json({ error: 'Failed to save practice result' }, { status: 500 });
     }
 
     return NextResponse.json({ result: data });
   } catch (error) {
-    console.error('[PRACTICE RESULTS POST] Error:', error);
+    console.error('[PRACTICE_RESULTS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

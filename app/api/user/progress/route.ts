@@ -194,7 +194,7 @@ export async function GET(req: NextRequest) {
       recentActivity: activity.slice(0, 20),
     });
   } catch (error) {
-    console.error('[USER PROGRESS GET] Error:', error);
+    console.error('[USER_PROGRESS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

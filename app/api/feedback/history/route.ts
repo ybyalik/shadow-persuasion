@@ -28,13 +28,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[FEEDBACK HISTORY GET] Error:', error);
+      console.error('[FEEDBACK_HISTORY]', 'Error fetching feedback:', error);
       return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
     }
 
     return NextResponse.json({ feedback: data || [] });
   } catch (error) {
-    console.error('[FEEDBACK HISTORY GET] Error:', error);
+    console.error('[FEEDBACK_HISTORY]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -52,13 +52,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[FEEDBACK HISTORY POST] Error:', error);
+      console.error('[FEEDBACK_HISTORY]', 'Error saving feedback:', error);
       return NextResponse.json({ error: 'Failed to save feedback' }, { status: 500 });
     }
 
     return NextResponse.json({ feedback: data });
   } catch (error) {
-    console.error('[FEEDBACK HISTORY POST] Error:', error);
+    console.error('[FEEDBACK_HISTORY]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

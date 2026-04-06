@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     const { data: sessions, error } = await query;
 
     if (error) {
-      console.error('Error fetching sessions:', error);
+      console.error('[CONVERSATIONS]', 'Error fetching sessions:', error);
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ sessions: sessionsWithPreview });
   } catch (error) {
-    console.error('[CONVERSATIONS GET] Error:', error);
+    console.error('[CONVERSATIONS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -87,13 +87,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error creating session:', error);
+      console.error('[CONVERSATIONS]', 'Error creating session:', error);
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 
     return NextResponse.json({ session: data });
   } catch (error) {
-    console.error('[CONVERSATIONS POST] Error:', error);
+    console.error('[CONVERSATIONS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -114,13 +114,13 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting session:', error);
+      console.error('[CONVERSATIONS]', 'Error deleting session:', error);
       return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[CONVERSATIONS DELETE] Error:', error);
+    console.error('[CONVERSATIONS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

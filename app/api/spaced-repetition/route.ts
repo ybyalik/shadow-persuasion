@@ -34,13 +34,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[SPACED REPETITION GET] Error:', error);
+      console.error('[SPACED_REPETITION]', 'Error fetching SR cards:', error);
       return NextResponse.json({ error: 'Failed to fetch SR cards' }, { status: 500 });
     }
 
     return NextResponse.json({ cards: data || [] });
   } catch (error) {
-    console.error('[SPACED REPETITION GET] Error:', error);
+    console.error('[SPACED_REPETITION]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -71,13 +71,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[SPACED REPETITION POST] Error:', error);
+      console.error('[SPACED_REPETITION]', 'Error updating SR card:', error);
       return NextResponse.json({ error: 'Failed to update SR card' }, { status: 500 });
     }
 
     return NextResponse.json({ card: data });
   } catch (error) {
-    console.error('[SPACED REPETITION POST] Error:', error);
+    console.error('[SPACED_REPETITION]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

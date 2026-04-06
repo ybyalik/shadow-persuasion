@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[MISSION COMPLETIONS GET] Error:', error);
+      console.error('[MISSION_COMPLETIONS]', 'Error fetching completions:', error);
       return NextResponse.json({ error: 'Failed to fetch completions' }, { status: 500 });
     }
 
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ completions, streak });
   } catch (error) {
-    console.error('[MISSION COMPLETIONS GET] Error:', error);
+    console.error('[MISSION_COMPLETIONS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -107,13 +107,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[MISSION COMPLETIONS POST] Error:', error);
+      console.error('[MISSION_COMPLETIONS]', 'Error saving completion:', error);
       return NextResponse.json({ error: 'Failed to save completion' }, { status: 500 });
     }
 
     return NextResponse.json({ completion: data });
   } catch (error) {
-    console.error('[MISSION COMPLETIONS POST] Error:', error);
+    console.error('[MISSION_COMPLETIONS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

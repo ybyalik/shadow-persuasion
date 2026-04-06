@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (error) {
-    console.error('[PROFILER API] Error:', error);
+    console.error('[PROFILER]', error);
     return NextResponse.json(
       { error: 'Failed to process profiler request.' },
       { status: 500 }
@@ -125,7 +125,7 @@ Analyze this interaction and provide an updated psychological profile.`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenRouter error:', response.status, errorText);
+    console.error('[PROFILER]', 'OpenRouter error:', response.status, errorText);
     return NextResponse.json({ error: 'AI service error' }, { status: 502 });
   }
 
@@ -136,10 +136,10 @@ Analyze this interaction and provide an updated psychological profile.`;
     const analysis = JSON.parse(content);
     return NextResponse.json(analysis);
   } catch {
-    console.error('Failed to parse AI response:', content);
+    console.error('[PROFILER]', 'Failed to parse AI analysis:', content);
     return NextResponse.json(
       { error: 'Failed to parse AI analysis' },
-      { status: 500 }
+      { status: 502 }
     );
   }
 }
@@ -224,7 +224,7 @@ Create a detailed, actionable strategy playbook for this person.`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenRouter error:', response.status, errorText);
+    console.error('[PROFILER]', 'OpenRouter error:', response.status, errorText);
     return NextResponse.json({ error: 'AI service error' }, { status: 502 });
   }
 
@@ -235,10 +235,10 @@ Create a detailed, actionable strategy playbook for this person.`;
     const playbook = JSON.parse(content);
     return NextResponse.json(playbook);
   } catch {
-    console.error('Failed to parse AI response:', content);
+    console.error('[PROFILER]', 'Failed to parse AI playbook:', content);
     return NextResponse.json(
       { error: 'Failed to parse AI playbook' },
-      { status: 500 }
+      { status: 502 }
     );
   }
 }

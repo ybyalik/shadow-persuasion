@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 import { scenarios } from '@/lib/scenarios';
 import { searchKnowledge } from '@/lib/rag';
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (!scenario) {
-      return new Response('Scenario not found.', { status: 404 });
+      return NextResponse.json({ error: 'Scenario not found.' }, { status: 404 });
     }
 
     // Extract latest user message for RAG search
@@ -66,12 +66,12 @@ The coaching annotation must be valid JSON inside the COACHING comment. Score 1-
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter error:', response.status, errorText);
-      return new Response(`AI service error: ${response.status}`, { status: 502 });
+      console.error('[SCENARIOS]', 'OpenRouter error:', response.status, errorText);
+      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
     if (!response.body) {
-      return new Response('No response body', { status: 502 });
+      return NextResponse.json({ error: 'No response body from AI service' }, { status: 502 });
     }
 
     const encoder = new TextEncoder();
@@ -101,7 +101,7 @@ The coaching annotation must be valid JSON inside the COACHING comment. Score 1-
             }
           }
         } catch (e) {
-          console.error('Stream error:', e);
+          console.error('[SCENARIOS]', 'Stream error:', e);
         } finally {
           controller.close();
         }
@@ -113,7 +113,7 @@ The coaching annotation must be valid JSON inside the COACHING comment. Score 1-
     });
 
   } catch (error) {
-    console.error('[SCENARIOS API] Error:', error);
-    return new Response('Failed to get scenario response.', { status: 500 });
+    console.error('[SCENARIOS]', error);
+    return NextResponse.json({ error: 'Failed to get scenario response.' }, { status: 500 });
   }
 }

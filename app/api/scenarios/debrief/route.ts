@@ -86,7 +86,7 @@ Be specific. Reference actual messages from the conversation. Ground your analys
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter debrief error:', response.status, errorText);
+      console.error('[DEBRIEF]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -101,12 +101,12 @@ Be specific. Reference actual messages from the conversation. Ground your analys
       const debrief = JSON.parse(content);
       return NextResponse.json(debrief);
     } catch {
-      console.error('Failed to parse debrief JSON:', content);
+      console.error('[DEBRIEF]', 'Failed to parse debrief JSON:', content);
       return NextResponse.json({ error: 'Invalid debrief response' }, { status: 502 });
     }
 
   } catch (error) {
-    console.error('[DEBRIEF API] Error:', error);
+    console.error('[DEBRIEF]', error);
     return NextResponse.json({ error: 'Failed to generate debrief.' }, { status: 500 });
   }
 }

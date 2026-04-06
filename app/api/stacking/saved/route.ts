@@ -28,13 +28,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[STACKING SAVED GET] Error:', error);
+      console.error('[STACKING_SAVED]', 'Error fetching saved stacks:', error);
       return NextResponse.json({ error: 'Failed to fetch saved stacks' }, { status: 500 });
     }
 
     return NextResponse.json({ stacks: data || [] });
   } catch (error) {
-    console.error('[STACKING SAVED GET] Error:', error);
+    console.error('[STACKING_SAVED]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -52,13 +52,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[STACKING SAVED POST] Error:', error);
+      console.error('[STACKING_SAVED]', 'Error saving stack:', error);
       return NextResponse.json({ error: 'Failed to save stack' }, { status: 500 });
     }
 
     return NextResponse.json({ stack: data });
   } catch (error) {
-    console.error('[STACKING SAVED POST] Error:', error);
+    console.error('[STACKING_SAVED]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -85,13 +85,13 @@ export async function DELETE(req: NextRequest) {
     const { error } = await query;
 
     if (error) {
-      console.error('[STACKING SAVED DELETE] Error:', error);
+      console.error('[STACKING_SAVED]', 'Error deleting stack:', error);
       return NextResponse.json({ error: 'Failed to delete stack' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[STACKING SAVED DELETE] Error:', error);
+    console.error('[STACKING_SAVED]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

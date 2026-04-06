@@ -85,7 +85,7 @@ Based on the user's goal and current skill gaps, recommend 3-5 techniques and cr
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[RECOMMENDATIONS API] OpenRouter error:', response.status, errorText);
+      console.error('[RECOMMENDATIONS]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -96,11 +96,11 @@ Based on the user's goal and current skill gaps, recommend 3-5 techniques and cr
       const result = JSON.parse(content);
       return NextResponse.json(result);
     } catch (parseError) {
-      console.error('[RECOMMENDATIONS API] JSON parse error:', parseError);
+      console.error('[RECOMMENDATIONS]', 'JSON parse error:', parseError);
       return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
   } catch (error) {
-    console.error('[RECOMMENDATIONS API] Error:', error);
+    console.error('[RECOMMENDATIONS]', error);
     return NextResponse.json({ error: 'Failed to generate recommendations.' }, { status: 500 });
   }
 }

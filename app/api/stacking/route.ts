@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter error:', response.status, errorText);
+      console.error('[STACKING]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     const parsed = JSON.parse(content);
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error('[STACKING API] Error:', error);
+    console.error('[STACKING]', error);
     return NextResponse.json(
       { error: 'Failed to process stacking request.' },
       { status: 500 }

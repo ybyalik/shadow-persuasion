@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTENT:\n${ragContext}` : '';
     const enhancedPrompt = PRACTICE_SYSTEM_PROMPT + knowledgeContext;
 
-    console.log('[TECHNIQUE-PRACTICE API] Generating scenarios for:', techniqueName);
+    console.log('[TECHNIQUE_PRACTICE]', 'Generating scenarios for:', techniqueName);
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[TECHNIQUE-PRACTICE API] OpenRouter error:', response.status, errorText);
+      console.error('[TECHNIQUE_PRACTICE]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
     // Parse the JSON response
     try {
       const result = JSON.parse(content);
-      console.log('[TECHNIQUE-PRACTICE API] Generated', result.scenarios?.length || 0, 'scenarios');
+      console.log('[TECHNIQUE_PRACTICE]', 'Generated', result.scenarios?.length || 0, 'scenarios');
       return NextResponse.json(result);
     } catch (parseError) {
-      console.error('[TECHNIQUE-PRACTICE API] Failed to parse AI response as JSON:', content);
+      console.error('[TECHNIQUE_PRACTICE]', 'Failed to parse AI response as JSON:', content);
       
       // Return fallback scenarios if parsing fails
       return NextResponse.json({
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error('[TECHNIQUE-PRACTICE API] Error:', error);
+    console.error('[TECHNIQUE_PRACTICE]', error);
     return NextResponse.json({ error: 'Failed to generate practice scenarios.' }, { status: 500 });
   }
 }

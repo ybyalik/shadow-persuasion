@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    console.error('[JOURNAL API] Error:', error);
+    console.error('[JOURNAL]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -75,7 +75,7 @@ Notes: ${report.notes || 'None'}`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenRouter error:', response.status, errorText);
+    console.error('[JOURNAL]', 'OpenRouter error:', response.status, errorText);
     return NextResponse.json({ error: 'AI service error' }, { status: 502 });
   }
 
@@ -86,7 +86,8 @@ Notes: ${report.notes || 'None'}`;
     const analysis = JSON.parse(content);
     return NextResponse.json(analysis);
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response', raw: content }, { status: 500 });
+    console.error('[JOURNAL]', 'Failed to parse debrief AI response:', content);
+    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 502 });
   }
 }
 
@@ -155,7 +156,7 @@ Respond with a JSON object containing exactly these keys:
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenRouter error:', response.status, errorText);
+    console.error('[JOURNAL]', 'OpenRouter error:', response.status, errorText);
     return NextResponse.json({ error: 'AI service error' }, { status: 502 });
   }
 
@@ -166,6 +167,7 @@ Respond with a JSON object containing exactly these keys:
     const analysis = JSON.parse(content);
     return NextResponse.json(analysis);
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response', raw: content }, { status: 500 });
+    console.error('[JOURNAL]', 'Failed to parse weekly review AI response:', content);
+    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 502 });
   }
 }

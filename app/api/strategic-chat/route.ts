@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
           .single();
         activeSessionId = newSession?.id;
       } catch (e) {
-        console.error('Failed to create strategic session:', e);
+        console.error('[STRATEGIC_CHAT]', 'Failed to create session:', e);
       }
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       supabase
         .from('chat_messages')
         .insert({ session_id: activeSessionId, role: 'user', content: lastUserMsg.content })
-        .then(({ error }) => { if (error) console.error('Save user msg error:', error); });
+        .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save user msg error:', error); });
     }
 
     // Get the latest user message for knowledge search
@@ -110,7 +110,7 @@ Tailor all advice and tactics specifically to support this objective. Consider t
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter error:', response.status, errorText);
+      console.error('[STRATEGIC_CHAT]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -153,7 +153,7 @@ Tailor all advice and tactics specifically to support this objective. Consider t
                 content: cleanContent,
                 metadata: {},
               })
-              .then(({ error }) => { if (error) console.error('Save strategic assistant msg error:', error); });
+              .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save assistant msg error:', error); });
 
             supabase
               .from('chat_sessions')
@@ -177,7 +177,7 @@ Tailor all advice and tactics specifically to support this objective. Consider t
     });
 
   } catch (error) {
-    console.error('[STRATEGIC CHAT API] Error:', error);
+    console.error('[STRATEGIC_CHAT]', error);
     return NextResponse.json({ error: 'Failed to process strategic chat.' }, { status: 500 });
   }
 }

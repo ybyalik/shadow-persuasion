@@ -38,13 +38,13 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[JOURNAL REPORTS GET] Error:', error);
+      console.error('[JOURNAL_REPORTS]', 'Error fetching reports:', error);
       return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 });
     }
 
     return NextResponse.json({ reports: data || [] });
   } catch (error) {
-    console.error('[JOURNAL REPORTS GET] Error:', error);
+    console.error('[JOURNAL_REPORTS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -62,13 +62,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[JOURNAL REPORTS POST] Error:', error);
+      console.error('[JOURNAL_REPORTS]', 'Error creating report:', error);
       return NextResponse.json({ error: 'Failed to create report' }, { status: 500 });
     }
 
     return NextResponse.json({ report: data });
   } catch (error) {
-    console.error('[JOURNAL REPORTS POST] Error:', error);
+    console.error('[JOURNAL_REPORTS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -95,13 +95,13 @@ export async function DELETE(req: NextRequest) {
     const { error } = await query;
 
     if (error) {
-      console.error('[JOURNAL REPORTS DELETE] Error:', error);
+      console.error('[JOURNAL_REPORTS]', 'Error deleting report:', error);
       return NextResponse.json({ error: 'Failed to delete report' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[JOURNAL REPORTS DELETE] Error:', error);
+    console.error('[JOURNAL_REPORTS]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

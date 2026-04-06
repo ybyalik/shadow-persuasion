@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 import { searchKnowledge, getEmbedding, supabase } from '@/lib/rag';
 
@@ -81,12 +81,12 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter error:', response.status, errorText);
-      return new Response(`AI service error: ${response.status}`, { status: 502 });
+      console.error('[CHAT]', 'OpenRouter error:', response.status, errorText);
+      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
     if (!response.body) {
-      return new Response('No response body', { status: 502 });
+      return NextResponse.json({ error: 'No response body from AI service' }, { status: 502 });
     }
 
     const encoder = new TextEncoder();
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           .single();
         activeSessionId = newSession?.id;
       } catch (e) {
-        console.error('Failed to create session:', e);
+        console.error('[CHAT]', 'Failed to create session:', e);
       }
     }
 
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       supabase
         .from('chat_messages')
         .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content })
-        .then(({ error }) => { if (error) console.error('Save user msg error:', error); });
+        .then(({ error }) => { if (error) console.error('[CHAT]', 'Save user msg error:', error); });
     }
 
     let fullAssistantContent = '';
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (e) {
-          console.error('Stream error:', e);
+          console.error('[CHAT]', 'Stream error:', e);
         } finally {
           // Append sources as a special delimiter + JSON at the end
           if (ragResult.sources.length > 0) {
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
                 content: cleanContent,
                 metadata: ragResult.sources.length > 0 ? { sources: ragResult.sources } : {},
               })
-              .then(({ error }) => { if (error) console.error('Save assistant msg error:', error); });
+              .then(({ error }) => { if (error) console.error('[CHAT]', 'Save assistant msg error:', error); });
 
             supabase
               .from('chat_sessions')
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[CHAT API] Error:', error);
-    return new Response('Failed to get chat response.', { status: 500 });
+    console.error('[CHAT]', error);
+    return NextResponse.json({ error: 'Failed to get chat response.' }, { status: 500 });
   }
 }

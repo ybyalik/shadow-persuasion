@@ -69,7 +69,7 @@ Analyze this outcome and provide specific improvement suggestions.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[FEEDBACK API] OpenRouter error:', response.status, errorText);
+      console.error('[FEEDBACK]', 'OpenRouter error:', response.status, errorText);
       return NextResponse.json({ error: 'AI service error' }, { status: 502 });
     }
 
@@ -92,11 +92,11 @@ Analyze this outcome and provide specific improvement suggestions.`;
         },
       });
     } catch (parseError) {
-      console.error('[FEEDBACK API] JSON parse error:', parseError);
+      console.error('[FEEDBACK]', 'JSON parse error:', parseError);
       return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
   } catch (error) {
-    console.error('[FEEDBACK API] Error:', error);
+    console.error('[FEEDBACK]', error);
     return NextResponse.json({ error: 'Failed to process feedback.' }, { status: 500 });
   }
 }

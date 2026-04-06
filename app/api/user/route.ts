@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 = no rows found, which is fine for a new user
-      console.error('Error fetching user profile:', error);
+      console.error('[USER]', 'Error fetching user profile:', error);
       return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
     }
 
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     if (err instanceof Response) {
       return new NextResponse(err.body, { status: err.status, headers: err.headers });
     }
-    console.error('[USER GET] Error:', err);
+    console.error('[USER]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error upserting user profile:', error);
+      console.error('[USER]', 'Error upserting user profile:', error);
       return NextResponse.json({ error: 'Failed to save user profile' }, { status: 500 });
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof Response) {
       return new NextResponse(err.body, { status: err.status, headers: err.headers });
     }
-    console.error('[USER POST] Error:', err);
+    console.error('[USER]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Eye, MessageSquare, Swords, BookOpen, Flame, Zap, Target,
   Clock, ArrowRight, CheckCircle, FileText, MessageCircle,
+  Briefcase, Heart, DollarSign, Shield, Star, Lock, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -232,6 +233,67 @@ function DashboardSkeleton() {
 }
 
 /* ────────────────────────────────────────────
+   Onboarding Goals
+   ──────────────────────────────────────────── */
+
+const ONBOARDING_GOALS = [
+  {
+    id: 'negotiations',
+    label: 'Win Negotiations',
+    desc: 'Career, salary, promotions',
+    icon: Briefcase,
+    coachPrompt: 'Help me prepare for an upcoming negotiation',
+    trainingId: 'salary-negotiation',
+    techniqueCategory: 'Negotiation',
+  },
+  {
+    id: 'relationships',
+    label: 'Master Relationships',
+    desc: 'Dating, attraction, connection',
+    icon: Heart,
+    coachPrompt: 'I want to build deeper connections with people',
+    trainingId: 'first-date',
+    techniqueCategory: 'Rapport',
+  },
+  {
+    id: 'deals',
+    label: 'Close More Deals',
+    desc: 'Sales, clients, business',
+    icon: DollarSign,
+    coachPrompt: 'Help me close more sales and win clients',
+    trainingId: 'sales-pitch',
+    techniqueCategory: 'Influence',
+  },
+  {
+    id: 'difficult-people',
+    label: 'Handle Difficult People',
+    desc: 'Narcissists, manipulators, toxic dynamics',
+    icon: Shield,
+    coachPrompt: 'I need strategies for dealing with a difficult person',
+    trainingId: 'difficult-boss',
+    techniqueCategory: 'Defense',
+  },
+  {
+    id: 'influence',
+    label: 'Build Influence',
+    desc: 'Leadership, authority, social power',
+    icon: Star,
+    coachPrompt: 'I want to become more influential and authoritative',
+    trainingId: 'team-leadership',
+    techniqueCategory: 'Framing',
+  },
+  {
+    id: 'defense',
+    label: 'Defend Yourself',
+    desc: 'Detect manipulation, protect boundaries',
+    icon: Lock,
+    coachPrompt: 'Help me spot and counter manipulation tactics',
+    trainingId: 'manipulation-defense',
+    techniqueCategory: 'Defense',
+  },
+] as const;
+
+/* ────────────────────────────────────────────
    Dashboard Page
    ──────────────────────────────────────────── */
 
@@ -242,6 +304,10 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState<ProgressData | null>(null);
   const [completions, setCompletions] = useState<MissionCompletion[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [onboardingComplete, setOnboardingComplete] = useState(true); // assume true until we know
+  const [selectedGoal, setSelectedGoal] = useState<typeof ONBOARDING_GOALS[number] | null>(null);
+  const [onboardingStep, setOnboardingStep] = useState<'goals' | 'getStarted'>('goals');
+  const [savingGoal, setSavingGoal] = useState(false);
 
   // Today's mission
   const today = new Date().toISOString().split('T')[0];
@@ -289,6 +355,14 @@ export default function DashboardPage() {
         if (progressRes) setProgress(progressRes);
         if (completionsRes?.completions) setCompletions(completionsRes.completions);
         if (conversationsRes?.sessions) setSessions(conversationsRes.sessions);
+
+        // Determine if user is brand new (no activity + no sessions)
+        const hasActivity = (progressRes?.recentActivity?.length ?? 0) > 0;
+        const hasSessions = (conversationsRes?.sessions?.length ?? 0) > 0;
+        const hasXP = (progressRes?.totalXP ?? 0) > 0;
+        if (!hasActivity && !hasSessions && !hasXP) {
+          setOnboardingComplete(false);
+        }
       } catch (err) {
         console.error('Dashboard fetch error:', err);
       } finally {
@@ -307,6 +381,164 @@ export default function DashboardPage() {
   const streak = progress?.streak?.current ?? 0;
   const recentActivity = progress?.recentActivity?.slice(0, 5) ?? [];
   const recentSessions = sessions.slice(0, 2);
+
+  /* ────────────────────────────────────────────
+     Onboarding: save goal handler
+     ──────────────────────────────────────────── */
+  const handleGoalSelect = async (goal: typeof ONBOARDING_GOALS[number]) => {
+    setSelectedGoal(goal);
+    setSavingGoal(true);
+    try {
+      const token = await user?.getIdToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      await fetch('/api/user', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ goals: [goal.id] }),
+      });
+    } catch (err) {
+      console.error('Failed to save goal:', err);
+    } finally {
+      setSavingGoal(false);
+      setOnboardingStep('getStarted');
+    }
+  };
+
+  /* ────────────────────────────────────────────
+     Onboarding Screen
+     ──────────────────────────────────────────── */
+  if (!onboardingComplete) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <div className="w-full max-w-2xl">
+          {onboardingStep === 'goals' ? (
+            <div className="space-y-8">
+              {/* Welcome Header */}
+              <div className="text-center space-y-3">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 text-[#D4A017] text-xs font-mono uppercase tracking-widest mb-2">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  New Operative
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black font-mono tracking-wide">
+                  Welcome to <span className="text-[#D4A017]">Shadow.Ops</span>
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
+                  Your training begins now. Choose your primary objective and we&apos;ll build your personalized programme.
+                </p>
+              </div>
+
+              {/* Goal Cards */}
+              <div>
+                <p className="text-center text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                  What brings you here?
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {ONBOARDING_GOALS.map(goal => {
+                    const Icon = goal.icon;
+                    return (
+                      <button
+                        key={goal.id}
+                        onClick={() => handleGoalSelect(goal)}
+                        disabled={savingGoal}
+                        className="group relative flex flex-col items-center justify-center p-5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] transition-all hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/10 text-center disabled:opacity-50"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#D4A017]/10 flex items-center justify-center mb-3 group-hover:bg-[#D4A017]/20 transition-colors">
+                          <Icon className="h-6 w-6 text-[#D4A017]" />
+                        </div>
+                        <h3 className="text-sm font-bold font-mono">{goal.label}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{goal.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : selectedGoal ? (
+            /* Get Started Screen */
+            <div className="space-y-8">
+              <div className="text-center space-y-3">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 text-[#D4A017] text-xs font-mono uppercase tracking-widest mb-2">
+                  <Target className="h-3.5 w-3.5" />
+                  Objective Set
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-wide">
+                  Your <span className="text-[#D4A017]">Mission Briefing</span>
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
+                  Here are your first three assignments, {displayName}. Complete them to begin building your Persuasion Score.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Action 1: Strategic Coach */}
+                <Link
+                  href={`/app/chat?prompt=${encodeURIComponent(selectedGoal.coachPrompt)}`}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
+                    <MessageSquare className="h-5 w-5 text-[#D4A017]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold font-mono">Talk to Your Strategic Coach</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Get personalized advice on &quot;{selectedGoal.label}&quot;
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
+                </Link>
+
+                {/* Action 2: Training Scenario */}
+                <Link
+                  href="/app/training"
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
+                    <Swords className="h-5 w-5 text-[#D4A017]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold font-mono">Run Your First Scenario</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Practice {selectedGoal.techniqueCategory.toLowerCase()} techniques in a realistic simulation
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
+                </Link>
+
+                {/* Action 3: Browse Techniques */}
+                <Link
+                  href={`/app/techniques?category=${encodeURIComponent(selectedGoal.techniqueCategory)}`}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
+                    <BookOpen className="h-5 w-5 text-[#D4A017]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold font-mono">Study {selectedGoal.techniqueCategory} Techniques</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Browse the playbook for {selectedGoal.desc.toLowerCase()}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
+                </Link>
+              </div>
+
+              {/* Let's Go Button */}
+              <div className="text-center">
+                <button
+                  onClick={() => setOnboardingComplete(true)}
+                  className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#D4A017] text-black text-sm font-bold font-mono uppercase tracking-wider hover:bg-[#C4901A] transition-all hover:scale-105"
+                >
+                  Let&apos;s Go
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-12">
@@ -417,6 +649,60 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{card.desc}</p>
           </Link>
         ))}
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          Section 3.5: This Week Activity Heatmap
+          ═══════════════════════════════════════════ */}
+      <section className="rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] p-6">
+        <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+          This Week
+        </h2>
+        <div className="flex items-end justify-between gap-2">
+          {(() => {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0=Sun
+            // Monday-based week: offset from Monday
+            const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - mondayOffset);
+            monday.setHours(0, 0, 0, 0);
+
+            const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+            const allActivity = progress?.recentActivity ?? [];
+
+            // Count activities per day of the week
+            const dayCounts = Array(7).fill(0);
+            allActivity.forEach(a => {
+              const d = new Date(a.date);
+              const diffMs = d.getTime() - monday.getTime();
+              const dayIndex = Math.floor(diffMs / 86400000);
+              if (dayIndex >= 0 && dayIndex < 7) {
+                dayCounts[dayIndex]++;
+              }
+            });
+
+            return dayLabels.map((label, i) => {
+              const count = dayCounts[i];
+              const isToday = i === mondayOffset;
+              let bgClass = 'bg-gray-100 dark:bg-[#2A2A2A]';
+              if (count >= 3) bgClass = 'bg-[#D4A017]';
+              else if (count >= 1) bgClass = 'bg-[#D4A017]/40';
+
+              return (
+                <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                  <div
+                    className={`w-full aspect-square max-w-[48px] rounded-lg ${bgClass} transition-colors ${isToday ? 'ring-2 ring-[#D4A017]/50' : ''}`}
+                    title={`${label}: ${count} activit${count === 1 ? 'y' : 'ies'}`}
+                  />
+                  <span className={`text-xs font-mono ${isToday ? 'text-[#D4A017] font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
+                    {label}
+                  </span>
+                </div>
+              );
+            });
+          })()}
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════
