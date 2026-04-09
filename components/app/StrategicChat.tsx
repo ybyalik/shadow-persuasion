@@ -5,6 +5,7 @@ import { ChatInput } from '@/components/app/ChatInput';
 import { ChatMessage } from '@/components/app/ChatMessage';
 import { Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 
 interface Goal {
     id: string;
@@ -378,7 +379,10 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
 
                     {!loadingPeople && peopleProfiles.length === 0 && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            No profiles yet. Add people in the Profiler section.
+                            No profiles yet.{' '}
+                            <Link href="/app/people" className="text-[#D4A017] hover:underline">
+                                Add people in the Profiler section &rarr;
+                            </Link>
                         </p>
                     )}
                 </div>
