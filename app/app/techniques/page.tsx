@@ -350,9 +350,6 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
                 </div>
               </div>
               <h3 className="text-lg font-bold mt-3">{technique.name}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {technique.chunkCount} knowledge chunk{technique.chunkCount !== 1 ? 's' : ''}
-              </p>
             </Link>
           ))}
         </div>

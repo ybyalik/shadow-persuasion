@@ -8,10 +8,34 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { techniqueId } = await req.json();
+    const { techniqueId, force } = await req.json();
 
     if (!techniqueId) {
       return NextResponse.json({ error: 'No techniqueId provided.' }, { status: 400 });
+    }
+
+    // Check for cached summary first (unless force regenerate)
+    if (!force) {
+      const { data: cached, error: cacheError } = await supabase
+        .from('technique_summaries')
+        .select('*')
+        .eq('technique_id', techniqueId)
+        .single();
+
+      if (!cacheError && cached) {
+        return NextResponse.json({
+          techniqueId,
+          techniqueName: techniqueId,
+          cached: true,
+          profile: {
+            description: cached.description,
+            howTo: cached.how_to,
+            whenToUse: cached.when_to_use,
+            whenNotToUse: cached.when_not_to_use,
+            examples: cached.examples,
+          },
+        });
+      }
     }
 
     // Fetch all chunks for this technique
@@ -93,9 +117,27 @@ ${chunkText}`;
 
     const profile = JSON.parse(content);
 
+    // Cache the generated summary in Supabase
+    const { error: upsertError } = await supabase
+      .from('technique_summaries')
+      .upsert({
+        technique_id: techniqueId,
+        description: profile.description,
+        how_to: profile.howTo,
+        when_to_use: profile.whenToUse,
+        when_not_to_use: profile.whenNotToUse,
+        examples: profile.examples,
+        generated_at: new Date().toISOString(),
+      }, { onConflict: 'technique_id' });
+
+    if (upsertError) {
+      console.error('Failed to cache technique summary:', upsertError);
+    }
+
     return NextResponse.json({
       techniqueId,
       techniqueName,
+      cached: false,
       profile,
     });
   } catch (err) {

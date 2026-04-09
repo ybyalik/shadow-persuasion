@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Play, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2, Sparkles, Book, Loader2 } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ArrowLeft, Play, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2, Sparkles, Book, Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const formatLabel = (s: string) => s.split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -105,15 +105,15 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
       .catch(err => console.error('Failed to fetch scenarios:', err));
   }, [technique]);
 
-  // Generate synthesized profile
-  const handleSynthesize = async () => {
+  // Fetch synthesized profile (auto on mount, uses cache)
+  const fetchSynthesized = useCallback(async (force = false) => {
     if (!technique) return;
     setSynthesizing(true);
     try {
       const res = await fetch('/api/techniques/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ techniqueId: technique.id }),
+        body: JSON.stringify({ techniqueId: technique.id, force }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -124,7 +124,16 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
     } finally {
       setSynthesizing(false);
     }
-  };
+  }, [technique]);
+
+  // Auto-generate summary on first visit
+  useEffect(() => {
+    if (technique && !synthesized && !synthesizing) {
+      fetchSynthesized();
+    }
+  }, [technique]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [chunksExpanded, setChunksExpanded] = useState(false);
 
   // Practice
   const generateScenarios = async () => {
@@ -377,11 +386,13 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
       </header>
 
       {/* Mode Tabs */}
-      <div className="flex space-x-1 bg-gray-50 dark:bg-[#222222] p-1 rounded-lg">
+      <div className="flex space-x-2">
         <button
           onClick={() => setMode('learn')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            mode === 'learn' ? 'bg-[#D4A017] text-[#0A0A0A]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+            mode === 'learn'
+              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
+              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
           }`}
         >
           <BookOpen className="h-4 w-4 inline mr-2" />
@@ -389,8 +400,10 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
         </button>
         <button
           onClick={startPractice}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            mode === 'practice' ? 'bg-[#D4A017] text-[#0A0A0A]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+            mode === 'practice'
+              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
+              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
           }`}
         >
           <Target className="h-4 w-4 inline mr-2" />
@@ -398,8 +411,10 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
         </button>
         <button
           onClick={() => setMode('examples')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            mode === 'examples' ? 'bg-[#D4A017] text-[#0A0A0A]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+            mode === 'examples'
+              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
+              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
           }`}
         >
           <MessageSquare className="h-4 w-4 inline mr-2" />
@@ -409,93 +424,39 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
 
       {mode === 'learn' && (
         <>
-          {/* Overview chunks */}
-          {technique.chunks.overview.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Overview</h2>
-              <div className="space-y-4">
-                {technique.chunks.overview.map((chunk) => (
-                  <div key={chunk.id}>
-                    <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{chunk.content}</p>
-                    <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Application chunks → How to Use */}
-          {technique.chunks.application.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">How to Use It</h2>
-              <div className="space-y-4">
-                {technique.chunks.application.map((chunk) => (
-                  <div key={chunk.id}>
-                    <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{chunk.content}</p>
-                    <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Framework chunks */}
-          {technique.chunks.framework.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Framework</h2>
-              <div className="space-y-4">
-                {technique.chunks.framework.map((chunk) => (
-                  <div key={chunk.id}>
-                    <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{chunk.content}</p>
-                    <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Use cases */}
-          {technique.useCases.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Use Cases</h2>
-              <div className="flex flex-wrap gap-2">
-                {technique.useCases.map((uc, i) => (
-                  <span key={i} className="px-3 py-1.5 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] text-sm text-gray-600 dark:text-gray-300">
-                    {uc}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Generate Summary button */}
+          {/* AI Summary Section */}
           <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-            {!synthesized ? (
-              <div className="text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">Want a structured summary with step-by-step instructions?</p>
-                <button
-                  onClick={handleSynthesize}
-                  disabled={synthesizing}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg text-sm uppercase tracking-wider hover:bg-[#E8B030] transition-all disabled:opacity-50"
-                >
-                  {synthesizing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Generate Summary
-                    </>
-                  )}
-                </button>
+            {synthesizing && !synthesized ? (
+              /* Loading skeleton */
+              <div className="animate-pulse space-y-5">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 bg-[#D4A017]/30 rounded" />
+                  <div className="h-5 w-48 bg-gray-200 dark:bg-[#333] rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gray-200 dark:bg-[#333] rounded" />
+                  <div className="h-4 w-5/6 bg-gray-200 dark:bg-[#333] rounded" />
+                  <div className="h-4 w-4/6 bg-gray-200 dark:bg-[#333] rounded" />
+                </div>
+                <div className="h-4 w-32 bg-gray-200 dark:bg-[#333] rounded" />
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map(n => (
+                    <div key={n} className="flex items-start gap-3">
+                      <div className="h-6 w-6 bg-[#D4A017]/20 rounded-full flex-shrink-0" />
+                      <div className="h-4 w-full bg-gray-200 dark:bg-[#333] rounded" />
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="h-28 bg-gray-100 dark:bg-[#0A0A0A] rounded-lg" />
+                  <div className="h-28 bg-gray-100 dark:bg-[#0A0A0A] rounded-lg" />
+                </div>
               </div>
-            ) : (
+            ) : synthesized ? (
               <div className="space-y-6">
                 <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
                   <Sparkles className="h-5 w-5" />
-                  AI-Synthesized Profile
+                  Description
                 </h2>
 
                 {/* Description */}
@@ -503,7 +464,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
 
                 {/* How To */}
                 <div>
-                  <h3 className="font-mono text-md text-[#D4A017] uppercase mb-3">Step-by-Step</h3>
+                  <h3 className="font-mono text-md text-[#D4A017] uppercase mb-3">How to Use It</h3>
                   <ul className="space-y-3">
                     {synthesized.howTo.map((step, index) => (
                       <li key={index} className="flex items-start gap-3">
@@ -533,9 +494,100 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
                     <p className="text-sm text-gray-600 dark:text-gray-300">{synthesized.whenNotToUse}</p>
                   </div>
                 </div>
+
+                {/* Regenerate link */}
+                <div className="text-right">
+                  <button
+                    onClick={() => fetchSynthesized(true)}
+                    disabled={synthesizing}
+                    className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#D4A017] transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${synthesizing ? 'animate-spin' : ''}`} />
+                    Regenerate
+                  </button>
+                </div>
               </div>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400 text-sm">Failed to load summary. <button onClick={() => fetchSynthesized()} className="text-[#D4A017] hover:underline">Try again</button></p>
             )}
           </div>
+
+          {/* Use cases */}
+          {technique.useCases.length > 0 && (
+            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
+              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Use Cases</h2>
+              <div className="flex flex-wrap gap-2">
+                {technique.useCases.map((uc, i) => (
+                  <span key={i} className="px-3 py-1.5 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] text-sm text-gray-600 dark:text-gray-300">
+                    {uc}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Collapsible Knowledge Base Chunks */}
+          {(technique.chunks.overview.length > 0 || technique.chunks.application.length > 0 || technique.chunks.framework.length > 0) && (
+            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
+              <button
+                onClick={() => setChunksExpanded(!chunksExpanded)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
+                  <Book className="h-5 w-5" />
+                  From the Knowledge Base
+                </h2>
+                {chunksExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Raw excerpts from source books</p>
+
+              {chunksExpanded && (
+                <div className="mt-4 space-y-6">
+                  {technique.chunks.overview.length > 0 && (
+                    <div>
+                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Overview</h3>
+                      <div className="space-y-4">
+                        {technique.chunks.overview.map((chunk) => (
+                          <div key={chunk.id}>
+                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
+                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {technique.chunks.application.length > 0 && (
+                    <div>
+                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Application</h3>
+                      <div className="space-y-4">
+                        {technique.chunks.application.map((chunk) => (
+                          <div key={chunk.id}>
+                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
+                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {technique.chunks.framework.length > 0 && (
+                    <div>
+                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Framework</h3>
+                      <div className="space-y-4">
+                        {technique.chunks.framework.map((chunk) => (
+                          <div key={chunk.id}>
+                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
+                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Practice This Technique in Training Arena */}
           {relevantScenarios.length > 0 && (
@@ -588,19 +640,6 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
               </div>
             </div>
           )}
-
-          {/* Practice CTA */}
-          <div className="text-center p-8 bg-gradient-to-r from-amber-50 to-white dark:from-[#2A2520] dark:to-[#1A1A1A] rounded-lg border border-[#D4A017]/30">
-            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Ready to Master This Technique?</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Test your understanding with interactive scenarios</p>
-            <button
-              onClick={startPractice}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] transition-all hover:scale-105"
-            >
-              <Play className="h-5 w-5" />
-              Start Interactive Practice
-            </button>
-          </div>
         </>
       )}
 
@@ -637,7 +676,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
             <div className="text-center py-8 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
               <p className="text-gray-500 dark:text-gray-400 mb-3">No example chunks available.</p>
               <button
-                onClick={handleSynthesize}
+                onClick={fetchSynthesized}
                 disabled={synthesizing}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg text-sm uppercase tracking-wider hover:bg-[#E8B030] transition-all disabled:opacity-50"
               >
@@ -671,16 +710,6 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
             </div>
           )}
 
-          {/* CTA to practice */}
-          <div className="text-center pt-2">
-            <button
-              onClick={startPractice}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg text-sm uppercase tracking-wider hover:bg-[#E8B030] transition-all hover:scale-105"
-            >
-              <Play className="h-4 w-4" />
-              Practice {technique.name} Now
-            </button>
-          </div>
         </div>
       )}
     </div>
