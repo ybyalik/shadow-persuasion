@@ -519,76 +519,6 @@ export default function AnalyzePage() {
         </div>
       </header>
 
-      {/* Recent Analyses History */}
-      {!result && !isLoading && history.length > 0 && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#D4A017]" />
-              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
-                Recent Analyses
-              </span>
-            </div>
-            {history.length > 3 && (
-              <button
-                onClick={() => setHistoryExpanded(!historyExpanded)}
-                className="flex items-center gap-1 text-xs text-[#D4A017] hover:text-[#E8B830] font-mono uppercase transition-colors"
-              >
-                {historyExpanded ? 'Show Less' : 'View All'}
-                <ChevronDown className={`h-3 w-3 transition-transform ${historyExpanded ? 'rotate-180' : ''}`} />
-              </button>
-            )}
-          </div>
-          <div className="space-y-2">
-            {(historyExpanded ? history : history.slice(0, 3)).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleLoadFromHistory(item)}
-                className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg cursor-pointer hover:border-[#D4A017] transition-all group"
-              >
-                {/* Threat score badge */}
-                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-mono font-bold text-sm ${
-                  item.threat_score <= 3 ? 'bg-green-500/20 text-green-400' :
-                  item.threat_score <= 6 ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-red-500/20 text-red-400'
-                }`}>
-                  {item.threat_score}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 dark:text-white truncate">
-                    {item.input_text ? item.input_text.slice(0, 80) : 'Image analysis'}
-                    {item.input_text && item.input_text.length > 80 ? '...' : ''}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(item.created_at)}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.tactics_count} tactic{item.tactics_count !== 1 ? 's' : ''}
-                    </span>
-                    {item.input_type === 'image' && (
-                      <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-mono">IMG</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Delete button */}
-                <button
-                  onClick={(e) => handleDeleteHistory(item.id, e)}
-                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
-                  title="Delete"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-          {historyLoading && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2 font-mono">Loading...</p>
-          )}
-        </div>
-      )}
-
       {/* Input Area */}
       {!result && !isLoading && (
         <div className="space-y-4">
@@ -1067,6 +997,71 @@ export default function AnalyzePage() {
               {savingToProfile ? 'Saving...' : 'Save Analysis'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Recent Analyses History — always visible below */}
+      {history.length > 0 && (
+        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#D4A017]" />
+              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+                Recent Analyses
+              </span>
+            </div>
+            {history.length > 3 && (
+              <button
+                onClick={() => setHistoryExpanded(!historyExpanded)}
+                className="flex items-center gap-1 text-xs text-[#D4A017] hover:text-[#E8B830] font-mono uppercase transition-colors"
+              >
+                {historyExpanded ? 'Show Less' : `View All (${history.length})`}
+                <ChevronDown className={`h-3 w-3 transition-transform ${historyExpanded ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+          </div>
+          <div className="space-y-2">
+            {(historyExpanded ? history : history.slice(0, 3)).map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleLoadFromHistory(item)}
+                className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg cursor-pointer hover:border-[#D4A017] transition-all group"
+              >
+                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-mono font-bold text-sm ${
+                  item.threat_score <= 3 ? 'bg-green-500/20 text-green-400' :
+                  item.threat_score <= 6 ? 'bg-yellow-500/20 text-yellow-400' :
+                  'bg-red-500/20 text-red-400'
+                }`}>
+                  {item.threat_score}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 dark:text-white truncate">
+                    {item.input_text ? item.input_text.slice(0, 80) : 'Image analysis'}
+                    {item.input_text && item.input_text.length > 80 ? '...' : ''}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(item.created_at)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {item.tactics_count} tactic{item.tactics_count !== 1 ? 's' : ''}
+                    </span>
+                    {item.input_type === 'image' && (
+                      <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-mono">IMG</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => handleDeleteHistory(item.id, e)}
+                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
+                  title="Delete"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          {historyLoading && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2 font-mono">Loading...</p>
+          )}
         </div>
       )}
 
