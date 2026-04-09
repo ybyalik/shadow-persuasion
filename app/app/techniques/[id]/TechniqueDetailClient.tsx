@@ -590,9 +590,9 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
           )}
 
           {/* Practice CTA */}
-          <div className="text-center p-8 bg-gradient-to-r from-[#2A2520] to-[#1A1A1A] rounded-lg border border-[#D4A017]/30">
-            <h3 className="text-xl font-bold mb-2">Ready to Master This Technique?</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">Test your understanding with interactive scenarios</p>
+          <div className="text-center p-8 bg-gradient-to-r from-amber-50 to-white dark:from-[#2A2520] dark:to-[#1A1A1A] rounded-lg border border-[#D4A017]/30">
+            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Ready to Master This Technique?</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Test your understanding with interactive scenarios</p>
             <button
               onClick={startPractice}
               className="inline-flex items-center gap-2 px-8 py-3 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] transition-all hover:scale-105"

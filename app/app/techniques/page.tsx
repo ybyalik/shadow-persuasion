@@ -266,17 +266,25 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
               </button>
             ))}
           </div>
-          <div className="flex items-center space-x-2">
-            {difficultyOptions.map(d => (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Difficulty:</span>
+            {difficultyOptions.map((d, idx) => (
               <button
                 key={d}
                 onClick={() => setDifficultyFilter(d)}
-                className={`px-3 py-1 text-xs rounded-full font-semibold transition-colors whitespace-nowrap
+                className={`flex items-center gap-1.5 px-3 py-1 text-sm rounded-full font-semibold transition-colors whitespace-nowrap
                   ${difficultyFilter === d
-                    ? 'bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]'
-                    : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222] border border-gray-200 dark:border-[#444]'}
+                    ? 'bg-[#D4A017] text-[#0A0A0A]'
+                    : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222]'}
                 `}
               >
+                {idx > 0 && (
+                  <span className="flex">
+                    {[...Array(3)].map((_, i) => (
+                      <Star key={i} className={`h-3.5 w-3.5 ${i < idx ? (difficultyFilter === d ? 'text-[#0A0A0A] fill-current' : 'text-[#D4A017] fill-[#D4A017]') : 'text-gray-400'}`} />
+                    ))}
+                  </span>
+                )}
                 {d === 'All' ? 'All Levels' : d}
               </button>
             ))}
