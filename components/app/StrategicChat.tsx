@@ -21,6 +21,7 @@ interface Message {
     role: 'user' | 'assistant';
     content: string;
     sources?: any[];
+    imagePreview?: string;
 }
 
 interface StrategicChatProps {
@@ -94,25 +95,49 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
         setMessages([initMessage]);
     }, [goal]);
 
-    const handleSend = async (input: string) => {
-        // If a person is selected, prepend their profile context to the message
+    const handleSend = async (input: string, image?: { file: File; preview: string; base64: string }) => {
+        // If image is attached, add a description for the AI
         let enrichedInput = input;
+        if (image) {
+            enrichedInput = `[User attached an image]\n${input || 'Please analyze this image and provide strategic guidance.'}`;
+        }
+
+        // If a person is selected, prepend their profile context
         if (selectedPerson) {
             const traits = selectedPerson.keyTraitTags?.join(', ') || 'unknown';
             const commStyle = selectedPerson.communicationStyle || 'not profiled yet';
             const analysisInfo = selectedPerson.analysis_data
                 ? `Threat score: ${selectedPerson.analysis_data.threat_score || 'N/A'}, Communication style: ${JSON.stringify(selectedPerson.analysis_data.communication_style || {})}`
                 : '';
-            enrichedInput = `[Context: I'm dealing with ${selectedPerson.name}. Their profile: traits=${traits}, communication style=${commStyle}. ${analysisInfo} ${selectedPerson.notes ? 'Notes: ' + selectedPerson.notes : ''}]\n\n${input}`;
+            enrichedInput = `[Context: I'm dealing with ${selectedPerson.name}. Their profile: traits=${traits}, communication style=${commStyle}. ${analysisInfo} ${selectedPerson.notes ? 'Notes: ' + selectedPerson.notes : ''}]\n\n${enrichedInput}`;
         }
 
         const userMessage: Message = { id: Date.now().toString(), role: 'user', content: enrichedInput };
-        // Show the original (non-enriched) input in the UI
-        const displayMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+        // Show the original input + image preview in the UI
+        const displayContent = image ? `📷 ${input || '(image attached)'}` : input;
+        const displayMessage: Message = { id: Date.now().toString(), role: 'user', content: displayContent, imagePreview: image?.preview };
         setMessages(prev => [...prev, displayMessage]);
         setIsLoading(true);
 
         try {
+            // If image is attached, first extract text via vision API
+            let imageContext = '';
+            if (image?.base64) {
+                try {
+                    const extractRes = await fetch('/api/user/voice-profile/extract', {
+                        method: 'POST',
+                        body: (() => { const fd = new FormData(); fd.append('image', image.file); return fd; })(),
+                    });
+                    if (extractRes.ok) {
+                        const extractData = await extractRes.json();
+                        if (extractData.extractedText) {
+                            imageContext = `\n[Extracted text from the attached image: "${extractData.extractedText}"]\n`;
+                            userMessage.content = enrichedInput + imageContext;
+                        }
+                    }
+                } catch {}
+            }
+
             const response = await fetch('/api/strategic-chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -248,7 +273,14 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg">
                     {messages.map((msg) => (
-                        <ChatMessage key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
+                        <div key={msg.id}>
+                            {msg.imagePreview && (
+                                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-1`}>
+                                    <img src={msg.imagePreview} alt="Attached" className="max-h-40 rounded-lg border border-gray-200 dark:border-[#333]" />
+                                </div>
+                            )}
+                            <ChatMessage role={msg.role} content={msg.content} sources={msg.sources} />
+                        </div>
                     ))}
                     {isLoading && messages[messages.length-1]?.role === 'user' && (
                         <ChatMessage role="assistant" content="Analyzing your situation and preparing tactical guidance..." isLoading={true} />

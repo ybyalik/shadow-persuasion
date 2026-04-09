@@ -51,9 +51,27 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }, [params.id]);
 
 
-  const handleSend = async (input: string) => {
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+  const handleSend = async (input: string, image?: { file: File; preview: string; base64: string }) => {
+    let messageContent = input;
+
+    // If image attached, extract text first
+    if (image?.file) {
+      try {
+        const fd = new FormData();
+        fd.append('image', image.file);
+        const extractRes = await fetch('/api/user/voice-profile/extract', { method: 'POST', body: fd });
+        if (extractRes.ok) {
+          const extractData = await extractRes.json();
+          if (extractData.extractedText) {
+            messageContent = `${input}\n\n[Extracted from attached image: "${extractData.extractedText}"]`;
+          }
+        }
+      } catch {}
+    }
+
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: messageContent };
+    const displayMessage: Message = { id: Date.now().toString(), role: 'user', content: image ? `📷 ${input || '(image attached)'}` : input };
+    setMessages(prev => [...prev, displayMessage]);
     setIsLoading(true);
 
     try {
