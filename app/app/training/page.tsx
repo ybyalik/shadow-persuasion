@@ -3,15 +3,25 @@
 import { useState } from 'react';
 import { scenarios, Scenario } from '@/lib/scenarios';
 import { ScenarioCard } from '@/components/app/ScenarioCard';
+import { Star } from 'lucide-react';
 
 const categories = ['All', 'Career', 'Relationships', 'Sales', 'Social', 'Defense'];
+const difficultyLevels = [
+  { value: 0, label: 'All' },
+  { value: 1, label: 'Beginner' },
+  { value: 2, label: 'Intermediate' },
+  { value: 3, label: 'Advanced' },
+];
 
 export default function TrainingArenaPage() {
   const [filter, setFilter] = useState('All');
+  const [difficulty, setDifficulty] = useState(0);
 
-  const filteredScenarios = filter === 'All'
-    ? scenarios
-    : scenarios.filter(s => s.category === filter);
+  const filteredScenarios = scenarios.filter(s => {
+    const categoryMatch = filter === 'All' || s.category === filter;
+    const difficultyMatch = difficulty === 0 || s.difficulty === difficulty;
+    return categoryMatch && difficultyMatch;
+  });
 
   return (
     <div className="space-y-8">
@@ -34,6 +44,30 @@ export default function TrainingArenaPage() {
             `}
           >
             {category}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Difficulty:</span>
+        {difficultyLevels.map(level => (
+          <button
+            key={level.value}
+            onClick={() => setDifficulty(level.value)}
+            className={`flex items-center gap-1.5 px-3 py-1 text-sm rounded-full font-semibold transition-colors
+              ${difficulty === level.value
+                ? 'bg-[#D4A017] text-[#0A0A0A]'
+                : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222]'}
+            `}
+          >
+            {level.value > 0 && (
+              <span className="flex">
+                {[...Array(3)].map((_, i) => (
+                  <Star key={i} className={`h-3.5 w-3.5 ${i < level.value ? 'text-[#D4A017] fill-current' : 'text-gray-400'} ${difficulty === level.value && i < level.value ? 'text-[#0A0A0A] fill-current' : ''}`} />
+                ))}
+              </span>
+            )}
+            {level.label}
           </button>
         ))}
       </div>
