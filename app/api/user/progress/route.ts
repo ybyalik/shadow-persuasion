@@ -7,6 +7,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Map any category string to one of the 6 standard skill areas
+function mapToSkillArea(category: string | undefined | null): string {
+  if (!category) return 'persuasion'; // default
+  const lower = category.toLowerCase();
+  if (lower.includes('rapport') || lower.includes('mirror') || lower.includes('empathy') || lower.includes('relationship')) return 'rapport';
+  if (lower.includes('negotiat') || lower.includes('anchor') || lower.includes('contrast') || lower.includes('takeaway') || lower.includes('door')) return 'negotiation';
+  if (lower.includes('influence') || lower.includes('persuasi') || lower.includes('reciproc') || lower.includes('scarcit') || lower.includes('social_proof') || lower.includes('commit')) return 'persuasion';
+  if (lower.includes('frame') || lower.includes('conflict') || lower.includes('pattern') || lower.includes('authority') || lower.includes('reframe')) return 'conflict';
+  if (lower.includes('defense') || lower.includes('defend') || lower.includes('accusation') || lower.includes('manipulation') || lower.includes('gaslight') || lower.includes('toxic') || lower.includes('dark')) return 'defense';
+  if (lower.includes('read') || lower.includes('decode') || lower.includes('analyz') || lower.includes('profil') || lower.includes('body_language') || lower.includes('nlp')) return 'reading';
+  return 'persuasion'; // default fallback
+}
+
 function calculateStreak(completions: any[]): { current: number; longest: number } {
   if (completions.length === 0) return { current: 0, longest: 0 };
 
@@ -67,23 +80,26 @@ export async function GET(req: NextRequest) {
     };
 
     // Fetch all data sources in parallel
-    const [missionsRes, practiceRes, reportsRes, feedbackRes] = await Promise.all([
+    const [missionsRes, practiceRes, reportsRes, feedbackRes, analysesRes] = await Promise.all([
       userFilter(supabase.from('mission_completions').select('*')),
       userFilter(supabase.from('practice_results').select('*')),
       userFilter(supabase.from('field_reports').select('*')),
       userFilter(supabase.from('user_feedback').select('*')),
+      userFilter(supabase.from('analysis_history').select('id, threat_score, techniques_identified, created_at, user_id')),
     ]);
 
     const missions = missionsRes.data || [];
     const practiceResults = practiceRes.data || [];
     const reports = reportsRes.data || [];
     const feedback = feedbackRes.data || [];
+    const analyses = analysesRes.data || [];
 
-    // Total XP: sum xp_earned from missions, practice_results; 10xp per field report
+    // Total XP: sum from all sources
     let totalXP = 0;
     for (const m of missions) totalXP += m.xp_earned ?? 10;
-    for (const p of practiceResults) totalXP += p.xp_earned ?? 0;
+    for (const p of practiceResults) totalXP += p.xp_earned ?? 5;
     for (const r of reports) totalXP += r.xp_earned ?? 10;
+    for (const a of analyses) totalXP += 5; // 5 XP per analysis
 
     // Current streak from mission completions
     const streak = calculateStreak(missions);
@@ -94,10 +110,11 @@ export async function GET(req: NextRequest) {
 
     const addTech = (id: string, success: number, category?: string) => {
       techniqueSet.add(id);
-      const existing = techUsage.get(id) || { count: 0, successSum: 0, category };
+      const mappedCategory = mapToSkillArea(category || id);
+      const existing = techUsage.get(id) || { count: 0, successSum: 0, category: mappedCategory };
       existing.count += 1;
       existing.successSum += success;
-      if (category) existing.category = category;
+      if (!existing.category || existing.category === 'persuasion') existing.category = mappedCategory;
       techUsage.set(id, existing);
     };
 
@@ -124,11 +141,21 @@ export async function GET(req: NextRequest) {
         addTech(f.technique_id, success, f.category);
       }
     }
+    for (const a of analyses) {
+      if (a.techniques_identified && Array.isArray(a.techniques_identified)) {
+        for (const t of a.techniques_identified) {
+          addTech(t, 60, 'reading'); // analyses count toward Reading People
+        }
+      }
+    }
 
-    // Sub-scores by category
+    // Sub-scores by the 6 standard skill areas
+    const skillAreas = ['rapport', 'negotiation', 'persuasion', 'conflict', 'defense', 'reading'];
     const categoryStats = new Map<string, { total: number; successSum: number }>();
+    for (const area of skillAreas) categoryStats.set(area, { total: 0, successSum: 0 });
+
     for (const [, data] of techUsage) {
-      const cat = data.category || 'Unknown';
+      const cat = data.category || 'persuasion';
       const existing = categoryStats.get(cat) || { total: 0, successSum: 0 };
       existing.total += data.count;
       existing.successSum += data.successSum;
@@ -136,8 +163,9 @@ export async function GET(req: NextRequest) {
     }
 
     const subScores: Record<string, number> = {};
-    for (const [cat, data] of categoryStats) {
-      subScores[cat] = data.total > 0 ? Math.round(data.successSum / data.total) : 0;
+    for (const area of skillAreas) {
+      const data = categoryStats.get(area) || { total: 0, successSum: 0 };
+      subScores[area] = data.total > 0 ? Math.round(data.successSum / data.total) : 0;
     }
 
     // Recent activity feed
@@ -182,16 +210,36 @@ export async function GET(req: NextRequest) {
         date: f.created_at,
       });
     }
+    for (const a of analyses) {
+      activity.push({
+        type: 'analysis',
+        label: `Conversation analyzed${a.threat_score ? ` (threat: ${a.threat_score}/10)` : ''}`,
+        date: a.created_at,
+      });
+    }
 
     activity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // Compute overall score (0-100, capped at 1000 XP)
+    const score = Math.min(100, Math.round((totalXP / 1000) * 100));
+
     return NextResponse.json({
       totalXP,
+      score,
       streak,
       techniquesUsed: techniqueSet.size,
       techniqueDetails: Object.fromEntries(techUsage),
       subScores,
       recentActivity: activity.slice(0, 20),
+      stats: {
+        totalXP,
+        streak: streak.current,
+        techniquesMastered: Array.from(techUsage.values()).filter(t => t.count >= 3).length,
+        fieldReports: reports.length,
+        sparringSessions: practiceResults.filter(p => p.type === 'scenario' || p.type === 'sparring').length,
+        missionsCompleted: missions.length,
+        analysesRun: analyses.length,
+      },
     });
   } catch (error) {
     console.error('[USER_PROGRESS]', error);
