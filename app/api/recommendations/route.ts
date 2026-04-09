@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { techniques } from '@/lib/techniques';
-import { searchKnowledge } from '@/lib/rag';
+import { supabase, searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
 
 const SYSTEM_PROMPT = `You are an expert persuasion coach. Given a user's goal, their recently practiced techniques, and their weak areas, recommend 3-5 techniques they should focus on next.
@@ -39,9 +38,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No goal provided.' }, { status: 400 });
     }
 
-    // Build technique library context
-    const techniqueList = techniques
-      .map((t) => `- ${t.id}: ${t.name} (${t.category}, difficulty ${t.difficulty}) - ${t.description}`)
+    // Build technique library context from knowledge base
+    const { data: techRows } = await supabase
+      .from('knowledge_chunks')
+      .select('technique_name, technique_id, category, difficulty')
+      .not('technique_name', 'is', null)
+      .neq('technique_name', '')
+      .neq('technique_name', 'General');
+
+    const techMap = new Map<string, { id: string; name: string; category: string; difficulty: number }>();
+    for (const row of techRows || []) {
+      const key = row.technique_id || row.technique_name;
+      if (!techMap.has(key)) {
+        techMap.set(key, {
+          id: row.technique_id || row.technique_name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          name: row.technique_name,
+          category: row.category || 'General',
+          difficulty: row.difficulty || 1,
+        });
+      }
+    }
+    const techniqueList = Array.from(techMap.values())
+      .map((t) => `- ${t.id}: ${t.name} (${t.category}, difficulty ${t.difficulty})`)
       .join('\n');
 
     // RAG search

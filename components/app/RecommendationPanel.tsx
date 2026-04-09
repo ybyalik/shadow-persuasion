@@ -158,7 +158,7 @@ export function RecommendationPanel() {
           {recommendations.slice(0, 5).map((rec, i) => (
             <Link
               key={rec.techniqueId || i}
-              href={`/app/library/${rec.techniqueId}`}
+              href={`/app/techniques/${rec.techniqueId}`}
               className="block p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#252525] hover:border-[#D4A017]/50 transition-all group"
             >
               <div className="flex items-start justify-between gap-3">

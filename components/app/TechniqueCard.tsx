@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Star } from 'lucide-react';
+// DEPRECATED: This component uses the legacy Technique type. Prefer inline cards from /api/techniques.
 import { Technique } from '@/lib/techniques';
 
 type SRStatus = 'not-started' | 'learning' | 'due' | 'mastered';
@@ -28,7 +29,7 @@ const STATUS_LABELS: Record<SRStatus, string> = {
 
 export function TechniqueCard({ technique, href, srStatus }: TechniqueCardProps) {
   return (
-    <Link href={href || `/app/library/${technique.id}`} className="block p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1">
+    <Link href={href || `/app/techniques/${technique.id}`} className="block p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase bg-[#D4A017]/20 text-[#D4A017] px-2 py-1 rounded-full">{technique.category}</span>

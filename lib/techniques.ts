@@ -1,3 +1,5 @@
+// DEPRECATED: Use /api/techniques instead. This file is kept as a fallback.
+
 export type Technique = {
   id: string;
   name: string;

@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Clock, RotateCcw, CheckCircle2 } from 'lucide-react';
-import { techniques } from '@/lib/techniques';
-import { TechniqueCard } from '@/components/app/TechniqueCard';
+import { Clock, RotateCcw, CheckCircle2, Star } from 'lucide-react';
+import { useTechniques, type APITechnique } from '@/lib/hooks/useTechniques';
 import { type SRCard } from '@/lib/spaced-repetition';
 import { useAuth } from '@/lib/auth-context';
 
@@ -100,12 +99,16 @@ export default function TechniquesPage() {
 // ══════════════════════════════════════════════════════════════════════
 
 function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, string>> }) {
+  const { techniques: apiTechniques, loading: techniquesLoading } = useTechniques();
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [dueCards, setDueCards] = useState<SRCard[]>([]);
   const [cardStatusMap, setCardStatusMap] = useState<Record<string, SRCard['status']>>({});
   const [nextReview, setNextReview] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Derive category list dynamically from API data
+  const dynamicCategories = ['All', ...Array.from(new Set(apiTechniques.map(t => t.category))).sort()];
 
   useEffect(() => {
     const loadCards = async () => {
@@ -147,11 +150,10 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
     loadCards();
   }, [getHeaders]);
 
-  const filteredTechniques = techniques
+  const filteredTechniques = apiTechniques
     .filter(t => filter === 'All' || t.category === filter)
     .filter(t =>
-      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      t.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
   return (
@@ -232,7 +234,7 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
           className="w-full md:w-1/3 p-2 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017]"
         />
         <div className="flex-1 flex items-center space-x-2 overflow-x-auto">
-          {categories.map(category => (
+          {dynamicCategories.map(category => (
             <button
               key={category}
               onClick={() => setFilter(category)}
@@ -248,17 +250,71 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
         </div>
       </div>
 
+      {/* Loading skeleton */}
+      {techniquesLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="h-5 w-20 bg-gray-200 dark:bg-[#333] rounded-full" />
+                <div className="flex gap-1">
+                  {[...Array(3)].map((_, j) => (
+                    <div key={j} className="h-4 w-4 bg-gray-200 dark:bg-[#333] rounded" />
+                  ))}
+                </div>
+              </div>
+              <div className="h-5 w-36 bg-gray-200 dark:bg-[#333] rounded mt-3" />
+              <div className="h-4 w-full bg-gray-200 dark:bg-[#333] rounded mt-2" />
+              <div className="h-4 w-2/3 bg-gray-200 dark:bg-[#333] rounded mt-1" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!techniquesLoading && apiTechniques.length === 0 && (
+        <div className="text-center py-12 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333]">
+          <p className="text-gray-500 dark:text-gray-400 text-lg">Upload books in Admin to populate techniques</p>
+        </div>
+      )}
+
       {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTechniques.map(technique => (
-          <TechniqueCard
-            key={technique.id}
-            technique={technique}
-            href={`/app/techniques/${technique.id}`}
-            srStatus={mounted ? cardStatusMap[technique.id] : undefined}
-          />
-        ))}
-      </div>
+      {!techniquesLoading && filteredTechniques.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTechniques.map(technique => (
+            <Link
+              key={technique.id}
+              href={`/app/techniques/${technique.id}`}
+              className="block p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase bg-[#D4A017]/20 text-[#D4A017] px-2 py-1 rounded-full">{technique.category}</span>
+                  {mounted && cardStatusMap[technique.id] && (
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                        cardStatusMap[technique.id] === 'mastered' ? 'bg-green-400' :
+                        cardStatusMap[technique.id] === 'learning' ? 'bg-yellow-400' :
+                        cardStatusMap[technique.id] === 'due' ? 'bg-red-400' : 'bg-gray-600'
+                      }`}
+                      title={cardStatusMap[technique.id]}
+                    />
+                  )}
+                </div>
+                <div className="flex">
+                  {[...Array(3)].map((_, i) => (
+                    <Star key={i} className={`h-4 w-4 ${i < technique.difficulty ? 'text-[#D4A017] fill-current' : 'text-gray-600'}`} />
+                  ))}
+                </div>
+              </div>
+              <h3 className="text-lg font-bold mt-3">{technique.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {technique.chunkCount} knowledge chunk{technique.chunkCount !== 1 ? 's' : ''}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

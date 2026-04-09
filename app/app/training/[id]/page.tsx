@@ -435,7 +435,7 @@ export default function TrainingScenarioPage() {
             <ul className="space-y-2">
               {relevantTechniques.map(t => (
                 <li key={t.id}>
-                  <Link href={`/app/library/${t.id}`} className="text-base hover:underline">{t.name}</Link>
+                  <Link href={`/app/techniques/${t.id}`} className="text-base hover:underline">{t.name}</Link>
                 </li>
               ))}
             </ul>

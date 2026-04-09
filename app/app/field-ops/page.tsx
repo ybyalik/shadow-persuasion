@@ -6,7 +6,7 @@ import {
   Flame, Clock, Trophy, Target, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronUp, Star, Plus, Search, Calendar, TrendingUp, X,
 } from 'lucide-react';
-import { techniques } from '@/lib/techniques';
+import { useTechniques } from '@/lib/hooks/useTechniques';
 import { useAuth } from '@/lib/auth-context';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -338,8 +338,9 @@ function NewReportForm({
   const [outcome, setOutcome] = useState(3);
   const [notes, setNotes] = useState('');
   const [techSearch, setTechSearch] = useState('');
+  const { techniques: apiTechniques } = useTechniques();
 
-  const filteredTechniques = techniques.filter(
+  const filteredTechniques = apiTechniques.filter(
     (t) =>
       t.name.toLowerCase().includes(techSearch.toLowerCase()) ||
       t.category.toLowerCase().includes(techSearch.toLowerCase())
