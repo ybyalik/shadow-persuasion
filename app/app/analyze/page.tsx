@@ -191,19 +191,29 @@ export default function AnalyzePage() {
     if (!result) return;
     setSavingToProfile(true);
 
-    const analysisData = {
-      communication_style: result.communicationStyle,
-      detected_tactics: result.tactics.map(t => t.tactic),
-      threat_score: result.threatScore,
-      power_dynamics: result.powerDynamics,
-      overall_assessment: result.overallAssessment,
-      techniques_identified: result.techniques_identified,
+    // Map analysis result into the profile traits structure the detail page expects
+    const traitsPayload = {
+      communication: {
+        sensoryPreference: result.communicationStyle.sensoryPreference,
+        emotionalPattern: result.communicationStyle.emotionalState,
+        receptivity: result.communicationStyle.receptivity,
+        summary: result.overallAssessment,
+      },
+      triggers: {
+        defensive: result.tactics.map(t => t.tactic),
+      },
+      // Preserve raw analysis for reference
+      _lastAnalysis: {
+        threat_score: result.threatScore,
+        power_dynamics: result.powerDynamics,
+        detected_tactics: result.tactics.map(t => ({ tactic: t.tactic, quote: t.quote })),
+        techniques_identified: result.techniques_identified,
+        analyzed_at: new Date().toISOString(),
+      },
     };
 
     try {
       const headers = await getHeaders();
-
-      const traitsPayload = { analysis: analysisData, analyzed_at: new Date().toISOString() };
 
       if (selectedPersonId) {
         // Update existing profile — merge analysis into traits
