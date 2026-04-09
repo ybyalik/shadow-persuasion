@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ArrowLeft, Play, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2, Sparkles, Book, Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
+const ADMIN_EMAILS = ['ybyalik@gmail.com'];
 const formatLabel = (s: string) => s.split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 import NextLink from 'next/link';
 // Scenarios are fetched dynamically from the API
@@ -73,6 +75,8 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
   const [practiceError, setPracticeError] = useState<string | null>(null);
 
   const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
 
   // Fetch technique data
   useEffect(() => {
@@ -495,17 +499,19 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
                   </div>
                 </div>
 
-                {/* Regenerate link */}
-                <div className="text-right">
-                  <button
-                    onClick={() => fetchSynthesized(true)}
-                    disabled={synthesizing}
-                    className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#D4A017] transition-colors disabled:opacity-50"
-                  >
-                    <RefreshCw className={`h-3 w-3 ${synthesizing ? 'animate-spin' : ''}`} />
-                    Regenerate
-                  </button>
-                </div>
+                {/* Regenerate link — admin only */}
+                {isAdmin && (
+                  <div className="text-right">
+                    <button
+                      onClick={() => fetchSynthesized(true)}
+                      disabled={synthesizing}
+                      className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#D4A017] transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${synthesizing ? 'animate-spin' : ''}`} />
+                      Regenerate
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-center text-gray-500 dark:text-gray-400 text-sm">Failed to load summary. <button onClick={() => fetchSynthesized()} className="text-[#D4A017] hover:underline">Try again</button></p>
