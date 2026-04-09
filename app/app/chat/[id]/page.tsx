@@ -101,12 +101,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               for (const line of lines) {
                   const trimmed = line.trim();
                   if (!trimmed) continue;
-                  
+
+                  // Skip SSE comments (e.g., ": OPENROUTER PROCESSING")
+                  if (trimmed.startsWith(':')) continue;
+
                   // Handle server-sent events format
                   if (trimmed.startsWith('data: ')) {
                       const data = trimmed.slice(6);
                       if (data === '[DONE]') continue;
-                      
+
                       try {
                           const json = JSON.parse(data);
                           const content = json.choices?.[0]?.delta?.content || '';
@@ -114,14 +117,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                               fullContent += content;
                           }
                       } catch (e) {
-                          // If it's not JSON, treat as plain content
-                          if (!data.includes('{"id":') && !data.includes('"object":"chat.completion.chunk"')) {
-                              fullContent += data;
-                          }
+                          // Skip non-JSON data
                       }
-                  } else if (!trimmed.includes('{"id":') && !trimmed.includes('"object":"chat.completion.chunk"')) {
-                      // Plain text content
-                      fullContent += trimmed + '\n';
                   }
               }
               

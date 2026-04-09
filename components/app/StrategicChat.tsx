@@ -155,12 +155,15 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                     for (const line of lines) {
                         const trimmed = line.trim();
                         if (!trimmed) continue;
-                        
+
+                        // Skip SSE comments (lines starting with :)
+                        if (trimmed.startsWith(':')) continue;
+
                         // Handle server-sent events format
                         if (trimmed.startsWith('data: ')) {
                             const data = trimmed.slice(6);
                             if (data === '[DONE]') continue;
-                            
+
                             try {
                                 const json = JSON.parse(data);
                                 const content = json.choices?.[0]?.delta?.content || '';
@@ -168,10 +171,7 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                                     fullContent += content;
                                 }
                             } catch (e) {
-                                // If it's not JSON, treat as plain content
-                                if (!data.includes('{"id":') && !data.includes('"object":"chat.completion.chunk"')) {
-                                    fullContent += data;
-                                }
+                                // Skip non-JSON data — don't display raw SSE artifacts
                             }
                         } else if (!trimmed.includes('{"id":') && !trimmed.includes('"object":"chat.completion.chunk"')) {
                             // Plain text content
