@@ -618,31 +618,50 @@ export default function AnalyzePage() {
       {result && (
         <div className="space-y-6">
 
-          {/* ── Threat Score Bar ── */}
-          {result.threatScore > 0 && (
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-[#D4A017]" />
-                  <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
-                    Manipulation Threat Level
-                  </span>
-                </div>
+          {/* ── Threat Score Bar (always visible) ── */}
+          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-[#D4A017]" />
+                <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+                  {result.threatScore > 0 ? 'Manipulation Threat Level' : 'Threat Assessment'}
+                </span>
+              </div>
+              {result.threatScore > 0 ? (
                 <span className={`font-mono text-2xl font-bold ${getThreatTextColor(result.threatScore)}`}>
                   {result.threatScore}/10
                 </span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${getThreatColor(result.threatScore)}`}
-                  style={{ width: `${result.threatScore * 10}%` }}
-                />
-              </div>
-              <p className={`text-sm mt-2 font-mono ${getThreatTextColor(result.threatScore)}`}>
-                {getThreatLabel(result.threatScore)} &mdash; {result.tactics.length} tactic{result.tactics.length !== 1 ? 's' : ''} detected
-              </p>
+              ) : (
+                <span className="font-mono text-2xl font-bold text-green-400">
+                  All Clear
+                </span>
+              )}
             </div>
-          )}
+            {result.threatScore > 0 ? (
+              <>
+                <div className="w-full h-3 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${getThreatColor(result.threatScore)}`}
+                    style={{ width: `${result.threatScore * 10}%` }}
+                  />
+                </div>
+                <p className={`text-sm mt-2 font-mono ${getThreatTextColor(result.threatScore)}`}>
+                  {getThreatLabel(result.threatScore)} &mdash; {result.tactics.length} tactic{result.tactics.length !== 1 ? 's' : ''} detected
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-full h-3 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: '100%' }} />
+                </div>
+              </div>
+            )}
+            {result.threatScore === 0 && (
+              <p className="text-sm mt-2 text-green-400 font-mono">
+                No manipulation detected &mdash; this conversation appears straightforward. See your strategic position below.
+              </p>
+            )}
+          </div>
 
           {/* ── Power Dynamics ── */}
           <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
@@ -723,14 +742,14 @@ export default function AnalyzePage() {
             </div>
           </div>
 
-          {/* ── Highlighted Original Text (if we have text) ── */}
-          {text && result.tactics.length > 0 && (
+          {/* ── Analyzed Text (always show if we have text) ── */}
+          {text && (
             <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5">
               <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold block mb-3">
-                Analyzed Text &mdash; Manipulation Highlighted
+                {result.tactics.length > 0 ? 'Analyzed Text — Manipulation Highlighted' : 'Analyzed Text'}
               </span>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {highlightText(text, result.tactics)}
+                {result.tactics.length > 0 ? highlightText(text, result.tactics) : text}
               </p>
             </div>
           )}
@@ -745,16 +764,20 @@ export default function AnalyzePage() {
             </div>
           )}
 
-          {/* ── Manipulation Tactics Detected ── */}
-          {result.tactics.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
+          {/* ── Tactics Section (always visible) ── */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              {result.tactics.length > 0 ? (
                 <AlertTriangle className="h-5 w-5 text-red-400" />
-                <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
-                  Manipulation Tactics Detected
-                </span>
-              </div>
-              {result.tactics.map((tactic, i) => (
+              ) : (
+                <Shield className="h-5 w-5 text-green-400" />
+              )}
+              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+                {result.tactics.length > 0 ? 'Manipulation Tactics Detected' : 'Influence Scan'}
+              </span>
+            </div>
+            {result.tactics.length > 0 ? (
+              result.tactics.map((tactic, i) => (
                 <div key={i} className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-mono text-gray-900 dark:text-white font-bold">{tactic.tactic}</h3>
@@ -775,16 +798,21 @@ export default function AnalyzePage() {
                     <p className="text-sm text-gray-900 dark:text-white">&ldquo;{tactic.counterResponse}&rdquo;</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="bg-white dark:bg-[#1A1A1A] border border-green-500/20 rounded-lg p-4">
+                <p className="text-sm text-green-400 font-mono">No manipulation tactics detected.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This conversation appears to be straightforward communication. Your strategic response options below focus on positioning and influence.</p>
+              </div>
+            )}
+          </div>
 
-          {/* ── Full Counter-Script ── */}
-          {result.counterScript && result.tactics.length > 0 && (
+          {/* ── Counter-Script / Recommended Approach (always visible) ── */}
+          {result.counterScript && (
             <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">
-                  Full Counter-Script
+                  {result.tactics.length > 0 ? 'Full Counter-Script' : 'Recommended Approach'}
                 </span>
                 <button
                   onClick={() => handleCopy(result.counterScript)}
