@@ -1378,6 +1378,19 @@ interface AnalysisHistoryItem {
   full_result: any;
 }
 
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\(Source: "(.*?)" by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full mx-0.5">📖 $1</span>')
+    .replace(/\n\n/g, '<br/><br/>')
+    .replace(/\n/g, '<br/>');
+}
+
+function stripMarkdown(text: string): string {
+  return text.replace(/\*\*/g, '').replace(/^---.*---\s*/gm, '').trim();
+}
+
 function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders: () => Promise<Record<string, string>> }) {
   const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1454,7 +1467,7 @@ function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders:
           >
             <span className={`w-2 h-2 rounded-full shrink-0 ${getThreatColor(a.threat_score)}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{a.input_text || 'Image analysis'}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{a.input_text ? stripMarkdown(a.input_text) : 'Image analysis'}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Threat: {a.threat_score}/10 ({getThreatLabel(a.threat_score)}) · Power: You {a.power_yours} vs Them {a.power_theirs} · {a.tactics_count} tactic{a.tactics_count !== 1 ? 's' : ''}
               </p>
@@ -1469,7 +1482,7 @@ function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders:
               {a.overall_assessment && (
                 <div>
                   <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Assessment</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{a.overall_assessment}</p>
+                  <div className="text-sm text-gray-600 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(a.overall_assessment) }} />
                 </div>
               )}
               {a.techniques_identified?.length > 0 && (
@@ -1499,7 +1512,7 @@ function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders:
               {a.full_result?.counterScript && (
                 <div>
                   <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Counter-Script</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">{a.full_result.counterScript}</p>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]" dangerouslySetInnerHTML={{ __html: renderMarkdown(a.full_result.counterScript) }} />
                 </div>
               )}
               <div className="flex justify-between items-center pt-2">
