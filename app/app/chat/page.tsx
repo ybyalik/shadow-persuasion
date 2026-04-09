@@ -28,11 +28,25 @@ interface ChatSession {
   lastMessageAt: string | null;
 }
 
-interface QuickfireResponse {
+interface QuickfireResponseOption {
+  approach: string;
   sayThis: string;
   why: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+interface QuickfireScenario {
+  ifTheySay: string;
+  thenSay: string;
+  why: string;
+}
+
+interface QuickfireResponse {
+  responses: QuickfireResponseOption[];
   avoid: string;
-  ifBackfires: string;
+  scenarios: QuickfireScenario[];
+  classification: string;
+  technique: string;
 }
 
 export default function ChatListPage() {
@@ -50,7 +64,7 @@ export default function ChatListPage() {
   const [qfResponse, setQfResponse] = useState<QuickfireResponse | null>(null);
   const [qfIsLoading, setQfIsLoading] = useState(false);
   const [qfError, setQfError] = useState<string | null>(null);
-  const [qfCopied, setQfCopied] = useState(false);
+  const [qfCopied, setQfCopied] = useState<string | null>(null);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -164,10 +178,10 @@ export default function ChatListPage() {
     }
   };
 
-  const handleQfCopy = (text: string) => {
+  const handleQfCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
-    setQfCopied(true);
-    setTimeout(() => setQfCopied(false), 2000);
+    setQfCopied(key);
+    setTimeout(() => setQfCopied(null), 2000);
   };
 
   const handleQfReset = () => {
@@ -212,7 +226,7 @@ export default function ChatListPage() {
   // Quick-Fire Mode
   if (mode === 'quickfire') {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         <header>
           <button
             onClick={handleExitQuickfire}
@@ -292,48 +306,136 @@ export default function ChatListPage() {
         )}
 
         {qfResponse && (
-          <div className="space-y-4">
-            {/* SAY THIS */}
-            <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017] rounded-lg p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">
-                  Say This:
+          <div className="space-y-6">
+            {/* Classification & Technique Header */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {qfResponse.classification && (
+                <span className="font-mono text-xs uppercase tracking-wider px-2 py-1 bg-[#D4A017]/20 text-[#D4A017] rounded">
+                  {qfResponse.classification.replace(/_/g, ' ')}
                 </span>
-                <button
-                  onClick={() => handleQfCopy(qfResponse.sayThis)}
-                  className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors font-mono"
-                >
-                  {qfCopied ? '[ COPIED ]' : '[ COPY ]'}
-                </button>
-              </div>
-              <p className="text-gray-900 dark:text-white text-xl leading-relaxed">
-                &ldquo;{qfResponse.sayThis}&rdquo;
-              </p>
+              )}
+              {qfResponse.technique && (
+                <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Technique: {qfResponse.technique}
+                </span>
+              )}
             </div>
 
-            {/* WHY */}
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
-              <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
-                Why:
-              </span>
-              <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">{qfResponse.why}</p>
+            {/* 3 Response Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {qfResponse.responses?.map((resp, idx) => {
+                const riskColor = resp.riskLevel === 'LOW'
+                  ? 'bg-green-900/30 text-green-400 border-green-700'
+                  : resp.riskLevel === 'HIGH'
+                    ? 'bg-red-900/30 text-red-400 border-red-700'
+                    : 'bg-yellow-900/30 text-yellow-400 border-yellow-700';
+                const isRecommended = idx === 0;
+                return (
+                  <div
+                    key={idx}
+                    className={`bg-white dark:bg-[#1A1A1A] rounded-lg p-5 flex flex-col gap-3 border-2 ${
+                      isRecommended
+                        ? 'border-[#D4A017]'
+                        : 'border-gray-200 dark:border-[#333333]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                        {resp.approach}
+                      </span>
+                      <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border ${riskColor}`}>
+                        {resp.riskLevel}
+                      </span>
+                    </div>
+                    {isRecommended && (
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4A017]">
+                        &#9733; Recommended
+                      </span>
+                    )}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">
+                          Say This:
+                        </span>
+                        <button
+                          onClick={() => handleQfCopy(resp.sayThis, `resp-${idx}`)}
+                          className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors font-mono"
+                        >
+                          {qfCopied === `resp-${idx}` ? '[ COPIED ]' : '[ COPY ]'}
+                        </button>
+                      </div>
+                      <p className="text-gray-900 dark:text-white text-base leading-relaxed">
+                        &ldquo;{resp.sayThis}&rdquo;
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+                        Why:
+                      </span>
+                      <p className="text-gray-600 dark:text-gray-300 mt-1 text-xs">{resp.why}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* AVOID */}
-            <div className="bg-white dark:bg-[#1A1A1A] border border-red-900/50 rounded-lg p-4">
+            {/* AVOID Section */}
+            <div className="bg-red-950/20 dark:bg-red-950/30 border border-red-900/50 rounded-lg p-4">
               <span className="font-mono text-xs uppercase tracking-wider text-red-400 font-bold">
-                Avoid:
+                &#9888; Avoid:
               </span>
               <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">{qfResponse.avoid}</p>
             </div>
 
-            {/* IF IT BACKFIRES */}
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4">
-              <span className="font-mono text-xs uppercase tracking-wider text-yellow-600 font-bold">
-                If It Backfires:
-              </span>
-              <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">&ldquo;{qfResponse.ifBackfires}&rdquo;</p>
-            </div>
+            {/* Scenario Tree */}
+            {qfResponse.scenarios && qfResponse.scenarios.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-mono text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+                  If They Say&hellip;
+                </h3>
+                <div className="space-y-0">
+                  {qfResponse.scenarios.map((scenario, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      {/* Connecting line */}
+                      <div className="flex flex-col items-center w-6 flex-shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#D4A017] mt-5 flex-shrink-0" />
+                        {idx < qfResponse.scenarios.length - 1 && (
+                          <div className="w-0.5 flex-1 bg-[#D4A017]/30" />
+                        )}
+                      </div>
+                      {/* Card */}
+                      <div className="flex-1 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 mb-3">
+                        <p className="text-gray-500 dark:text-gray-400 italic text-sm">
+                          &ldquo;{scenario.ifTheySay}&rdquo;
+                        </p>
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">
+                              Then Say:
+                            </span>
+                            <button
+                              onClick={() => handleQfCopy(scenario.thenSay, `scenario-${idx}`)}
+                              className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors font-mono"
+                            >
+                              {qfCopied === `scenario-${idx}` ? '[ COPIED ]' : '[ COPY ]'}
+                            </button>
+                          </div>
+                          <p className="text-gray-900 dark:text-white font-medium text-sm">
+                            &ldquo;{scenario.thenSay}&rdquo;
+                          </p>
+                        </div>
+                        <div className="mt-2">
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Why:
+                          </span>
+                          <p className="text-gray-600 dark:text-gray-300 text-xs">{scenario.why}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleQfReset}

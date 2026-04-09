@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Eye, MessageSquare, Swords, BookOpen, Flame, Zap, Target,
   Clock, ArrowRight, CheckCircle, FileText, MessageCircle,
-  Briefcase, Heart, DollarSign, Shield, Star, Lock, Sparkles,
+  Briefcase, Heart, DollarSign, Shield, Star, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -238,58 +238,67 @@ function DashboardSkeleton() {
 
 const ONBOARDING_GOALS = [
   {
-    id: 'negotiations',
-    label: 'Win Negotiations',
-    desc: 'Career, salary, promotions',
+    id: 'career',
+    label: 'Dominate at Work',
+    description: 'Promotions, raises, politics, getting taken seriously',
     icon: Briefcase,
-    coachPrompt: 'Help me prepare for an upcoming negotiation',
-    trainingId: 'salary-negotiation',
+    coachPrompt: 'career advancement and workplace influence',
+    trainingLink: '/app/training/negotiate-raise',
     techniqueCategory: 'Negotiation',
   },
   {
-    id: 'relationships',
-    label: 'Master Relationships',
-    desc: 'Dating, attraction, connection',
+    id: 'dating',
+    label: 'Attract & Connect',
+    description: 'Dating, attraction, chemistry, getting them hooked',
     icon: Heart,
-    coachPrompt: 'I want to build deeper connections with people',
-    trainingId: 'first-date',
+    coachPrompt: 'dating, attraction, and romantic connection',
+    trainingLink: '/app/training/first-date',
     techniqueCategory: 'Rapport',
   },
   {
-    id: 'deals',
-    label: 'Close More Deals',
-    desc: 'Sales, clients, business',
+    id: 'business',
+    label: 'Close & Persuade',
+    description: 'Sales, clients, deals, getting people to say yes',
     icon: DollarSign,
-    coachPrompt: 'Help me close more sales and win clients',
-    trainingId: 'sales-pitch',
+    coachPrompt: 'sales, business persuasion, and closing deals',
+    trainingLink: '/app/training/close-client',
     techniqueCategory: 'Influence',
   },
   {
-    id: 'difficult-people',
-    label: 'Handle Difficult People',
-    desc: 'Narcissists, manipulators, toxic dynamics',
-    icon: Shield,
-    coachPrompt: 'I need strategies for dealing with a difficult person',
-    trainingId: 'difficult-boss',
-    techniqueCategory: 'Defense',
-  },
-  {
-    id: 'influence',
-    label: 'Build Influence',
-    desc: 'Leadership, authority, social power',
+    id: 'social',
+    label: 'Command Any Room',
+    description: 'Social power, first impressions, respect, leadership',
     icon: Star,
-    coachPrompt: 'I want to become more influential and authoritative',
-    trainingId: 'team-leadership',
+    coachPrompt: 'social influence, leadership presence, and commanding respect',
+    trainingLink: '/app/training/command-room',
     techniqueCategory: 'Framing',
   },
   {
     id: 'defense',
-    label: 'Defend Yourself',
-    desc: 'Detect manipulation, protect boundaries',
-    icon: Lock,
-    coachPrompt: 'Help me spot and counter manipulation tactics',
-    trainingId: 'manipulation-defense',
+    label: 'Neutralize Toxic People',
+    description: 'Narcissists, manipulators, gaslighters, setting boundaries',
+    icon: Shield,
+    coachPrompt: 'handling toxic people, setting boundaries, and psychological defense',
+    trainingLink: '/app/training/counter-gaslighting',
     techniqueCategory: 'Defense',
+  },
+  {
+    id: 'confidence',
+    label: 'Build Unshakable Confidence',
+    description: 'Stop seeking approval, own your presence, inner power',
+    icon: Zap,
+    coachPrompt: 'building confidence, self-assurance, and personal power',
+    trainingLink: '/app/training',
+    techniqueCategory: 'Rapport',
+  },
+  {
+    id: 'all',
+    label: 'Master It All',
+    description: 'I want the full arsenal — every tool, every edge',
+    icon: Target,
+    coachPrompt: 'comprehensive influence and persuasion mastery',
+    trainingLink: '/app/training',
+    techniqueCategory: 'Influence',
   },
 ] as const;
 
@@ -484,21 +493,30 @@ export default function DashboardPage() {
                 <p className="text-center text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
                   What brings you here?
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                   {ONBOARDING_GOALS.map(goal => {
                     const Icon = goal.icon;
+                    const isMasterAll = goal.id === 'all';
                     return (
                       <button
                         key={goal.id}
                         onClick={() => handleGoalSelect(goal)}
                         disabled={savingGoal}
-                        className="group relative flex flex-col items-center justify-center p-5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] transition-all hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/10 text-center disabled:opacity-50"
+                        className={`group relative flex flex-col items-center justify-center p-5 rounded-xl bg-white dark:bg-[#1A1A1A] border transition-all hover:border-[#D4A017] hover:shadow-lg hover:shadow-[#D4A017]/10 text-center disabled:opacity-50 ${
+                          isMasterAll
+                            ? 'col-span-2 lg:col-span-1 border-[#D4A017]/50 bg-gradient-to-b from-[#D4A017]/5 to-transparent'
+                            : 'border-gray-200 dark:border-[#333]'
+                        }`}
                       >
-                        <div className="w-12 h-12 rounded-full bg-[#D4A017]/10 flex items-center justify-center mb-3 group-hover:bg-[#D4A017]/20 transition-colors">
-                          <Icon className="h-6 w-6 text-[#D4A017]" />
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
+                          isMasterAll
+                            ? 'bg-[#D4A017]/20 group-hover:bg-[#D4A017]/30'
+                            : 'bg-[#D4A017]/10 group-hover:bg-[#D4A017]/20'
+                        }`}>
+                          <Icon className={`h-6 w-6 ${isMasterAll ? 'text-[#D4A017]' : 'text-[#D4A017]'}`} />
                         </div>
-                        <h3 className="text-sm font-bold font-mono">{goal.label}</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{goal.desc}</p>
+                        <h3 className={`text-sm font-bold font-mono ${isMasterAll ? 'text-[#D4A017]' : ''}`}>{goal.label}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{goal.description}</p>
                       </button>
                     );
                   })}
@@ -645,7 +663,7 @@ export default function DashboardPage() {
 
                 {/* Action 2: Training Scenario */}
                 <Link
-                  href="/app/training"
+                  href={selectedGoal.trainingLink}
                   className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
                 >
                   <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
@@ -671,7 +689,7 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <p className="text-sm font-bold font-mono">Study {selectedGoal.techniqueCategory} Techniques</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Browse the playbook for {selectedGoal.desc.toLowerCase()}
+                      Browse the playbook for {selectedGoal.description.toLowerCase()}
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />

@@ -8,16 +8,50 @@ const SYSTEM_PROMPT = `${HANDLER_VOICE}
 You are a tactical influence advisor. The user is in a LIVE situation and needs an answer in seconds. Be direct, specific, give exact words. No preamble, no disclaimers.
 
 Before responding, classify the situation: FRAME_CONTEST | NEGOTIATION | RAPPORT_CRISIS | EMOTIONAL_HIJACK | STATUS_CHALLENGE | COMPLIANCE_REQUEST
-Select the optimal counter-technique, then generate the script.
+Select the optimal counter-technique, then generate THREE different response approaches and THREE follow-up scenarios.
 
 You MUST respond with valid JSON in this exact format:
 {
+  "responses": [
+    {
+      "approach": "Direct & Assertive",
+      "sayThis": "exact words to say",
+      "why": "psychology principle, citing source if from knowledge base",
+      "riskLevel": "LOW or MEDIUM or HIGH"
+    },
+    {
+      "approach": "Subtle & Strategic",
+      "sayThis": "exact words to say",
+      "why": "psychology principle, citing source if from knowledge base",
+      "riskLevel": "LOW or MEDIUM or HIGH"
+    },
+    {
+      "approach": "Empathetic & Disarming",
+      "sayThis": "exact words to say",
+      "why": "psychology principle, citing source if from knowledge base",
+      "riskLevel": "LOW or MEDIUM or HIGH"
+    }
+  ],
+  "avoid": "one thing NOT to say and why",
+  "scenarios": [
+    {
+      "ifTheySay": "likely response from the other person",
+      "thenSay": "your counter-response",
+      "why": "brief explanation"
+    },
+    {
+      "ifTheySay": "another possible response",
+      "thenSay": "your counter-response",
+      "why": "brief explanation"
+    },
+    {
+      "ifTheySay": "worst case response",
+      "thenSay": "your counter-response",
+      "why": "brief explanation"
+    }
+  ],
   "classification": "FRAME_CONTEST|NEGOTIATION|RAPPORT_CRISIS|EMOTIONAL_HIJACK|STATUS_CHALLENGE|COMPLIANCE_REQUEST",
-  "technique": "Name of the technique being applied (from knowledge base if available)",
-  "sayThis": "Exact words the user should say right now",
-  "why": "One sentence explaining the psychology behind it, citing source if from knowledge base",
-  "avoid": "One specific thing NOT to say or do",
-  "ifBackfires": "One fallback line if the first approach doesn't work"
+  "technique": "primary technique name from knowledge base if available"
 }`;
 
 export const maxDuration = 30;
@@ -59,7 +93,7 @@ export async function POST(req: NextRequest) {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 1200,
       }),
     });
 
