@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -102,6 +102,8 @@ interface Profile {
   confidenceScore?: number;
   keyTraitTags?: string[];
   riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  autoRiskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+  manualRiskOverride?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
   nextRecommendedAction?: string;
   tags?: string[];
   notes?: string;
@@ -150,11 +152,13 @@ export default function ProfileDetailPage() {
   const profileId = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'interactions' | 'playbook' | 'analyses'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'playbook'>('profile');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingPlaybook, setIsGeneratingPlaybook] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
+  const [analysesLoading, setAnalysesLoading] = useState(true);
 
   const getHeaders = useCallback(async () => {
     const token = await user?.getIdToken();
@@ -181,6 +185,37 @@ export default function ProfileDetailPage() {
     };
     loadProfile();
   }, [profileId, getHeaders]);
+
+  // Load analyses for this person
+  useEffect(() => {
+    const loadAnalyses = async () => {
+      try {
+        const headers = await getHeaders();
+        const res = await fetch(`/api/analyze/history?person_id=${profileId}&limit=50`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyses(data.analyses || []);
+        }
+      } catch (e) {
+        console.error('Failed to load analyses:', e);
+      } finally {
+        setAnalysesLoading(false);
+      }
+    };
+    loadAnalyses();
+  }, [profileId, getHeaders]);
+
+  // Auto-calculate risk level from analyses
+  const autoRiskLevel = useMemo<'LOW' | 'MEDIUM' | 'HIGH' | null>(() => {
+    if (analyses.length === 0) return null;
+    const maxThreat = Math.max(...analyses.map((a) => a.threat_score));
+    if (maxThreat >= 7) return 'HIGH';
+    if (maxThreat >= 4) return 'MEDIUM';
+    return 'LOW';
+  }, [analyses]);
+
+  // Effective risk level: manual override takes precedence
+  const effectiveRiskLevel = profile?.manualRiskOverride || autoRiskLevel || profile?.riskLevel || null;
 
   // Save profile changes
   const saveProfile = useCallback(
@@ -278,12 +313,25 @@ export default function ProfileDetailPage() {
     setIsGeneratingPlaybook(true);
     try {
       const authHeaders = await getHeaders();
+
+      // Build analyses summary for the AI
+      const analysisSummaries = analyses.map((a) => ({
+        date: a.created_at,
+        threat_score: a.threat_score,
+        tactics_count: a.tactics_count,
+        techniques: a.techniques_identified || [],
+        assessment: a.overall_assessment?.slice(0, 300) || '',
+        power_yours: a.power_yours,
+        power_theirs: a.power_theirs,
+      }));
+
       const res = await fetch('/api/profiler', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'generate-playbook',
           profile,
+          analysisData: { analyses: analysisSummaries },
         }),
       });
 
@@ -306,10 +354,16 @@ export default function ProfileDetailPage() {
     }
   };
 
-  // Update risk level
+  // Update risk level (manual override)
   const handleRiskLevelChange = (riskLevel: 'LOW' | 'MEDIUM' | 'HIGH') => {
     if (!profile) return;
-    saveProfile({ ...profile, riskLevel, updatedAt: new Date().toISOString() });
+    saveProfile({ ...profile, riskLevel, manualRiskOverride: riskLevel, updatedAt: new Date().toISOString() });
+  };
+
+  // Clear manual override
+  const handleClearRiskOverride = () => {
+    if (!profile) return;
+    saveProfile({ ...profile, manualRiskOverride: null, riskLevel: autoRiskLevel || undefined, updatedAt: new Date().toISOString() });
   };
 
   // Update next recommended action
@@ -364,9 +418,8 @@ export default function ProfileDetailPage() {
 
   const tabs = [
     { id: 'profile' as const, label: 'Psychological Profile', icon: Brain },
-    { id: 'interactions' as const, label: 'Interaction Log', icon: MessageSquare },
+    { id: 'activity' as const, label: 'Activity', icon: MessageSquare },
     { id: 'playbook' as const, label: 'Strategy Playbook', icon: Target },
-    { id: 'analyses' as const, label: 'Analyses', icon: AlertTriangle },
   ];
 
   return (
@@ -397,9 +450,9 @@ export default function ProfileDetailPage() {
               >
                 {profile.relationshipType}
               </span>
-              {profile.riskLevel && (
-                <span className={`px-2 py-0.5 text-xs font-mono border rounded ${getRiskColor(profile.riskLevel)}`}>
-                  {profile.riskLevel} RISK
+              {effectiveRiskLevel && (
+                <span className={`px-2 py-0.5 text-xs font-mono border rounded ${getRiskColor(effectiveRiskLevel)}`}>
+                  {effectiveRiskLevel} RISK
                 </span>
               )}
               {(profile.confidenceScore ?? 0) > 0 && (
@@ -466,14 +519,19 @@ export default function ProfileDetailPage() {
       {activeTab === 'profile' && (
         <PsychologicalProfileTab
           profile={profile}
+          autoRiskLevel={autoRiskLevel}
+          effectiveRiskLevel={effectiveRiskLevel}
           onRiskLevelChange={handleRiskLevelChange}
+          onClearRiskOverride={handleClearRiskOverride}
           onNextActionChange={handleNextActionChange}
           onNotesChange={handleNotesChange}
         />
       )}
-      {activeTab === 'interactions' && (
-        <InteractionLogTab
+      {activeTab === 'activity' && (
+        <ActivityTab
           profile={profile}
+          analyses={analyses}
+          analysesLoading={analysesLoading}
           onLogInteraction={() => setIsLogModalOpen(true)}
           onDeleteInteraction={(interactionId) => {
             const updated = {
@@ -483,17 +541,24 @@ export default function ProfileDetailPage() {
             };
             saveProfile(updated);
           }}
+          onDeleteAnalysis={async (id: string) => {
+            try {
+              const headers = await getHeaders();
+              await fetch(`/api/analyze/history?id=${id}`, { method: 'DELETE', headers });
+              setAnalyses((prev) => prev.filter((a) => a.id !== id));
+            } catch (e) {
+              console.error('Failed to delete analysis:', e);
+            }
+          }}
         />
       )}
       {activeTab === 'playbook' && (
         <PlaybookTab
           profile={profile}
+          analyses={analyses}
           onGenerate={handleGeneratePlaybook}
           isGenerating={isGeneratingPlaybook}
         />
-      )}
-      {activeTab === 'analyses' && (
-        <AnalysesTab profileId={profileId} getHeaders={getHeaders} />
       )}
 
       {/* Log Interaction Modal */}
@@ -577,12 +642,18 @@ function TagsSection({
 
 function PsychologicalProfileTab({
   profile,
+  autoRiskLevel,
+  effectiveRiskLevel,
   onRiskLevelChange,
+  onClearRiskOverride,
   onNextActionChange,
   onNotesChange,
 }: {
   profile: Profile;
+  autoRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+  effectiveRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | null;
   onRiskLevelChange: (risk: 'LOW' | 'MEDIUM' | 'HIGH') => void;
+  onClearRiskOverride: () => void;
   onNextActionChange: (action: string) => void;
   onNotesChange: (notes: string) => void;
 }) {
@@ -592,6 +663,7 @@ function PsychologicalProfileTab({
   const [nextAction, setNextAction] = useState(profile.nextRecommendedAction || '');
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(profile.notes || '');
+  const [showRiskOverride, setShowRiskOverride] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -599,26 +671,83 @@ function PsychologicalProfileTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
           <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Risk Level</h3>
-          <div className="flex gap-2">
-            {(['LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
-              <button
-                key={level}
-                onClick={() => onRiskLevelChange(level)}
-                className={`flex-1 py-2 text-sm font-mono uppercase rounded border transition-all ${
-                  profile.riskLevel === level
-                    ? level === 'LOW'
-                      ? 'bg-green-500/20 text-green-400 border-green-500'
-                      : level === 'MEDIUM'
-                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
-                      : 'bg-red-500/20 text-red-400 border-red-500'
-                    : 'bg-gray-50 dark:bg-[#222222] border-gray-200 dark:border-[#333333] text-gray-500 hover:border-gray-400'
-                }`}
-              >
-                {level}
-              </button>
-            ))}
+
+          {/* Auto-calculated badge */}
+          <div className="flex items-center gap-3 mb-3">
+            {effectiveRiskLevel ? (
+              <span className={`px-3 py-1.5 text-sm font-mono uppercase font-semibold rounded border ${getRiskColor(effectiveRiskLevel)}`}>
+                {effectiveRiskLevel}
+              </span>
+            ) : (
+              <span className="px-3 py-1.5 text-sm font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded">
+                Not assessed yet
+              </span>
+            )}
+            {profile.manualRiskOverride && (
+              <span className="text-xs text-gray-500 dark:text-gray-400 italic">(manually set)</span>
+            )}
           </div>
-          {profile.riskLevel === 'HIGH' && (
+
+          {/* Explanation */}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            Risk level is automatically calculated from your conversation analyses with this person. Higher threat scores in analyzed conversations = higher risk.
+          </p>
+
+          {/* Override link */}
+          {!showRiskOverride ? (
+            <button
+              onClick={() => setShowRiskOverride(true)}
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors underline"
+            >
+              Override
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                {(['LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => {
+                      onRiskLevelChange(level);
+                      setShowRiskOverride(false);
+                    }}
+                    className={`flex-1 py-2 text-sm font-mono uppercase rounded border transition-all ${
+                      profile.manualRiskOverride === level
+                        ? level === 'LOW'
+                          ? 'bg-green-500/20 text-green-400 border-green-500'
+                          : level === 'MEDIUM'
+                          ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
+                          : 'bg-red-500/20 text-red-400 border-red-500'
+                        : 'bg-gray-50 dark:bg-[#222222] border-gray-200 dark:border-[#333333] text-gray-500 hover:border-gray-400'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3">
+                {profile.manualRiskOverride && (
+                  <button
+                    onClick={() => {
+                      onClearRiskOverride();
+                      setShowRiskOverride(false);
+                    }}
+                    className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors underline"
+                  >
+                    Clear override (use auto)
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowRiskOverride(false)}
+                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {effectiveRiskLevel === 'HIGH' && (
             <div className="mt-3 flex items-start gap-2 text-xs text-red-400">
               <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
               <span>High risk relationship - proceed with extreme caution</span>
@@ -866,96 +995,253 @@ function PsychologicalProfileTab({
   );
 }
 
-// ─── Tab 2: Interaction Log ───────────────────────────────────────────────────
+// ─── Tab 2: Activity (unified timeline) ─────────────────────────────────────
 
-function InteractionLogTab({
+type ActivityItem =
+  | { type: 'note'; date: string; data: Interaction }
+  | { type: 'analysis'; date: string; data: AnalysisHistoryItem };
+
+function ActivityTab({
   profile,
+  analyses,
+  analysesLoading,
   onLogInteraction,
   onDeleteInteraction,
+  onDeleteAnalysis,
 }: {
   profile: Profile;
+  analyses: AnalysisHistoryItem[];
+  analysesLoading: boolean;
   onLogInteraction: () => void;
   onDeleteInteraction: (id: string) => void;
+  onDeleteAnalysis: (id: string) => void;
 }) {
-  const sorted = [...profile.interactions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null);
 
-  if (sorted.length === 0) {
-    return (
-      <div className="text-center py-16 space-y-3">
-        <MessageSquare className="h-12 w-12 text-gray-600 mx-auto" />
-        <p className="text-gray-500 dark:text-gray-400">No interactions logged yet</p>
-        <button
-          onClick={onLogInteraction}
-          className="mt-2 bg-[#D4A017] text-[#0A0A0A] px-5 py-2 rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
-        >
-          Log First Interaction
-        </button>
-      </div>
+  const getThreatColor = (score: number) => {
+    if (score <= 3) return 'bg-green-500';
+    if (score <= 6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getThreatLabel = (score: number) => {
+    if (score <= 3) return 'Low';
+    if (score <= 6) return 'Medium';
+    return 'High';
+  };
+
+  // Merge interactions and analyses into a single timeline
+  const items: ActivityItem[] = useMemo(() => {
+    const noteItems: ActivityItem[] = profile.interactions.map((i) => ({
+      type: 'note' as const,
+      date: i.date,
+      data: i,
+    }));
+    const analysisItems: ActivityItem[] = analyses.map((a) => ({
+      type: 'analysis' as const,
+      date: a.created_at,
+      data: a,
+    }));
+    return [...noteItems, ...analysisItems].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }
+  }, [profile.interactions, analyses]);
 
   return (
     <div className="space-y-4">
-      {sorted.map((interaction) => (
-        <div
-          key={interaction.id}
-          className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5 space-y-3"
+      {/* Add Note button */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+          {items.length} item{items.length !== 1 ? 's' : ''} total
+        </p>
+        <button
+          onClick={onLogInteraction}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
         >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gray-500 font-mono">
-                {new Date(interaction.date).toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </p>
-              <p className="text-gray-900 dark:text-white mt-1">{interaction.summary}</p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={`h-4 w-4 ${
-                      s <= interaction.outcome ? 'text-[#D4A017] fill-[#D4A017]' : 'text-[#333333]'
-                    }`}
-                  />
-                ))}
-              </div>
-              <button
-                onClick={() => onDeleteInteraction(interaction.id)}
-                className="p-1 text-gray-600 hover:text-red-400 transition-colors"
-                title="Delete interaction"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
+          <Plus className="h-4 w-4" />
+          Add Note
+        </button>
+      </div>
 
-          {interaction.techniques.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {interaction.techniques.map((t, i) => (
-                <span key={i} className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-2 py-0.5 rounded border border-[#D4A017]/20">
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {interaction.notes && <p className="text-sm text-gray-500 dark:text-gray-400">{interaction.notes}</p>}
-
-          {interaction.aiAnalysis && (
-            <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-[#D4A017]">
-              <p className="text-xs font-mono uppercase text-[#D4A017] mb-1">AI Analysis</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">{interaction.aiAnalysis}</p>
-            </div>
-          )}
+      {analysesLoading && (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-[#D4A017]" />
         </div>
-      ))}
+      )}
+
+      {!analysesLoading && items.length === 0 && (
+        <div className="text-center py-16 space-y-3">
+          <MessageSquare className="h-12 w-12 text-gray-600 mx-auto" />
+          <p className="text-gray-500 dark:text-gray-400">No activity yet</p>
+          <p className="text-gray-500 text-sm max-w-md mx-auto">
+            Log an interaction note or run an analysis on the{' '}
+            <a href="/app/analyze" className="text-[#D4A017] hover:underline">Analyze page</a>{' '}
+            to start building this timeline.
+          </p>
+          <button
+            onClick={onLogInteraction}
+            className="mt-2 bg-[#D4A017] text-[#0A0A0A] px-5 py-2 rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
+          >
+            Log First Note
+          </button>
+        </div>
+      )}
+
+      {items.map((item) => {
+        if (item.type === 'note') {
+          const interaction = item.data as Interaction;
+          return (
+            <div
+              key={`note-${interaction.id}`}
+              className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5 space-y-3"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="text-lg mt-0.5" title="Manual note">📝</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-500 font-mono">
+                        {new Date(interaction.date).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </p>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                        Note
+                      </span>
+                    </div>
+                    <p className="text-gray-900 dark:text-white mt-1">{interaction.summary}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`h-4 w-4 ${
+                          s <= interaction.outcome ? 'text-[#D4A017] fill-[#D4A017]' : 'text-[#333333]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => onDeleteInteraction(interaction.id)}
+                    className="p-1 text-gray-600 hover:text-red-400 transition-colors"
+                    title="Delete note"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {interaction.techniques.length > 0 && (
+                <div className="flex flex-wrap gap-1 ml-9">
+                  {interaction.techniques.map((t, i) => (
+                    <span key={i} className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-2 py-0.5 rounded border border-[#D4A017]/20">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {interaction.notes && <p className="text-sm text-gray-500 dark:text-gray-400 ml-9">{interaction.notes}</p>}
+
+              {interaction.aiAnalysis && (
+                <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-[#D4A017] ml-9">
+                  <p className="text-xs font-mono uppercase text-[#D4A017] mb-1">AI Analysis</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{interaction.aiAnalysis}</p>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Analysis item
+        const analysis = item.data as AnalysisHistoryItem;
+        const isExpanded = expandedAnalysis === analysis.id;
+
+        return (
+          <div
+            key={`analysis-${analysis.id}`}
+            className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden"
+          >
+            <button
+              onClick={() => setExpandedAnalysis(isExpanded ? null : analysis.id)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
+            >
+              <span className="text-lg" title="Analysis">🔍</span>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${getThreatColor(analysis.threat_score)}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
+                    Analysis
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Threat: {analysis.threat_score}/10 ({getThreatLabel(analysis.threat_score)})
+                  </span>
+                </div>
+                <p className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                  {analysis.input_text ? stripMarkdown(analysis.input_text).slice(0, 120) : 'Image analysis'}
+                </p>
+              </div>
+              <span className="text-xs text-gray-400 shrink-0">{formatDate(analysis.created_at)}</span>
+              <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isExpanded && (
+              <div className="px-4 pb-4 border-t border-gray-200 dark:border-[#333] pt-3 space-y-3 ml-9">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Power: You {analysis.power_yours} vs Them {analysis.power_theirs} · {analysis.tactics_count} tactic{analysis.tactics_count !== 1 ? 's' : ''}
+                </p>
+                {analysis.overall_assessment && (
+                  <div>
+                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Assessment</p>
+                    <div className="text-sm text-gray-600 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(analysis.overall_assessment) }} />
+                  </div>
+                )}
+                {analysis.techniques_identified?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Techniques Identified</p>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.techniques_identified.map((t, i) => (
+                        <span key={i} className="text-xs px-2 py-0.5 rounded bg-[#D4A017]/10 text-[#D4A017] border border-[#D4A017]/20">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {analysis.full_result?.tactics?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Detected Tactics</p>
+                    <div className="space-y-2">
+                      {analysis.full_result.tactics.map((tactic: any, i: number) => (
+                        <div key={i} className="text-sm bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">
+                          <span className="font-medium text-gray-800 dark:text-gray-200">{tactic.tactic}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-xs ml-2">({tactic.category})</span>
+                          {tactic.quote && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&ldquo;{tactic.quote}&rdquo;</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {analysis.full_result?.counterScript && (
+                  <div>
+                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Counter-Script</p>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]" dangerouslySetInnerHTML={{ __html: renderMarkdown(analysis.full_result.counterScript) }} />
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2">
+                  <a href="/app/analyze" className="text-xs text-[#D4A017] hover:underline">Run new analysis →</a>
+                  <button onClick={() => onDeleteAnalysis(analysis.id)} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
+                    <Trash2 className="h-3 w-3" /> Delete
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -964,14 +1250,18 @@ function InteractionLogTab({
 
 function PlaybookTab({
   profile,
+  analyses,
   onGenerate,
   isGenerating,
 }: {
   profile: Profile;
+  analyses: AnalysisHistoryItem[];
   onGenerate: () => void;
   isGenerating: boolean;
 }) {
   const { playbook } = profile;
+  const totalDataPoints = analyses.length + profile.interactions.length;
+  const hasData = totalDataPoints > 0;
 
   return (
     <div className="space-y-6">
@@ -982,11 +1272,16 @@ function PlaybookTab({
               Generated {new Date(playbook.generatedAt).toLocaleString()}
             </p>
           )}
+          {hasData && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
+              {analyses.length} analysis{analyses.length !== 1 ? 'es' : ''} + {profile.interactions.length} note{profile.interactions.length !== 1 ? 's' : ''} available
+            </p>
+          )}
         </div>
         <button
           onClick={onGenerate}
-          disabled={isGenerating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50"
+          disabled={isGenerating || !hasData}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -997,6 +1292,14 @@ function PlaybookTab({
         </button>
       </div>
 
+      {!hasData && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+          <p className="text-sm text-yellow-600 dark:text-yellow-400">
+            Add at least one analysis or note about this person before generating a strategy. The AI needs real data to create an accurate playbook.
+          </p>
+        </div>
+      )}
+
       {isGenerating && (
         <div className="text-center py-16 space-y-3">
           <Loader2 className="h-10 w-10 text-[#D4A017] animate-spin mx-auto" />
@@ -1004,12 +1307,12 @@ function PlaybookTab({
         </div>
       )}
 
-      {!isGenerating && !playbook && (
+      {!isGenerating && !playbook && hasData && (
         <div className="text-center py-16 space-y-3">
           <Target className="h-12 w-12 text-gray-600 mx-auto" />
           <p className="text-gray-500 dark:text-gray-400">No strategy generated yet</p>
           <p className="text-gray-500 text-sm max-w-md mx-auto">
-            Log some interactions first, then generate a personalized strategy playbook for this person.
+            Click Generate Strategy to create a personalized playbook based on your {totalDataPoints} data point{totalDataPoints !== 1 ? 's' : ''}.
           </p>
         </div>
       )}
@@ -1391,140 +1694,4 @@ function stripMarkdown(text: string): string {
   return text.replace(/\*\*/g, '').replace(/^---.*---\s*/gm, '').trim();
 }
 
-function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders: () => Promise<Record<string, string>> }) {
-  const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const headers = await getHeaders();
-        const res = await fetch(`/api/analyze/history?person_id=${profileId}&limit=50`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          setAnalyses(data.analyses || []);
-        }
-      } catch (e) {
-        console.error('Failed to load analyses:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [profileId, getHeaders]);
-
-  const handleDelete = async (id: string) => {
-    try {
-      const headers = await getHeaders();
-      await fetch(`/api/analyze/history?id=${id}`, { method: 'DELETE', headers });
-      setAnalyses((prev) => prev.filter((a) => a.id !== id));
-    } catch (e) {
-      console.error('Failed to delete analysis:', e);
-    }
-  };
-
-  const getThreatColor = (score: number) => {
-    if (score <= 3) return 'bg-green-500';
-    if (score <= 6) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getThreatLabel = (score: number) => {
-    if (score <= 3) return 'Low';
-    if (score <= 6) return 'Medium';
-    return 'High';
-  };
-
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-[#D4A017]" />
-      </div>
-    );
-  }
-
-  if (analyses.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-        <AlertTriangle className="h-8 w-8 mx-auto mb-3 opacity-50" />
-        <p className="font-mono text-sm">No analyses linked to this person yet.</p>
-        <p className="text-xs mt-1">Run an analysis on the <a href="/app/analyze" className="text-[#D4A017] hover:underline">Analyze page</a> and save it to this profile.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500 dark:text-gray-400">{analyses.length} analysis{analyses.length !== 1 ? 'es' : ''} linked</p>
-      {analyses.map((a) => (
-        <div key={a.id} className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden">
-          {/* Summary row */}
-          <button
-            onClick={() => setExpanded(expanded === a.id ? null : a.id)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
-          >
-            <span className={`w-2 h-2 rounded-full shrink-0 ${getThreatColor(a.threat_score)}`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{a.input_text ? stripMarkdown(a.input_text) : 'Image analysis'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Threat: {a.threat_score}/10 ({getThreatLabel(a.threat_score)}) · Power: You {a.power_yours} vs Them {a.power_theirs} · {a.tactics_count} tactic{a.tactics_count !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <span className="text-xs text-gray-400 shrink-0">{formatDate(a.created_at)}</span>
-            <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${expanded === a.id ? 'rotate-90' : ''}`} />
-          </button>
-
-          {/* Expanded detail */}
-          {expanded === a.id && (
-            <div className="px-4 pb-4 border-t border-gray-200 dark:border-[#333] pt-3 space-y-3">
-              {a.overall_assessment && (
-                <div>
-                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Assessment</p>
-                  <div className="text-sm text-gray-600 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(a.overall_assessment) }} />
-                </div>
-              )}
-              {a.techniques_identified?.length > 0 && (
-                <div>
-                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Techniques Identified</p>
-                  <div className="flex flex-wrap gap-1">
-                    {a.techniques_identified.map((t, i) => (
-                      <span key={i} className="text-xs px-2 py-0.5 rounded bg-[#D4A017]/10 text-[#D4A017] border border-[#D4A017]/20">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {a.full_result?.tactics?.length > 0 && (
-                <div>
-                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Detected Tactics</p>
-                  <div className="space-y-2">
-                    {a.full_result.tactics.map((tactic: any, i: number) => (
-                      <div key={i} className="text-sm bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">
-                        <span className="font-medium text-gray-800 dark:text-gray-200">{tactic.tactic}</span>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs ml-2">({tactic.category})</span>
-                        {tactic.quote && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&ldquo;{tactic.quote}&rdquo;</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {a.full_result?.counterScript && (
-                <div>
-                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Counter-Script</p>
-                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]" dangerouslySetInnerHTML={{ __html: renderMarkdown(a.full_result.counterScript) }} />
-                </div>
-              )}
-              <div className="flex justify-between items-center pt-2">
-                <a href="/app/analyze" className="text-xs text-[#D4A017] hover:underline">Run new analysis →</a>
-                <button onClick={() => handleDelete(a.id)} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
-                  <Trash2 className="h-3 w-3" /> Delete
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
+// AnalysesTab removed — functionality merged into ActivityTab above
