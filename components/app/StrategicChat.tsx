@@ -409,7 +409,7 @@ export function StrategicChat({ goal, onBack }: StrategicChatProps) {
                         <h3 className="font-mono uppercase text-red-400 font-bold">Important</h3>
                     </div>
                     
-                    <div className="space-y-2 text-sm text-red-200">
+                    <div className="space-y-2 text-sm text-red-400">
                         <p>• Use influence ethically and responsibly</p>
                         <p>• Respect others' boundaries and autonomy</p>
                         <p>• Focus on win-win outcomes when possible</p>
