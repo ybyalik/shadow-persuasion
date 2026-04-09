@@ -44,13 +44,13 @@ function parseCoaching(raw: string): { content: string; coaching?: CoachingData 
 
 function parseMarkdown(text: string): string {
   return text
-    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
+    .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
+    .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800 dark:text-[#E8E8E0] font-semibold">$1</strong>')
-    .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-xs font-mono font-bold mt-1 mb-1">$1</span>')
+    .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-sm font-mono font-bold mt-1 mb-1">$1</span>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
+    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-base">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
     .replace(/^[-] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">&rarr;</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
     .replace(/\n\n/g, '<div class="h-3"></div>')
     .replace(/\n/g, '<br/>');
@@ -64,7 +64,7 @@ function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
     <div className="mt-2 border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden bg-gray-50 dark:bg-[#111]">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-white dark:bg-[#1a1a1a] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-white dark:bg-[#1a1a1a] transition-colors"
       >
         <div className="flex items-center gap-2">
           <Lightbulb className="h-3 w-3 text-[#D4A017]" />
@@ -77,7 +77,7 @@ function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
         {expanded ? <ChevronUp className="h-3 w-3 text-gray-500" /> : <ChevronDown className="h-3 w-3 text-gray-500" />}
       </button>
       {expanded && (
-        <div className="px-3 pb-3 space-y-2 text-xs border-t border-[#222]">
+        <div className="px-3 pb-3 space-y-2 text-sm border-t border-[#222]">
           <div className="pt-2">
             <span className="text-gray-500 dark:text-gray-400">Feedback:</span>
             <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{coaching.feedback}</p>
@@ -433,7 +433,7 @@ export default function TrainingScenarioPage() {
             <ul className="space-y-2">
               {relevantTechniques.map(t => (
                 <li key={t.id}>
-                  <Link href={`/app/library/${t.id}`} className="text-sm hover:underline">{t.name}</Link>
+                  <Link href={`/app/library/${t.id}`} className="text-base hover:underline">{t.name}</Link>
                 </li>
               ))}
             </ul>
@@ -458,13 +458,13 @@ export default function TrainingScenarioPage() {
       {/* Header bar */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#333]">
         <div>
-          <span className="font-mono text-xs text-[#D4A017] uppercase">{scenario.category}</span>
-          <h1 className="text-lg font-bold tracking-wider">{scenario.title}</h1>
+          <span className="font-mono text-sm text-[#D4A017] uppercase">{scenario.category}</span>
+          <h1 className="text-xl font-bold tracking-wider">{scenario.title}</h1>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); setScoreSaved(false); }}
-            className="px-4 py-2 text-xs font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
+            className="px-4 py-2 text-sm font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
           >
             Restart
           </button>
@@ -472,7 +472,7 @@ export default function TrainingScenarioPage() {
             <button
               onClick={requestDebrief}
               disabled={isDebriefing}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase bg-red-600/80 text-gray-900 dark:text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-mono uppercase bg-red-600/80 text-gray-900 dark:text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
             >
               <StopCircle className="h-3.5 w-3.5" />
               {isDebriefing ? 'Analyzing...' : 'End & Debrief'}
@@ -493,12 +493,12 @@ export default function TrainingScenarioPage() {
               }`}>
                 {msg.role === 'assistant' && (
                   <div className="px-4 pt-3 pb-1">
-                    <span className="text-xs font-mono uppercase text-[#D4A017] tracking-wider">Counterpart</span>
+                    <span className="text-sm font-mono uppercase text-[#D4A017] tracking-wider">Counterpart</span>
                   </div>
                 )}
                 <div className="px-4 pb-3">
                   <div
-                    className={`text-sm leading-relaxed ${msg.role === 'user' ? 'text-[#0A0A0A]' : 'text-gray-800 dark:text-[#E8E8E0]'}`}
+                    className={`text-base leading-relaxed ${msg.role === 'user' ? 'text-[#0A0A0A]' : 'text-gray-800 dark:text-[#E8E8E0]'}`}
                     dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.content) }}
                   />
                 </div>
@@ -543,7 +543,7 @@ export default function TrainingScenarioPage() {
             }}
             placeholder="Your response..."
             rows={1}
-            className="flex-1 p-2 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
+            className="flex-1 p-3 text-base bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
             disabled={isLoading}
           />
           <button
