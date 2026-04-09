@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
       .from(TABLE)
       .insert({
         name: body.name,
-        relationship_type: body.relationshipType,
+        relationship_type: body.relationshipType || 'Other',
         user_id: userId,
-        traits: {},
-        interactions: [],
+        traits: body.traits || {},
+        interactions: body.interactions || [],
       })
       .select()
       .single();

@@ -203,16 +203,18 @@ export default function AnalyzePage() {
     try {
       const headers = await getHeaders();
 
+      const traitsPayload = { analysis: analysisData, analyzed_at: new Date().toISOString() };
+
       if (selectedPersonId) {
-        // Update existing profile
+        // Update existing profile — merge analysis into traits
         const person = peopleProfiles.find(p => p.id === selectedPersonId);
         const res = await fetch('/api/profiler/people', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', ...headers },
           body: JSON.stringify({
             id: selectedPersonId,
-            analysis_data: analysisData,
-            last_analysis_date: new Date().toISOString(),
+            traits: traitsPayload,
+            updated_at: new Date().toISOString(),
           }),
         });
         if (res.ok) {
@@ -221,14 +223,14 @@ export default function AnalyzePage() {
           setSaveToast('Failed to save to profile');
         }
       } else if (newPersonName.trim()) {
-        // Create new profile
+        // Create new profile with analysis
         const res = await fetch('/api/profiler/people', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...headers },
           body: JSON.stringify({
             name: newPersonName.trim(),
-            analysis_data: analysisData,
-            last_analysis_date: new Date().toISOString(),
+            relationshipType: 'Other',
+            traits: traitsPayload,
           }),
         });
         if (res.ok) {
