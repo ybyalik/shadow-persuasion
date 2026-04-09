@@ -28,7 +28,7 @@ export function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => href === '/app' ? pathname === '/app' : pathname === href || pathname.startsWith(href + '/');
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
