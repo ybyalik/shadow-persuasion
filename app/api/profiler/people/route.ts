@@ -9,6 +9,28 @@ const supabase = createClient(
 
 const TABLE = 'user_profiles_people';
 
+// Map snake_case DB row to camelCase for frontend
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProfile(row: any) {
+  if (!row) return row;
+  return {
+    id: row.id,
+    name: row.name,
+    relationshipType: row.relationship_type,
+    traits: row.traits || {},
+    interactions: row.interactions || [],
+    playbook: row.playbook,
+    confidenceScore: row.confidence_score,
+    keyTraitTags: row.key_trait_tags,
+    riskLevel: row.risk_level,
+    nextRecommendedAction: row.next_recommended_action,
+    tags: row.tags,
+    notes: row.notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 // GET: List all people profiles for the user
 export async function GET(req: NextRequest) {
   try {
@@ -32,7 +54,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch people profiles' }, { status: 500 });
     }
 
-    return NextResponse.json({ profiles: data || [] });
+    return NextResponse.json({ profiles: (data || []).map(mapProfile) });
   } catch (error) {
     console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -62,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
     }
 
-    return NextResponse.json({ profile: data });
+    return NextResponse.json({ profile: mapProfile(data) });
   } catch (error) {
     console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -95,7 +117,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
     }
 
-    return NextResponse.json({ profile: data });
+    return NextResponse.json({ profile: mapProfile(data) });
   } catch (error) {
     console.error('[PROFILER_PEOPLE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
