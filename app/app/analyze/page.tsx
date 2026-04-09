@@ -75,16 +75,16 @@ interface AnalysisResult {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Urgency: 'bg-red-900/40 text-red-300 border-red-800',
-  'Social Proof': 'bg-blue-900/40 text-blue-300 border-blue-800',
-  Authority: 'bg-purple-900/40 text-purple-300 border-purple-800',
-  Guilt: 'bg-orange-900/40 text-orange-300 border-orange-800',
-  Misdirection: 'bg-pink-900/40 text-pink-300 border-pink-800',
-  Scarcity: 'bg-yellow-900/40 text-yellow-300 border-yellow-800',
-  Fear: 'bg-red-900/40 text-red-300 border-red-800',
-  Flattery: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  Reciprocity: 'bg-cyan-900/40 text-cyan-300 border-cyan-800',
-  Anchoring: 'bg-indigo-900/40 text-indigo-300 border-indigo-800',
+  Urgency: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800',
+  'Social Proof': 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800',
+  Authority: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800',
+  Guilt: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800',
+  Misdirection: 'bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300 border-pink-300 dark:border-pink-800',
+  Scarcity: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-800',
+  Fear: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800',
+  Flattery: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+  Reciprocity: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
+  Anchoring: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
 };
 
 function getCategoryStyle(category: string): string {
@@ -111,10 +111,10 @@ function getThreatTextColor(score: number): string {
 
 function getRiskColor(risk: string) {
   switch (risk) {
-    case 'LOW': return 'text-green-400 bg-green-400/20 border-green-400/50';
-    case 'MEDIUM': return 'text-yellow-300 bg-yellow-400/20 border-yellow-400/50';
-    case 'HIGH': return 'text-red-300 bg-red-400/20 border-red-400/50';
-    default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10 border-gray-400/20';
+    case 'LOW': return 'text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-400/20 border-green-300 dark:border-green-400/50';
+    case 'MEDIUM': return 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-400/20 border-yellow-300 dark:border-yellow-400/50';
+    case 'HIGH': return 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-400/20 border-red-300 dark:border-red-400/50';
+    default: return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-400/10 border-gray-300 dark:border-gray-400/20';
   }
 }
 

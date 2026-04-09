@@ -325,10 +325,10 @@ export default function ChatListPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {qfResponse.responses?.map((resp, idx) => {
                 const riskColor = resp.riskLevel === 'LOW'
-                  ? 'bg-green-900/30 text-green-400 border-green-700'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700'
                   : resp.riskLevel === 'HIGH'
-                    ? 'bg-red-900/30 text-red-400 border-red-700'
-                    : 'bg-yellow-900/30 text-yellow-400 border-yellow-700';
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700'
+                    : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700';
                 const isRecommended = idx === 0;
                 return (
                   <div
