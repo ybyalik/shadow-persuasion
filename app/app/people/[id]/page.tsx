@@ -149,7 +149,7 @@ export default function ProfileDetailPage() {
   const profileId = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'interactions' | 'playbook'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'interactions' | 'playbook' | 'analyses'>('profile');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingPlaybook, setIsGeneratingPlaybook] = useState(false);
@@ -365,6 +365,7 @@ export default function ProfileDetailPage() {
     { id: 'profile' as const, label: 'Psychological Profile', icon: Brain },
     { id: 'interactions' as const, label: 'Interaction Log', icon: MessageSquare },
     { id: 'playbook' as const, label: 'Strategy Playbook', icon: Target },
+    { id: 'analyses' as const, label: 'Analyses', icon: AlertTriangle },
   ];
 
   return (
@@ -489,6 +490,9 @@ export default function ProfileDetailPage() {
           onGenerate={handleGeneratePlaybook}
           isGenerating={isGeneratingPlaybook}
         />
+      )}
+      {activeTab === 'analyses' && (
+        <AnalysesTab profileId={profileId} getHeaders={getHeaders} />
       )}
 
       {/* Log Interaction Modal */}
@@ -1354,5 +1358,170 @@ function RadarChart({
         );
       })}
     </svg>
+  );
+}
+
+// ─── Tab 4: Analyses ─────────────────────────────────────────────────────────
+
+interface AnalysisHistoryItem {
+  id: string;
+  input_text: string;
+  input_type: string;
+  threat_score: number;
+  power_yours: number;
+  power_theirs: number;
+  tactics_count: number;
+  overall_assessment: string;
+  techniques_identified: string[];
+  created_at: string;
+  full_result: any;
+}
+
+function AnalysesTab({ profileId, getHeaders }: { profileId: string; getHeaders: () => Promise<Record<string, string>> }) {
+  const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const headers = await getHeaders();
+        const res = await fetch(`/api/analyze/history?person_id=${profileId}&limit=50`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyses(data.analyses || []);
+        }
+      } catch (e) {
+        console.error('Failed to load analyses:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [profileId, getHeaders]);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const headers = await getHeaders();
+      await fetch(`/api/analyze/history?id=${id}`, { method: 'DELETE', headers });
+      setAnalyses((prev) => prev.filter((a) => a.id !== id));
+    } catch (e) {
+      console.error('Failed to delete analysis:', e);
+    }
+  };
+
+  const getThreatColor = (score: number) => {
+    if (score <= 3) return 'bg-green-500';
+    if (score <= 6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getThreatLabel = (score: number) => {
+    if (score <= 3) return 'Low';
+    if (score <= 6) return 'Medium';
+    return 'High';
+  };
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-[#D4A017]" />
+      </div>
+    );
+  }
+
+  if (analyses.length === 0) {
+    return (
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <AlertTriangle className="h-8 w-8 mx-auto mb-3 opacity-50" />
+        <p className="font-mono text-sm">No analyses linked to this person yet.</p>
+        <p className="text-xs mt-1">Run an analysis on the <a href="/app/analyze" className="text-[#D4A017] hover:underline">Analyze page</a> and save it to this profile.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{analyses.length} analysis{analyses.length !== 1 ? 'es' : ''} linked</p>
+      {analyses.map((a) => (
+        <div key={a.id} className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden">
+          {/* Summary row */}
+          <button
+            onClick={() => setExpanded(expanded === a.id ? null : a.id)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
+          >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${getThreatColor(a.threat_score)}`} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{a.input_text || 'Image analysis'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Threat: {a.threat_score}/10 ({getThreatLabel(a.threat_score)}) · Power: You {a.power_yours} vs Them {a.power_theirs} · {a.tactics_count} tactic{a.tactics_count !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <span className="text-xs text-gray-400 shrink-0">{timeAgo(a.created_at)}</span>
+            <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${expanded === a.id ? 'rotate-90' : ''}`} />
+          </button>
+
+          {/* Expanded detail */}
+          {expanded === a.id && (
+            <div className="px-4 pb-4 border-t border-gray-200 dark:border-[#333] pt-3 space-y-3">
+              {a.overall_assessment && (
+                <div>
+                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Assessment</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{a.overall_assessment}</p>
+                </div>
+              )}
+              {a.techniques_identified?.length > 0 && (
+                <div>
+                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Techniques Identified</p>
+                  <div className="flex flex-wrap gap-1">
+                    {a.techniques_identified.map((t, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 rounded bg-[#D4A017]/10 text-[#D4A017] border border-[#D4A017]/20">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {a.full_result?.tactics?.length > 0 && (
+                <div>
+                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Detected Tactics</p>
+                  <div className="space-y-2">
+                    {a.full_result.tactics.map((tactic: any, i: number) => (
+                      <div key={i} className="text-sm bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">{tactic.tactic}</span>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs ml-2">({tactic.category})</span>
+                        {tactic.quote && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&ldquo;{tactic.quote}&rdquo;</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {a.full_result?.counterScript && (
+                <div>
+                  <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Counter-Script</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">{a.full_result.counterScript}</p>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-2">
+                <a href="/app/analyze" className="text-xs text-[#D4A017] hover:underline">Run new analysis →</a>
+                <button onClick={() => handleDelete(a.id)} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
+                  <Trash2 className="h-3 w-3" /> Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
