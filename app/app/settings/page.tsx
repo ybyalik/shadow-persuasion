@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Save, Loader2, Check, User, Mic, RotateCcw } from 'lucide-react';
+import { Save, Loader2, Check, User, Mic, RotateCcw, Upload, Image, X } from 'lucide-react';
 
 const TONE_OPTIONS = ['Professional', 'Casual', 'Friendly', 'Direct', 'Diplomatic', 'Assertive', 'Warm'];
 
@@ -15,6 +15,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [extracting, setExtracting] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<{ name: string; preview: string }[]>([]);
 
   const getHeaders = useCallback(async () => {
     const token = await user?.getIdToken();
@@ -44,6 +46,51 @@ export default function SettingsPage() {
     };
     load();
   }, [getHeaders]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setExtracting(true);
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue;
+
+      // Show preview
+      const preview = URL.createObjectURL(file);
+      setUploadedImages(prev => [...prev, { name: file.name, preview }]);
+
+      // Extract text via API
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const headers = await getHeaders();
+        const res = await fetch('/api/user/voice-profile/extract', {
+          method: 'POST',
+          headers: { ...headers },
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.extractedText) {
+            setSampleTexts(prev => {
+              const separator = prev.trim() ? '\n\n---\n\n' : '';
+              return prev + separator + data.extractedText;
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to extract text from image:', err);
+      }
+    }
+
+    setExtracting(false);
+    // Reset input
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const toggleTone = (tone: string) => {
     setTones(prev => prev.includes(tone) ? prev.filter(t => t !== tone) : [...prev, tone]);
@@ -171,7 +218,7 @@ export default function SettingsPage() {
 
           <div>
             <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1.5">
-              Sample Messages <span className="normal-case font-sans">(paste 2-3 real messages you&apos;ve written, separated by ---)</span>
+              Sample Messages <span className="normal-case font-sans">(paste text or upload screenshots of messages you&apos;ve written)</span>
             </label>
             <textarea
               value={sampleTexts}
@@ -179,6 +226,44 @@ export default function SettingsPage() {
               placeholder={"Hey Sarah, just wanted to follow up on our conversation from Tuesday. I think we're aligned on the approach — let me know if you need anything from my end before the deadline.\n\n---\n\nHonestly, I think we should just go for it. The numbers make sense and waiting another quarter isn't going to change anything."}
               className="w-full h-36 bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-[#444] rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] resize-none"
             />
+            {/* Image upload for samples */}
+            <div className="mt-3 flex items-center gap-3">
+              <label className="flex items-center gap-2 px-3 py-2 text-xs font-mono border border-gray-300 dark:border-[#444] rounded-lg cursor-pointer text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-all bg-gray-50 dark:bg-[#222]">
+                <Image className="h-4 w-4" />
+                Upload Screenshots
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+              {extracting && (
+                <span className="flex items-center gap-2 text-xs text-[#D4A017] font-mono">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Extracting text from image...
+                </span>
+              )}
+            </div>
+            {uploadedImages.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {uploadedImages.map((img, i) => (
+                  <div key={i} className="relative group">
+                    <img src={img.preview} alt={img.name} className="h-16 w-16 object-cover rounded-lg border border-gray-300 dark:border-[#444]" />
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    <div className="absolute inset-0 bg-green-500/20 rounded-lg flex items-center justify-center">
+                      <Check className="h-4 w-4 text-green-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-400 mt-2">Upload screenshots of emails, texts, or DMs you&apos;ve sent. AI will extract the text and learn your voice.</p>
           </div>
 
           <button
