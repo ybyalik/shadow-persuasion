@@ -46,10 +46,10 @@ const CoverPage = () => {
       {/* CLASSIFIED / DECLASSIFIED stamps */}
       <div className="absolute top-8 right-8 z-10">
         <motion.p
-          className="text-red-800 text-3xl font-bold border-4 border-red-800 p-2 transform -rotate-12 origin-center"
+          className="text-red-700 text-3xl font-bold border-4 border-red-700 p-2 transform -rotate-12 origin-center scale-110"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
-          animate={isInView ? { scale: 1, opacity: 0.55 } : {}}
+          animate={isInView ? { scale: 1, opacity: 0.6 } : {}}
           transition={{
             type: 'spring',
             stiffness: 350,
@@ -60,7 +60,7 @@ const CoverPage = () => {
           CLASSIFIED
         </motion.p>
         <motion.p
-          className="text-[#8B6914] text-3xl font-bold border-4 border-[#8B6914] p-2 transform rotate-12 origin-center absolute top-4 -left-4"
+          className="text-green-700 text-3xl font-bold border-4 border-green-700 p-2 transform rotate-12 origin-center absolute top-4 -left-4 scale-125"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 0.7 } : {}}
@@ -167,6 +167,16 @@ const CoverPage = () => {
             I commit to using these techniques ethically and responsibly
           </span>
         </motion.div>
+
+        {/* Ethical note */}
+        <motion.p
+          className="mt-4 text-sm text-[#5C3A1E] italic"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, delay: 2.1 }}
+        >
+          &#8627; Note: Ethical influence creates win-win outcomes for all parties involved.
+        </motion.p>
 
         {/* CTA button */}
         <motion.button
