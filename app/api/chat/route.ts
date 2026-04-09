@@ -63,12 +63,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Build system prompt with RAG context
-    let systemContent = HANDLER_VOICE + HANDLER_SYSTEM_PROMPT;
+    let systemContent = HANDLER_VOICE + HANDLER_SYSTEM_PROMPT + voiceContext;
     if (ragResult.context) {
       const ragContext = ragResult.context;
       systemContent += `\n\n${RAG_ENFORCEMENT}\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}`;
     }
-    systemContent += voiceContext;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

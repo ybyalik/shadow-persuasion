@@ -32,7 +32,14 @@ export async function getVoiceProfile(userId: string | null): Promise<string> {
         prompt += `  Example ${i + 1}: "${s.slice(0, 500)}"\n`;
       });
     }
-    prompt += '\nCRITICAL: All scripts, responses, and suggested messages you generate MUST sound like this person wrote them. Match their vocabulary, sentence length, tone, and personality. Do NOT use generic corporate language unless that matches their style.\n';
+    prompt += `\nCRITICAL — VOICE MATCHING REQUIREMENTS:
+- Every counter-script, response option, suggested message, and "say this" MUST sound like this person wrote it
+- Match their vocabulary, sentence length, humor level, tone, and personality exactly
+- If they are funny/casual, the responses should be funny/casual — NOT corporate or formal
+- If they use short sentences, use short sentences. If they use slang, use slang.
+- Read their sample messages carefully and mimic that exact voice
+- Do NOT generate generic professional language unless that matches their actual style
+`;
 
     return prompt;
   } catch {

@@ -220,7 +220,7 @@ export async function POST(req: NextRequest) {
 
     // RAG search using the actual content
     const ragContext = await searchKnowledge(textContent);
-    const enhancedPrompt = COMPREHENSIVE_SYSTEM_PROMPT + userContextBlock + (ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : '') + voiceContext;
+    const enhancedPrompt = COMPREHENSIVE_SYSTEM_PROMPT + voiceContext + userContextBlock + (ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : '');
 
     // Build the analysis message
     const userContent: any[] = [];

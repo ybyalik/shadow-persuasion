@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
     const knowledgeContext = searchQuery ? await searchKnowledge(searchQuery, { threshold: 0.32 }) : '';
 
     // Add goal context to the system prompt
-    const contextualPrompt = `${HANDLER_VOICE}\n${STRATEGIC_CHAT_SYSTEM_PROMPT}
+    const contextualPrompt = `${HANDLER_VOICE}\n${STRATEGIC_CHAT_SYSTEM_PROMPT}${voiceContext}
 
 CURRENT SESSION GOAL: "${goalTitle}" (${goal})
-Tailor all advice and tactics specifically to support this objective. Consider the unique challenges and opportunities associated with this goal type.${knowledgeContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT STRATEGIC TECHNIQUES FROM KNOWLEDGE BASE:\n${knowledgeContext}` : ''}${voiceContext}`;
+Tailor all advice and tactics specifically to support this objective. Consider the unique challenges and opportunities associated with this goal type.${knowledgeContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT STRATEGIC TECHNIQUES FROM KNOWLEDGE BASE:\n${knowledgeContext}` : ''}`;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

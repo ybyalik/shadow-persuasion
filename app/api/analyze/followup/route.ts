@@ -55,7 +55,7 @@ Your role:
 - Explain psychological dynamics at play
 - Help the user navigate this conversation effectively
 
-Be direct, tactical, and specific. Provide exact wording when suggesting responses. Consider power dynamics and manipulation risks in your advice.${ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : ''}${voiceContext}`;
+Be direct, tactical, and specific. Provide exact wording when suggesting responses. Consider power dynamics and manipulation risks in your advice.${voiceContext}${ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : ''}`;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

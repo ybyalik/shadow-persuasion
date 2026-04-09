@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'openai/gpt-4o',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT + knowledgeContext + voiceContext },
+          { role: 'system', content: SYSTEM_PROMPT + voiceContext + knowledgeContext },
           {
             role: 'user',
             content: `Create technique stacking sequences for this goal: "${goal}"`,

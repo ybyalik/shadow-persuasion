@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const goalInstruction = goal
       ? `\n\nIMPORTANT: The user's primary goal is "${goal}". Prioritize and emphasize this goal across ALL rewrite versions. Each version should be optimized to support "${goal}" while still applying its respective category strategy. The best version for achieving "${goal}" should be listed first.`
       : '';
-    const enhancedPrompt = REWRITE_SYSTEM_PROMPT + goalInstruction + knowledgeContext + voiceContext;
+    const enhancedPrompt = REWRITE_SYSTEM_PROMPT + voiceContext + goalInstruction + knowledgeContext;
 
     console.log('[REWRITE]', 'Calling OpenRouter');
     
