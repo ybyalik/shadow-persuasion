@@ -2,6 +2,7 @@
 
 import { scenarios } from '@/lib/scenarios';
 import { techniques } from '@/lib/techniques';
+import { formatWithCitations } from '@/lib/format-citations';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -52,6 +53,7 @@ function parseMarkdown(text: string): string {
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-base">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
     .replace(/^[-] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">&rarr;</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
+    .replace(/\(Source: "(.*?)" by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-[#D4A017]/15 text-[#D4A017] px-2 py-0.5 rounded-full" title="From: $1 by $2">📖 $1</span>')
     .replace(/\n\n/g, '<div class="h-3"></div>')
     .replace(/\n/g, '<br/>');
 }
@@ -80,12 +82,12 @@ function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
         <div className="px-3 pb-3 space-y-2 text-sm border-t border-[#222]">
           <div className="pt-2">
             <span className="text-gray-500 dark:text-gray-400">Feedback:</span>
-            <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{coaching.feedback}</p>
+            <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{formatWithCitations(coaching.feedback)}</p>
           </div>
           {coaching.tip && (
             <div>
               <span className="text-[#D4A017]">Tip:</span>
-              <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{coaching.tip}</p>
+              <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{formatWithCitations(coaching.tip)}</p>
             </div>
           )}
         </div>
@@ -166,7 +168,7 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
               <div className="space-y-2">
                 {debrief.missedOpportunities.map((m, i) => (
                   <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-yellow-500/20">
-                    <p className="text-sm text-gray-600 dark:text-[#ccc] mb-1">{m.moment}</p>
+                    <p className="text-sm text-gray-600 dark:text-[#ccc] mb-1">{formatWithCitations(m.moment)}</p>
                     <p className="text-xs text-yellow-400">Should have used: <strong>{m.technique}</strong></p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&quot;{m.suggestedResponse}&quot;</p>
                   </div>
@@ -189,8 +191,8 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
                         {tp.impact}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-[#ccc]">{tp.moment}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{tp.explanation}</p>
+                    <p className="text-sm text-gray-600 dark:text-[#ccc]">{formatWithCitations(tp.moment)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatWithCitations(tp.explanation)}</p>
                   </div>
                 ))}
               </div>
@@ -207,7 +209,7 @@ function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () =
                 {debrief.suggestions.map((s, i) => (
                   <li key={i} className="flex gap-2 text-sm text-gray-600 dark:text-[#ccc]">
                     <span className="text-blue-400 mt-0.5">&rarr;</span>
-                    <span>{s}</span>
+                    <span>{formatWithCitations(s)}</span>
                   </li>
                 ))}
               </ul>

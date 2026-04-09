@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { formatWithCitations } from '@/lib/format-citations';
 import {
   Flame, Clock, Trophy, Target, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronUp, Star, Plus, Search, Calendar, TrendingUp, X,
@@ -584,7 +585,7 @@ function ReportCard({ report }: { report: JournalReport }) {
                   {report.aiAnalysis.whatWorked?.map((item, i) => (
                     <li key={i} className="text-sm text-green-400 flex items-start gap-2">
                       <span className="mt-1 shrink-0">+</span>
-                      <span>{item}</span>
+                      <span>{formatWithCitations(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -596,7 +597,7 @@ function ReportCard({ report }: { report: JournalReport }) {
                   {report.aiAnalysis.whatToImprove?.map((item, i) => (
                     <li key={i} className="text-sm text-red-400 flex items-start gap-2">
                       <span className="mt-1 shrink-0">-</span>
-                      <span>{item}</span>
+                      <span>{formatWithCitations(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -1222,10 +1223,10 @@ export default function FieldOpsPage() {
                 <span className="font-bold text-gray-900 dark:text-white text-lg">Grade: {gradeResult.grade}</span>
                 <span className="text-[#D4A017] font-bold">+{gradeResult.xpEarned} XP</span>
               </div>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">{gradeResult.feedback}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{formatWithCitations(gradeResult.feedback)}</p>
               <div className="bg-gray-50 dark:bg-[#222222] rounded-lg p-3 border border-gray-200 dark:border-[#333333]">
                 <span className="text-xs font-mono text-gray-500 uppercase">Insight</span>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{gradeResult.insight}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{formatWithCitations(gradeResult.insight)}</p>
               </div>
               <p className="text-xs text-gray-500 mt-2 italic">
                 A field report has been automatically created from this mission.
