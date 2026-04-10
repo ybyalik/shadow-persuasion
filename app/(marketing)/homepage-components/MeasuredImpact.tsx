@@ -66,11 +66,11 @@ const MeasuredImpact = () => {
           </div>
 
           <div className="ml-12 mr-4">
-            <div className="flex items-end justify-between h-80 mb-8 relative">
+            <div className="flex items-stretch justify-between h-80 mb-8 relative">
               {metrics.map((metric, index) => (
-                <div 
+                <div
                   key={metric.label}
-                  className="flex-1 flex flex-col items-center group relative"
+                  className="flex-1 flex flex-col items-center group relative pt-12"
                 >
                   {/* Value display on hover */}
                   <motion.div
@@ -85,7 +85,7 @@ const MeasuredImpact = () => {
                   </motion.div>
 
                   {/* Bar Container */}
-                  <div className="w-8 lg:w-12 bg-[#D4C5B0] rounded-t-lg relative overflow-hidden flex-1 max-h-full border border-gray-400">
+                  <div className="w-8 lg:w-12 bg-[#D4C5B0] rounded-t-lg relative overflow-hidden h-full border border-gray-400">
                     <motion.div
                       className={`absolute bottom-0 left-0 right-0 rounded-t-lg transition-all duration-300 ${
                         metric.highlight 
