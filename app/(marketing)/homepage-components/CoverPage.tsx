@@ -86,27 +86,29 @@ const CoverPage = () => {
           DOC-SC-2026-001 // PUBLIC ACCESS
         </motion.p>
 
-        {/* Staggered title */}
-        <h1 className="text-6xl md:text-8xl font-bold my-4 flex flex-wrap items-center justify-center gap-x-5">
-          {titleWords.map((word, i) => (
-            <motion.span
-              key={word}
-              initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
-              animate={
-                isInView
-                  ? { opacity: 1, y: 0, filter: 'blur(0px)' }
-                  : {}
-              }
-              transition={{ duration: 0.6, delay: 0.4 + i * 0.2 }}
-            >
-              {word}
-            </motion.span>
-          ))}
+        {/* Staggered title — PROJECT: on one line, SHADOW PERSUASION below */}
+        <h1 className="text-center my-4">
+          <motion.span
+            className="block text-3xl md:text-5xl font-bold tracking-widest text-[#1A1A1A]"
+            initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+            animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            PROJECT:
+          </motion.span>
+          <motion.span
+            className="block text-6xl md:text-8xl font-bold tracking-wider text-[#1A1A1A]"
+            initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+            animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            SHADOW PERSUASION
+          </motion.span>
         </h1>
 
-        {/* Subtitle */}
+        {/* Subtitle — black text */}
         <motion.p
-          className="text-xl md:text-2xl text-[#5C4B32] max-w-3xl mx-auto"
+          className="text-xl md:text-2xl text-[#1A1A1A] max-w-3xl mx-auto"
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.8, delay: 1.1 }}
@@ -168,15 +170,15 @@ const CoverPage = () => {
           </span>
         </motion.div>
 
-        {/* Ethical note */}
-        <motion.p
-          className="mt-4 text-sm text-[#5C3A1E] italic"
+        {/* Ethical note — matching v5 styling */}
+        <motion.div
+          className="mt-6 ml-8 text-blue-700 italic transform -rotate-2 relative"
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.5, delay: 2.1 }}
         >
-          &#8627; Note: Ethical influence creates win-win outcomes for all parties involved.
-        </motion.p>
+          <p className="text-lg">↳ Note: Ethical influence creates win-win outcomes for all parties involved.</p>
+        </motion.div>
 
         {/* CTA button */}
         <motion.button

@@ -18,7 +18,6 @@ import MeasuredImpact from './homepage-components/MeasuredImpact';
 import ProgressionPath from './homepage-components/ProgressionPath';
 import DarkPatternRolodex from './homepage-components/DarkPatternRolodex';
 import Statements from './homepage-components/Statements';
-import FieldAssessment from './homepage-components/FieldAssessment';
 import ClassifiedComparison from './homepage-components/ClassifiedComparison';
 import FAQ from './homepage-components/FAQ';
 import AccessRequest from './homepage-components/AccessRequest';
@@ -94,9 +93,6 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-16 md:space-y-20 py-16">
         <Statements />
       </div>
-
-      {/* 20. FieldAssessment */}
-      <FieldAssessment />
 
       {/* 21. ClassifiedComparison (Document Comparison) */}
       <ClassifiedComparison />
