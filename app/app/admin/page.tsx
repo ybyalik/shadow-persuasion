@@ -29,11 +29,15 @@ type DBBook = {
 type Chunk = {
   id: string;
   technique_name: string;
+  technique_id: string;
   category: string;
   chunk_type: string;
   difficulty: string;
+  use_cases: string[];
+  risk_level: string;
   content: string;
   token_count: number;
+  created_at: string;
 };
 
 async function extractPdfText(file: File): Promise<{ text: string; pages: number }> {
@@ -583,8 +587,42 @@ export default function AdminPage() {
                       </button>
                     </div>
                     {expandedChunk === chunk.id && (
-                      <div className="mt-3 p-3 bg-white dark:bg-[#1A1A1A] rounded text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
-                        {chunk.content}
+                      <div className="mt-3 space-y-3">
+                        {/* Metadata grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                          <div className="p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333]">
+                            <span className="text-gray-500 dark:text-gray-400 font-mono uppercase block mb-0.5">Technique ID</span>
+                            <span className="text-gray-800 dark:text-[#E8E8E0] font-medium">{chunk.technique_id || '—'}</span>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333]">
+                            <span className="text-gray-500 dark:text-gray-400 font-mono uppercase block mb-0.5">Difficulty</span>
+                            <span className={`font-medium ${chunk.difficulty === 'advanced' ? 'text-red-400' : chunk.difficulty === 'intermediate' ? 'text-yellow-400' : 'text-green-400'}`}>
+                              {chunk.difficulty || '—'}
+                            </span>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333]">
+                            <span className="text-gray-500 dark:text-gray-400 font-mono uppercase block mb-0.5">Risk Level</span>
+                            <span className={`font-medium ${chunk.risk_level === 'high' ? 'text-red-400' : chunk.risk_level === 'medium' ? 'text-yellow-400' : 'text-green-400'}`}>
+                              {chunk.risk_level || '—'}
+                            </span>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333]">
+                            <span className="text-gray-500 dark:text-gray-400 font-mono uppercase block mb-0.5">Chunk Type</span>
+                            <span className="text-gray-800 dark:text-[#E8E8E0] font-medium">{chunk.chunk_type || '—'}</span>
+                          </div>
+                          <div className="p-2 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333] col-span-2">
+                            <span className="text-gray-500 dark:text-gray-400 font-mono uppercase block mb-0.5">Use Cases</span>
+                            <div className="flex flex-wrap gap-1">
+                              {chunk.use_cases?.length > 0 ? chunk.use_cases.map((uc, i) => (
+                                <span key={i} className="px-1.5 py-0.5 bg-[#D4A017]/10 text-[#D4A017] rounded text-[10px] font-mono">{uc}</span>
+                              )) : <span className="text-gray-500">—</span>}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Content */}
+                        <div className="p-3 bg-white dark:bg-[#1A1A1A] rounded border border-gray-200 dark:border-[#333] text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+                          {chunk.content}
+                        </div>
                       </div>
                     )}
                   </div>
