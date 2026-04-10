@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Clock, RotateCcw, CheckCircle2, Star } from 'lucide-react';
+import { Clock, RotateCcw, CheckCircle2, Star, ChevronDown } from 'lucide-react';
 import { useTechniques, type APITechnique } from '@/lib/hooks/useTechniques';
 import { type SRCard } from '@/lib/spaced-repetition';
 import { useAuth } from '@/lib/auth-context';
@@ -56,6 +56,7 @@ function techniqueSlug(name: string): string {
 
 export default function TechniquesPage() {
   const { user } = useAuth();
+  const { techniques: apiTechniques, loading: techniquesLoading } = useTechniques();
   const [activeTab, setActiveTab] = useState<'library' | 'stacking'>('library');
 
   const getHeaders = useCallback(async () => {
@@ -89,7 +90,11 @@ export default function TechniquesPage() {
         </button>
       </div>
 
-      {activeTab === 'library' ? <LibraryTab getHeaders={getHeaders} /> : <StackingTab getHeaders={getHeaders} />}
+      {activeTab === 'library' ? (
+        <LibraryTab getHeaders={getHeaders} apiTechniques={apiTechniques} techniquesLoading={techniquesLoading} />
+      ) : (
+        <StackingTab getHeaders={getHeaders} apiTechniques={apiTechniques} />
+      )}
     </div>
   );
 }
@@ -98,8 +103,7 @@ export default function TechniquesPage() {
 // Library Tab
 // ══════════════════════════════════════════════════════════════════════
 
-function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, string>> }) {
-  const { techniques: apiTechniques, loading: techniquesLoading } = useTechniques();
+function LibraryTab({ getHeaders, apiTechniques, techniquesLoading }: { getHeaders: () => Promise<Record<string, string>>; apiTechniques: APITechnique[]; techniquesLoading: boolean }) {
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [dueCards, setDueCards] = useState<SRCard[]>([]);
@@ -362,7 +366,7 @@ function LibraryTab({ getHeaders }: { getHeaders: () => Promise<Record<string, s
 // Stacking Tab
 // ══════════════════════════════════════════════════════════════════════
 
-function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, string>> }) {
+function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<Record<string, string>>; apiTechniques: APITechnique[] }) {
   const [goal, setGoal] = useState('');
   const [customGoal, setCustomGoal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -376,6 +380,22 @@ function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, 
   const [saveLabel, setSaveLabel] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
   const [currentGoal, setCurrentGoal] = useState('');
+  const [requiredTechniques, setRequiredTechniques] = useState<string[]>([]);
+  const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
+
+  const findMatchingTechnique = (name: string): APITechnique | undefined => {
+    const slug = techniqueSlug(name);
+    const nameLower = name.toLowerCase();
+    return apiTechniques.find(
+      (t) => t.id.toLowerCase() === slug || t.name.toLowerCase() === nameLower
+    );
+  };
+
+  const toggleRequiredTechnique = (name: string) => {
+    setRequiredTechniques((prev) =>
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
+    );
+  };
 
   useEffect(() => {
     const loadSaved = async () => {
@@ -405,10 +425,15 @@ function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, 
     setCurrentGoal(finalGoal);
 
     try {
+      const body: Record<string, unknown> = { goal: finalGoal };
+      if (requiredTechniques.length > 0) {
+        body.requiredTechniques = requiredTechniques;
+      }
+
       const res = await fetch('/api/stacking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal: finalGoal }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) throw new Error('Failed to generate technique stack.');
@@ -468,6 +493,25 @@ function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, 
     setShowSaved(false);
   };
 
+  const renderTechniqueLabel = (name: string) => {
+    const match = findMatchingTechnique(name);
+    if (match) {
+      return (
+        <Link
+          href={`/app/techniques/${match.id}`}
+          className="font-mono font-bold text-[#D4A017] text-sm uppercase tracking-wider hover:underline"
+        >
+          {name}
+        </Link>
+      );
+    }
+    return (
+      <span className="font-mono font-bold text-[#D4A017] text-sm uppercase tracking-wider">
+        {name}
+      </span>
+    );
+  };
+
   const renderStack = (stack: Stack, isCurrent = true) => (
     <div className="space-y-1">
       {/* Stack header */}
@@ -508,53 +552,72 @@ function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, 
         </div>
       )}
 
-      {/* Steps */}
-      <div className="relative">
-        {stack.steps.map((step, idx) => (
-          <div key={step.stepNumber} className="relative">
-            {idx < stack.steps.length - 1 && (
-              <div className="absolute left-[18px] top-[44px] bottom-0 w-px bg-gray-200 dark:bg-[#333333]" />
-            )}
+      {/* Steps - Flowchart Layout */}
+      <div className="relative pl-[18px]">
+        {/* Continuous gold line running through all steps */}
+        <div
+          className="absolute left-[18px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#D4A017] via-[#D4A017]/60 to-[#D4A017]/20"
+          style={{ height: 'calc(100% - 24px)' }}
+        />
 
-            <div className="flex gap-4 pb-6">
-              <div className="flex-shrink-0 w-[38px] h-[38px] rounded-full bg-[#D4A017] flex items-center justify-center z-10">
-                <span className="font-mono font-bold text-[#0A0A0A] text-sm">
-                  {step.stepNumber}
-                </span>
+        {stack.steps.map((step, idx) => (
+          <div key={step.stepNumber} className="relative mb-2 last:mb-0">
+            <div className="flex gap-4 pb-4">
+              {/* Gold numbered circle on the line */}
+              <div className="relative flex-shrink-0">
+                <div className="w-[38px] h-[38px] rounded-full bg-[#D4A017] flex items-center justify-center z-10 relative shadow-[0_0_12px_rgba(212,160,23,0.3)]">
+                  <span className="font-mono font-bold text-[#0A0A0A] text-sm">
+                    {step.stepNumber}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex-1 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 hover:border-[#D4A017]/30 transition-colors">
-                <Link
-                  href={`/app/techniques/${techniqueSlug(step.technique)}`}
-                  className="font-mono font-bold text-[#D4A017] text-sm uppercase tracking-wider hover:underline"
-                >
-                  {step.technique}
-                </Link>
+              <div className="flex-1 space-y-2">
+                {/* Main step card */}
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 hover:border-[#D4A017]/30 transition-colors">
+                  {renderTechniqueLabel(step.technique)}
 
-                <p className="text-gray-900 dark:text-white text-sm mt-2 leading-relaxed">
-                  {step.action}
-                </p>
+                  <p className="text-gray-900 dark:text-white text-sm mt-2 leading-relaxed">
+                    {step.action}
+                  </p>
 
-                <p className="text-gray-500 text-xs mt-2 italic">
-                  {step.rationale}
-                </p>
+                  <p className="text-gray-500 text-xs mt-2 italic">
+                    {step.rationale}
+                  </p>
+                </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <div className="bg-green-900/10 border border-green-900/30 rounded px-2.5 py-1.5">
-                    <span className="text-green-400 text-xs font-mono block mb-0.5">
-                      If positive:
-                    </span>
-                    <span className="text-green-300/70 text-xs">{step.ifPositive}</span>
+                {/* Branching cards */}
+                <div className="flex flex-col sm:flex-row gap-2 ml-2">
+                  {/* Positive branch */}
+                  <div className="flex-1 flex items-stretch gap-2">
+                    <div className="w-[3px] rounded-full bg-green-500/60 flex-shrink-0" />
+                    <div className="flex-1 bg-green-950/20 dark:bg-green-950/30 border border-green-800/30 rounded-lg px-3 py-2">
+                      <span className="text-green-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
+                        If positive
+                      </span>
+                      <span className="text-green-300/80 text-xs leading-relaxed">{step.ifPositive}</span>
+                    </div>
                   </div>
-                  <div className="bg-red-900/10 border border-red-900/30 rounded px-2.5 py-1.5">
-                    <span className="text-red-400 text-xs font-mono block mb-0.5">
-                      If resist:
-                    </span>
-                    <span className="text-red-300/70 text-xs">{step.ifResist}</span>
+                  {/* Resist branch */}
+                  <div className="flex-1 flex items-stretch gap-2">
+                    <div className="w-[3px] rounded-full bg-red-500/60 flex-shrink-0" />
+                    <div className="flex-1 bg-red-950/20 dark:bg-red-950/30 border border-red-800/30 rounded-lg px-3 py-2">
+                      <span className="text-red-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
+                        If resist
+                      </span>
+                      <span className="text-red-300/80 text-xs leading-relaxed">{step.ifResist}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Connector arrow between steps */}
+            {idx < stack.steps.length - 1 && (
+              <div className="flex items-center ml-[13px] -mt-2 mb-1">
+                <div className="w-[12px] h-[12px] border-l-[2px] border-b-[2px] border-[#D4A017]/40 rotate-[-45deg]" />
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -613,18 +676,70 @@ function StackingTab({ getHeaders }: { getHeaders: () => Promise<Record<string, 
         </div>
 
         {goal === 'custom' && (
-          <input
-            type="text"
+          <textarea
             value={customGoal}
             onChange={(e) => setCustomGoal(e.target.value)}
-            placeholder="Describe your goal..."
-            className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors"
+            placeholder="Describe your situation: e.g., I need to convince my landlord to lower my rent. He's been unresponsive to my last two requests."
+            rows={3}
+            className="w-full bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#D4A017] transition-colors resize-y"
             autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && customGoal.trim()) generateStack();
-            }}
           />
         )}
+
+        {/* Technique Pre-selection (Optional) */}
+        <div className="border border-gray-200 dark:border-[#333333] rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowTechniqueSelector(!showTechniqueSelector)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1A1A1A] hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
+          >
+            <span className="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
+              Include specific techniques (optional)
+              {requiredTechniques.length > 0 && (
+                <span className="ml-2 text-[#D4A017]">
+                  {requiredTechniques.length} selected
+                </span>
+              )}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 text-gray-400 transition-transform ${showTechniqueSelector ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showTechniqueSelector && (
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-[#333333] bg-gray-50 dark:bg-[#111]">
+              {apiTechniques.length === 0 ? (
+                <p className="text-gray-500 text-xs">No techniques loaded yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {apiTechniques.map((tech) => (
+                    <button
+                      key={tech.id}
+                      onClick={() => toggleRequiredTechnique(tech.name)}
+                      className={`px-2.5 py-1.5 rounded-md border text-xs font-mono transition-all ${
+                        requiredTechniques.includes(tech.name)
+                          ? 'border-[#D4A017] bg-[#D4A017]/15 text-[#D4A017]'
+                          : 'border-gray-200 dark:border-[#333] bg-white dark:bg-[#1A1A1A] text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-[#555]'
+                      }`}
+                    >
+                      {requiredTechniques.includes(tech.name) && (
+                        <span className="mr-1">&#10003;</span>
+                      )}
+                      {tech.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {requiredTechniques.length > 0 && (
+                <button
+                  onClick={() => setRequiredTechniques([])}
+                  className="mt-2 text-[10px] font-mono text-gray-500 hover:text-red-400 transition-colors uppercase tracking-wider"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         <button
           onClick={generateStack}

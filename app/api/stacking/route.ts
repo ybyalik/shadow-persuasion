@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const userId = await getUserFromRequest(req);
     const voiceContext = await getVoiceProfile(userId);
 
-    const { goal } = await req.json();
+    const { goal, requiredTechniques } = await req.json();
 
     if (!goal || typeof goal !== 'string') {
       return NextResponse.json(
@@ -58,6 +58,11 @@ export async function POST(req: NextRequest) {
 
     const ragContext = await searchKnowledge(goal);
     const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${ragContext}` : '';
+
+    let requiredTechniquesInstruction = '';
+    if (Array.isArray(requiredTechniques) && requiredTechniques.length > 0) {
+      requiredTechniquesInstruction = `\n\nIMPORTANT: You MUST include these techniques in the stack: ${requiredTechniques.join(', ')}. Arrange them in optimal sequence with the other techniques you recommend.`;
+    }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'openai/gpt-4o',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT + voiceContext + knowledgeContext },
+          { role: 'system', content: SYSTEM_PROMPT + voiceContext + knowledgeContext + requiredTechniquesInstruction },
           {
             role: 'user',
             content: `Create technique stacking sequences for this goal: "${goal}"`,
