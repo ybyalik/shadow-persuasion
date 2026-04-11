@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Copy, Lightbulb, Zap } from 'lucide-react';
+import { Copy, Check, Lightbulb, Zap } from 'lucide-react';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
 
 interface RewriteResult {
@@ -23,6 +23,7 @@ export default function RewritePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<RewriteResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
     const { categories: taxonomyCategories } = useTaxonomy();
     const [goalFocused, setGoalFocused] = useState(false);
@@ -87,9 +88,18 @@ export default function RewritePage() {
         }
     };
 
-    const handleCopy = async (text: string) => {
+    const handleCopy = async (text: string, idx: number) => {
         await navigator.clipboard.writeText(text);
-        // TODO: Add toast notification
+        setCopiedIdx(idx);
+        setTimeout(() => setCopiedIdx(null), 2000);
+    };
+
+    const handleReset = () => {
+        setResult(null);
+        setOriginalMessage('');
+        setGoal('');
+        setError(null);
+        setCopiedIdx(null);
     };
 
     const getRiskColor = (risk: string) => {
@@ -226,10 +236,10 @@ export default function RewritePage() {
                                 <div className="bg-gray-50 dark:bg-[#222222] p-4 rounded-md relative group">
                                     <p className="text-gray-900 dark:text-white font-medium">{version.message}</p>
                                     <button
-                                        onClick={() => handleCopy(version.message)}
+                                        onClick={() => handleCopy(version.message, index)}
                                         className="absolute top-3 right-3 p-2 bg-gray-200 dark:bg-[#333333] rounded-md opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-gray-300 dark:hover:bg-[#444444]"
                                     >
-                                        <Copy className="h-4 w-4" />
+                                        {copiedIdx === index ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                     </button>
                                 </div>
 
@@ -243,6 +253,14 @@ export default function RewritePage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Reset Button */}
+                    <button
+                        onClick={handleReset}
+                        className="w-full py-3 border border-gray-200 dark:border-[#333333] rounded-lg font-mono uppercase text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-colors"
+                    >
+                        Rewrite Another Message
+                    </button>
                 </div>
             )}
         </div>

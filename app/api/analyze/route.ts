@@ -275,7 +275,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No response from AI' }, { status: 502 });
     }
 
-    const parsed = JSON.parse(content);
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      console.error('[ANALYZE]', 'Failed to parse AI response:', content?.slice(0, 200));
+      return NextResponse.json({ error: 'AI returned an invalid response. Please try again.' }, { status: 502 });
+    }
 
     // Include extracted text for image uploads so the frontend can display it
     if (isImage) {

@@ -71,7 +71,7 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <img src="/logo.png" alt="Shadow Persuasion" className="w-28 brightness-75" />
+          <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-28" />
           <p className="text-xs text-gray-600">
             &copy; {new Date().getFullYear()} Shadow Persuasion. All rights reserved.
           </p>

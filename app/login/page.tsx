@@ -130,7 +130,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
-          <img src="/logo.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3" />
+          <img src="/logo.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3 dark:hidden" />
+          <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3 hidden dark:block" />
           <p className="text-sm text-gray-500 dark:text-[#888888] tracking-wide">
             Psychology &amp; Influence Training
           </p>

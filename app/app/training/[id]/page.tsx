@@ -4,7 +4,7 @@ import { formatWithCitations } from '@/lib/format-citations';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Send, ChevronDown, ChevronUp, Award, Target, AlertTriangle, Lightbulb, TrendingUp, StopCircle, Loader2 } from 'lucide-react';
+import { Send, ChevronDown, ChevronUp, Award, Target, AlertTriangle, Lightbulb, TrendingUp, StopCircle, Loader2, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTechniques } from '@/lib/hooks/useTechniques';
 
@@ -251,6 +251,7 @@ export default function TrainingScenarioPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [debrief, setDebrief] = useState<DebriefData | null>(null);
   const [isDebriefing, setIsDebriefing] = useState(false);
+  const [debriefError, setDebriefError] = useState<string | null>(null);
   const [scoreSaved, setScoreSaved] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -438,7 +439,8 @@ export default function TrainingScenarioPage() {
       setDebrief(data);
     } catch (error) {
       console.error('Debrief error:', error);
-      alert('Failed to generate debrief. Please try again.');
+      setDebriefError('Failed to generate debrief. Please try again.');
+      setTimeout(() => setDebriefError(null), 5000);
     } finally {
       setIsDebriefing(false);
     }
@@ -520,6 +522,16 @@ export default function TrainingScenarioPage() {
           )}
         </div>
       </div>
+
+      {/* Debrief Error Banner */}
+      {debriefError && (
+        <div className="mx-4 mt-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3 flex items-center justify-between">
+          <p className="text-sm text-red-700 dark:text-red-400">{debriefError}</p>
+          <button onClick={() => setDebriefError(null)} className="text-red-500 hover:text-red-700 ml-4">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

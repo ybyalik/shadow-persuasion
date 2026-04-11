@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 
 type Source = { book: string; author: string; technique: string; similarity: number };
 
@@ -39,8 +39,15 @@ function parseMarkdown(text: string): string {
 
 export function ChatMessage({ role, content, isLoading, sources }: ChatMessageProps) {
   const [showSources, setShowSources] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isUser = role === 'user';
   const formattedContent = parseMarkdown(content);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   
   // Deduplicate sources by book+technique
   const uniqueSources = sources?.filter((s, i, arr) => 
@@ -49,12 +56,21 @@ export function ChatMessage({ role, content, isLoading, sources }: ChatMessagePr
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-2xl rounded-lg ${
+      <div className={`max-w-2xl rounded-lg relative ${
           isUser
             ? 'p-4 bg-[#D4A017] text-[#0A0A0A]'
-            : 'bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'
+            : 'group bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'
         }`}
       >
+        {!isUser && !isLoading && (
+          <button
+            onClick={handleCopy}
+            className="absolute top-2 right-2 p-1.5 rounded-md bg-gray-100 dark:bg-[#333333] hover:bg-gray-200 dark:hover:bg-[#444444] transition-all opacity-60 md:opacity-0 md:group-hover:opacity-100 z-10"
+            title="Copy message"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />}
+          </button>
+        )}
         {!isUser && (
           <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <span className="text-xs font-mono uppercase text-[#D4A017] tracking-wider">Handler</span>

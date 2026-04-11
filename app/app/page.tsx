@@ -474,7 +474,8 @@ export default function DashboardPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   New Operative
                 </div>
-                <img src="/logo.png" alt="Shadow Persuasion" className="w-48 mx-auto mb-2" />
+                <img src="/logo.png" alt="Shadow Persuasion" className="w-48 mx-auto mb-2 dark:hidden" />
+                <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-48 mx-auto mb-2 hidden dark:block" />
                 <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-wide">
                   Welcome
                 </h1>

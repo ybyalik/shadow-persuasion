@@ -151,6 +151,16 @@ export default function PeoplePage() {
     loadProfiles();
   }, [getHeaders]);
 
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  // Auto-dismiss create error after 5 seconds
+  useEffect(() => {
+    if (createError) {
+      const t = setTimeout(() => setCreateError(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [createError]);
+
   const handleAddProfile = async (name: string, relationshipType: RelationshipType) => {
     try {
       const headers = await getHeaders();
@@ -161,7 +171,7 @@ export default function PeoplePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to create profile');
+        setCreateError(data.error || 'Failed to create profile');
         return;
       }
       const newProfile = data.profile;
@@ -170,7 +180,7 @@ export default function PeoplePage() {
       router.push(`/app/people/${newProfile.id}`);
     } catch (e) {
       console.error('Failed to create profile:', e);
-      alert('Failed to create profile. Please try again.');
+      setCreateError('Failed to create profile. Please try again.');
     }
   };
 
@@ -217,6 +227,16 @@ export default function PeoplePage() {
           Add Profile
         </button>
       </div>
+
+      {/* Error Banner */}
+      {createError && (
+        <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-sm text-red-700 dark:text-red-400">{createError}</p>
+          <button onClick={() => setCreateError(null)} className="text-red-500 hover:text-red-700 ml-4">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

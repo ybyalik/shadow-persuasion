@@ -157,6 +157,8 @@ export default function ProfileDetailPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingPlaybook, setIsGeneratingPlaybook] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
   const [analysesLoading, setAnalysesLoading] = useState(true);
 
@@ -236,7 +238,6 @@ export default function ProfileDetailPage() {
   );
 
   const handleDeleteProfile = async () => {
-    if (!confirm('Delete this profile? This cannot be undone.')) return;
     try {
       const headers = await getHeaders();
       await fetch(`/api/profiler/people?id=${profileId}`, {
@@ -472,13 +473,31 @@ export default function ProfileDetailPage() {
             <Plus className="h-4 w-4" />
             Log Interaction
           </button>
-          <button
-            onClick={handleDeleteProfile}
-            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-            title="Delete profile"
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
+          {confirmingDelete ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-red-400">Are you sure?</span>
+              <button
+                onClick={handleDeleteProfile}
+                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-500 transition-colors text-xs font-semibold"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="px-3 py-1 bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-[#444] transition-colors text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+              title="Delete profile"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 

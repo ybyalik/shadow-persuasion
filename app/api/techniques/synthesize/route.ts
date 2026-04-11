@@ -135,7 +135,13 @@ ${chunkText}`;
       return NextResponse.json({ error: 'Empty AI response.' }, { status: 502 });
     }
 
-    const profile = JSON.parse(content);
+    let profile;
+    try {
+      profile = JSON.parse(content);
+    } catch {
+      console.error('[SYNTHESIZE]', 'Failed to parse AI response:', content?.slice(0, 200));
+      return NextResponse.json({ error: 'AI returned an invalid response. Please try again.' }, { status: 502 });
+    }
 
     // Cache the generated summary in Supabase
     const { error: upsertError } = await supabase

@@ -54,7 +54,8 @@ export function Sidebar() {
       <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
         <div className="flex-1 overflow-y-auto">
           <div className="mb-6 flex justify-center">
-            <img src="/logo.png" alt="Shadow Persuasion" className="w-36 dark:brightness-110" />
+            <img src="/logo.png" alt="Shadow Persuasion" className="w-36 dark:hidden" />
+            <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-36 hidden dark:block" />
           </div>
           <nav className="space-y-1">
             {navItems.map((item) => (
