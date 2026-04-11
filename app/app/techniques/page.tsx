@@ -594,21 +594,21 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
                   {/* Positive branch */}
                   <div className="flex-1 flex items-stretch gap-2">
                     <div className="w-[3px] rounded-full bg-green-500/60 flex-shrink-0" />
-                    <div className="flex-1 bg-green-950/20 dark:bg-green-950/30 border border-green-800/30 rounded-lg px-3 py-2">
-                      <span className="text-green-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
+                    <div className="flex-1 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/30 rounded-lg px-3 py-2">
+                      <span className="text-green-700 dark:text-green-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
                         If positive
                       </span>
-                      <span className="text-green-300/80 text-xs leading-relaxed">{step.ifPositive}</span>
+                      <span className="text-green-800 dark:text-green-200 text-xs leading-relaxed">{step.ifPositive}</span>
                     </div>
                   </div>
                   {/* Resist branch */}
                   <div className="flex-1 flex items-stretch gap-2">
                     <div className="w-[3px] rounded-full bg-red-500/60 flex-shrink-0" />
-                    <div className="flex-1 bg-red-950/20 dark:bg-red-950/30 border border-red-800/30 rounded-lg px-3 py-2">
-                      <span className="text-red-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
+                    <div className="flex-1 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-lg px-3 py-2">
+                      <span className="text-red-700 dark:text-red-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5">
                         If resist
                       </span>
-                      <span className="text-red-300/80 text-xs leading-relaxed">{step.ifResist}</span>
+                      <span className="text-red-800 dark:text-red-200 text-xs leading-relaxed">{step.ifResist}</span>
                     </div>
                   </div>
                 </div>

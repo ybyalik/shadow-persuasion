@@ -453,7 +453,7 @@ function NewReportForm({
             type="submit"
             className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
           >
-            Submit & Get AI Debrief
+            Submit & Get Debrief
           </button>
           <button
             type="button"
