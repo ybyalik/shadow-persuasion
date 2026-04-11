@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Lightbulb, Zap } from 'lucide-react';
+import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
 
 interface RewriteResult {
     versions: {
@@ -23,14 +24,7 @@ export default function RewritePage() {
     const [result, setResult] = useState<RewriteResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const goals = [
-        'Build Authority & Credibility',
-        'Create Urgency & Motivation', 
-        'Establish Rapport & Connection',
-        'Redirect Frame & Control',
-        'Generate Reciprocity & Obligation',
-        'Increase Intrigue & Interest'
-    ];
+    const { categories: taxonomyCategories } = useTaxonomy();
 
     const handleRewrite = async () => {
         if (!originalMessage.trim()) return;
@@ -113,8 +107,12 @@ export default function RewritePage() {
                         className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
                     >
                         <option value="">Select your objective...</option>
-                        {goals.map((g) => (
-                            <option key={g} value={g}>{g}</option>
+                        {taxonomyCategories.map((cat) => (
+                            <optgroup key={cat.id} label={`${cat.emoji} ${cat.name}`}>
+                                {cat.useCases.map((uc) => (
+                                    <option key={uc.id} value={uc.title}>{uc.title}</option>
+                                ))}
+                            </optgroup>
                         ))}
                     </select>
                 </div>
