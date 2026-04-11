@@ -50,7 +50,6 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
     const [isLoading, setIsLoading] = useState(false);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(resumeSessionId || null);
     const [tacticalGuidance, setTacticalGuidance] = useState<any>(null);
-    const [progressScore, setProgressScore] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // People integration state
@@ -286,6 +285,8 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
         }
     };
 
+    const progressScore = Math.min(100, Math.round((messages.filter(m => m.role === 'user').length / 8) * 100));
+
     return (
         <div className="flex h-[calc(100vh-4rem)] gap-6">
             {/* Main Chat Area */}
@@ -347,7 +348,7 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
             </div>
 
             {/* Tactical Guidance Panel */}
-            <div className="w-80 space-y-4">
+            <div className="hidden lg:block w-80 space-y-4">
                 {/* Live Guidance */}
                 {tacticalGuidance && (
                     <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-4">

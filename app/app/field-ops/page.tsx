@@ -778,6 +778,7 @@ export default function FieldOpsPage() {
   const [userGoals, setUserGoals] = useState<string[]>([]);
   const [lowPoolWarning, setLowPoolWarning] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const ADMIN_EMAILS = ['ybyalik@gmail.com'];
   const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
@@ -966,26 +967,39 @@ export default function FieldOpsPage() {
         });
 
         // Persist mission completion to API
-        fetch('/api/missions/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify(newCompletion),
-        }).catch((e) => console.error('Failed to save mission completion:', e));
+        try {
+          setSaveError(null);
+          const compRes = await fetch('/api/missions/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify(newCompletion),
+          });
+          if (!compRes.ok) throw new Error('Failed to save mission completion');
+        } catch (e) {
+          console.error('Failed to save mission completion:', e);
+          setSaveError('Failed to save mission completion. Your progress may not be recorded.');
+        }
 
         // Save to practice_results for Persuasion Score integration
         const missionScore = result.grade === 'A+' ? 100 : result.grade === 'A' ? 90 : result.grade === 'B+' ? 85 : result.grade === 'B' ? 80 : result.grade === 'C+' ? 75 : result.grade === 'C' ? 70 : result.grade === 'D' ? 50 : 40;
-        fetch('/api/practice-results', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify({
-            type: 'mission',
-            reference_id: `mission-${todayMission.id}`,
-            score: missionScore,
-            xp_earned: result.xpEarned || 0,
-            techniques_used: [todayMission.technique],
-            feedback: { grade: result.grade, feedback: result.feedback, insight: result.insight },
-          }),
-        }).catch((e) => console.error('Failed to save practice result:', e));
+        try {
+          const prRes = await fetch('/api/practice-results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify({
+              type: 'mission',
+              reference_id: `mission-${todayMission.id}`,
+              score: missionScore,
+              xp_earned: result.xpEarned || 0,
+              techniques_used: [todayMission.technique],
+              feedback: { grade: result.grade, feedback: result.feedback, insight: result.insight },
+            }),
+          });
+          if (!prRes.ok) throw new Error('Failed to save practice result');
+        } catch (e) {
+          console.error('Failed to save practice result:', e);
+          setSaveError('Failed to save practice result. Your score may not be updated.');
+        }
 
         // ── Auto-create a field report from the mission completion ──
         const outcomeScore = completionData.didItWork === 'Yes' ? 5 : completionData.didItWork === 'Somewhat' ? 3 : 1;
@@ -1022,11 +1036,17 @@ export default function FieldOpsPage() {
         setReports((prev) => [autoReport, ...prev]);
 
         // Persist auto-report to API
-        fetch('/api/journal/reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify(autoReport),
-        }).catch((e) => console.error('Failed to save auto-report:', e));
+        try {
+          const reportRes = await fetch('/api/journal/reports', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify(autoReport),
+          });
+          if (!reportRes.ok) throw new Error('Failed to save auto-report');
+        } catch (e) {
+          console.error('Failed to save auto-report:', e);
+          setSaveError('Failed to save field report. Your report may not be recorded.');
+        }
 
         // Also request a full AI debrief for the auto-created report
         try {
@@ -1081,25 +1101,38 @@ export default function FieldOpsPage() {
     setShowForm(false);
 
     // Persist report to API
-    fetch('/api/journal/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify(newReport),
-    }).catch((e) => console.error('Failed to save report:', e));
+    try {
+      setSaveError(null);
+      const reportRes = await fetch('/api/journal/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify(newReport),
+      });
+      if (!reportRes.ok) throw new Error('Failed to save report');
+    } catch (e) {
+      console.error('Failed to save report:', e);
+      setSaveError('Failed to save field report. Your report may not be recorded.');
+    }
 
     // Save to practice_results for Persuasion Score integration
     const fieldReportScore = reportData.outcome * 20; // 1-5 outcome mapped to 20-100
-    fetch('/api/practice-results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({
-        type: 'field_report',
-        reference_id: newReport.id,
-        score: fieldReportScore,
-        techniques_used: reportData.techniques || [],
-        feedback: { situation: reportData.situation, outcome: reportData.outcome },
-      }),
-    }).catch((e) => console.error('Failed to save field report practice result:', e));
+    try {
+      const prRes = await fetch('/api/practice-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          type: 'field_report',
+          reference_id: newReport.id,
+          score: fieldReportScore,
+          techniques_used: reportData.techniques || [],
+          feedback: { situation: reportData.situation, outcome: reportData.outcome },
+        }),
+      });
+      if (!prRes.ok) throw new Error('Failed to save practice result');
+    } catch (e) {
+      console.error('Failed to save field report practice result:', e);
+      setSaveError('Failed to save practice result. Your score may not be updated.');
+    }
 
     try {
       const res = await fetch('/api/journal', {
@@ -1156,6 +1189,13 @@ export default function FieldOpsPage() {
 
   return (
     <div className="space-y-8">
+      {/* ── Save Error Banner ── */}
+      {saveError && (
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{saveError}</p>
+          <button onClick={() => setSaveError(null)} className="text-red-400 hover:text-red-300 ml-4 text-sm font-bold">Dismiss</button>
+        </div>
+      )}
       {/* ── Header ── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>

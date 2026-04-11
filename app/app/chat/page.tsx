@@ -538,7 +538,7 @@ export default function ChatListPage() {
                         setQfHistory(prev => prev.filter(h => h.id !== item.id));
                       } catch {}
                     }}
-                    className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
+                    className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
                     title="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -637,7 +637,7 @@ export default function ChatListPage() {
                   </div>
                   <button
                     onClick={(e) => handleDeleteSession(convo.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
+                    className="opacity-60 md:opacity-0 md:group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
                     title="Delete session"
                   >
                     <Trash2 className="h-4 w-4" />

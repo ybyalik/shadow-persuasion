@@ -48,6 +48,9 @@ async function searchKnowledgeWithSources(query: string, limit: number = 5): Pro
 export async function POST(req: NextRequest) {
   try {
     const userId = await getUserFromRequest(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
     const voiceContext = await getVoiceProfile(userId);
 
     const { messages, session_id } = await req.json();
@@ -105,7 +108,7 @@ export async function POST(req: NextRequest) {
         const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat';
         const { data: newSession } = await supabase
           .from('chat_sessions')
-          .insert({ title, session_type: 'general' })
+          .insert({ title, session_type: 'general', user_id: userId })
           .select('id')
           .single();
         activeSessionId = newSession?.id;

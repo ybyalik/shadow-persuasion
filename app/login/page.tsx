@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
@@ -20,6 +21,9 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -75,6 +79,26 @@ export default function LoginPage() {
       router.push('/app');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to sign in with Google';
+      setError(formatFirebaseError(message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setResetMessage('');
+    if (!resetEmail.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage('Reset link sent! Check your email.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send reset email';
       setError(formatFirebaseError(message));
     } finally {
       setSubmitting(false);
@@ -181,6 +205,49 @@ export default function LoginPage() {
               >
                 {submitting ? 'SIGNING IN...' : 'SIGN IN'}
               </button>
+
+              {!showForgotPassword ? (
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(true); setResetEmail(email); setResetMessage(''); setError(''); }}
+                  className="w-full text-center text-sm text-gray-500 dark:text-[#888888] hover:text-[#D4A017] transition-colors mt-2"
+                >
+                  Forgot Password?
+                </button>
+              ) : (
+                <div className="mt-4 p-4 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg space-y-3">
+                  <p className="text-sm text-gray-500 dark:text-[#888888]">Enter your email to receive a password reset link.</p>
+                  {resetMessage && (
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-500 text-sm">
+                      {resetMessage}
+                    </div>
+                  )}
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-3 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-800 dark:text-[#E8E8E0] placeholder-[#555555] focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017] transition-colors"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={submitting}
+                      className="flex-1 py-2 bg-[#D4A017] hover:bg-[#B8860B] text-[#0A0A0A] font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {submitting ? 'SENDING...' : 'SEND RESET LINK'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowForgotPassword(false); setResetMessage(''); }}
+                      className="px-4 py-2 text-gray-500 dark:text-[#888888] hover:text-gray-800 dark:hover:text-[#E8E8E0] text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
           )}
 

@@ -584,6 +584,7 @@ export default function AnalyzePage() {
 
       const decoder = new TextDecoder();
       let assistantContent = '';
+      let buffer = '';
       // Add placeholder for streaming
       setFollowUpMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
@@ -591,7 +592,9 @@ export default function AnalyzePage() {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk;
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // keep last incomplete line in buffer
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed.startsWith('data: ')) continue;
@@ -736,7 +739,7 @@ export default function AnalyzePage() {
                           <img src={preview} alt={`Screenshot ${i + 1}`} className="h-24 rounded border border-gray-600" />
                           <button
                             onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                            className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -1207,7 +1210,7 @@ export default function AnalyzePage() {
                           e.stopPropagation();
                           handleCopy(option.message, index);
                         }}
-                        className="absolute top-2 right-2 p-1 bg-gray-300 dark:bg-[#444444] rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#555555]"
+                        className="absolute top-2 right-2 p-1 bg-gray-300 dark:bg-[#444444] rounded opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-[#555555]"
                       >
                         {copiedIndex === index ? (
                           <span className="text-xs text-green-400 font-mono">Done</span>
@@ -1526,7 +1529,7 @@ export default function AnalyzePage() {
                 </div>
                 <button
                   onClick={(e) => handleDeleteHistory(item.id, e)}
-                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
+                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-all rounded hover:bg-red-500/10"
                   title="Delete"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

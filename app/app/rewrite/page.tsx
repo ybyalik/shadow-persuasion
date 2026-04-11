@@ -227,7 +227,7 @@ export default function RewritePage() {
                                     <p className="text-gray-900 dark:text-white font-medium">{version.message}</p>
                                     <button
                                         onClick={() => handleCopy(version.message)}
-                                        className="absolute top-3 right-3 p-2 bg-gray-200 dark:bg-[#333333] rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-300 dark:hover:bg-[#444444]"
+                                        className="absolute top-3 right-3 p-2 bg-gray-200 dark:bg-[#333333] rounded-md opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-gray-300 dark:hover:bg-[#444444]"
                                     >
                                         <Copy className="h-4 w-4" />
                                     </button>

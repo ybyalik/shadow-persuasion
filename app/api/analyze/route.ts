@@ -91,6 +91,9 @@ Important rules:
 export async function POST(req: NextRequest) {
   try {
     const userId = await getUserFromRequest(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
     const voiceContext = await getVoiceProfile(userId);
 
     let textContent = '';
