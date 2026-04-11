@@ -5,6 +5,7 @@ import { ScenarioCard } from '@/components/app/ScenarioCard';
 import { Star, Loader2, Plus } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
+import { getCategoryIcon } from '@/lib/category-icons';
 
 // Map old scenario category names to taxonomy category IDs
 const CATEGORY_TO_TAXONOMY: Record<string, string> = {
@@ -59,11 +60,11 @@ export default function TrainingArenaPage() {
     return ['All', ...taxonomyCategories.map(c => c.id)];
   }, [taxonomyCategories]);
 
-  // Build display label map: category id -> "emoji name"
+  // Build display label map: category id -> name (icons rendered inline)
   const categoryLabels = useMemo(() => {
     const map: Record<string, string> = { All: 'All' };
     for (const c of taxonomyCategories) {
-      map[c.id] = `${c.emoji} ${c.name}`;
+      map[c.id] = c.name;
     }
     return map;
   }, [taxonomyCategories]);
@@ -162,6 +163,7 @@ export default function TrainingArenaPage() {
                 : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222]'}
             `}
           >
+            {category !== 'All' && (() => { const Icon = getCategoryIcon(category); return <Icon className="h-4 w-4 inline-block mr-1" />; })()}
             {categoryLabels[category] || category}
           </button>
         ))}

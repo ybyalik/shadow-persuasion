@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useTaxonomy, TaxonomyCategory, TaxonomyUseCase } from '@/lib/hooks/useTaxonomy';
+import { getCategoryIcon } from '@/lib/category-icons';
 
 interface Goal {
     id: string;
@@ -30,7 +31,7 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                 id: category.id,
                 title: category.name,
                 description: category.description,
-                icon: <span className="text-2xl">{category.emoji}</span>,
+                icon: (() => { const I = getCategoryIcon(category.id); return <I className="h-6 w-6 text-[#D4A017]" />; })(),
                 color: 'bg-[#D4A017]',
                 examples: [],
             });
@@ -39,11 +40,12 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
 
     const handleUseCaseClick = (useCase: TaxonomyUseCase) => {
         if (!selectedCategory) return;
+        const UseCaseIcon = getCategoryIcon(selectedCategory.id);
         onSelectGoal({
             id: selectedCategory.id,
             title: useCase.title,
             description: selectedCategory.description,
-            icon: <span className="text-2xl">{selectedCategory.emoji}</span>,
+            icon: <UseCaseIcon className="h-6 w-6 text-[#D4A017]" />,
             color: 'bg-[#D4A017]',
             examples: [],
         });
@@ -51,11 +53,12 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
 
     const handleCustomStart = () => {
         if (!selectedCategory) return;
+        const CustomIcon = getCategoryIcon(selectedCategory.id);
         onSelectGoal({
             id: selectedCategory.id,
             title: selectedCategory.name,
             description: selectedCategory.description,
-            icon: <span className="text-2xl">{selectedCategory.emoji}</span>,
+            icon: <CustomIcon className="h-6 w-6 text-[#D4A017]" />,
             color: 'bg-[#D4A017]',
             examples: [],
         });
@@ -74,7 +77,7 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                         Back to categories
                     </button>
                     <h1 className="text-3xl font-bold uppercase font-mono tracking-wider text-[#D4A017] mb-2">
-                        {selectedCategory.emoji} {selectedCategory.name}
+                        {(() => { const HIcon = getCategoryIcon(selectedCategory.id); return <HIcon className="inline h-6 w-6 text-[#D4A017] mr-2" />; })()}{selectedCategory.name}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                         Pick your specific situation, or start with a custom topic.
@@ -133,9 +136,9 @@ export function GoalSelector({ onSelectGoal }: GoalSelectorProps) {
                             onClick={() => handleCategoryClick(category)}
                             className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6 text-left hover:border-[#D4A017] hover:bg-gray-100 dark:hover:bg-[#222222] transition-all duration-200 group"
                         >
-                            {/* Emoji */}
-                            <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">
-                                {category.emoji}
+                            {/* Icon */}
+                            <div className="mb-4 group-hover:scale-110 transition-transform">
+                                {(() => { const CIcon = getCategoryIcon(category.id); return <CIcon className="h-10 w-10 text-[#D4A017]" />; })()}
                             </div>
 
                             {/* Content */}

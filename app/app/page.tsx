@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTaxonomy, TaxonomyCategory } from '@/lib/hooks/useTaxonomy';
+import { getCategoryIcon } from '@/lib/category-icons';
 import { formatDate } from '@/lib/format-date';
 
 /* ────────────────────────────────────────────
@@ -440,7 +441,7 @@ export default function DashboardPage() {
                               <CheckCircle className="h-4 w-4 text-[#D4A017]" />
                             </div>
                           )}
-                          <div className="text-3xl mb-3">{category.emoji}</div>
+                          {(() => { const Icon = getCategoryIcon(category.id); return <div className="mb-3"><Icon className="h-8 w-8 text-[#D4A017]" /></div>; })()}
                           <h3 className="text-sm font-bold font-mono">{category.name}</h3>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{category.description}</p>
                         </button>

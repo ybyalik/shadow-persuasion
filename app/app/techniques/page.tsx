@@ -7,6 +7,7 @@ import { useTechniques, type APITechnique } from '@/lib/hooks/useTechniques';
 import { type SRCard } from '@/lib/spaced-repetition';
 import { useAuth } from '@/lib/auth-context';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
+import { getCategoryIcon } from '@/lib/category-icons';
 
 // ── Library constants ──
 const categories = ['All', 'Influence', 'Negotiation', 'Rapport', 'Framing', 'Defense'];
@@ -770,7 +771,7 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
                   className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#1A1A1A] hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
                 >
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {cat.emoji} {cat.name}
+                    {(() => { const Icon = getCategoryIcon(cat.id); return <Icon className="h-4 w-4 inline-block mr-1" />; })()}{cat.name}
                     <span className="ml-1.5 text-gray-400 text-xs">({cat.useCases.length})</span>
                   </span>
                   <ChevronDown
