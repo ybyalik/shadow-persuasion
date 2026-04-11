@@ -86,7 +86,7 @@ function ScoreRing({ score, size = 220, stroke = 12 }: { score: number; size?: n
           fill="none"
           stroke="currentColor"
           strokeWidth={stroke}
-          className="text-[#1A1A1A]"
+          className="text-gray-200 dark:text-[#1A1A1A]"
         />
         {/* Progress ring */}
         <circle

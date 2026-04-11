@@ -5,6 +5,7 @@ import { Copy, TrendingUp, AlertTriangle, Target, Zap, HelpCircle, Shield, UserP
 import { useAuth } from '@/lib/auth-context';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
 import { formatDate } from '@/lib/format-date';
+import { renderMarkdown } from '@/lib/markdown';
 
 // ─── History Types ──────────────────────────────────────────────────────────
 
@@ -74,25 +75,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Reciprocity: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
   Anchoring: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800',
 };
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function renderMarkdown(text: string): string {
-  const escaped = escapeHtml(text);
-  return escaped
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\(Source: &quot;(.*?)&quot; by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full mx-0.5">📖 $1</span>')
-    .replace(/\n\n/g, '<br/><br/>')
-    .replace(/\n/g, '<br/>');
-}
 
 function getCategoryStyle(category: string): string {
   return CATEGORY_COLORS[category] || 'bg-gray-900/40 text-gray-600 dark:text-gray-300 border-gray-700';

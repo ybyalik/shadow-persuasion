@@ -5,10 +5,9 @@ import { useRef } from 'react';
 import { ArrowLeft, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2, Sparkles, Book, Loader2, RefreshCw, ChevronDown, ChevronUp, Send, Briefcase, Heart, DollarSign, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useAdmin } from '@/lib/hooks/useAdmin';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
 import { getCategoryIcon } from '@/lib/category-icons';
-
-const ADMIN_EMAILS = ['ybyalik@gmail.com'];
 const formatLabel = (s: string) => s.split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 import NextLink from 'next/link';
 // Scenarios are fetched dynamically from the API
@@ -109,7 +108,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
   const router = useRouter();
   const { user } = useAuth();
   const { categories: taxonomyCategories } = useTaxonomy();
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+  const isAdmin = useAdmin();
 
   // Fetch technique data
   useEffect(() => {

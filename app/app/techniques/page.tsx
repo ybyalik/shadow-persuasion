@@ -106,6 +106,7 @@ export default function TechniquesPage() {
 // ══════════════════════════════════════════════════════════════════════
 
 function LibraryTab({ getHeaders, apiTechniques, techniquesLoading }: { getHeaders: () => Promise<Record<string, string>>; apiTechniques: APITechnique[]; techniquesLoading: boolean }) {
+  const { user } = useAuth();
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [dueCards, setDueCards] = useState<SRCard[]>([]);
@@ -331,7 +332,11 @@ function LibraryTab({ getHeaders, apiTechniques, techniquesLoading }: { getHeade
       {/* Empty state */}
       {!techniquesLoading && apiTechniques.length === 0 && (
         <div className="text-center py-12 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333]">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">Upload books in Admin to populate techniques</p>
+          <p className="text-gray-500 dark:text-gray-400 text-lg">
+            {user?.email === 'ybyalik@gmail.com'
+              ? 'Upload books in Admin to populate techniques.'
+              : 'Techniques are being curated. Check back soon!'}
+          </p>
         </div>
       )}
 

@@ -429,7 +429,7 @@ export default function DashboardPage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const sampleTexts = voiceSampleTexts
-        .split(/\n{2,}/)
+        .split(/\n-{3,}\n/)
         .map(s => s.trim())
         .filter(Boolean);
 
@@ -649,7 +649,7 @@ export default function DashboardPage() {
                     Sample Texts
                   </label>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mb-1.5">
-                    Paste 2-3 real messages or emails you&apos;ve written. This helps us match your natural voice. Separate each with a blank line.
+                    Paste 2-3 real messages or emails you&apos;ve written. This helps us match your natural voice. Separate each with a line of --- (three or more dashes).
                   </p>
                   <textarea
                     value={voiceSampleTexts}

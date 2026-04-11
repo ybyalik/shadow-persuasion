@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
 
+// Admin emails — kept in sync with app_settings table and /lib/admin.ts
 const ADMIN_EMAILS = ['ybyalik@gmail.com'];
 
 /**

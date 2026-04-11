@@ -35,6 +35,26 @@ function mapProfile(row: any) {
 export async function GET(req: NextRequest) {
   try {
     const userId = await getUserFromRequest(req);
+    const { searchParams } = new URL(req.url);
+
+    // Support fetching a single profile by ID
+    const singleId = searchParams.get('id');
+    if (singleId) {
+      let query = supabase
+        .from(TABLE)
+        .select('*')
+        .eq('id', singleId);
+
+      if (userId) {
+        query = query.eq('user_id', userId);
+      } else {
+        query = query.is('user_id', null);
+      }
+
+      const { data, error } = await query.single();
+      if (error || !data) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      return NextResponse.json({ profile: mapProfile(data) });
+    }
 
     let query = supabase
       .from(TABLE)

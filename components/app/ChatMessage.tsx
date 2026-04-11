@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BookOpen, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { renderMarkdown } from '@/lib/markdown';
 
 type Source = { book: string; author: string; technique: string; similarity: number };
 
@@ -12,36 +13,11 @@ interface ChatMessageProps {
   sources?: Source[];
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function parseMarkdown(text: string): string {
-  const escaped = escapeHtml(text);
-  return escaped
-    .replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800 dark:text-[#E8E8E0] font-semibold">$1</strong>')
-    .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-xs font-mono font-bold mt-1 mb-1">$1</span>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-sm">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
-    .replace(/^[-•] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">→</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
-    .replace(/\(Source: &quot;(.*?)&quot; by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full cursor-help" title="From: $1 by $2">📚 $1</span>')
-    .replace(/\n\n/g, '<div class="h-3"></div>')
-    .replace(/\n/g, '<br/>');
-}
-
 export function ChatMessage({ role, content, isLoading, sources }: ChatMessageProps) {
   const [showSources, setShowSources] = useState(false);
   const [copied, setCopied] = useState(false);
   const isUser = role === 'user';
-  const formattedContent = parseMarkdown(content);
+  const formattedContent = renderMarkdown(content);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);

@@ -6,8 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Search, MessageSquare, Edit, Users, Swords, ClipboardList, BookOpen, Trophy, Upload, LogOut, Sun, Moon, ChevronUp, Settings, MoreHorizontal, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
-
-const ADMIN_EMAILS = ['ybyalik@gmail.com'];
+import { useAdmin } from '@/lib/hooks/useAdmin';
 
 const navItems = [
   { href: '/app', icon: Home, label: 'Dashboard' },
@@ -25,6 +24,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const isAdmin = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -64,7 +64,7 @@ export function Sidebar() {
                 <span className="font-medium">{item.label}</span>
               </Link>
             ))}
-            {user?.email && ADMIN_EMAILS.includes(user.email) && (
+            {isAdmin && (
               <Link href="/app/admin" className={linkClass('/app/admin')}>
                 <Upload className="h-5 w-5" />
                 <span className="font-medium">Admin</span>

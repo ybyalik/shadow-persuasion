@@ -16,7 +16,7 @@ const CATEGORY_TO_TAXONOMY: Record<string, string> = {
   Defense: 'defense',
 };
 
-const ADMIN_EMAILS = ['ybyalik@gmail.com'];
+import { useAdmin } from '@/lib/hooks/useAdmin';
 
 type Scenario = {
   id: string;
@@ -38,7 +38,7 @@ const difficultyLevels = [
 
 export default function TrainingArenaPage() {
   const { user } = useAuth();
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+  const isAdmin = useAdmin();
   const { categories: taxonomyCategories, loading: taxonomyLoading } = useTaxonomy();
 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);

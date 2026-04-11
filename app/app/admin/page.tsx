@@ -4,8 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, BookOpen, Trash2, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Eye, ChevronLeft, ChevronRight, Pencil, Check, X, Plus, Power, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-
-const ADMIN_EMAILS = ['ybyalik@gmail.com'];
+import { useAdmin } from '@/lib/hooks/useAdmin';
 
 type BookStatus = 'extracting' | 'processing' | 'done' | 'error';
 type UploadBook = {
@@ -74,12 +73,13 @@ function chunkText(text: string, maxWords: number = 800): string[] {
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isAdmin = useAdmin();
 
   useEffect(() => {
-    if (!loading && (!user?.email || !ADMIN_EMAILS.includes(user.email))) {
+    if (!loading && !isAdmin) {
       router.replace('/app');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isAdmin]);
 
   const [uploads, setUploads] = useState<UploadBook[]>([]);
   const [dbBooks, setDbBooks] = useState<DBBook[]>([]);
@@ -397,7 +397,7 @@ export default function AdminPage() {
     setTaxLoading(false);
   };
 
-  useEffect(() => { if (user?.email && ADMIN_EMAILS.includes(user.email)) loadTaxonomy(); }, [user]);
+  useEffect(() => { if (isAdmin) loadTaxonomy(); }, [user, isAdmin]);
 
   const taxApi = async (method: string, body?: any, params?: string) => {
     setTaxSaving(true);
@@ -460,7 +460,7 @@ export default function AdminPage() {
     taxApi('PUT', { type: 'use_case', id: other.id, sort_order: uc.sort_order });
   };
 
-  if (loading || !user?.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (loading || !isAdmin) {
     return null;
   }
 

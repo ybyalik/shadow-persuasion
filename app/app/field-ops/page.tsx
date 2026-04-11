@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useTechniques } from '@/lib/hooks/useTechniques';
 import { useAuth } from '@/lib/auth-context';
+import { useAdmin } from '@/lib/hooks/useAdmin';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -780,8 +781,7 @@ export default function FieldOpsPage() {
   const [generating, setGenerating] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const ADMIN_EMAILS = ['ybyalik@gmail.com'];
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+  const isAdmin = useAdmin();
 
   // Fetch user profile for goals, then mission pool with category filter
   useEffect(() => {
@@ -863,12 +863,12 @@ export default function FieldOpsPage() {
     for (let i = 1; i <= 7; i++) {
       const date = new Date(Date.now() - i * 86400000);
       const dateStr = getDateString(date);
-      const mission = getDailyMission(filteredPool, dateStr, completedIds);
+      const mission = getDailyMission(filteredPool, dateStr);
       const completion = missionsData.completions.find((c) => c.date === dateStr);
       missions.push({ date: dateStr, mission, completion });
     }
     return missions;
-  }, [filteredPool, missionsData.completions, completedIds]);
+  }, [filteredPool, missionsData.completions]);
 
   // Timer
   const [timeLeft, setTimeLeft] = useState('');
@@ -1347,7 +1347,7 @@ export default function FieldOpsPage() {
       {lowPoolWarning && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
           <Target className="h-5 w-5 text-yellow-400 shrink-0" />
-          <p className="text-sm text-yellow-300 flex-1">
+          <p className="text-sm text-yellow-600 dark:text-yellow-300 flex-1">
             Running low on missions for your focus areas. New missions will be generated from your knowledge base.
           </p>
         </div>
@@ -1457,7 +1457,7 @@ export default function FieldOpsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <Calendar className="h-16 w-16 text-[#333333] mx-auto" />
+                <Calendar className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto" />
                 <div>
                   <h3 className="text-xl font-bold text-[#D4A017] mb-2">No Field Reports Yet</h3>
                   <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
