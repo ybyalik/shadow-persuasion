@@ -30,14 +30,14 @@ const CoverPage = () => {
       ref={ref}
       className="relative min-h-screen flex flex-col items-center justify-center text-center p-8 overflow-hidden"
     >
-      {/* Logo — top left */}
+      {/* Logo — above title, centered */}
       <motion.div
-        className="absolute top-6 left-6 z-10"
+        className="z-10 mb-4"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 0.6, delay: 0.5 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <img src="/logo.png" alt="Shadow Persuasion" className="w-20 h-20 md:w-24 md:h-24" />
+        <img src="/logo.png" alt="Shadow Persuasion" className="w-32 h-32 md:w-40 md:h-40 mx-auto" />
       </motion.div>
 
       {/* Scan-line sweep animation */}
