@@ -128,6 +128,15 @@ function LibraryTab({ getHeaders, apiTechniques, techniquesLoading }: { getHeade
     return map[d?.toLowerCase()] || 1;
   };
 
+  // Pre-filter from onboarding context
+  useEffect(() => {
+    const onboardingFilter = sessionStorage.getItem('onboarding-technique-filter');
+    if (onboardingFilter) {
+      sessionStorage.removeItem('onboarding-technique-filter');
+      setFilter(onboardingFilter);
+    }
+  }, []);
+
   // Derive category list dynamically from API data
   const dynamicCategories = ['All', ...Array.from(new Set(apiTechniques.map(t => t.category))).sort()];
   const difficultyOptions = ['All', 'Beginner', 'Intermediate', 'Advanced'];

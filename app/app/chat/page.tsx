@@ -88,6 +88,31 @@ export default function ChatListPage() {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Auto-start strategic session from onboarding context
+  useEffect(() => {
+    const ctx = sessionStorage.getItem('onboarding-context');
+    if (ctx) {
+      sessionStorage.removeItem('onboarding-context');
+      try {
+        const { goal, categories } = JSON.parse(ctx);
+        if (goal) {
+          const categoryId = (categories && categories[0]) || 'career';
+          setSelectedGoal({
+            id: categoryId,
+            title: goal,
+            description: '',
+            icon: null,
+            color: '',
+            examples: [],
+          });
+          setMode('strategic');
+        }
+      } catch {
+        // Ignore malformed data
+      }
+    }
+  }, []);
+
   const handleNewGeneralChat = async () => {
     try {
       const res = await fetch('/api/conversations', {

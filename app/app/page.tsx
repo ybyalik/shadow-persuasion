@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Eye, MessageSquare, Swords, BookOpen, Flame, Zap, Target,
@@ -211,6 +212,7 @@ function DashboardSkeleton() {
    ──────────────────────────────────────────── */
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { categories: taxonomyCategories, loading: taxonomyLoading } = useTaxonomy();
 
@@ -297,6 +299,9 @@ export default function DashboardPage() {
               const profileData = await profileRes.json();
               goals = profileData.profile?.goals || [];
               setUserGoals(goals);
+              if (profileData.profile?.pressingUseCase) {
+                setSelectedUseCase(profileData.profile.pressingUseCase);
+              }
             }
           } catch (err) {
             console.error('Failed to fetch user profile:', err);
@@ -670,9 +675,15 @@ export default function DashboardPage() {
 
               <div className="space-y-3">
                 {/* Action 1: Strategic Coach */}
-                <Link
-                  href={`/app/chat?prompt=${encodeURIComponent(selectedUseCase || selectedGoals.map(g => g.name).join(', '))}`}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('onboarding-context', JSON.stringify({
+                      goal: selectedUseCase || selectedGoals.map(g => g.name).join(', '),
+                      categories: selectedGoals.map(g => g.id),
+                    }));
+                    router.push('/app/chat');
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
                     <MessageSquare className="h-5 w-5 text-[#D4A017]" />
@@ -684,12 +695,18 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
-                </Link>
+                </button>
 
                 {/* Action 2: Training Scenario */}
-                <Link
-                  href="/app/training"
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                <button
+                  onClick={() => {
+                    const primaryCategory = selectedGoals[0]?.id || '';
+                    if (primaryCategory) {
+                      sessionStorage.setItem('onboarding-training-filter', primaryCategory);
+                    }
+                    router.push('/app/training');
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
                     <Swords className="h-5 w-5 text-[#D4A017]" />
@@ -701,12 +718,18 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
-                </Link>
+                </button>
 
                 {/* Action 3: Browse Techniques */}
-                <Link
-                  href="/app/techniques"
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group"
+                <button
+                  onClick={() => {
+                    const primaryCategory = selectedGoals[0]?.id || '';
+                    if (primaryCategory) {
+                      sessionStorage.setItem('onboarding-technique-filter', primaryCategory);
+                    }
+                    router.push('/app/techniques');
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center shrink-0">
                     <BookOpen className="h-5 w-5 text-[#D4A017]" />
@@ -718,7 +741,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors" />
-                </Link>
+                </button>
               </div>
 
               {/* Let's Go Button */}
@@ -778,6 +801,76 @@ export default function DashboardPage() {
           Full Score →
         </Link>
       </section>
+
+      {/* ═══════════════════════════════════════════
+          Section 1.5: Your Focus Areas (if goals set)
+          ═══════════════════════════════════════════ */}
+      {userGoals.length > 0 && (
+        <section className="rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Your Focus Areas
+              </h2>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Based on your goals</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {userGoals.map(goalId => {
+              const cat = taxonomyCategories.find(c => c.id === goalId);
+              const Icon = getCategoryIcon(goalId);
+              return (
+                <span
+                  key={goalId}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#D4A017]/10 border border-[#D4A017]/30 text-[#D4A017] text-xs font-mono"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {cat?.name || goalId}
+                </span>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {selectedUseCase && (
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('onboarding-context', JSON.stringify({
+                    goal: selectedUseCase,
+                    categories: userGoals,
+                  }));
+                  router.push('/app/chat');
+                }}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group text-left"
+              >
+                <MessageSquare className="h-5 w-5 text-[#D4A017] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-mono uppercase text-gray-500 dark:text-gray-400">Get help with</p>
+                  <p className="text-sm font-medium truncate">{selectedUseCase}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors shrink-0" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (userGoals[0]) {
+                  sessionStorage.setItem('onboarding-training-filter', userGoals[0]);
+                }
+                router.push('/app/training');
+              }}
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#333] hover:border-[#D4A017] transition-all group text-left"
+            >
+              <Swords className="h-5 w-5 text-[#D4A017] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-mono uppercase text-gray-500 dark:text-gray-400">Practice</p>
+                <p className="text-sm font-medium truncate">
+                  {taxonomyCategories.find(c => c.id === userGoals[0])?.name || userGoals[0]} scenarios
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#D4A017] transition-colors shrink-0" />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════
           Section 2: Today's Mission

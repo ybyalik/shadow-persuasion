@@ -71,6 +71,15 @@ export default function TrainingArenaPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Pre-filter from onboarding context
+  useEffect(() => {
+    const onboardingFilter = sessionStorage.getItem('onboarding-training-filter');
+    if (onboardingFilter) {
+      sessionStorage.removeItem('onboarding-training-filter');
+      setFilter(onboardingFilter);
+    }
+  }, []);
+
   // Use taxonomy categories for filter tabs
   const categories = useMemo(() => {
     return ['All', ...taxonomyCategories.map(c => c.id)];
