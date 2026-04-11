@@ -52,8 +52,8 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
         <div className="flex-1 overflow-y-auto">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-center font-mono tracking-wider text-gray-900 dark:text-white">SHADOW.OPS</h1>
+          <div className="mb-6 flex justify-center">
+            <img src="/logo.png" alt="Shadow Persuasion" className="w-36 dark:brightness-110" />
           </div>
           <nav className="space-y-1">
             {navItems.map((item) => (

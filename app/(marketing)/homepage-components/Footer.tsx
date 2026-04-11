@@ -71,9 +71,7 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-gray-600">
-            SHADOW.OPS
-          </p>
+          <img src="/logo.png" alt="Shadow Persuasion" className="w-28 brightness-75" />
           <p className="text-xs text-gray-600">
             &copy; {new Date().getFullYear()} Shadow Persuasion. All rights reserved.
           </p>

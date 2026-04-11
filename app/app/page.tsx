@@ -474,8 +474,9 @@ export default function DashboardPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   New Operative
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black font-mono tracking-wide">
-                  Welcome to <span className="text-[#D4A017]">Shadow.Ops</span>
+                <img src="/logo.png" alt="Shadow Persuasion" className="w-48 mx-auto mb-2" />
+                <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-wide">
+                  Welcome
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
                   Your training begins now. Choose your objectives and we&apos;ll build your personalized programme.
@@ -1054,58 +1055,117 @@ export default function DashboardPage() {
       </section>
 
       {/* ═══════════════════════════════════════════
-          Section 3.5: This Week Activity Heatmap
+          Section 3.5: This Week Stats
           ═══════════════════════════════════════════ */}
-      <section className="rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] p-6">
-        <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
-          This Week
-        </h2>
-        <div className="flex items-end justify-between gap-2">
-          {(() => {
-            const now = new Date();
-            const dayOfWeek = now.getDay(); // 0=Sun
-            // Monday-based week: offset from Monday
-            const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-            const monday = new Date(now);
-            monday.setDate(now.getDate() - mondayOffset);
-            monday.setHours(0, 0, 0, 0);
+      {(() => {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0=Sun
+        const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - mondayOffset);
+        monday.setHours(0, 0, 0, 0);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
 
-            const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-            const allActivity = progress?.recentActivity ?? [];
+        const fmtShort = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-            // Count activities per day of the week
-            const dayCounts = Array(7).fill(0);
-            allActivity.forEach(a => {
-              const d = new Date(a.date);
-              const diffMs = d.getTime() - monday.getTime();
-              const dayIndex = Math.floor(diffMs / 86400000);
-              if (dayIndex >= 0 && dayIndex < 7) {
-                dayCounts[dayIndex]++;
-              }
-            });
+        const allActivity = progress?.recentActivity ?? [];
+        const weekActivity = allActivity.filter(a => {
+          const d = new Date(a.date);
+          return d.getTime() >= monday.getTime() && d.getTime() < monday.getTime() + 7 * 86400000;
+        });
 
-            return dayLabels.map((label, i) => {
-              const count = dayCounts[i];
-              const isToday = i === mondayOffset;
-              let bgClass = 'bg-gray-100 dark:bg-[#2A2A2A]';
-              if (count >= 3) bgClass = 'bg-[#D4A017]';
-              else if (count >= 1) bgClass = 'bg-[#D4A017]/40';
+        const analysisCount = weekActivity.filter(a => a.type === 'analysis').length;
+        const coachCount = weekActivity.filter(a => a.type === 'feedback' || a.type === 'journal').length;
+        const missionCount = weekActivity.filter(a => a.type === 'mission').length;
+        const practiceCount = weekActivity.filter(a => a.type === 'practice' || a.type === 'scenario').length;
 
-              return (
-                <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                  <div
-                    className={`w-full aspect-square max-w-[48px] rounded-lg ${bgClass} transition-colors ${isToday ? 'ring-2 ring-[#D4A017]/50' : ''}`}
-                    title={`${label}: ${count} activit${count === 1 ? 'y' : 'ies'}`}
-                  />
-                  <span className={`text-xs font-mono ${isToday ? 'text-[#D4A017] font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
-                    {label}
+        const weekXPTotal = completions
+          .filter(c => {
+            const d = new Date(c.completed_at || c.created_at || c.date || '').getTime();
+            return d >= monday.getTime() && d < monday.getTime() + 7 * 86400000;
+          })
+          .reduce((sum, c) => sum + (c.xp_earned ?? 10), 0);
+
+        const statCards = [
+          { label: 'Analyses', value: analysisCount, icon: Search },
+          { label: 'Coach', value: coachCount, icon: MessageSquare },
+          { label: 'Missions', value: missionCount, icon: Target },
+          { label: 'Practice', value: practiceCount, icon: BookOpen },
+          { label: 'XP', value: weekXPTotal, icon: Zap },
+        ];
+
+        // Daily breakdown: activity types per day
+        const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        const dayTypes: Set<string>[] = Array.from({ length: 7 }, () => new Set());
+        weekActivity.forEach(a => {
+          const d = new Date(a.date);
+          const dayIndex = Math.floor((d.getTime() - monday.getTime()) / 86400000);
+          if (dayIndex >= 0 && dayIndex < 7) {
+            dayTypes[dayIndex].add(a.type);
+          }
+        });
+
+        return (
+          <section className="rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                This Week
+              </h2>
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                {fmtShort(monday)} &ndash; {fmtShort(sunday)}
+              </span>
+            </div>
+
+            {/* Stat boxes */}
+            <div className="grid grid-cols-5 gap-2 sm:gap-3 mb-5">
+              {statCards.map(s => (
+                <div
+                  key={s.label}
+                  className="flex flex-col items-center p-2.5 sm:p-3 rounded-lg bg-gray-50 dark:bg-[#222] border border-gray-100 dark:border-[#333]"
+                >
+                  <s.icon className="h-4 w-4 text-[#D4A017] mb-1.5" />
+                  <span className="text-lg sm:text-xl font-black font-mono tabular-nums text-gray-800 dark:text-gray-100">
+                    {s.value}
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-0.5">
+                    {s.label}
                   </span>
                 </div>
-              );
-            });
-          })()}
-        </div>
-      </section>
+              ))}
+            </div>
+
+            {/* Daily breakdown dots */}
+            <div className="flex items-end justify-between gap-2">
+              {dayLabels.map((label, i) => {
+                const types = dayTypes[i];
+                const isToday = i === mondayOffset;
+                const hasActivity = types.size > 0;
+                return (
+                  <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                    <div className="flex flex-col items-center gap-1 min-h-[24px] justify-end">
+                      {hasActivity ? (
+                        Array.from(types).slice(0, 3).map((t, j) => (
+                          <div
+                            key={j}
+                            className="w-2.5 h-2.5 rounded-full bg-[#D4A017]"
+                            title={t}
+                          />
+                        ))
+                      ) : (
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-200 dark:bg-[#333]" />
+                      )}
+                    </div>
+                    <span className={`text-xs font-mono ${isToday ? 'text-[#D4A017] font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ═══════════════════════════════════════════
           Section 4: Recent Activity

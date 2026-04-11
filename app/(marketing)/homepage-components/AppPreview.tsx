@@ -376,7 +376,7 @@ export default function AppPreview() {
             <div className="w-[140px] md:w-[160px] bg-[#0F0F0F] border-r border-[#1A1A1A] flex flex-col py-2 shrink-0">
               {/* Logo */}
               <div className="px-3 mb-3">
-                <div className="text-[11px] font-bold text-[#D4A017] tracking-wider">SHADOW.OPS</div>
+                <div className="text-[11px] font-bold text-[#D4A017] tracking-wider">SHADOW PERSUASION</div>
                 <div className="text-[7px] text-gray-600 uppercase tracking-widest">Operator v2.4</div>
               </div>
 

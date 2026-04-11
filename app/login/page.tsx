@@ -106,11 +106,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold font-mono tracking-[0.3em] text-gray-800 dark:text-[#E8E8E0]">
-            SHADOW<span className="text-[#D4A017]">.</span>OPS
-          </h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-[#888888] tracking-wide">
-            AI-Powered Dark Psychology Coaching
+          <img src="/logo.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-[#888888] tracking-wide">
+            Psychology &amp; Influence Training
           </p>
         </div>
 
