@@ -7,6 +7,7 @@ import {
   Eye, MessageSquare, Swords, BookOpen, Flame, Zap, Target,
   Clock, ArrowRight, CheckCircle, FileText, MessageCircle,
   Briefcase, Heart, DollarSign, Shield, Star, Sparkles,
+  Search, ChevronRight, Pencil,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTaxonomy, TaxonomyCategory } from '@/lib/hooks/useTaxonomy';
@@ -116,9 +117,25 @@ function getActivityIcon(type: string) {
   switch (type) {
     case 'mission': return Target;
     case 'journal': return FileText;
+    case 'field_report': return FileText;
     case 'practice': return Swords;
+    case 'scenario': return Swords;
     case 'feedback': return MessageCircle;
+    case 'analysis': return Eye;
     default: return Zap;
+  }
+}
+
+function getActivityLink(type: string): string {
+  switch (type) {
+    case 'analysis': return '/app/analyze';
+    case 'mission': return '/app/field-ops';
+    case 'practice':
+    case 'scenario': return '/app/training';
+    case 'journal':
+    case 'field_report': return '/app/field-ops';
+    case 'feedback': return '/app/score';
+    default: return '/app';
   }
 }
 
@@ -223,6 +240,9 @@ export default function DashboardPage() {
   const [missionPool, setMissionPool] = useState<Mission[]>([]);
   const [userGoals, setUserGoals] = useState<string[]>([]);
   const [lowPoolWarning, setLowPoolWarning] = useState(false);
+  const [editingFocus, setEditingFocus] = useState(false);
+  const [editGoals, setEditGoals] = useState<string[]>([]);
+  const [savingFocusEdit, setSavingFocusEdit] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(true); // assume true until we know
   const [selectedGoals, setSelectedGoals] = useState<TaxonomyCategory[]>([]);
   const [selectedUseCase, setSelectedUseCase] = useState<string | null>(null);
@@ -814,6 +834,15 @@ export default function DashboardPage() {
               </h2>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Based on your goals</p>
             </div>
+            {!editingFocus && (
+              <button
+                onClick={() => { setEditGoals([...userGoals]); setEditingFocus(true); }}
+                className="flex items-center gap-1 text-xs text-[#D4A017] hover:underline font-mono"
+              >
+                <Pencil className="h-3 w-3" />
+                Edit
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2 mb-4">
             {userGoals.map(goalId => {
@@ -830,6 +859,73 @@ export default function DashboardPage() {
               );
             })}
           </div>
+          {editingFocus && (
+            <div className="border-t border-gray-200 dark:border-[#333] pt-4 mt-2 space-y-3">
+              <p className="text-xs font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Toggle categories
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {taxonomyCategories.map(category => {
+                  const isSelected = editGoals.includes(category.id);
+                  const Icon = getCategoryIcon(category.id);
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() =>
+                        setEditGoals(prev =>
+                          prev.includes(category.id)
+                            ? prev.filter(g => g !== category.id)
+                            : [...prev, category.id]
+                        )
+                      }
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono border transition-all ${
+                        isSelected
+                          ? 'bg-[#D4A017]/10 border-[#D4A017]/30 text-[#D4A017]'
+                          : 'bg-gray-50 dark:bg-[#222] border-gray-200 dark:border-[#444] text-gray-500 dark:text-gray-400 hover:border-[#D4A017]/50'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {category.name}
+                      {isSelected && <CheckCircle className="h-3 w-3 ml-0.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  disabled={savingFocusEdit || editGoals.length === 0}
+                  onClick={async () => {
+                    setSavingFocusEdit(true);
+                    try {
+                      const token = await user?.getIdToken();
+                      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                      if (token) headers['Authorization'] = `Bearer ${token}`;
+                      await fetch('/api/user', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ goals: editGoals }),
+                      });
+                      setUserGoals(editGoals);
+                      setEditingFocus(false);
+                    } catch (err) {
+                      console.error('Failed to save focus areas:', err);
+                    } finally {
+                      setSavingFocusEdit(false);
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-lg bg-[#D4A017] text-black text-xs font-bold font-mono uppercase tracking-wider hover:bg-[#C4901A] transition-colors disabled:opacity-50"
+                >
+                  {savingFocusEdit ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditingFocus(false)}
+                  className="text-xs font-mono text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {selectedUseCase && (
               <button
@@ -1036,19 +1132,24 @@ export default function DashboardPage() {
           <div className="space-y-1">
             {recentActivity.map((item, i) => {
               const Icon = getActivityIcon(item.type);
+              const href = getActivityLink(item.type);
               return (
-                <div
+                <Link
                   key={i}
-                  className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors"
+                  href={href}
+                  className="flex items-center gap-3 py-2.5 px-3 hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer rounded-lg transition-colors group"
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                  <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-[#2A2A2A] flex items-center justify-center shrink-0 group-hover:bg-[#D4A017]/10 transition-colors">
+                    <Icon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 group-hover:text-[#D4A017] transition-colors" />
+                  </div>
                   <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">
                     {item.label}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
                     {formatDate(item.date)}
                   </span>
-                </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600 group-hover:text-[#D4A017] transition-colors shrink-0" />
+                </Link>
               );
             })}
           </div>

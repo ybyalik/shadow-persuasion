@@ -37,7 +37,7 @@ const CoverPage = () => {
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <img src="/logo.png" alt="Shadow Persuasion" className="w-32 h-32 md:w-40 md:h-40 mx-auto" />
+        <img src="/logo.png" alt="Shadow Persuasion" className="w-64 md:w-80 mx-auto" />
       </motion.div>
 
       {/* Scan-line sweep animation */}
