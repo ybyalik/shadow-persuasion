@@ -7,15 +7,11 @@ import HowItWorks from './homepage-components/HowItWorks';
 import { SystemCapabilities } from './homepage-components/SystemCapabilities';
 import AppPreview from './homepage-components/AppPreview';
 import { SystemPreview } from './homepage-components/SystemPreview';
-import InfluenceDecoder from './homepage-components/InfluenceDecoder';
 import LiveAnalysisDemo from './homepage-components/LiveAnalysisDemo';
-import DossierAnalysis from './homepage-components/DossierAnalysis';
 import ConversationBreakdown from './homepage-components/ConversationBreakdown';
-import CaseFileBrowser from './homepage-components/CaseFileBrowser';
 import ScenarioSimulator from './homepage-components/ScenarioSimulator';
 import { OperationalModules } from './homepage-components/OperationalModules';
 import Evidence from './homepage-components/Evidence';
-import MeasuredImpact from './homepage-components/MeasuredImpact';
 import ProgressionPath from './homepage-components/ProgressionPath';
 import DarkPatternRolodex from './homepage-components/DarkPatternRolodex';
 import Statements from './homepage-components/Statements';
@@ -100,13 +96,6 @@ export default function HomePage() {
       {/* 21. Footer */}
       <Footer />
 
-      {/* ══ REDUNDANT SECTIONS (kept for reference) ══ */}
-      {false && <>
-        <DossierAnalysis />
-        <InfluenceDecoder />
-        <CaseFileBrowser />
-        <MeasuredImpact />
-      </>}
     </main>
   );
 }
