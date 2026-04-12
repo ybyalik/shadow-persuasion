@@ -53,10 +53,10 @@ const CoverPage = () => {
         transition={{ duration: 2.2, ease: 'easeInOut', delay: 0.3 }}
       />
 
-      {/* CLASSIFIED / DECLASSIFIED stamps */}
-      <div className="absolute top-28 right-4 md:top-8 md:right-8 z-10">
+      {/* CLASSIFIED / DECLASSIFIED stamps — hidden on small mobile */}
+      <div className="absolute top-8 right-8 z-10 hidden sm:block">
         <motion.p
-          className="text-red-700 text-xl md:text-3xl font-bold border-4 border-red-700 p-1 md:p-2 transform -rotate-12 origin-center scale-110"
+          className="text-red-700 text-3xl font-bold border-4 border-red-700 p-2 transform -rotate-12 origin-center scale-110"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 0.6 } : {}}
@@ -70,7 +70,7 @@ const CoverPage = () => {
           CLASSIFIED
         </motion.p>
         <motion.p
-          className="text-green-700 text-xl md:text-3xl font-bold border-4 border-green-700 p-1 md:p-2 transform rotate-12 origin-center absolute top-4 -left-2 md:-left-4 scale-110 md:scale-125"
+          className="text-green-700 text-3xl font-bold border-4 border-green-700 p-2 transform rotate-12 origin-center absolute top-4 -left-4 scale-125"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 0.7 } : {}}
@@ -88,7 +88,7 @@ const CoverPage = () => {
       <div className="z-0 max-w-5xl mx-auto">
         {/* Document number */}
         <motion.p
-          className="mt-8 md:mt-0 text-sm uppercase tracking-[0.3em] text-[#6B5B3E]"
+          className="text-sm uppercase tracking-[0.3em] text-[#6B5B3E]"
           initial={{ opacity: 0, y: -10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -127,7 +127,7 @@ const CoverPage = () => {
         </motion.p>
 
         {/* Category cards */}
-        <div className="mt-10 max-w-4xl mx-auto">
+        <div className="mt-10 max-w-4xl mx-auto px-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-base">
             {categories.map((cat, i) => (
               <motion.div
