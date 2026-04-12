@@ -1416,12 +1416,12 @@ export default function FieldOpsPage() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {(['all', 'week', 'month'] as TimeFilter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setTimeFilter(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                   timeFilter === f
                     ? 'bg-[#D4A017] text-[#0A0A0A]'
                     : 'bg-gray-50 dark:bg-[#222222] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#333333] hover:border-[#D4A017]'

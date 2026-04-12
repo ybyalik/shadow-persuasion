@@ -496,7 +496,7 @@ export default function TrainingScenarioPage() {
 
   // Practice mode
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] max-w-4xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 border-b border-gray-200 dark:border-[#333]">
         <div className="min-w-0">

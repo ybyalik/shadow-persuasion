@@ -288,7 +288,7 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
     const progressScore = Math.min(100, Math.round((messages.filter(m => m.role === 'user').length / 8) * 100));
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] gap-4 lg:gap-6">
+        <div className="flex h-[calc(100vh-4rem)] gap-4 lg:gap-6">
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
