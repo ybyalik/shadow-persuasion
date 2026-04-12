@@ -288,11 +288,11 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
     const progressScore = Math.min(100, Math.round((messages.filter(m => m.role === 'user').length / 8) * 100));
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] gap-6">
+        <div className="flex h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] gap-4 lg:gap-6">
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 mb-4 flex items-center gap-4">
+                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 sm:p-4 mb-4 flex flex-wrap items-center gap-3 sm:gap-4">
                     <button
                         onClick={onBack}
                         className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors"

@@ -342,10 +342,10 @@ function NewReportForm({
   const labelCls = 'block text-sm font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 overflow-y-auto bg-black/40 dark:bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-8 pb-4 sm:pb-8 overflow-y-auto bg-black/40 dark:bg-black/70 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl p-6 space-y-5 mx-4"
+        className="w-full max-w-2xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-xl p-4 sm:p-6 space-y-5 mx-2 sm:mx-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold font-mono uppercase tracking-wider text-[#D4A017]">
@@ -673,18 +673,18 @@ function WeeklyReviewSection({ reports, getHeaders }: { reports: JournalReport[]
 
       {expanded && (
         <div className="border-t border-gray-200 dark:border-[#333333] p-4 space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekReports.length}</p>
-              <p className="text-xs font-mono text-gray-500 uppercase">Reports</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{weekReports.length}</p>
+              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Reports</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{uniqueTechniques.length}</p>
-              <p className="text-xs font-mono text-gray-500 uppercase">Techniques</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{uniqueTechniques.length}</p>
+              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Techniques</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgOutcome}</p>
-              <p className="text-xs font-mono text-gray-500 uppercase">Avg Outcome</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{avgOutcome}</p>
+              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Avg Outcome</p>
             </div>
           </div>
 
@@ -1204,10 +1204,10 @@ export default function FieldOpsPage() {
             Daily missions, field reports, and tactical analysis -- all in one place.
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors min-h-[44px]"
           >
             <Plus className="h-5 w-5" />
             New Report
@@ -1265,9 +1265,9 @@ export default function FieldOpsPage() {
       {/* ── Section 1: Today's Mission ── */}
       <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl overflow-hidden">
         <div className="bg-gradient-to-r from-[#D4A017]/10 to-transparent p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 flex-wrap">
                 <span className="text-xs font-mono text-gray-500 uppercase">Today&apos;s Mission</span>
                 <span
                   className={`px-2 py-0.5 text-xs font-medium border rounded ${difficultyColors[todayMission.difficulty]}`}
@@ -1507,7 +1507,7 @@ export default function FieldOpsPage() {
               return (
                 <div
                   key={date}
-                  className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#333333] last:border-b-0"
+                  className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-gray-200 dark:border-[#333333] last:border-b-0 gap-2"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {completion ? (

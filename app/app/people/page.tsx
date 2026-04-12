@@ -452,7 +452,7 @@ function AddProfileModal({
 
   return (
     <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-md">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
           <h2 className="text-xl font-mono uppercase text-[#D4A017]">New Profile</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-[#333333] rounded transition-colors">

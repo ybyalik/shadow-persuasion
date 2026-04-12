@@ -496,14 +496,14 @@ export default function TrainingScenarioPage() {
 
   // Practice mode
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] max-w-4xl mx-auto">
       {/* Header bar */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#333]">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 border-b border-gray-200 dark:border-[#333]">
+        <div className="min-w-0">
           <span className="font-mono text-sm text-[#D4A017] uppercase">{scenario.category}</span>
-          <h1 className="text-xl font-bold tracking-wider">{scenario.title}</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-wider truncate">{scenario.title}</h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 flex-wrap shrink-0">
           <button
             onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); setScoreSaved(false); }}
             className="px-4 py-2 text-sm font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
@@ -538,7 +538,7 @@ export default function TrainingScenarioPage() {
         {messages.map((msg) => (
           <div key={msg.id}>
             <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-2xl rounded-lg ${
+              <div className={`max-w-[85%] sm:max-w-2xl rounded-lg ${
                 msg.role === 'user'
                   ? 'p-4 bg-[#D4A017] text-[#0A0A0A]'
                   : 'bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'

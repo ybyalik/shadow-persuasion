@@ -263,7 +263,8 @@ export default function ScorePage() {
 
       {/* ── Central Score Display ── */}
       <section className="flex flex-col items-center py-8">
-        <ScoreRing score={score} />
+        <div className="hidden sm:block"><ScoreRing score={score} /></div>
+        <div className="sm:hidden"><ScoreRing score={score} size={180} /></div>
         <div className="mt-4 text-center">
           <p
             className="text-lg font-bold font-mono uppercase tracking-widest transition-colors duration-700"

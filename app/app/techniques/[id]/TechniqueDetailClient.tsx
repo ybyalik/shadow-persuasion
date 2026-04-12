@@ -388,7 +388,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
             <p className="text-gray-500 dark:text-gray-400">Choose a context for your role-play simulation</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {taxonomyCategories.map((cat) => {
               const Icon = getCategoryIcon(cat.id);
               return (
@@ -466,7 +466,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
             <div key={i}>
               {/* Message bubble */}
               <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-lg text-sm whitespace-pre-line ${
+                <div className={`max-w-[90%] sm:max-w-[80%] p-3 rounded-lg text-sm whitespace-pre-line ${
                   msg.role === 'user'
                     ? 'bg-[#D4A017]/20 text-gray-900 dark:text-white border border-[#D4A017]/30 rounded-br-none'
                     : 'bg-gray-100 dark:bg-[#222222] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-[#333333] rounded-bl-none'
@@ -624,20 +624,20 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
           Back to Techniques
         </button>
 
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
           <p className="font-mono text-sm text-[#D4A017] uppercase">{formatLabel(technique.category)}</p>
-          <span className="text-gray-500">-</span>
+          <span className="text-gray-500 hidden sm:inline">-</span>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Difficulty: {formatLabel(String(technique.difficulty))}
           </p>
           {technique.riskLevel && technique.riskLevel !== 'unknown' && (
             <>
-              <span className="text-gray-500">-</span>
+              <span className="text-gray-500 hidden sm:inline">-</span>
               <p className="text-sm text-gray-500 dark:text-gray-400">Risk: {formatLabel(technique.riskLevel)}</p>
             </>
           )}
         </div>
-        <h1 className="text-3xl font-bold tracking-wider">{technique.name}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-wider">{technique.name}</h1>
 
         {/* Book source badges */}
         {technique.books.length > 0 && (
@@ -656,7 +656,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
       <div className="flex space-x-2">
         <button
           onClick={() => setMode('learn')}
-          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
             mode === 'learn'
               ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
               : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
@@ -667,7 +667,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
         </button>
         <button
           onClick={() => startPractice()}
-          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
             mode === 'practice'
               ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
               : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
@@ -678,7 +678,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
         </button>
         <button
           onClick={() => setMode('examples')}
-          className={`flex-1 py-2.5 px-5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
             mode === 'examples'
               ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
               : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
@@ -977,7 +977,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
                         return (
                           <div key={lineIdx}>
                             <div className={`flex ${isYou ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[75%] space-y-1`}>
+                              <div className={`max-w-[88%] sm:max-w-[75%] space-y-1`}>
                                 <p className={`text-[10px] font-mono uppercase ${isYou ? 'text-right text-[#D4A017]' : 'text-left text-gray-400'}`}>
                                   {line.speaker}
                                 </p>

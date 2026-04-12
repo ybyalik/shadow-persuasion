@@ -555,28 +555,29 @@ export default function ChatListPage() {
   // Main Chat List
   return (
     <div className="space-y-8">
-       <header className="flex items-center justify-between">
+       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
               Strategic Communication Sessions
           </h1>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
               onClick={() => setShowGoalSelector(true)}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#E8B030] transition-colors"
+              className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#E8B030] transition-colors text-sm sm:text-base"
             >
               <PlusCircle className="h-5 w-5" />
-              <span>New Strategic Session</span>
+              <span className="hidden sm:inline">New Strategic Session</span>
+              <span className="sm:hidden">New Session</span>
             </button>
             <button
               onClick={handleEnterQuickfire}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-500 transition-colors"
+              className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-500 transition-colors text-sm sm:text-base"
             >
               <Zap className="h-5 w-5" />
-              <span>Quick-Fire Mode</span>
+              <span>Quick-Fire</span>
             </button>
             <button
               onClick={handleNewGeneralChat}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
+              className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors text-sm sm:text-base"
             >
               <span>New Chat</span>
             </button>

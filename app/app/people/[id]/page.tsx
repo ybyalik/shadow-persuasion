@@ -515,13 +515,13 @@ export default function ProfileDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-[#333333]">
-        <div className="flex gap-0">
+      <div className="border-b border-gray-200 dark:border-[#333333] overflow-x-auto">
+        <div className="flex gap-0 min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
                 activeTab === tab.id
                   ? 'border-[#D4A017] text-[#D4A017]'
                   : 'border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-300'
@@ -1284,7 +1284,7 @@ function PlaybookTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           {playbook?.generatedAt && (
             <p className="text-xs text-gray-500 font-mono">
@@ -1300,7 +1300,7 @@ function PlaybookTab({
         <button
           onClick={onGenerate}
           disabled={isGenerating || !hasData}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] shrink-0"
         >
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1358,9 +1358,9 @@ function PlaybookTab({
               <div className="space-y-3">
                 {playbook.effectiveTactics!.map((t, i) => (
                   <div key={i} className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-4 rounded space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <span className="font-semibold text-gray-900 dark:text-white">{t.tactic}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <div className="w-20 bg-gray-200 dark:bg-[#333333] rounded-full h-2">
                           <div
                             className="bg-[#D4A017] h-2 rounded-full transition-all"

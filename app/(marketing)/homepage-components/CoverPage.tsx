@@ -88,7 +88,7 @@ const CoverPage = () => {
       <div className="z-0 max-w-5xl mx-auto">
         {/* Document number */}
         <motion.p
-          className="text-sm uppercase tracking-[0.3em] text-[#6B5B3E]"
+          className="text-xs sm:text-sm uppercase tracking-[0.15em] sm:tracking-[0.3em] text-[#6B5B3E]"
           initial={{ opacity: 0, y: -10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -99,7 +99,7 @@ const CoverPage = () => {
         {/* Staggered title — PROJECT: on one line, SHADOW PERSUASION below */}
         <h1 className="text-center my-4">
           <motion.span
-            className="block text-3xl md:text-5xl font-bold tracking-widest text-[#1A1A1A]"
+            className="block text-2xl sm:text-3xl md:text-5xl font-bold tracking-widest text-[#1A1A1A]"
             initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
             animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
             transition={{ duration: 0.5, delay: 0.5 }}
@@ -107,7 +107,7 @@ const CoverPage = () => {
             PROJECT:
           </motion.span>
           <motion.span
-            className="block text-6xl md:text-8xl font-bold tracking-wider text-[#1A1A1A]"
+            className="block text-4xl sm:text-6xl md:text-8xl font-bold tracking-wider text-[#1A1A1A]"
             initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
             animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
             transition={{ duration: 0.5, delay: 0.8 }}
@@ -118,7 +118,7 @@ const CoverPage = () => {
 
         {/* Subtitle — black text */}
         <motion.p
-          className="text-xl md:text-2xl text-[#1A1A1A] max-w-3xl mx-auto"
+          className="text-lg sm:text-xl md:text-2xl text-[#1A1A1A] max-w-3xl mx-auto px-2"
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.8, delay: 1.1 }}

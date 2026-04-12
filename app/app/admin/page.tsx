@@ -676,7 +676,7 @@ export default function AdminPage() {
         {/* New Category Form */}
         {taxNewCat && (
           <div className="mb-4 p-4 bg-gray-50 dark:bg-[#222] rounded-lg border border-gray-200 dark:border-[#333] space-y-3">
-            <div className="grid grid-cols-[60px_1fr_1fr] gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-[60px_1fr_1fr] gap-2">
               <div>
                 <label className="block text-xs font-mono text-gray-500 uppercase mb-1">Emoji</label>
                 <input type="text" value={taxNewCatForm.emoji} onChange={e => setTaxNewCatForm(p => ({ ...p, emoji: e.target.value }))}
@@ -714,13 +714,13 @@ export default function AdminPage() {
               {/* Category Header */}
               <div className="p-3 flex items-center justify-between">
                 {taxEditingCat === cat.id ? (
-                  <div className="flex-1 flex items-center gap-2">
+                  <div className="flex-1 flex flex-wrap items-center gap-2">
                     <input type="text" value={taxEditCat.emoji} onChange={e => setTaxEditCat(p => ({ ...p, emoji: e.target.value }))}
                       className="w-12 p-1.5 bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] rounded text-sm text-center text-gray-800 dark:text-[#E8E8E0] focus:outline-none focus:border-[#D4A017]" />
                     <input type="text" value={taxEditCat.name} onChange={e => setTaxEditCat(p => ({ ...p, name: e.target.value }))}
-                      className="flex-1 p-1.5 bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] rounded text-sm text-gray-800 dark:text-[#E8E8E0] focus:outline-none focus:border-[#D4A017]" />
+                      className="flex-1 min-w-[100px] p-1.5 bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] rounded text-sm text-gray-800 dark:text-[#E8E8E0] focus:outline-none focus:border-[#D4A017]" />
                     <input type="text" value={taxEditCat.description} onChange={e => setTaxEditCat(p => ({ ...p, description: e.target.value }))}
-                      className="flex-1 p-1.5 bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] rounded text-sm text-gray-800 dark:text-[#E8E8E0] focus:outline-none focus:border-[#D4A017]" />
+                      className="flex-1 min-w-[100px] p-1.5 bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] rounded text-sm text-gray-800 dark:text-[#E8E8E0] focus:outline-none focus:border-[#D4A017]" />
                     <button onClick={() => handleSaveCatEdit(cat.id)} disabled={taxSaving}
                       className="p-1.5 text-green-400 hover:text-green-300"><Check className="h-4 w-4" /></button>
                     <button onClick={() => setTaxEditingCat(null)}
@@ -824,8 +824,8 @@ export default function AdminPage() {
       {/* Chunk Browser */}
       {viewingBook && (
         <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider truncate min-w-0">
               Chunks: {viewingBook} ({chunkTotal} total)
             </h2>
             <button onClick={() => { setViewingBook(null); setChunks([]); }}

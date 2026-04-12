@@ -221,7 +221,7 @@ export default function TrainingArenaPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
             Training Arena
@@ -231,7 +231,7 @@ export default function TrainingArenaPage() {
         {isAdmin && (
           <button
             onClick={openModal}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-mono uppercase bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B030] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-mono uppercase bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B030] transition-colors min-h-[44px]"
           >
             <Plus className="h-4 w-4" />
             Generate New Scenarios
@@ -307,7 +307,7 @@ export default function TrainingArenaPage() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
 
           {/* Modal */}
-          <div className="relative bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#333333] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#333333] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={closeModal}
