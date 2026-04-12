@@ -25,7 +25,7 @@ const specialElite = Special_Elite({ subsets: ['latin'], weight: '400' });
 
 export default function HomePage() {
   return (
-    <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A]`}>
+    <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A] overflow-x-hidden`}>
       {/* 1. CoverPage */}
       <CoverPage />
 
@@ -91,7 +91,9 @@ export default function HomePage() {
       </div>
 
       {/* 20. AccessRequest */}
-      <AccessRequest />
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+        <AccessRequest />
+      </div>
 
       {/* 21. Footer */}
       <Footer />

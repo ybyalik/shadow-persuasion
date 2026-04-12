@@ -28,7 +28,7 @@ const CoverPage = () => {
   return (
     <div
       ref={ref}
-      className="relative min-h-screen flex flex-col items-center justify-center text-center p-8 overflow-hidden"
+      className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 md:px-12 py-8 overflow-hidden"
     >
       {/* Logo — above title, centered */}
       <motion.div
@@ -37,7 +37,7 @@ const CoverPage = () => {
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <img src="/logo.png" alt="Shadow Persuasion" className="w-64 md:w-80 mx-auto" />
+        <img src="/logo.png" alt="Shadow Persuasion" className="w-48 md:w-80 mx-auto" />
       </motion.div>
 
       {/* Scan-line sweep animation */}
@@ -54,9 +54,9 @@ const CoverPage = () => {
       />
 
       {/* CLASSIFIED / DECLASSIFIED stamps */}
-      <div className="absolute top-8 right-8 z-10">
+      <div className="absolute top-20 right-4 md:top-8 md:right-8 z-10">
         <motion.p
-          className="text-red-700 text-3xl font-bold border-4 border-red-700 p-2 transform -rotate-12 origin-center scale-110"
+          className="text-red-700 text-xl md:text-3xl font-bold border-4 border-red-700 p-1 md:p-2 transform -rotate-12 origin-center scale-110"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 0.6 } : {}}
@@ -70,7 +70,7 @@ const CoverPage = () => {
           CLASSIFIED
         </motion.p>
         <motion.p
-          className="text-green-700 text-3xl font-bold border-4 border-green-700 p-2 transform rotate-12 origin-center absolute top-4 -left-4 scale-125"
+          className="text-green-700 text-xl md:text-3xl font-bold border-4 border-green-700 p-1 md:p-2 transform rotate-12 origin-center absolute top-4 -left-2 md:-left-4 scale-110 md:scale-125"
           style={{ fontFamily: 'monospace' }}
           initial={{ scale: 1.4, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 0.7 } : {}}

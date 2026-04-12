@@ -23,7 +23,7 @@ const ScenarioSimulator = () => {
   return (
     <section
       ref={ref}
-      className="relative -mx-6 md:-mx-12 px-6 md:px-12 py-20 bg-[#1A1A1A] text-[#E8E8E0]"
+      className="relative px-6 md:px-12 py-20 bg-[#1A1A1A] text-[#E8E8E0]"
     >
       <div className="max-w-7xl mx-auto">
         <div className="text-left mb-12">

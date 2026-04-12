@@ -14,7 +14,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section ref={ref} className="py-16 px-6 lg:px-12">
+    <section ref={ref} className="py-16 px-6 md:px-12">
       <div className="max-w-5xl mx-auto">
         <motion.h2
           className="text-3xl lg:text-4xl font-bold text-center mb-4 text-[#1A1A1A]"

@@ -56,19 +56,6 @@ const Footer = () => {
           />
         </div>
 
-        {/* Social links */}
-        <div className="flex items-center justify-center gap-6 mb-10">
-          {['X', 'IG', 'YT', 'TG'].map((platform) => (
-            <a
-              key={platform}
-              href="#"
-              className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-xs font-mono text-gray-500 hover:border-[#D4A017] hover:text-[#D4A017] transition-colors duration-200"
-            >
-              {platform}
-            </a>
-          ))}
-        </div>
-
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-28" />

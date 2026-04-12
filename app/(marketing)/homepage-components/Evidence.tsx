@@ -47,7 +47,7 @@ const Evidence = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
   return (
-    <section ref={ref} className="relative -mx-6 md:-mx-12 px-6 md:px-12 py-20 bg-[#1A1A1A] text-[#E8E8E0]">
+    <section ref={ref} className="relative px-6 md:px-12 py-20 bg-[#1A1A1A] text-[#E8E8E0]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold uppercase tracking-wider text-white">
@@ -74,7 +74,7 @@ const Evidence = () => {
                   animate={inView ? { opacity: 1, x: 0 } : {}}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                 >
-                  <td className="p-3 whitespace-nowrap">{row.metric}</td>
+                  <td className="p-3">{row.metric}</td>
                   <td className="p-3 text-center">{row.before}</td>
                   <td className="p-3 text-center">{row.after}</td>
                   <td className="p-3 font-bold text-center text-[#D4A017]">
