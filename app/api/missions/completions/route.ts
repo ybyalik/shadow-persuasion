@@ -71,19 +71,15 @@ function calculateStreak(completions: any[], tzOffsetMin = 0): { current: number
 export async function GET(req: NextRequest) {
   try {
     const userId = await getUserFromRequest(req);
-
-    let query = supabase
-      .from(TABLE)
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
+    if (!userId) {
+      return NextResponse.json({ completions: [], streak: { current: 0, longest: 0 } });
     }
 
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('[MISSION_COMPLETIONS]', 'Error fetching completions:', error);
