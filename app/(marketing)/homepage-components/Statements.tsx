@@ -35,9 +35,7 @@ const Statement = ({ codename, date, title, children, index, inView }: Statement
       {children}
     </div>
 
-    <div className="mt-6 pt-4 border-t border-gray-300">
-      <p className="text-sm text-gray-600">Signature: <span className="font-mono">_______________</span></p>
-    </div>
+    <div className="mt-4" />
 
     <div className="absolute bottom-4 right-4 text-red-700 text-sm font-bold border-2 border-red-700 p-1.5 transform -rotate-6 opacity-70 font-mono">
       VERIFIED MEMBER

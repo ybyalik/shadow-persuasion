@@ -69,18 +69,9 @@ const LiveAnalysisDemo = () => {
           <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-4 text-gray-300 text-sm italic">
             &ldquo;{SAMPLE_INPUT}&rdquo;
           </div>
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-mono text-xs text-green-400/80 uppercase tracking-wider">Analysis Engine</span>
-            </div>
-            <button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="bg-[#D4A017] hover:bg-[#E8B830] text-[#0A0A0A] font-mono uppercase px-5 py-2 text-sm tracking-wider font-bold rounded disabled:opacity-50 transition-colors"
-            >
-              {isAnalyzing ? 'Analyzing...' : 'Re-Run Analysis'}
-            </button>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="font-mono text-xs text-green-400/80 uppercase tracking-wider">Analysis Engine</span>
           </div>
         </motion.div>
 

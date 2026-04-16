@@ -223,11 +223,7 @@ const ConversationBreakdown = () => {
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <div className="flex justify-between items-center text-xs font-mono text-gray-600">
-            <span>CLASSIFICATION: SAMPLE ANALYSES</span>
-            <span>FILE: CONV_BREAKDOWN_C1.DOC</span>
-            <span>PAGE 1 OF 247</span>
-          </div>
+          <div className="h-4" />
         </motion.div>
       </div>
     </section>

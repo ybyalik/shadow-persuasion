@@ -28,7 +28,7 @@ const stats = [
   {
     icon: Brain,
     value: '10',
-    label: 'AI-Powered Training Modules',
+    label: 'Training Modules',
   },
   {
     icon: Layers,
@@ -71,7 +71,7 @@ const ExecutiveSummary = () => {
     <section ref={sectionRef}>
       {/* Header bar */}
       <div className="border-b-2 border-t-2 border-[#5C3A1E] py-1 mb-12 text-sm text-center text-[#6B5B3E] tracking-wide">
-        <p>PAGE 1 of 12 | CLASSIFICATION: PUBLIC ACCESS | DATE: MARCH 2026</p>
+        <p>CLASSIFICATION: PUBLIC ACCESS | DATE: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</p>
       </div>
 
       <div className="relative">
