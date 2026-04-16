@@ -18,7 +18,7 @@ const AccessRequest = () => {
       <div className="max-w-md mx-auto">
         <ul className="space-y-3 text-lg mb-8">
           <CheckListItem>AI Strategic Coach &amp; Conversation Analyzer</CheckListItem>
-          <CheckListItem>50+ Influence Techniques with Practice Mode</CheckListItem>
+          <CheckListItem>700+ Influence Techniques with Practice Mode</CheckListItem>
           <CheckListItem>Training Arena, Field Ops &amp; Daily Missions</CheckListItem>
           <CheckListItem>Message Optimizer &amp; Quick-Fire Mode</CheckListItem>
           <CheckListItem>People Profiles, Persuasion Score &amp; Voice Profile</CheckListItem>

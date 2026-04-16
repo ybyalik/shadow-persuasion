@@ -144,7 +144,7 @@ const DarkPatternRolodex = () => {
             transition={{ duration: 0.5, delay: 0.8 }}
         >
             <p className="font-mono text-sm text-gray-500 uppercase tracking-wider">
-                [50+ Techniques Available Inside the Full Library]
+                [700+ Techniques Available Inside the Full Library]
             </p>
         </motion.div>
     </section>

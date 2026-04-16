@@ -19,7 +19,7 @@ const capabilities = [
   {
     icon: '[◆]',
     title: 'Influence Technique Library',
-    description: '50+ proven persuasion frameworks from behavioral science. Each one comes with practice scenarios, annotated examples, and AI coaching to help you deploy them naturally.',
+    description: '700+ proven persuasion frameworks from behavioral science. Each one comes with practice scenarios, annotated examples, and AI coaching to help you deploy them naturally.',
     classified: false,
   },
 ];
@@ -85,42 +85,37 @@ export const SystemCapabilities = () => {
         </div>
         
         {/* Use Cases Section */}
-        <div className="mt-12 bg-[#F4ECD8] border-2 border-[#999] p-6">
-          <h3 className="text-2xl font-bold text-black mb-6 text-center">PRACTICAL APPLICATIONS</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="bg-blue-100 border-2 border-blue-600 p-4 mb-2">
-                <h4 className="font-bold text-blue-800">CAREER SUCCESS</h4>
+        <div className="mt-12">
+          <h3 className="text-2xl font-bold text-black mb-2 text-center">PRACTICAL APPLICATIONS</h3>
+          <p className="text-center text-gray-600 text-sm mb-8 font-mono uppercase tracking-wider">121 use cases across 12 categories</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[
+              { emoji: '💼', name: 'Career & Work', uses: ['Get a raise', 'Land a promotion', 'Win workplace conflict', 'Survive office politics'] },
+              { emoji: '👔', name: 'Leadership', uses: ['Get team buy-in', 'Handle underperformers', 'Earn respect as new leader', 'Drive change adoption'] },
+              { emoji: '💰', name: 'Business & Sales', uses: ['Close hesitant deals', 'Stop client ghosting', 'Charge higher prices', 'Win negotiations'] },
+              { emoji: '💵', name: 'Personal Finance', uses: ['Negotiate big purchases', 'Get refunds when policy says no', 'Exit contracts cleanly', 'Get exceptions made'] },
+              { emoji: '❤️', name: 'Dating & Attraction', uses: ['Build tension & chemistry', 'Get out of the friend zone', 'Read mixed signals', 'Make them commit'] },
+              { emoji: '👥', name: 'Relationships', uses: ['Set boundaries', 'Repair trust', 'Handle toxic people', 'Defuse conflicts'] },
+              { emoji: '👨‍👩‍👧', name: 'Parenting', uses: ['Get teens to listen', 'Co-parent with difficult ex', 'Enforce boundaries with respect', 'Have hard conversations'] },
+              { emoji: '🧍', name: 'Personal Power', uses: ['Stop people-pleasing', 'Build unshakeable confidence', 'Command a room', 'Overcome imposter syndrome'] },
+              { emoji: '🌋', name: 'High Stakes', uses: ['Win custody situations', 'Get second chances', 'Convince someone to get help', 'Handle public failure'] },
+              { emoji: '💬', name: 'Texting & Online', uses: ['Get more DM replies', 'Recover dead conversations', 'Close over text', 'Improve dating app results'] },
+              { emoji: '📣', name: 'Influence & Audience', uses: ['Build a trusted audience', 'Write content that converts', 'Make your brand stand out', 'Grow social following'] },
+              { emoji: '🛡️', name: 'Defend & Protect', uses: ['Spot manipulation', 'Detect liars', 'Shut down gaslighting', 'Recognize toxic people early'] },
+            ].map((cat) => (
+              <div key={cat.name} className="bg-[#F4ECD8] border border-[#999] p-4 hover:border-black hover:shadow-md transition-all duration-200">
+                <div className="text-2xl mb-2">{cat.emoji}</div>
+                <h4 className="font-bold text-black text-sm mb-2">{cat.name}</h4>
+                <ul className="text-xs text-gray-700 space-y-1">
+                  {cat.uses.map((u) => (
+                    <li key={u} className="flex items-start gap-1">
+                      <span className="text-green-700 mt-0.5 shrink-0">&#x2713;</span>
+                      <span>{u}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Salary negotiations</li>
-                <li>• Promotion requests</li>
-                <li>• Job interviews</li>
-                <li>• Leadership presence</li>
-              </ul>
-            </div>
-            <div className="text-center">
-              <div className="bg-green-100 border-2 border-green-600 p-4 mb-2">
-                <h4 className="font-bold text-green-800">RELATIONSHIPS</h4>
-              </div>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Dating conversations</li>
-                <li>• Marriage communication</li>
-                <li>• Family conflicts</li>
-                <li>• Social confidence</li>
-              </ul>
-            </div>
-            <div className="text-center">
-              <div className="bg-purple-100 border-2 border-purple-600 p-4 mb-2">
-                <h4 className="font-bold text-purple-800">BUSINESS GROWTH</h4>
-              </div>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Sales conversations</li>
-                <li>• Client negotiations</li>
-                <li>• Networking events</li>
-                <li>• Team leadership</li>
-              </ul>
-            </div>
+            ))}
           </div>
         </div>
     </section>

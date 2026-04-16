@@ -15,7 +15,7 @@ const leftFeatures = [
 const rightFeatures = [
     "AI Strategic Coach (24/7)",
     "Conversation Analysis Engine",
-    "50+ Influence Techniques with Practice Mode",
+    "700+ Influence Techniques with Practice Mode",
     "Message Optimizer",
     "People Profiles & Strategies",
     "Training Arena (AI Role-Play)",

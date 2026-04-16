@@ -22,7 +22,7 @@ const Highlight = ({ children }: { children: React.ReactNode }) => (
 const stats = [
   {
     icon: BookOpen,
-    value: '50+',
+    value: '700+',
     label: 'Influence Techniques You Can Practice & Deploy',
   },
   {

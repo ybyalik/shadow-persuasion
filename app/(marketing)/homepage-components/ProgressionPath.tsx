@@ -6,34 +6,46 @@ import { useInView } from 'react-intersection-observer';
 
 const levels = [
   {
-    name: 'BEGINNER',
-    description: 'Learn the fundamentals of strategic communication and influence awareness',
+    name: 'CIVILIAN',
+    description: 'Starting out. Building awareness of influence dynamics in everyday conversations.',
     classification: 'CLEARANCE: LEVEL 1',
     fileNum: 'PRS-001',
   },
   {
-    name: 'PRACTITIONER',
-    description: 'Core frameworks mastered. Consistent application in real conversations.',
+    name: 'OBSERVER',
+    description: 'Learning to read the room. Recognizing tactics, patterns, and power shifts in real time.',
     classification: 'CLEARANCE: LEVEL 2',
     fileNum: 'PRS-002',
   },
   {
-    name: 'STRATEGIST',
-    description: 'Advanced technique deployment. Real-time scenario handling.',
+    name: 'INITIATE',
+    description: 'Applying core frameworks. First successful deployments in real conversations.',
     classification: 'CLEARANCE: LEVEL 3',
     fileNum: 'PRS-003',
   },
   {
-    name: 'SPECIALIST',
-    description: 'Multi-technique stacking. Personalized influence strategies.',
+    name: 'OPERATIVE',
+    description: 'Consistent execution. Comfortable navigating negotiations, conflicts, and high-pressure moments.',
     classification: 'CLEARANCE: LEVEL 4',
     fileNum: 'PRS-004',
   },
   {
-    name: 'MASTER',
-    description: 'Full command of all frameworks. Teaching-level understanding.',
+    name: 'SPECIALIST',
+    description: 'Multi-technique stacking. Personalized influence strategies for any situation.',
     classification: 'CLEARANCE: LEVEL 5',
     fileNum: 'PRS-005',
+  },
+  {
+    name: 'HANDLER',
+    description: 'Elite-level mastery. Reading people instantly, controlling frames effortlessly.',
+    classification: 'CLEARANCE: LEVEL 6',
+    fileNum: 'PRS-006',
+  },
+  {
+    name: 'SHADOW MASTER',
+    description: 'Full command of all frameworks. The most strategic communicator in any room.',
+    classification: 'CLEARANCE: MAX',
+    fileNum: 'PRS-007',
   },
 ];
 

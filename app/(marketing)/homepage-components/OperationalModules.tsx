@@ -50,7 +50,7 @@ const modules = [
     {
         id: 'MODULE-008',
         title: 'Technique Library',
-        description: '50+ influence techniques with summaries, practice scenarios, annotated examples, and technique stacking for multi-step strategies.',
+        description: '700+ influence techniques with summaries, practice scenarios, annotated examples, and technique stacking for multi-step strategies.',
         classification: 'ACTIVE',
     },
     {
