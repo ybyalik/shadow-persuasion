@@ -393,6 +393,7 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
   const [showSaved, setShowSaved] = useState(false);
   const [saveLabel, setSaveLabel] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [savingStack, setSavingStack] = useState(false);
   const [currentGoal, setCurrentGoal] = useState('');
   const [requiredTechniques, setRequiredTechniques] = useState<string[]>([]);
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
@@ -463,6 +464,8 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
   };
 
   const handleSave = async (stack: Stack) => {
+    if (savingStack) return;
+    setSavingStack(true);
     const label = saveLabel.trim() || stack.name;
     const newSaved: SavedStack = {
       id: Date.now().toString(),
@@ -483,6 +486,8 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
       });
     } catch (e) {
       console.error('Failed to save stack:', e);
+    } finally {
+      setSavingStack(false);
     }
   };
 

@@ -334,7 +334,7 @@ export default function DashboardPage() {
 
         const [progressRes, completionsRes, conversationsRes, poolRes] = await Promise.all([
           fetch('/api/user/progress', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/missions/completions', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`/api/missions/completions?tz=${new Date().getTimezoneOffset()}`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/conversations', { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
           fetch(poolUrl).then(r => r.ok ? r.json() : null).catch(() => null),
         ]);

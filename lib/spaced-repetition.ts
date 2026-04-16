@@ -218,8 +218,8 @@ export function startTracking(techniqueId: string, techniqueRef?: TechniqueRef):
     interval: 1,
     repetitions: 0,
     nextReviewDate: todayStr(),
-    lastReviewDate: todayStr(),
-    status: 'learning',
+    lastReviewDate: null,
+    status: 'not-started',
   };
 
   data[techniqueId] = card;

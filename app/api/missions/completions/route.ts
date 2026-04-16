@@ -9,23 +9,29 @@ const supabase = createClient(
 
 const TABLE = 'mission_completions';
 
-function calculateStreak(completions: any[]): { current: number; longest: number } {
+function toLocalDateStr(date: Date, tzOffsetMin: number): string {
+  const local = new Date(date.getTime() - tzOffsetMin * 60000);
+  return local.toISOString().split('T')[0];
+}
+
+function calculateStreak(completions: any[], tzOffsetMin = 0): { current: number; longest: number } {
   if (completions.length === 0) return { current: 0, longest: 0 };
 
-  // Get unique dates (YYYY-MM-DD), sorted descending
+  // Get unique dates (YYYY-MM-DD) in user's local timezone, sorted descending
   const dates = Array.from(
     new Set(
       completions.map((c) => {
         const d = new Date(c.completed_at || c.created_at);
-        return d.toISOString().split('T')[0];
+        return toLocalDateStr(d, tzOffsetMin);
       })
     )
   ).sort((a, b) => b.localeCompare(a));
 
   if (dates.length === 0) return { current: 0, longest: 0 };
 
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const now = new Date();
+  const today = toLocalDateStr(now, tzOffsetMin);
+  const yesterday = toLocalDateStr(new Date(now.getTime() - 86400000), tzOffsetMin);
 
   // Current streak: must include today or yesterday
   let current = 0;
@@ -85,7 +91,9 @@ export async function GET(req: NextRequest) {
     }
 
     const completions = data || [];
-    const streak = calculateStreak(completions);
+    const tzParam = req.nextUrl.searchParams.get('tz');
+    const tzOffsetMin = tzParam ? parseInt(tzParam, 10) || 0 : 0;
+    const streak = calculateStreak(completions, tzOffsetMin);
 
     return NextResponse.json({ completions, streak });
   } catch (error) {

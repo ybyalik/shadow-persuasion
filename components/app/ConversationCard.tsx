@@ -38,7 +38,10 @@ export function ConversationCard({ conversation, onUpdate, onDelete }: Conversat
     const [isExpanded, setIsExpanded] = useState(false);
 
     const getDaysAgo = (dateString: string) => {
-        const days = Math.floor((Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24));
+        if (!dateString) return 'Unknown';
+        const time = new Date(dateString).getTime();
+        if (isNaN(time)) return 'Unknown';
+        const days = Math.floor((Date.now() - time) / (1000 * 60 * 60 * 24));
         if (days === 0) return 'Today';
         if (days === 1) return '1 day ago';
         return `${days} days ago`;

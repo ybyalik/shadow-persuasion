@@ -24,16 +24,17 @@ export async function POST(req: NextRequest) {
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === 'user');
 
     // Search knowledge base with scenario context + user message
+    const techniquesStr = Array.isArray(scenario.techniques) ? scenario.techniques.join(' ') : '';
     const searchQuery = lastUserMessage
-      ? `${lastUserMessage.content} ${scenario.description} ${scenario.objective} ${scenario.techniques.join(' ')}`
-      : `${scenario.objective} ${scenario.description} ${scenario.techniques.join(' ')}`;
+      ? `${lastUserMessage.content} ${scenario.description} ${scenario.objective} ${techniquesStr}`
+      : `${scenario.objective} ${scenario.description} ${techniquesStr}`;
     const ragContext = await searchKnowledge(searchQuery);
     const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
 
     const scenarioPrompt = `You are role-playing a SCENARIO SIMULATION. The scenario is: "${scenario.title}".
 Description: ${scenario.description}
 Objective for the user: ${scenario.objective}
-Key techniques they should practice: ${scenario.techniques.join(', ')}
+Key techniques they should practice: ${Array.isArray(scenario.techniques) ? scenario.techniques.join(', ') : 'general influence techniques'}
 
 YOUR ROLE: Play the OTHER person in this scenario (e.g., the boss, the client, the date, the manipulator). Stay in character and respond realistically. Make it challenging but winnable.
 

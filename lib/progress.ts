@@ -131,7 +131,7 @@ export function getProgress(): ProgressData {
       techniqueName: getTechniqueName(id),
       category: getTechniqueCategory(id),
       timesUsed: data.uses,
-      avgSuccess: Math.round(data.successSum / data.uses),
+      avgSuccess: data.uses > 0 ? Math.round(data.successSum / data.uses) : 0,
       lastUsed: data.lastUsed,
     });
   }

@@ -75,10 +75,12 @@ export async function POST(req: NextRequest) {
     // Save user message
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user');
     if (activeSessionId && lastUserMsg) {
-      supabase
-        .from('chat_messages')
-        .insert({ session_id: activeSessionId, role: 'user', content: lastUserMsg.content })
-        .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save user msg error:', error); });
+      Promise.resolve(
+        supabase
+          .from('chat_messages')
+          .insert({ session_id: activeSessionId, role: 'user', content: lastUserMsg.content })
+          .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save user msg error:', error); })
+      ).catch((e: unknown) => console.error('[STRATEGIC_CHAT]', 'Save user msg exception:', e));
     }
 
     // Get the latest user message for knowledge search
@@ -154,21 +156,25 @@ Tailor all advice and tactics specifically to support this objective. Consider t
           if (plainContent) {
             // Strip guidance metadata for clean storage
             const cleanContent = plainContent.replace(/<!--GUIDANCE:[\s\S]*?-->/, '').trim();
-            supabase
-              .from('chat_messages')
-              .insert({
-                session_id: activeSessionId,
-                role: 'assistant',
-                content: cleanContent,
-                metadata: {},
-              })
-              .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save assistant msg error:', error); });
+            Promise.resolve(
+              supabase
+                .from('chat_messages')
+                .insert({
+                  session_id: activeSessionId,
+                  role: 'assistant',
+                  content: cleanContent,
+                  metadata: {},
+                })
+                .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Save assistant msg error:', error); })
+            ).catch((e: unknown) => console.error('[STRATEGIC_CHAT]', 'Save assistant msg exception:', e));
 
-            supabase
-              .from('chat_sessions')
-              .update({ updated_at: new Date().toISOString() })
-              .eq('id', activeSessionId)
-              .then(() => {});
+            Promise.resolve(
+              supabase
+                .from('chat_sessions')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', activeSessionId)
+                .then(({ error }) => { if (error) console.error('[STRATEGIC_CHAT]', 'Update session error:', error); })
+            ).catch((e: unknown) => console.error('[STRATEGIC_CHAT]', 'Update session exception:', e));
           }
         }
       },

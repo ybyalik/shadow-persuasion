@@ -881,7 +881,7 @@ export default function AnalyzePage() {
 
           <button
             onClick={handleAnalyze}
-            disabled={mode === 'text' ? !text.trim() : imageFiles.length === 0}
+            disabled={isLoading || (mode === 'text' ? !text.trim() : imageFiles.length === 0)}
             className="w-full py-3 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#E8B830] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             Analyze Conversation

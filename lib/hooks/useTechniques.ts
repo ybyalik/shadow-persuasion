@@ -40,10 +40,12 @@ export function useTechniques() {
       .then((data) => {
         cachedTechniques = data;
         setTechniques(data);
+        setError(null);
       })
       .catch((err) => {
         console.error('Failed to fetch techniques:', err);
         setError('Failed to load techniques');
+        cachedTechniques = null;
       })
       .finally(() => {
         setLoading(false);

@@ -51,7 +51,10 @@ export function RecommendationPanel() {
     try {
       const weakAreas = getWeakAreas();
       const recentRaw = localStorage.getItem('shadow-missions-data');
-      const missions = recentRaw ? JSON.parse(recentRaw) : { completed: [] };
+      let missions = { completed: [] as any[] };
+      if (recentRaw) {
+        try { missions = JSON.parse(recentRaw); } catch { /* corrupted localStorage, use default */ }
+      }
       const recentTechniques = (missions.completed || [])
         .slice(-5)
         .map((m: any) => m.techniqueId)

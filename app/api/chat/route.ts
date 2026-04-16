@@ -119,10 +119,12 @@ export async function POST(req: NextRequest) {
 
     // Save user message
     if (activeSessionId && lastUserMessage) {
-      supabase
-        .from('chat_messages')
-        .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content })
-        .then(({ error }) => { if (error) console.error('[CHAT]', 'Save user msg error:', error); });
+      Promise.resolve(
+        supabase
+          .from('chat_messages')
+          .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content })
+          .then(({ error }) => { if (error) console.error('[CHAT]', 'Save user msg error:', error); })
+      ).catch((e: unknown) => console.error('[CHAT]', 'Save user msg exception:', e));
     }
 
     let fullAssistantContent = '';
@@ -165,21 +167,25 @@ export async function POST(req: NextRequest) {
           // Save assistant message to DB
           if (activeSessionId && fullAssistantContent) {
             const cleanContent = fullAssistantContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
-            supabase
-              .from('chat_messages')
-              .insert({
-                session_id: activeSessionId,
-                role: 'assistant',
-                content: cleanContent,
-                metadata: ragResult.sources.length > 0 ? { sources: ragResult.sources } : {},
-              })
-              .then(({ error }) => { if (error) console.error('[CHAT]', 'Save assistant msg error:', error); });
+            Promise.resolve(
+              supabase
+                .from('chat_messages')
+                .insert({
+                  session_id: activeSessionId,
+                  role: 'assistant',
+                  content: cleanContent,
+                  metadata: ragResult.sources.length > 0 ? { sources: ragResult.sources } : {},
+                })
+                .then(({ error }) => { if (error) console.error('[CHAT]', 'Save assistant msg error:', error); })
+            ).catch((e: unknown) => console.error('[CHAT]', 'Save assistant msg exception:', e));
 
-            supabase
-              .from('chat_sessions')
-              .update({ updated_at: new Date().toISOString() })
-              .eq('id', activeSessionId)
-              .then(() => {});
+            Promise.resolve(
+              supabase
+                .from('chat_sessions')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', activeSessionId)
+                .then(({ error }) => { if (error) console.error('[CHAT]', 'Update session error:', error); })
+            ).catch((e: unknown) => console.error('[CHAT]', 'Update session exception:', e));
           }
         }
       },

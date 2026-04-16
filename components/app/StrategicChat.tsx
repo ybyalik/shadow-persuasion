@@ -129,7 +129,7 @@ export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }
             if (traitTags) profileContext += ` Key traits: ${traitTags}.`;
             if (analysis) {
                 if (analysis.threat_score != null) profileContext += ` Threat score: ${analysis.threat_score}/10.`;
-                if (analysis.power_dynamics) profileContext += ` Power dynamics: You ${analysis.power_dynamics.yourPower}/10, Them ${analysis.power_dynamics.theirPower}/10.`;
+                if (analysis.power_dynamics) profileContext += ` Power dynamics: You ${analysis.power_dynamics.yourPower ?? '?'}/10, Them ${analysis.power_dynamics.theirPower ?? '?'}/10.`;
                 if (analysis.techniques_identified?.length) profileContext += ` Known techniques they use: ${analysis.techniques_identified.join(', ')}.`;
             }
             if (selectedPerson.notes) profileContext += ` Notes: ${selectedPerson.notes}`;

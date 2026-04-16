@@ -131,6 +131,7 @@ export default function TrainingArenaPage() {
   };
 
   const handleGenerate = async () => {
+    if (modalStep !== 'config') return;
     setModalStep('loading');
     try {
       const res = await fetch('/api/scenarios/generate', {

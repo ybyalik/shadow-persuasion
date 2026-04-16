@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
 
     if (userId) {
       query = query.eq('user_id', userId);
+    } else {
+      // No authenticated user — only return sessions with no user_id
+      query = query.is('user_id', null);
     }
 
     if (type) {
@@ -39,25 +42,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
-    // Fetch last message for each session
-    const sessionsWithPreview = await Promise.all(
-      (sessions || []).map(async (session) => {
-        const { data: lastMsg } = await supabase
-          .from('chat_messages')
-          .select('content, role, created_at')
-          .eq('session_id', session.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+    // Fetch last message for all sessions in a single query
+    const sessionIds = (sessions || []).map((s) => s.id);
+    let lastMessages: Record<string, { content: string; role: string; created_at: string }> = {};
 
-        return {
-          ...session,
-          lastMessage: lastMsg?.content?.slice(0, 150) || null,
-          lastMessageRole: lastMsg?.role || null,
-          lastMessageAt: lastMsg?.created_at || null,
-        };
-      })
-    );
+    if (sessionIds.length > 0) {
+      const { data: allMessages } = await supabase
+        .from('chat_messages')
+        .select('session_id, content, role, created_at')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: false });
+
+      // Keep only the most recent message per session
+      for (const msg of allMessages || []) {
+        if (!lastMessages[msg.session_id]) {
+          lastMessages[msg.session_id] = msg;
+        }
+      }
+    }
+
+    const sessionsWithPreview = (sessions || []).map((session) => {
+      const lastMsg = lastMessages[session.id];
+      return {
+        ...session,
+        lastMessage: lastMsg?.content?.slice(0, 150) || null,
+        lastMessageRole: lastMsg?.role || null,
+        lastMessageAt: lastMsg?.created_at || null,
+      };
+    });
 
     return NextResponse.json({ sessions: sessionsWithPreview });
   } catch (error) {
@@ -101,6 +113,7 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete a chat session by id
 export async function DELETE(req: NextRequest) {
   try {
+    const userId = await getUserFromRequest(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -108,10 +121,16 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Session id is required' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    let query = supabase
       .from('chat_sessions')
       .delete()
       .eq('id', id);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { error } = await query;
 
     if (error) {
       console.error('[CONVERSATIONS]', 'Error deleting session:', error);

@@ -890,7 +890,7 @@ export default function FieldOpsPage() {
       try {
         const headers = await getHeaders();
         const [missionsRes, reportsRes] = await Promise.all([
-          fetch('/api/missions/completions', { headers }),
+          fetch(`/api/missions/completions?tz=${new Date().getTimezoneOffset()}`, { headers }),
           fetch('/api/journal/reports?period=all', { headers }),
         ]);
         if (missionsRes.ok) {

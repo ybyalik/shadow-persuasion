@@ -45,10 +45,12 @@ export function useTaxonomy() {
       .then((data) => {
         cachedCategories = data;
         setCategories(data);
+        setError(null);
       })
       .catch((err) => {
         console.error('Failed to fetch taxonomy:', err);
         setError('Failed to load taxonomy');
+        cachedCategories = null;
       })
       .finally(() => {
         setLoading(false);
