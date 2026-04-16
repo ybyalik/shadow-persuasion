@@ -15,12 +15,35 @@ const patterns = [
   { name: "EMOTIONAL REFRAMING", description: "Shift the emotional context of a conversation to create alignment.", effectiveness: 9, context: "High-Stakes Conversations" },
 ];
 
-const DarkPatternRolodex = () => {
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.3 });
-  const [selectedFile, setSelectedFile] = useState(0);
+const TechniqueCard = ({ pattern, index, total }: { pattern: typeof patterns[number]; index: number; total: number }) => (
+  <div className="bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-5 flex flex-col justify-between h-full">
+    <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">
+      {index + 1}/{total}
+    </div>
+    <div>
+      <h3 className="font-special-elite text-xl font-bold text-black">{pattern.name}</h3>
+      <p className="text-sm text-gray-700 leading-snug mt-2">{pattern.description}</p>
+    </div>
+    <div className="mt-3">
+      <div className="font-mono text-xs text-gray-500">{pattern.context}</div>
+      <div className="flex items-center gap-2 mt-2 font-mono text-xs">
+        <div>Effectiveness:</div>
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`} />
+          ))}
+        </div>
+        <div>{pattern.effectiveness}/10</div>
+      </div>
+    </div>
+  </div>
+);
 
-  // Get three files to display
-  const displayFiles = [patterns[0], patterns[1], patterns[2]];
+const DarkPatternRolodex = () => {
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+
+  const mid = (patterns.length - 1) / 2;
 
   return (
     <section className="relative py-16" ref={ref}>
@@ -33,111 +56,63 @@ const DarkPatternRolodex = () => {
 
         {/* Mobile: swipeable horizontal scroll */}
         <div
-          className="flex md:hidden gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6"
+          className="flex lg:hidden gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
-          <style>{`[style*="scrollbar-width: none"]::-webkit-scrollbar { display: none; }`}</style>
+          <style>{`.tech-scroll::-webkit-scrollbar { display: none; }`}</style>
           {patterns.map((pattern, index) => (
             <motion.div
               key={index}
-              className="min-w-[280px] w-[280px] flex-shrink-0 snap-center bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-6 flex flex-col justify-between"
+              className="relative min-w-[260px] w-[260px] h-[220px] flex-shrink-0 snap-center"
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <div className="text-xs font-mono text-gray-400 mb-2">
-                FILE: {index + 1} of {patterns.length}
-              </div>
-              <div>
-                <h3 className="font-special-elite text-2xl font-bold text-black">
-                  {pattern.name}
-                </h3>
-                <p className="text-base text-gray-700 leading-snug mt-2">
-                  {pattern.description}
-                </p>
-              </div>
-              <div className="mt-4">
-                <div className="font-mono text-xs text-gray-500">
-                  Context: {pattern.context}
-                </div>
-                <div className="flex items-center gap-2 mt-2 font-mono text-xs">
-                  <div>Effectiveness:</div>
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({length: 10}).map((_, i) => (
-                      <div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`}></div>
-                    ))}
-                  </div>
-                  <div>{pattern.effectiveness}/10</div>
-                </div>
-              </div>
+              <TechniqueCard pattern={pattern} index={index} total={patterns.length} />
             </motion.div>
           ))}
         </div>
 
-        {/* Desktop: overlapping cards */}
-        <div className="relative h-80 hidden md:flex items-center justify-center">
-            {displayFiles.map((pattern, index) => (
-                <motion.div
-                    key={index}
-                    className={`absolute w-[320px] h-64 bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-6 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-105 ${
-                        selectedFile === index ? 'z-30' : index === 1 ? 'z-20' : 'z-10'
-                    }`}
-                    style={{
-                        transform: `
-                            translateX(${(index - 1) * 25}px)
-                            translateY(${index * 8}px)
-                            rotate(${(index - 1) * 2}deg)
-                        `,
-                        boxShadow: selectedFile === index
-                            ? '0 20px 40px rgba(0,0,0,0.3)'
-                            : '0 10px 20px rgba(0,0,0,0.15)'
-                    }}
-                    initial={{ opacity: 0, y: 50, rotate: 0 }}
-                    animate={inView ? {
-                        opacity: 1,
-                        y: index * 8,
-                        rotate: (index - 1) * 2,
-                        x: (index - 1) * 25
-                    } : {}}
-                    transition={{ duration: 0.6, delay: index * 0.2 }}
-                    onClick={() => setSelectedFile(index)}
-                    whileHover={{
-                        scale: 1.05,
-                        y: index * 8 - 5,
-                        transition: { duration: 0.2 }
-                    }}
-                >
-                    <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">
-                        FILE: {index + 1} of {patterns.length}
-                    </div>
-                    <div>
-                        <h3 className="font-special-elite text-2xl font-bold text-black">
-                            {pattern.name}
-                        </h3>
-                        <p className="text-base text-gray-700 leading-snug mt-2">
-                            {pattern.description}
-                        </p>
-                    </div>
-                    <div>
-                        <div className="font-mono text-xs text-gray-500">
-                            Context: {pattern.context}
-                        </div>
-                        <div className="flex items-center gap-2 mt-2 font-mono text-xs">
-                            <div>Effectiveness:</div>
-                            <div className="flex items-center gap-0.5">
-                                {Array.from({length: 10}).map((_, i) => (
-                                    <div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`}></div>
-                                ))}
-                            </div>
-                            <div>{pattern.effectiveness}/10</div>
-                        </div>
-                    </div>
-                </motion.div>
-            ))}
+        {/* Desktop: fanned-out overlapping cards */}
+        <div className="relative hidden lg:block h-[420px] max-w-6xl mx-auto">
+          {patterns.map((pattern, index) => {
+            const offset = index - mid;
+            const xSpread = offset * 120;
+            const yDip = Math.abs(offset) * 12;
+            const rotation = offset * 3;
+            const isHovered = hoveredCard === index;
+            const zBase = index + 10;
+
+            return (
+              <motion.div
+                key={index}
+                className="absolute left-1/2 top-8 w-[260px] h-[250px] cursor-pointer"
+                style={{ zIndex: isHovered ? 50 : zBase }}
+                initial={{ opacity: 0, y: 60, rotate: 0, x: '-50%' }}
+                animate={inView ? {
+                  opacity: 1,
+                  x: `calc(-50% + ${xSpread}px)`,
+                  y: yDip,
+                  rotate: rotation,
+                } : {}}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                whileHover={{
+                  y: -20,
+                  scale: 1.08,
+                  rotate: 0,
+                  transition: { duration: 0.2 },
+                }}
+                onHoverStart={() => setHoveredCard(index)}
+                onHoverEnd={() => setHoveredCard(null)}
+              >
+                <TechniqueCard pattern={pattern} index={index} total={patterns.length} />
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* File info */}
-        <motion.div 
+        <motion.div
             className="text-center mt-8"
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
