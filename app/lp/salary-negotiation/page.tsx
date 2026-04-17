@@ -301,7 +301,6 @@ export default function SalaryNegotiationLP() {
             )}
           </div>
         </section>
-      </div>
 
       {/* ══ 8. COACHING SESSION (salary-specific) ══ */}
       <section className="relative bg-[#EAE3D2] py-16 sm:py-24 px-6 sm:px-8 border-b-2 border-dashed border-gray-400">
