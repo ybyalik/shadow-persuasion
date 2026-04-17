@@ -25,7 +25,7 @@ const InfluenceDecoder = () => {
         <p className="text-gray-600 mt-2 text-base">Every conversation has hidden tactics. Our AI flags them in real time.</p>
       </div>
 
-      <div className="relative border-2 border-gray-400 bg-[#F4ECD8] p-6 sm:p-8 shadow-lg max-w-4xl">
+      <div className="relative border-2 border-gray-400 bg-[#F4ECD8] p-6 sm:p-8 shadow-lg max-w-4xl mx-auto">
         <div className="space-y-6 font-special-elite text-lg text-gray-900">
           {conversation.map((msg, index) => (
             <div

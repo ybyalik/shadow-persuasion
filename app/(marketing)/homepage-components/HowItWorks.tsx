@@ -42,12 +42,12 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-16 md:py-20 px-6 md:px-12 bg-[#1A1A1A]">
+    <section className="py-16 md:py-20 px-6 md:px-12 bg-[#EDE3D0]">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl lg:text-4xl font-bold text-center mb-3 text-[#F4ECD8]">
+        <h2 className="text-3xl lg:text-4xl font-bold text-center mb-3 text-[#1A1A1A]">
           How It Works
         </h2>
-        <p className="text-center text-gray-400 mb-14 text-lg max-w-2xl mx-auto">
+        <p className="text-center text-[#5C4B32] mb-14 text-lg max-w-2xl mx-auto">
           Three steps to becoming the most strategic communicator in any room
         </p>
 
@@ -57,7 +57,7 @@ export default function HowItWorks() {
             return (
               <div
                 key={step.number}
-                className="relative bg-[#222] border border-[#333] rounded-xl p-6 lg:p-8 hover:border-[#D4A017]/50 transition-all duration-300"
+                className="relative bg-white border border-gray-300 rounded-xl p-6 lg:p-8 hover:shadow-lg hover:border-[#D4A017] transition-all duration-300"
               >
                 {/* Step number */}
                 <div className="flex items-center gap-3 mb-5">
@@ -68,10 +68,10 @@ export default function HowItWorks() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-[#F4ECD8] mb-3">{step.title}</h3>
+                <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{step.title}</h3>
 
                 {/* Description */}
-                <p className="text-gray-400 text-base leading-relaxed mb-6">{step.description}</p>
+                <p className="text-[#3B2E1A] text-base leading-relaxed mb-6">{step.description}</p>
 
                 {/* Detail bullets */}
                 <ul className="space-y-3">
@@ -80,7 +80,7 @@ export default function HowItWorks() {
                     return (
                       <li key={detail.text} className="flex items-start gap-3">
                         <DetailIcon className="h-4 w-4 text-[#D4A017] mt-0.5 shrink-0" strokeWidth={2} />
-                        <span className="text-sm text-gray-300">{detail.text}</span>
+                        <span className="text-sm text-gray-600">{detail.text}</span>
                       </li>
                     );
                   })}
@@ -90,13 +90,17 @@ export default function HowItWorks() {
           })}
         </div>
 
-        {/* Connecting flow arrows — desktop only */}
-        <div className="hidden md:flex justify-center items-center gap-4 mt-10 text-gray-600">
-          <span className="text-sm font-mono">Upload</span>
-          <span className="text-[#D4A017]">&#8594;</span>
-          <span className="text-sm font-mono">Strategy</span>
-          <span className="text-[#D4A017]">&#8594;</span>
-          <span className="text-sm font-mono">Results</span>
+        {/* Connecting flow — desktop only */}
+        <div className="hidden md:flex justify-center items-center gap-0 mt-12">
+          {['Upload', 'Strategy', 'Results'].map((label, i) => (
+            <div key={label} className="flex items-center">
+              {i > 0 && <div className="w-16 h-0.5 bg-[#D4A017]" />}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-[#D4A017] flex items-center justify-center text-white font-bold text-sm">{i + 1}</div>
+                <span className="text-sm font-mono text-[#5C4B32] uppercase tracking-wider">{label}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

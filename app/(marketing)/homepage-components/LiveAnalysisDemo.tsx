@@ -50,10 +50,10 @@ const LiveAnalysisDemo = () => {
 
         {/* Input section */}
         <div className="mb-8">
-          <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-wider">
+          <label className="block font-mono text-xs text-gray-400 mb-2 uppercase tracking-wider">
             Message Being Analyzed
           </label>
-          <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-4 text-gray-300 text-sm italic">
+          <div className="bg-[#1E1E1E] border border-[#444] rounded-lg p-4 text-gray-300 text-base italic">
             &ldquo;{SAMPLE_INPUT}&rdquo;
           </div>
           <div className="flex items-center gap-2 mt-3">
@@ -71,7 +71,7 @@ const LiveAnalysisDemo = () => {
           transition={{ duration: 0.5 }}
         >
           {/* Threat Score */}
-          <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-5">
+          <div className="bg-[#1E1E1E] border border-[#444] rounded-lg p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold">Manipulation Threat Level</span>
               <span className="font-mono text-2xl font-bold text-yellow-400">{r.threatScore}/10</span>
@@ -84,13 +84,13 @@ const LiveAnalysisDemo = () => {
                 transition={{ duration: 0.8, delay: 0.2 }}
               />
             </div>
-            <p className="text-sm mt-2 font-mono text-yellow-400">Moderate Threat, {r.tactics.length} tactics detected</p>
+            <p className="text-base mt-2 font-mono text-yellow-400">Moderate Threat, {r.tactics.length} tactics detected</p>
           </div>
 
           {/* Power Dynamics + Communication — side by side on desktop */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Power Dynamics */}
-            <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-5">
+            <div className="bg-[#1E1E1E] border border-[#444] rounded-lg p-5">
               <h3 className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold mb-4">Influence Position</h3>
               <div className="space-y-3">
                 <div>
@@ -112,11 +112,11 @@ const LiveAnalysisDemo = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">{r.powerDynamics.dynamicsDescription}</p>
+              <p className="text-sm text-gray-300 mt-3">{r.powerDynamics.dynamicsDescription}</p>
             </div>
 
             {/* Communication Profile */}
-            <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-5">
+            <div className="bg-[#1E1E1E] border border-[#444] rounded-lg p-5">
               <h3 className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold mb-4">Communication Profile</h3>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center bg-[#0A0A0A] rounded-lg p-3">
@@ -132,7 +132,7 @@ const LiveAnalysisDemo = () => {
                   <div className="text-[10px] font-mono uppercase text-[#D4A017] mt-1">Openness</div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Low receptivity: resistant to direct persuasion. Use reframing and questions instead of statements.</p>
+              <p className="text-sm text-gray-300 mt-3">Low receptivity: resistant to direct persuasion. Use reframing and questions instead of statements.</p>
             </div>
           </div>
 
@@ -143,26 +143,26 @@ const LiveAnalysisDemo = () => {
               <span className="font-mono text-xs uppercase tracking-wider text-gray-400 font-bold">Tactics Detected</span>
             </div>
             {r.tactics.map((t, i) => (
-              <div key={i} className="bg-[#1A1A1A] border border-[#333] rounded-lg p-4 space-y-2">
+              <div key={i} className="bg-[#1E1E1E] border border-[#444] rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-white font-bold text-sm">{t.tactic}</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-gray-600 text-gray-400">{t.category}</span>
                 </div>
-                <blockquote className="border-l-2 border-[#D4A017] pl-3 text-sm text-gray-500 italic">&ldquo;{t.quote}&rdquo;</blockquote>
-                <p className="text-xs text-gray-400">{t.explanation}</p>
+                <blockquote className="border-l-2 border-[#D4A017] pl-3 text-base text-gray-400 italic">&ldquo;{t.quote}&rdquo;</blockquote>
+                <p className="text-sm text-gray-300">{t.explanation}</p>
                 <div className="bg-[#0A0A0A] border border-[#333] rounded p-3">
                   <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4A017] font-bold block mb-1">Counter:</span>
-                  <p className="text-sm text-white">&ldquo;{t.counterResponse}&rdquo;</p>
+                  <p className="text-base text-[#F4ECD8]">&ldquo;{t.counterResponse}&rdquo;</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Response Options */}
-          <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-5">
+          <div className="bg-[#1E1E1E] border border-[#444] rounded-lg p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-mono text-xs uppercase tracking-wider text-[#D4A017] font-bold">Strategic Response Options</h3>
-              <span className="font-mono text-xs text-gray-500">Success Rate: <span className="text-green-400 font-bold">{r.successProbability}%</span></span>
+              <span className="font-mono text-sm text-gray-400">Success Rate: <span className="text-green-400 font-bold">{r.successProbability}%</span></span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {r.responseOptions.map((opt, i) => (
@@ -175,7 +175,7 @@ const LiveAnalysisDemo = () => {
                   </div>
                   <p className="text-sm text-gray-300 italic">&ldquo;{opt.message}&rdquo;</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] font-mono text-gray-500">Power shift: +{opt.powerImpact}</span>
+                    <span className="text-xs font-mono text-gray-400">Power shift: +{opt.powerImpact}</span>
                   </div>
                 </div>
               ))}
@@ -184,13 +184,13 @@ const LiveAnalysisDemo = () => {
 
           {/* Signup CTA at bottom */}
           <div className="text-center pt-4">
-            <p className="text-gray-500 text-sm mb-3">This is a sample result. Sign up to analyze your own conversations.</p>
+            <p className="text-gray-400 text-sm mb-3">This is a sample result. Sign up to analyze your own conversations.</p>
             <a href="#pricing" className="inline-block bg-[#D4A017] text-[#0A0A0A] font-mono uppercase font-bold px-8 py-3 rounded hover:bg-[#E8B830] transition-colors tracking-wider text-sm">
               Start Your Training
             </a>
           </div>
         </motion.div>
-        <div className="flex items-center justify-center gap-6 mt-6 text-xs text-gray-600 font-mono">
+        <div className="flex items-center justify-center gap-6 mt-6 text-xs text-gray-400 font-mono">
           <span>🔒 256-bit encryption</span>
           <span>🗑️ Delete your data anytime</span>
           <span>🚫 Never shared or sold</span>

@@ -316,12 +316,12 @@ export default function AppPreview() {
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-1 mb-4">
+        <div className="flex justify-center gap-2 mb-4">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-4 py-1.5 text-xs rounded-t-md transition-all ${
+              className={`px-5 py-2 text-sm font-medium rounded-t-md transition-all ${
                 activeTab === tab
                   ? 'bg-[#0A0A0A] text-[#D4A017] border-t border-x border-[#333]'
                   : 'bg-[#1A1A1A] text-gray-500 hover:text-gray-300 border-t border-x border-transparent'
@@ -342,7 +342,7 @@ export default function AppPreview() {
               <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
             </div>
             <div className="flex-1 text-center">
-              <span className="text-[11px] text-gray-400">Shadow Persuasion | Operator Console</span>
+              <span className="text-xs text-gray-400">Shadow Persuasion | Operator Console</span>
             </div>
             <div className="w-[54px]" /> {/* Spacer to center title */}
           </div>
@@ -354,7 +354,7 @@ export default function AppPreview() {
                 <rect x="1" y="1" width="8" height="8" rx="1" stroke="#555" strokeWidth="1" />
                 <path d="M3 5L4.5 6.5L7 3.5" stroke="#27C93F" strokeWidth="1" strokeLinecap="round" />
               </svg>
-              <span className="text-[10px] text-gray-500">app.shadowpersuasion.com</span>
+              <span className="text-[11px] text-gray-500">app.shadowpersuasion.com</span>
             </div>
           </div>
 
@@ -364,8 +364,8 @@ export default function AppPreview() {
             <div className="w-[140px] md:w-[160px] bg-[#0F0F0F] border-r border-[#1A1A1A] flex flex-col py-2 shrink-0">
               {/* Logo */}
               <div className="px-3 mb-3">
-                <div className="text-[11px] font-bold text-[#D4A017] tracking-wider">SHADOW PERSUASION</div>
-                <div className="text-[7px] text-gray-600 uppercase tracking-widest"></div>
+                <div className="text-xs font-bold text-[#D4A017] tracking-wider">SHADOW PERSUASION</div>
+                <div className="text-[8px] text-gray-600 uppercase tracking-widest"></div>
               </div>
 
               {/* Nav items */}
@@ -375,15 +375,15 @@ export default function AppPreview() {
                   return (
                     <div
                       key={item.label}
-                      className={`flex items-center gap-2 px-2 py-1 rounded-md text-[9px] transition-colors cursor-default ${
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-colors cursor-default ${
                         isActive
                           ? 'bg-[#D4A017]/10 text-[#D4A017]'
                           : 'text-gray-600 hover:text-gray-400'
                       }`}
                     >
-                      <span className="text-[10px] w-4 text-center">{item.icon}</span>
+                      <span className="text-xs w-4 text-center">{item.icon}</span>
                       <span>{item.label}</span>
-                      {isActive && <div className="ml-auto w-1 h-1 rounded-full bg-[#D4A017]" />}
+                      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D4A017]" />}
                     </div>
                   );
                 })}
@@ -392,12 +392,12 @@ export default function AppPreview() {
               {/* User avatar */}
               <div className="px-3 pt-2 mt-auto border-t border-[#1A1A1A]">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-[#D4A017]/20 flex items-center justify-center text-[8px] text-[#D4A017]">
+                  <div className="w-6 h-6 rounded-full bg-[#D4A017]/20 flex items-center justify-center text-[9px] text-[#D4A017]">
                     OP
                   </div>
                   <div>
-                    <div className="text-[8px] text-gray-400">Operator</div>
-                    <div className="text-[7px] text-gray-600">Level 5</div>
+                    <div className="text-[10px] text-gray-400">Operator</div>
+                    <div className="text-[8px] text-gray-600">Level 5</div>
                   </div>
                 </div>
               </div>
@@ -423,7 +423,7 @@ export default function AppPreview() {
 
         {/* Bottom caption */}
         <div className="text-center mt-6">
-          <p className="text-[11px] text-[#8B7355] tracking-wider uppercase">
+          <p className="text-xs text-[#8B7355] tracking-wider uppercase">
             Live interactive preview: actual application interface
           </p>
         </div>

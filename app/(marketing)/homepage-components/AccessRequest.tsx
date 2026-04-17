@@ -29,7 +29,7 @@ const AccessRequest = () => {
       </div>
       <p className="text-center mt-8 text-xs text-gray-600">Cancel anytime. No contracts. Results in your first week or your money back.</p>
       <div className="border-t-2 border-black py-1 mt-12 text-sm text-center">
-        <p>Page 12 of 12 | END OF DOCUMENT</p>
+        <p>END OF DOCUMENT</p>
       </div>
     </section>
   );

@@ -52,14 +52,22 @@ export default function WhyNotChatGPT() {
         </div>
 
         {/* Knowledge base callout */}
-        <div className="bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl p-6 md:p-8 mb-10">
+        <div className="bg-[#1A1A1A] border-l-4 border-[#D4A017] rounded-r-xl p-6 md:p-8 mb-10">
           <div className="flex items-start gap-4">
-            <BookOpen className="h-8 w-8 text-[#D4A017] shrink-0 mt-1" />
+            <div className="shrink-0 mt-0.5 w-12 h-12 rounded-lg bg-[#D4A017]/10 flex items-center justify-center">
+              <BookOpen className="h-6 w-6 text-[#D4A017]" />
+            </div>
             <div>
-              <h3 className="text-lg font-bold text-[#F4ECD8] mb-2">Proprietary Knowledge Base</h3>
-              <p className="text-gray-400 leading-relaxed">
-                Shadow Persuasion is powered by a continuously expanding library of specialized psychology, dark psychology, behavioral science, NLP, negotiation, and influence research. This is material that general-purpose AI models have never been trained on. Every technique, counter-strategy, and coaching response draws from this curated knowledge base, giving you insights that no amount of ChatGPT prompting can replicate.
+              <h3 className="text-lg font-bold text-[#F4ECD8] mb-3">Proprietary Knowledge Base</h3>
+              <p className="text-gray-300 leading-relaxed mb-3">
+                Powered by a continuously expanding library of research that general-purpose AI has never been trained on:
               </p>
+              <ul className="space-y-1.5 text-gray-400">
+                <li className="flex items-start gap-2"><span className="text-[#D4A017] mt-0.5">&#9670;</span>Dark psychology, behavioral science &amp; NLP techniques</li>
+                <li className="flex items-start gap-2"><span className="text-[#D4A017] mt-0.5">&#9670;</span>Negotiation &amp; influence research from specialized sources</li>
+                <li className="flex items-start gap-2"><span className="text-[#D4A017] mt-0.5">&#9670;</span>Counter-strategies and coaching responses from curated experts</li>
+              </ul>
+              <p className="text-gray-500 text-sm mt-3 italic">Insights no amount of ChatGPT prompting can replicate.</p>
             </div>
           </div>
         </div>
@@ -73,7 +81,7 @@ export default function WhyNotChatGPT() {
                 {/* ChatGPT side */}
                 <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-4 md:p-5 flex items-center gap-3">
                   <span className="text-red-400 text-lg shrink-0">&#x2715;</span>
-                  <p className="text-gray-500 text-sm md:text-base">{row.chatgpt}</p>
+                  <p className="text-gray-400 text-sm md:text-base">{row.chatgpt}</p>
                 </div>
 
                 {/* Center icon */}
@@ -95,14 +103,14 @@ export default function WhyNotChatGPT() {
 
         {/* Column labels */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 md:gap-6 mt-4">
-          <p className="text-center text-xs font-mono uppercase tracking-wider text-gray-600">ChatGPT / General AI</p>
+          <p className="text-center text-xs font-mono uppercase tracking-wider text-gray-500">ChatGPT / General AI</p>
           <div className="hidden md:block w-10" />
           <p className="text-center text-xs font-mono uppercase tracking-wider text-[#D4A017]">Shadow Persuasion</p>
         </div>
 
         {/* Bottom line */}
         <div className="text-center mt-10">
-          <p className="text-gray-500 text-base">
+          <p className="text-gray-400 text-base">
             ChatGPT is a generalist. Shadow Persuasion is a specialist, powered by research most AI has never seen.
           </p>
         </div>

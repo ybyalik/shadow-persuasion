@@ -99,6 +99,13 @@ function PracticalApplications() {
     <div className="mt-12">
       <h3 className="text-2xl font-bold text-black mb-2 text-center">PRACTICAL APPLICATIONS</h3>
       <p className="text-center text-gray-600 text-base mb-8 font-mono uppercase tracking-wider">121 use cases across 12 categories</p>
+      {/* Click-outside overlay to close expanded popup */}
+      {expandedCat && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={() => setExpandedCat(null)}
+        />
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {categories.map((cat) => {
           const Icon = cat.icon;
