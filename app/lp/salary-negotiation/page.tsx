@@ -377,11 +377,13 @@ export default function SalaryNegotiationLP() {
               { original: '"You know how much I value you here"', breakdown: 'Flattery before rejection. Designed to make you feel appreciated so you feel guilty pushing back.', response: '"I appreciate that, and because the value is mutual, I want to make sure my compensation reflects it. What would need to change?"', patterns: ['FLATTERY SHIELD', 'GUILT SETUP'] },
               { original: '"Let\'s revisit this after the next review cycle"', breakdown: 'Classic delay tactic. Pushes the conversation to a vague future date with no commitment.', response: '"Great. Can we put a specific date on the calendar and agree on the metrics you would need to see?"', patterns: ['FUTURE FAKING', 'DELAY TACTIC'] },
             ].map((conv, i) => (
-              <div key={i} className="bg-[#F4ECD8] border-2 border-gray-400 p-6 grid grid-cols-1 lg:grid-cols-[2fr_3fr_3fr_auto] gap-4">
-                <div><p className="text-sm italic text-gray-800">{conv.original}</p></div>
-                <div><p className="text-sm text-gray-700 leading-relaxed">{conv.breakdown}</p></div>
-                <div><p className="text-sm text-black font-bold leading-relaxed">{conv.response}</p></div>
-                <div className="flex flex-wrap gap-1">{conv.patterns.map((p) => (<span key={p} className="px-2 py-1 text-xs font-mono font-bold uppercase tracking-wider border rounded bg-red-900 text-red-200 border-red-700">{p}</span>))}</div>
+              <div key={i} className="bg-[#F4ECD8] border-2 border-gray-400 p-6 space-y-3">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {conv.patterns.map((p) => (<span key={p} className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border rounded bg-red-900 text-red-200 border-red-700">{p}</span>))}
+                </div>
+                <p className="text-sm italic text-gray-800">{conv.original}</p>
+                <p className="text-sm text-gray-700 leading-relaxed">{conv.breakdown}</p>
+                <p className="text-sm text-black font-bold leading-relaxed">{conv.response}</p>
               </div>
             ))}
           </div>
