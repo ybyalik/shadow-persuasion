@@ -54,7 +54,7 @@ const paragraphs = [
   ),
   (
     <>
-      Shadow Persuasion changes that. Upload a screenshot and know exactly what they&apos;re trying to pull on you, and what to say back. Get word-for-word scripts before your next negotiation. Practice high-stakes conversations with AI before the real thing.{' '}
+      Shadow Persuasion changes that. Powered by a proprietary knowledge base built from psychology, dark psychology, NLP, behavioral science, and influence research that general-purpose AI has never seen. Upload a screenshot and know exactly what they&apos;re trying to pull on you, and what to say back. Get word-for-word scripts before your next negotiation. Practice high-stakes conversations with AI before the real thing.{' '}
       <Highlight>Stop leaving leverage on the table.</Highlight>
     </>
   ),

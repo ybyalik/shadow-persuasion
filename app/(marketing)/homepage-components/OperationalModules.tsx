@@ -47,7 +47,7 @@ const modules = [
     {
         id: 'MODULE-008',
         title: 'Technique Library',
-        description: '700+ influence techniques with summaries, practice scenarios, annotated examples, and technique stacking for multi-step strategies.',
+        description: '700+ techniques from our proprietary knowledge base of psychology, dark psychology, NLP, and influence research. Summaries, practice scenarios, examples, and technique stacking. New material added continuously.',
         classification: 'ACTIVE',
     },
     {

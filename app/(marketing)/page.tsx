@@ -22,6 +22,7 @@ import Footer from './homepage-components/Footer';
 import SectionDivider from './homepage-components/SectionDivider';
 import MidPageCTA from './homepage-components/MidPageCTA';
 import Guarantee from './homepage-components/Guarantee';
+import WhyNotChatGPT from './homepage-components/WhyNotChatGPT';
 
 const specialElite = Special_Elite({ subsets: ['latin'], weight: '400' });
 
@@ -69,6 +70,9 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12 md:space-y-16 py-10 md:py-14">
         <OperationalModules />
       </div>
+
+      {/* WhyNotChatGPT */}
+      <WhyNotChatGPT />
 
       {/* 12. SectionDivider */}
       <SectionDivider text="// THE RESULTS SPEAK FOR THEMSELVES //" />

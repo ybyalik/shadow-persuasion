@@ -35,7 +35,7 @@ const capabilities = [
   {
     icon: '[◆]',
     title: 'Influence Technique Library',
-    description: '700+ proven persuasion frameworks from behavioral science. Each one comes with practice scenarios, annotated examples, and AI coaching to help you deploy them naturally.',
+    description: '700+ techniques drawn from a proprietary knowledge base of psychology, dark psychology, NLP, and influence research. Each one comes with practice scenarios, annotated examples, and AI coaching to help you deploy them naturally. New material added continuously.',
     classified: false,
   },
 ];

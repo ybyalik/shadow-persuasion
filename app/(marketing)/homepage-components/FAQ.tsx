@@ -59,9 +59,6 @@ const FAQ = () => {
 
         {/* Accordion container styled as dossier */}
         <div className="bg-[#efe5cc] border border-[#D4A017]/30 rounded-lg shadow-sm overflow-hidden">
-          <AccordionItem question="How is this different from just using ChatGPT?">
-            <p>ChatGPT gives generic advice. Shadow Persuasion is built specifically for influence and persuasion with 700+ cataloged techniques, a structured training system with progress tracking, AI that learns your personal communication style, scenario practice with real-time coaching, and people profiles that track your relationships. It&apos;s the difference between asking a friend for advice and working with a specialist.</p>
-          </AccordionItem>
           <AccordionItem question="Is this manipulation?">
             <p>Strategic communication isn&apos;t manipulation. It&apos;s understanding how people actually make decisions and communicating more effectively. Every negotiation course, sales training, and leadership program teaches these same principles. The difference is that Shadow Persuasion gives you an AI coach that applies them to YOUR specific situations in real time. We focus on creating outcomes where both parties benefit.</p>
           </AccordionItem>
