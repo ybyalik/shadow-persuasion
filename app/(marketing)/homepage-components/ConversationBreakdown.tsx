@@ -191,19 +191,6 @@ const ConversationBreakdown = () => {
           ))}
         </div>
 
-        {/* File Footer */}
-        <div
-          className="text-center mt-8 p-4 border-2 border-gray-400"
-          style={{
-            background: `
-              linear-gradient(135deg, #EDE3D0 0%, #E8DCC8 100%),
-              url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E")
-            `,
-            backgroundBlendMode: 'overlay'
-          }}
-        >
-          <div className="h-4" />
-        </div>
       </div>
     </section>
   );
