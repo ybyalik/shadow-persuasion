@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Special_Elite } from 'next/font/google';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Upload, Zap, TrendingUp, Camera, MessageSquare, FileText, Target, Shield, Swords, BarChart3, CheckCircle, ChevronDown, BookOpen, Brain, UserCheck, Mic, Briefcase } from 'lucide-react';
 
@@ -371,19 +372,44 @@ export default function SalaryNegotiationLP() {
             <h2 className="font-mono text-sm uppercase tracking-widest text-gray-500 mb-2">REAL EXAMPLES</h2>
             <p className="text-3xl text-black">What Your Boss Really Means</p>
           </div>
-          <div className="space-y-4">
+          {/* Desktop table */}
+          <div className="hidden lg:block">
+            <div className="grid grid-cols-[2fr_3fr_3fr_1fr] gap-6 mb-6 bg-[#EDE3D0] border-2 border-gray-400 p-4">
+              <div className="font-mono text-sm uppercase tracking-wider text-gray-700 font-bold">Original Message</div>
+              <div className="font-mono text-sm uppercase tracking-wider text-gray-700 font-bold">AI Breakdown</div>
+              <div className="font-mono text-sm uppercase tracking-wider text-gray-700 font-bold">Recommended Response</div>
+              <div className="font-mono text-sm uppercase tracking-wider text-gray-700 font-bold">Patterns</div>
+            </div>
+            <div className="space-y-2">
+              {[
+                { original: '"We don\'t have the budget for a raise right now"', breakdown: 'Deflection tactic using organizational constraints as a shield. Often means "I have not been given a compelling enough reason to fight for your raise."', response: '"I understand. What specific milestones would need to be hit for us to revisit compensation in Q3?"', patterns: ['BUDGET SHIELD', 'DEFLECTION'] },
+                { original: '"You know how much I value you here"', breakdown: 'Flattery before rejection. Designed to make you feel appreciated so you feel guilty pushing back.', response: '"I appreciate that, and because the value is mutual, I want to make sure my compensation reflects it. What would need to change?"', patterns: ['FLATTERY SHIELD', 'GUILT SETUP'] },
+                { original: '"Let\'s revisit this after the next review cycle"', breakdown: 'Classic delay tactic. Pushes the conversation to a vague future date with no commitment.', response: '"Great. Can we put a specific date on the calendar and agree on the metrics you would need to see?"', patterns: ['FUTURE FAKING', 'DELAY TACTIC'] },
+              ].map((conv, i) => (
+                <div key={i} className="grid grid-cols-[2fr_3fr_3fr_1fr] gap-6 border-2 border-gray-400 p-4 bg-[#F4ECD8] hover:bg-[#EDE3D0] transition-colors">
+                  <div className="text-sm"><p className="italic text-gray-800">{conv.original}</p></div>
+                  <div className="text-sm"><p className="text-gray-700 leading-relaxed">{conv.breakdown}</p></div>
+                  <div className="text-sm"><p className="text-black font-bold leading-relaxed">{conv.response}</p></div>
+                  <div className="flex flex-col gap-1">
+                    {conv.patterns.map((p) => (<span key={p} className="px-2 py-1 text-xs font-mono font-bold uppercase tracking-wider border rounded bg-red-900 text-red-200 border-red-700">{p}</span>))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="lg:hidden space-y-6">
             {[
               { original: '"We don\'t have the budget for a raise right now"', breakdown: 'Deflection tactic using organizational constraints as a shield. Often means "I have not been given a compelling enough reason to fight for your raise."', response: '"I understand. What specific milestones would need to be hit for us to revisit compensation in Q3?"', patterns: ['BUDGET SHIELD', 'DEFLECTION'] },
               { original: '"You know how much I value you here"', breakdown: 'Flattery before rejection. Designed to make you feel appreciated so you feel guilty pushing back.', response: '"I appreciate that, and because the value is mutual, I want to make sure my compensation reflects it. What would need to change?"', patterns: ['FLATTERY SHIELD', 'GUILT SETUP'] },
               { original: '"Let\'s revisit this after the next review cycle"', breakdown: 'Classic delay tactic. Pushes the conversation to a vague future date with no commitment.', response: '"Great. Can we put a specific date on the calendar and agree on the metrics you would need to see?"', patterns: ['FUTURE FAKING', 'DELAY TACTIC'] },
             ].map((conv, i) => (
-              <div key={i} className="bg-[#F4ECD8] border-2 border-gray-400 p-6 space-y-3">
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {conv.patterns.map((p) => (<span key={p} className="inline-block px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border rounded bg-red-900 text-red-200 border-red-700">{p}</span>))}
-                </div>
-                <p className="text-sm italic text-gray-800">{conv.original}</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{conv.breakdown}</p>
-                <p className="text-sm text-black font-bold leading-relaxed">{conv.response}</p>
+              <div key={i} className="border-2 border-gray-400 p-6 space-y-4 bg-[#F4ECD8]">
+                <div><p className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">Original Message</p><p className="italic text-gray-800">{conv.original}</p></div>
+                <div><p className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">AI Breakdown</p><p className="text-gray-700 leading-relaxed">{conv.breakdown}</p></div>
+                <div><p className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">Recommended Response</p><p className="text-black font-bold leading-relaxed">{conv.response}</p></div>
+                <div className="flex flex-wrap gap-1">{conv.patterns.map((p) => (<span key={p} className="px-2 py-1 text-xs font-mono font-bold uppercase tracking-wider border rounded bg-red-900 text-red-200 border-red-700">{p}</span>))}</div>
               </div>
             ))}
           </div>
@@ -499,46 +525,8 @@ export default function SalaryNegotiationLP() {
 
       <MidPageCTA headline="Ready to Get the Salary You Deserve?" />
 
-      {/* ══ TECHNIQUE PREVIEW ══ */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
-        <section className="relative py-16">
-          <div className="text-left mb-12">
-            <h2 className="font-mono text-sm uppercase tracking-widest text-gray-500">TECHNIQUE PREVIEW</h2>
-            <p className="text-3xl mt-2">Negotiation Techniques from the Library</p>
-          </div>
-          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {[
-              { name: 'ANCHORING', description: 'Set the reference point in any negotiation to frame what is reasonable. State your target number first.', effectiveness: 9, context: 'Salary, Pricing' },
-              { name: 'STRATEGIC SILENCE', description: 'After making your case, stop talking. Let them sit with it. Silence creates pressure to respond.', effectiveness: 9, context: 'Negotiation, Raises' },
-              { name: 'FRAME CONTROL', description: 'Reposition the conversation from "asking for a raise" to "aligning on market value."', effectiveness: 10, context: 'All Negotiations' },
-              { name: 'SCARCITY FRAMING', description: 'Communicate your market options without threatening. "I am not looking to leave, but..."', effectiveness: 8, context: 'Salary, Offers' },
-              { name: 'PATTERN INTERRUPT', description: 'When your boss uses a familiar deflection, break the script with an unexpected reframe.', effectiveness: 8, context: 'Objection Handling' },
-              { name: 'SOCIAL PROOF', description: 'Reference market data, peer compensation, and industry benchmarks to validate your ask.', effectiveness: 7, context: 'Salary Research' },
-            ].map((pattern, index) => (
-              <div key={index} className="relative min-w-[260px] w-[260px] flex-shrink-0 snap-center bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-5 flex flex-col justify-between h-[220px]">
-                <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">{index + 1}/6</div>
-                <div>
-                  <h3 className="text-xl font-bold text-black">{pattern.name}</h3>
-                  <p className="text-sm text-gray-700 leading-snug mt-2">{pattern.description}</p>
-                </div>
-                <div className="mt-3">
-                  <div className="font-mono text-xs text-gray-500">{pattern.context}</div>
-                  <div className="flex items-center gap-2 mt-2 font-mono text-xs">
-                    <div>Effectiveness:</div>
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`} />))}
-                    </div>
-                    <div>{pattern.effectiveness}/10</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <p className="font-mono text-sm text-gray-500 uppercase tracking-wider">[700+ Techniques Available Inside the Full Library]</p>
-          </div>
-        </section>
-      </div>
+      {/* ══ TECHNIQUE PREVIEW (fanned layout matching homepage) ══ */}
+      <TechniquePreview />
 
       {/* ══ 14. COMPARISON (matches homepage design) ══ */}
       <section className="bg-[#0D0D0D] w-full">
@@ -643,5 +631,113 @@ export default function SalaryNegotiationLP() {
         </div>
       </footer>
     </main>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   Technique Preview (fanned cards, matches homepage)
+   ═══════════════════════════════════════════════ */
+
+const salaryTechniques = [
+  { name: 'ANCHORING', description: 'Set the reference point in any negotiation to frame what is reasonable. State your target number first.', effectiveness: 9, context: 'Salary, Pricing' },
+  { name: 'STRATEGIC SILENCE', description: 'After making your case, stop talking. Let them sit with it. Silence creates pressure to respond.', effectiveness: 9, context: 'Negotiation, Raises' },
+  { name: 'FRAME CONTROL', description: 'Reposition the conversation from "asking for a raise" to "aligning on market value."', effectiveness: 10, context: 'All Negotiations' },
+  { name: 'SCARCITY FRAMING', description: 'Communicate your market options without threatening. "I am not looking to leave, but..."', effectiveness: 8, context: 'Salary, Offers' },
+  { name: 'PATTERN INTERRUPT', description: 'When your boss uses a familiar deflection, break the script with an unexpected reframe.', effectiveness: 8, context: 'Objection Handling' },
+  { name: 'SOCIAL PROOF', description: 'Reference market data, peer compensation, and industry benchmarks to validate your ask.', effectiveness: 7, context: 'Salary Research' },
+];
+
+function TechniquePreview() {
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const mid = (salaryTechniques.length - 1) / 2;
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
+      <section className="relative py-16">
+        <div className="text-left mb-12">
+          <h2 className="font-mono text-sm uppercase tracking-widest text-gray-500">TECHNIQUE PREVIEW</h2>
+          <p className="text-3xl mt-2">Negotiation Techniques from the Library</p>
+        </div>
+
+        {/* Mobile: swipeable horizontal scroll */}
+        <div
+          className="flex lg:hidden gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {salaryTechniques.map((pattern, index) => (
+            <div key={index} className="relative min-w-[260px] w-[260px] h-[220px] flex-shrink-0 snap-center">
+              <div className="bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-5 flex flex-col justify-between h-full">
+                <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">{index + 1}/{salaryTechniques.length}</div>
+                <div>
+                  <h3 className="text-xl font-bold text-black">{pattern.name}</h3>
+                  <p className="text-sm text-gray-700 leading-snug mt-2">{pattern.description}</p>
+                </div>
+                <div className="mt-3">
+                  <div className="font-mono text-xs text-gray-500">{pattern.context}</div>
+                  <div className="flex items-center gap-2 mt-2 font-mono text-xs">
+                    <div>Effectiveness:</div>
+                    <div className="flex items-center gap-0.5">{Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`} />))}</div>
+                    <div>{pattern.effectiveness}/10</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: fanned-out overlapping cards */}
+        <div className="relative hidden lg:block h-[420px] max-w-6xl mx-auto">
+          {salaryTechniques.map((pattern, index) => {
+            const offset = index - mid;
+            const xSpread = offset * 140;
+            const yDip = Math.abs(offset) * 12;
+            const rotation = offset * 3;
+            const isHovered = hoveredCard === index;
+            const zBase = index + 10;
+
+            return (
+              <motion.div
+                key={index}
+                className="absolute left-1/2 top-8 w-[260px] h-[250px] cursor-pointer"
+                style={{
+                  zIndex: isHovered ? 50 : zBase,
+                  x: `calc(-50% + ${xSpread}px)`,
+                  y: yDip,
+                  rotate: rotation,
+                }}
+                whileHover={{
+                  y: -20,
+                  scale: 1.08,
+                  rotate: 0,
+                  transition: { duration: 0.2 },
+                }}
+                onHoverStart={() => setHoveredCard(index)}
+                onHoverEnd={() => setHoveredCard(null)}
+              >
+                <div className="bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-5 flex flex-col justify-between h-full">
+                  <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">{index + 1}/{salaryTechniques.length}</div>
+                  <div>
+                    <h3 className="text-xl font-bold text-black">{pattern.name}</h3>
+                    <p className="text-sm text-gray-700 leading-snug mt-2">{pattern.description}</p>
+                  </div>
+                  <div className="mt-3">
+                    <div className="font-mono text-xs text-gray-500">{pattern.context}</div>
+                    <div className="flex items-center gap-2 mt-2 font-mono text-xs">
+                      <div>Effectiveness:</div>
+                      <div className="flex items-center gap-0.5">{Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`} />))}</div>
+                      <div>{pattern.effectiveness}/10</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="font-mono text-sm text-gray-500 uppercase tracking-wider">[700+ Techniques Available Inside the Full Library]</p>
+        </div>
+      </section>
+    </div>
   );
 }
