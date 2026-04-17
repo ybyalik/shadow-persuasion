@@ -8,6 +8,7 @@ import { SystemCapabilities } from './homepage-components/SystemCapabilities';
 import AppPreview from './homepage-components/AppPreview';
 import { SystemPreview } from './homepage-components/SystemPreview';
 import LiveAnalysisDemo from './homepage-components/LiveAnalysisDemo';
+import InfluenceDecoder from './homepage-components/InfluenceDecoder';
 import ConversationBreakdown from './homepage-components/ConversationBreakdown';
 import ScenarioSimulator from './homepage-components/ScenarioSimulator';
 import { OperationalModules } from './homepage-components/OperationalModules';
@@ -20,7 +21,6 @@ import FAQ from './homepage-components/FAQ';
 import AccessRequest from './homepage-components/AccessRequest';
 import Footer from './homepage-components/Footer';
 import SectionDivider from './homepage-components/SectionDivider';
-import FieldAssessment from './homepage-components/FieldAssessment';
 import MidPageCTA from './homepage-components/MidPageCTA';
 import Guarantee from './homepage-components/Guarantee';
 import WhyNotChatGPT from './homepage-components/WhyNotChatGPT';
@@ -47,10 +47,7 @@ export default function HomePage() {
       {/* 5. AppPreview */}
       <AppPreview />
 
-      {/* Field Assessment quiz */}
-      <FieldAssessment />
-
-      {/* Mid-page CTA after assessment */}
+      {/* Mid-page CTA after AppPreview */}
       <MidPageCTA headline="Convinced? Start Training Now." />
 
       {/* 6. SectionDivider */}
@@ -66,6 +63,11 @@ export default function HomePage() {
 
       {/* 9. SystemPreview */}
       <SystemPreview />
+
+      {/* Influence Decoder */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
+        <InfluenceDecoder />
+      </div>
 
       {/* 10. ConversationBreakdown */}
       <ConversationBreakdown />
