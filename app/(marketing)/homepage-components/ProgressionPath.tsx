@@ -53,7 +53,7 @@ const ProgressionPath = () => {
         <h2 className="font-mono text-sm uppercase tracking-widest text-gray-500">
           APPENDIX D: OPERATOR PROGRESSION PATH
         </h2>
-        <p className="text-3xl mt-2">Career Trajectory</p>
+        <p className="text-3xl mt-2">Your Path to Mastery</p>
       </div>
 
       {/* Mobile: single column with centered line */}

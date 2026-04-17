@@ -60,7 +60,7 @@ const paragraphs = [
   ),
   (
     <>
-      Members report <Highlight>$5,000 to $50,000+ salary increases</Highlight> after their first negotiation using the system. Relationship satisfaction scores improve within 30 days. The difference isn&apos;t talent. It&apos;s having an AI that decodes what people really mean and tells you exactly what to say back.
+      Members report <Highlight>$5,000 to $50,000+ salary increases</Highlight>{' '}after their first negotiation using the system. Relationship satisfaction scores improve within 30 days. The difference isn&apos;t talent. It&apos;s having an AI that decodes what people really mean and tells you exactly what to say back.
     </>
   ),
 ];

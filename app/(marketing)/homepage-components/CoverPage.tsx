@@ -89,8 +89,8 @@ const CoverPage = () => {
 
         {/* Classification line */}
         <div className="mt-12 text-base text-[#6B5B3E] space-y-1 tracking-wide">
-          <p>CLASSIFICATION: AI-Powered Influence Psychology Training</p>
-          <p>STATUS: Now Accepting New Members</p>
+          <p><span className="font-bold">CLASSIFICATION:</span> AI-Powered Influence Psychology Training</p>
+          <p><span className="font-bold">STATUS:</span> Now Accepting New Members</p>
         </div>
 
         {/* CTA button */}
