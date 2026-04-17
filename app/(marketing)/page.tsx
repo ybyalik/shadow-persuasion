@@ -7,9 +7,7 @@ import HowItWorks from './homepage-components/HowItWorks';
 import { SystemCapabilities } from './homepage-components/SystemCapabilities';
 import AppPreview from './homepage-components/AppPreview';
 import { SystemPreview } from './homepage-components/SystemPreview';
-import LiveAnalysisDemoTabs from './homepage-components/LiveAnalysisDemoTabs';
 import LiveAnalysisDemoTabsV2 from './homepage-components/LiveAnalysisDemoTabsV2';
-import LiveAnalysisDemoTabsV3 from './homepage-components/LiveAnalysisDemoTabsV3';
 import InfluenceDecoder from './homepage-components/InfluenceDecoder';
 import ConversationBreakdown from './homepage-components/ConversationBreakdown';
 import ScenarioSimulator from './homepage-components/ScenarioSimulator';
@@ -60,17 +58,8 @@ export default function HomePage() {
         <SystemCapabilities />
       </div>
 
-      {/* Tabbed Analysis Demo — V1: Dark (original) */}
-      <div className="bg-[#D4A017] text-center py-2 font-mono text-sm font-bold text-black uppercase tracking-wider">V1: Dark Theme</div>
-      <LiveAnalysisDemoTabs />
-
-      {/* Tabbed Analysis Demo — V2: Beige/Parchment */}
-      <div className="bg-[#D4A017] text-center py-2 font-mono text-sm font-bold text-black uppercase tracking-wider">V2: Beige / Parchment Theme</div>
+      {/* Sample Analysis Output — Tabbed */}
       <LiveAnalysisDemoTabsV2 />
-
-      {/* Tabbed Analysis Demo — V3: Navy/Slate */}
-      <div className="bg-[#D4A017] text-center py-2 font-mono text-sm font-bold text-black uppercase tracking-wider">V3: Navy / Slate Theme</div>
-      <LiveAnalysisDemoTabsV3 />
 
       {/* 9. SystemPreview */}
       <SystemPreview />
