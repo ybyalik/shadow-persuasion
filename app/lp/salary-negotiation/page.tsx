@@ -436,15 +436,25 @@ export default function SalaryNegotiationLP() {
 
       <SectionDivider text="// THE RESULTS SPEAK FOR THEMSELVES //" />
 
-      {/* ══ 12. EVIDENCE (salary metrics) ══ */}
-      <section className="bg-[#1A1A1A] text-[#E8E8E0] px-6 md:px-12 py-14">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8 text-white">Salary Negotiation Results</h2>
+      {/* ══ 12. EVIDENCE (salary metrics — matches homepage design) ══ */}
+      <section className="relative px-6 md:px-12 py-20 bg-[#1A1A1A] text-[#E8E8E0]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold uppercase tracking-wider text-white">
+              Before &amp; After: Salary Negotiation Results
+            </h2>
+            <div className="w-24 h-1 bg-[#D4A017] mt-4 mx-auto" />
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead><tr className="border-b border-white/10 text-xs font-mono uppercase tracking-wider text-gray-500">
-                <th className="py-3 pr-4">Metric</th><th className="py-3 pr-4">Before</th><th className="py-3 pr-4">After</th><th className="py-3">Change</th>
-              </tr></thead>
+            <table className="w-full text-base md:text-lg text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-[#D4A017]">
+                  <th className="p-3 font-mono uppercase text-sm text-[#D4A017]">Metric</th>
+                  <th className="p-3 font-mono uppercase text-sm text-[#D4A017] text-center">Before Protocol</th>
+                  <th className="p-3 font-mono uppercase text-sm text-[#D4A017] text-center">After Protocol</th>
+                  <th className="p-3 font-mono uppercase text-sm text-[#D4A017] text-center">&Delta; Change</th>
+                </tr>
+              </thead>
               <tbody>
                 {[
                   { metric: 'Salary Negotiation Success Rate', before: '1 in 4', after: '3 in 4', change: '+200%' },
@@ -453,17 +463,17 @@ export default function SalaryNegotiationLP() {
                   { metric: 'Time to Prepare Counter-Strategy', before: '2+ hours', after: '< 3 min', change: '-97%' },
                   { metric: 'Ability to Detect Boss Manipulation Tactics', before: '18%', after: '89%', change: '+394%' },
                 ].map((row, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="py-4 pr-4 text-sm text-gray-300">{row.metric}</td>
-                    <td className="py-4 pr-4 text-sm text-gray-500">{row.before}</td>
-                    <td className="py-4 pr-4 text-sm text-white font-bold">{row.after}</td>
-                    <td className="py-4 text-sm text-green-400 font-mono font-bold">{row.change}</td>
+                  <tr key={i} className="border-b border-white/10">
+                    <td className="p-3">{row.metric}</td>
+                    <td className="p-3 text-center">{row.before}</td>
+                    <td className="p-3 text-center">{row.after}</td>
+                    <td className="p-3 font-bold text-center text-[#D4A017]">{row.change}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-gray-600 mt-4 text-center">Based on self-reported member data. Individual results vary.</p>
+          <p className="text-center mt-8 text-sm text-amber-500/50 font-mono">Based on self-reported member data. Individual results vary.</p>
         </div>
       </section>
 
@@ -489,28 +499,74 @@ export default function SalaryNegotiationLP() {
 
       <MidPageCTA headline="Ready to Get the Salary You Deserve?" />
 
-      {/* ══ 14. COMPARISON (salary framing) ══ */}
-      <section className="bg-[#0D0D0D] py-16 px-6 md:px-12">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-10">The Alternatives</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border border-dashed border-gray-600 p-6 rounded-lg">
-              <h3 className="text-xl text-center font-bold text-gray-300 mb-6">TRYING TO NEGOTIATE ALONE</h3>
-              <ul className="space-y-4 text-gray-400">
-                {['Google "how to ask for a raise" (generic advice)', 'Read a negotiation book ($20, no feedback)', 'Take an online course ($500-2,000, no AI)', 'Hire a career coach ($200-500/hour)', 'Ask ChatGPT (does not know your boss)', 'Wing it and hope for the best'].map((f) => (
-                  <li key={f} className="flex justify-between items-center"><span>{f}</span><span className="text-red-400 font-bold">&#x2715;</span></li>
+      {/* ══ TECHNIQUE PREVIEW ══ */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
+        <section className="relative py-16">
+          <div className="text-left mb-12">
+            <h2 className="font-mono text-sm uppercase tracking-widest text-gray-500">TECHNIQUE PREVIEW</h2>
+            <p className="text-3xl mt-2">Negotiation Techniques from the Library</p>
+          </div>
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {[
+              { name: 'ANCHORING', description: 'Set the reference point in any negotiation to frame what is reasonable. State your target number first.', effectiveness: 9, context: 'Salary, Pricing' },
+              { name: 'STRATEGIC SILENCE', description: 'After making your case, stop talking. Let them sit with it. Silence creates pressure to respond.', effectiveness: 9, context: 'Negotiation, Raises' },
+              { name: 'FRAME CONTROL', description: 'Reposition the conversation from "asking for a raise" to "aligning on market value."', effectiveness: 10, context: 'All Negotiations' },
+              { name: 'SCARCITY FRAMING', description: 'Communicate your market options without threatening. "I am not looking to leave, but..."', effectiveness: 8, context: 'Salary, Offers' },
+              { name: 'PATTERN INTERRUPT', description: 'When your boss uses a familiar deflection, break the script with an unexpected reframe.', effectiveness: 8, context: 'Objection Handling' },
+              { name: 'SOCIAL PROOF', description: 'Reference market data, peer compensation, and industry benchmarks to validate your ask.', effectiveness: 7, context: 'Salary Research' },
+            ].map((pattern, index) => (
+              <div key={index} className="relative min-w-[260px] w-[260px] flex-shrink-0 snap-center bg-[#F4ECD8] border-2 border-gray-400 shadow-xl rounded-sm p-5 flex flex-col justify-between h-[220px]">
+                <div className="absolute top-2 right-2 text-xs font-mono text-gray-400">{index + 1}/6</div>
+                <div>
+                  <h3 className="text-xl font-bold text-black">{pattern.name}</h3>
+                  <p className="text-sm text-gray-700 leading-snug mt-2">{pattern.description}</p>
+                </div>
+                <div className="mt-3">
+                  <div className="font-mono text-xs text-gray-500">{pattern.context}</div>
+                  <div className="flex items-center gap-2 mt-2 font-mono text-xs">
+                    <div>Effectiveness:</div>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 10 }).map((_, i) => (<div key={i} className={`h-3 w-1.5 ${i < pattern.effectiveness ? 'bg-black' : 'bg-gray-300'}`} />))}
+                    </div>
+                    <div>{pattern.effectiveness}/10</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <p className="font-mono text-sm text-gray-500 uppercase tracking-wider">[700+ Techniques Available Inside the Full Library]</p>
+          </div>
+        </section>
+      </div>
+
+      {/* ══ 14. COMPARISON (matches homepage design) ══ */}
+      <section className="bg-[#0D0D0D] w-full">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+          <div className="text-center mb-12">
+            <h2 className="font-mono text-sm uppercase tracking-widest text-gray-400">COMPARISON</h2>
+            <p className="text-3xl mt-2 text-white">Why Shadow Persuasion</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-2 border-gray-400 bg-[#F4ECD8] shadow-lg p-6 sm:p-8">
+            <div className="border border-dashed border-gray-400 p-6">
+              <h3 className="text-2xl text-center font-bold">THE ALTERNATIVES</h3>
+              <p className="text-center font-mono text-lg text-gray-600 mb-6">&nbsp;</p>
+              <ul className="space-y-4">
+                {['Google "how to ask for a raise" (generic advice)', 'Read a negotiation book ($20, no feedback)', 'Online courses ($500-$2,000, no AI feedback)', 'Hire a career coach ($200-500/hour)', 'ChatGPT (generic AI, does not know your boss)', 'Wing it and hope for the best'].map((f) => (
+                  <li key={f} className="flex justify-between items-center text-lg"><span>{f}</span><span className="text-red-500 font-bold text-xl">&#x2715;</span></li>
                 ))}
               </ul>
             </div>
-            <div className="border-2 border-amber-500 p-6 rounded-lg bg-[#1A1A1A] relative">
+            <div className="border-2 border-amber-500 p-6 bg-[#fffef7] shadow-2xl relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-black font-mono text-xs uppercase px-2 py-1 font-bold">RECOMMENDED</div>
-              <h3 className="text-xl text-center font-bold text-white mb-2">SHADOW PERSUASION</h3>
-              <p className="text-center font-mono text-lg text-[#D4A017] mb-6">$99/mo</p>
-              <ul className="space-y-4 text-gray-200">
-                {['Analyzes YOUR boss\'s exact words and tactics', 'Word-for-word counter-scripts for your situation', 'AI role-play to practice before the real meeting', '700+ negotiation techniques from proprietary research', 'Voice Profile so you sound like you, not a script', '24/7 AI coach for every conversation that matters'].map((f) => (
-                  <li key={f} className="flex justify-between items-center"><span>{f}</span><span className="text-green-400 font-bold">&#x2713;</span></li>
+              <h3 className="text-2xl text-center font-bold text-amber-900">SHADOW PERSUASION MEMBER</h3>
+              <p className="text-center font-mono text-lg mb-6"><span className="text-amber-700 font-bold">$99/MO</span></p>
+              <ul className="space-y-4">
+                {["Analyzes YOUR boss's exact words and tactics", 'Word-for-word counter-scripts for your situation', 'AI role-play to practice before the real meeting', '700+ negotiation techniques from proprietary research', 'Voice Profile so you sound like you, not a script', '24/7 AI coach for every conversation that matters', 'Persuasion Score and progress tracking', 'Daily field missions with AI grading'].map((f) => (
+                  <li key={f} className="flex justify-between items-center text-lg"><span>{f}</span><span className="text-green-600 font-bold">&#10003;</span></li>
                 ))}
               </ul>
+              <a href="/login" className="block w-full mt-8 bg-black text-white font-mono uppercase px-4 py-3 text-lg text-center hover:bg-amber-700 transition-colors duration-300">START TRAINING NOW</a>
             </div>
           </div>
         </div>
