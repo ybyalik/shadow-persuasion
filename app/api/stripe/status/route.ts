@@ -12,16 +12,44 @@ export async function GET(req: NextRequest) {
     const userId = await getUserFromRequest(req);
 
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ active: false });
     }
 
-    const { data, error } = await supabase
+    // First try by user_id
+    let { data } = await supabase
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
       .single();
 
-    if (error || !data) {
+    // If not found, try by email (for users who paid before creating account)
+    if (!data) {
+      // Get the user's email from the users table
+      const { data: userData } = await supabase
+        .from('users')
+        .select('email')
+        .eq('firebase_uid', userId)
+        .single();
+
+      if (userData?.email) {
+        const { data: emailMatch } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('email', userData.email)
+          .single();
+
+        if (emailMatch) {
+          // Link this subscription to their firebase uid
+          await supabase
+            .from('subscriptions')
+            .update({ user_id: userId })
+            .eq('id', emailMatch.id);
+          data = emailMatch;
+        }
+      }
+    }
+
+    if (!data) {
       return NextResponse.json({ active: false });
     }
 
@@ -36,9 +64,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('[STRIPE STATUS]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch subscription status' },
-      { status: 500 }
-    );
+    return NextResponse.json({ active: false });
   }
 }

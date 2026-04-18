@@ -59,34 +59,39 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.client_reference_id || session.metadata?.userId;
         const plan = session.metadata?.plan || 'unknown';
-
-        if (!userId) {
-          console.error('[STRIPE WEBHOOK] No userId in checkout.session.completed');
-          break;
-        }
+        const customerEmail = session.customer_details?.email || session.customer_email || null;
+        const userId = session.client_reference_id || session.metadata?.userId || null;
 
         // Retrieve the subscription to get period details
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string
         );
 
-        const { error } = await supabase.from('subscriptions').upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-            plan,
-            status: subscription.status === 'trialing' ? 'trialing' : 'active',
-            current_period_end: getSubscriptionPeriodEnd(subscription),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        );
+        const subscriptionData: any = {
+          stripe_customer_id: session.customer as string,
+          stripe_subscription_id: session.subscription as string,
+          plan,
+          status: subscription.status === 'trialing' ? 'trialing' : 'active',
+          current_period_end: getSubscriptionPeriodEnd(subscription),
+          email: customerEmail,
+          updated_at: new Date().toISOString(),
+        };
 
-        if (error) {
-          console.error('[STRIPE WEBHOOK] Supabase upsert error (checkout):', error);
+        if (userId) {
+          // User was logged in during checkout
+          subscriptionData.user_id = userId;
+          const { error } = await supabase.from('subscriptions').upsert(
+            subscriptionData,
+            { onConflict: 'user_id' }
+          );
+          if (error) console.error('[STRIPE WEBHOOK] Supabase upsert error (checkout):', error);
+        } else {
+          // User paid without logging in — store by stripe_customer_id
+          // Will be linked to their account when they sign up with the same email
+          subscriptionData.user_id = `stripe_${session.customer}`;
+          const { error } = await supabase.from('subscriptions').insert(subscriptionData);
+          if (error) console.error('[STRIPE WEBHOOK] Supabase insert error (checkout):', error);
         }
         break;
       }

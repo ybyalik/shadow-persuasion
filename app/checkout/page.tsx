@@ -1,19 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
-import { useAuth } from '@/lib/auth-context';
 import { CheckCircle, Shield, Clock, Zap, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const PLANS = {
-  weekly: { name: 'Weekly', price: '$9.95', period: '/week', amount: 9.95, badge: 'Most Flexible' },
-  monthly: { name: 'Monthly', price: '$34.95', period: '/month', amount: 34.95, badge: 'Most Popular' },
-  yearly: { name: 'Yearly', price: '$195.95', period: '/year', amount: 195.95, badge: 'Best Value', savings: '$223.45' },
+  weekly: { name: 'Weekly', price: '$9.95', period: '/week', badge: 'Most Flexible' },
+  monthly: { name: 'Monthly', price: '$34.95', period: '/month', badge: 'Most Popular' },
+  yearly: { name: 'Yearly', price: '$195.95', period: '/year', badge: 'Best Value', savings: '$223.45' },
 };
 
 type PlanKey = keyof typeof PLANS;
@@ -40,34 +39,24 @@ export default function CheckoutPageWrapper() {
 
 function CheckoutPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>((searchParams.get('plan') as PlanKey) || 'monthly');
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
+  const [checkoutKey, setCheckoutKey] = useState(0);
 
   const fetchClientSecret = useCallback(async () => {
-    if (!user) return '';
-    const token = await user.getIdToken();
     const res = await fetch('/api/stripe/create-embedded-checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ plan: selectedPlan, userId: user.uid, email: user.email }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: selectedPlan }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     return data.clientSecret;
-  }, [user, selectedPlan]);
+  }, [selectedPlan, checkoutKey]);
 
-  const plan = PLANS[selectedPlan];
-
-  if (authLoading || !user) {
-    return <div className="min-h-screen bg-[#F4ECD8] flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-[#D4A017] border-t-transparent rounded-full" /></div>;
-  }
+  const handlePlanChange = (plan: PlanKey) => {
+    setSelectedPlan(plan);
+    setCheckoutKey(k => k + 1); // Force new checkout session
+  };
 
   return (
     <div className="min-h-screen bg-[#F4ECD8]">
@@ -92,7 +81,7 @@ function CheckoutPage() {
                 {(Object.entries(PLANS) as [PlanKey, typeof PLANS[PlanKey]][]).map(([key, p]) => (
                   <button
                     key={key}
-                    onClick={() => setSelectedPlan(key)}
+                    onClick={() => handlePlanChange(key)}
                     className={`flex-1 py-3 px-3 rounded-lg border-2 text-center transition-all ${
                       selectedPlan === key
                         ? 'border-[#D4A017] bg-[#D4A017]/10'
@@ -132,7 +121,7 @@ function CheckoutPage() {
 
           {/* Right column — Stripe Embedded Checkout */}
           <div className="bg-white border border-gray-300 rounded-xl p-1 min-h-[400px]">
-            <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
+            <EmbeddedCheckoutProvider key={checkoutKey} stripe={stripePromise} options={{ fetchClientSecret }}>
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
           </div>

@@ -14,11 +14,6 @@ export default function PricingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const handleSelect = async (plan: 'weekly' | 'monthly' | 'yearly') => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
     router.push(`/checkout?plan=${plan}`);
   };
 
