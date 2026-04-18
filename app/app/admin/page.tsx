@@ -283,24 +283,7 @@ export default function AdminPage() {
     }, ...prev]);
 
     try {
-      // 1. Upload original file to Supabase Storage
-      setStatusText('Uploading file to storage...');
-      let storagePath: string | null = null;
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('title', bookTitle);
-        formData.append('author', bookAuthor);
-        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
-        const storageData = await storageRes.json();
-        if (storageData.stored && storageData.storagePath) {
-          storagePath = storageData.storagePath;
-        }
-      } catch {
-        // Storage upload is best-effort; don't block ingestion
-      }
-
-      // 2. Extract text
+      // 1. Extract text FIRST (this is the critical step)
       setStatusText('Reading file...');
       let text = '';
       let pageCount = 0;
@@ -317,8 +300,9 @@ export default function AdminPage() {
 
       if (text.length < 100) throw new Error('Could not extract enough text.');
 
-      // 3. Chunk and ingest
+      // 2. Chunk and ingest
       const allChunks = chunkText(text);
+      let storagePath: string | null = null;
       const totalChunks = allChunks.length;
 
       setUploads(prev => prev.map(b =>
@@ -362,6 +346,22 @@ export default function AdminPage() {
           b.id === bookId ? { ...b, chunks: processed, skipped: [...skipped] } : b
         ));
         setStatusText(`Processing: ${processed}/${totalChunks} chunks done${skipped.length > 0 ? ` (${skipped.length} skipped)` : ''}`);
+      }
+
+      // 3. Upload original PDF to storage (best-effort, after ingestion)
+      try {
+        setStatusText('Saving original file...');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', bookTitle);
+        formData.append('author', bookAuthor);
+        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
+        const storageData = await storageRes.json();
+        if (storageData.stored) {
+          setStatusText('File saved to storage.');
+        }
+      } catch {
+        // Storage is best-effort, don't fail the upload
       }
 
       setUploads(prev => prev.map(b =>
