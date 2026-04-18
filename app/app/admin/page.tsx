@@ -887,39 +887,66 @@ export default function AdminPage() {
 
             {dedupResults.merges?.length > 0 && (
               <>
-                <div className="max-h-80 overflow-y-auto space-y-2">
+                <div className="max-h-96 overflow-y-auto space-y-2">
                   {dedupResults.merges.map((merge: any, i: number) => (
-                    <div key={i} className="p-3 bg-gray-50 dark:bg-[#222] rounded border border-gray-200 dark:border-[#333] text-sm">
-                      <span className="text-green-400 font-bold">{merge.canonical}</span>
-                      <span className="text-gray-500"> &larr; </span>
-                      <span className="text-gray-400">{merge.variants.filter((v: string) => v !== merge.canonical).join(', ')}</span>
+                    <div key={i} className={`p-3 rounded border text-sm flex items-center justify-between gap-3 ${merge._rejected ? 'bg-red-500/5 border-red-500/20 opacity-50' : 'bg-gray-50 dark:bg-[#222] border-gray-200 dark:border-[#333]'}`}>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-green-400 font-bold">{merge.canonical}</span>
+                        <span className="text-gray-500"> &larr; </span>
+                        <span className="text-gray-400">{merge.variants.filter((v: string) => v !== merge.canonical).join(', ')}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const updated = { ...dedupResults };
+                          updated.merges = [...updated.merges];
+                          updated.merges[i] = { ...updated.merges[i], _rejected: !updated.merges[i]._rejected };
+                          const approved = updated.merges.filter((m: any) => !m._rejected);
+                          updated.mergeGroups = approved.length;
+                          updated.variantsToMerge = approved.reduce((sum: number, m: any) => sum + m.variants.length, 0);
+                          setDedupResults(updated);
+                        }}
+                        className={`shrink-0 px-2 py-1 text-xs font-mono rounded transition-colors ${merge._rejected ? 'text-gray-500 hover:text-green-400 border border-gray-600' : 'text-red-400 hover:text-red-300 border border-red-500/30'}`}
+                      >
+                        {merge._rejected ? 'Undo' : 'Reject'}
+                      </button>
                     </div>
                   ))}
                 </div>
 
-                <button
-                  onClick={async () => {
-                    if (!confirm(`This will merge ${dedupResults.variantsToMerge} variant names into ${dedupResults.mergeGroups} canonical names. Continue?`)) return;
-                    setDedupApplying(true);
-                    try {
-                      const res = await fetch('/api/admin/dedup-techniques', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ merges: dedupResults.merges }),
-                      });
-                      const data = await res.json();
-                      alert(`Done! ${data.chunksUpdated} chunks updated.`);
-                      setDedupResults(null);
-                    } catch (err: any) {
-                      alert('Failed: ' + err.message);
-                    }
-                    setDedupApplying(false);
-                  }}
-                  disabled={dedupApplying}
-                  className="w-full py-2.5 bg-red-600 text-white font-bold rounded-lg uppercase tracking-wider hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  {dedupApplying ? <><Loader2 className="h-4 w-4 animate-spin" /> Applying Merges...</> : `Apply ${dedupResults.mergeGroups} Merges`}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      const approved = dedupResults.merges.filter((m: any) => !m._rejected);
+                      if (approved.length === 0) { alert('No merges selected.'); return; }
+                      if (!confirm(`Apply ${approved.length} merges? (${dedupResults.merges.length - approved.length} rejected)`)) return;
+                      setDedupApplying(true);
+                      try {
+                        const res = await fetch('/api/admin/dedup-techniques', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ merges: approved }),
+                        });
+                        const data = await res.json();
+                        alert(`Done! ${data.chunksUpdated} chunks updated.`);
+                        setDedupResults(null);
+                      } catch (err: any) {
+                        alert('Failed: ' + err.message);
+                      }
+                      setDedupApplying(false);
+                    }}
+                    disabled={dedupApplying}
+                    className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    {dedupApplying ? <><Loader2 className="h-4 w-4 animate-spin" /> Applying...</> : `Apply ${dedupResults.merges.filter((m: any) => !m._rejected).length} Merges`}
+                  </button>
+                  <button
+                    onClick={() => setDedupResults(null)}
+                    disabled={dedupApplying}
+                    className="px-6 py-2.5 border border-gray-600 text-gray-400 font-bold rounded-lg uppercase tracking-wider hover:border-gray-400 hover:text-gray-200 disabled:opacity-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </>
             )}
 

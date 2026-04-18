@@ -68,10 +68,13 @@ NEVER merge when the names describe DIFFERENT techniques, applications, or subty
 - "Body Language Reading" vs "Body Language Manipulation" = DIFFERENT (reading vs using)
 - "Brainwashing" vs "Brainwashing Through Isolation" vs "Brainwashing through Music" = DIFFERENT (different methods)
 - "Building Rapport" vs "Building Defenses Against Manipulation" = COMPLETELY DIFFERENT
-- "Frame Control" vs "Reframing" = DIFFERENT techniques
+- "Frame Control" vs "Reframing" = DIFFERENT techniques (frame control = maintaining dominance, reframing = changing meaning)
 - "Manipulation" vs "Smoke Screen Manipulation" = DIFFERENT (general vs specific type)
+- "Setting Boundaries" vs "Building Defenses Against Manipulation" = DIFFERENT (specific skill vs broad concept)
+- "Understanding Manipulation" vs "Refusal to Be Manipulated" = DIFFERENT (knowledge vs action)
+- "Love Bombing" vs "Love Flooding" = DIFFERENT (manipulation tactic vs therapy concept)
 
-The test: Would a teacher put these in the SAME chapter or DIFFERENT chapters? If different chapters, do NOT merge.
+The test: Would a psychology professor put these in the EXACT SAME entry in a glossary? If there is ANY meaningful difference in what they describe, do NOT merge. Only merge when the names are interchangeable synonyms for the identical concept.
 
 When in doubt, DO NOT MERGE. It is far better to keep two entries separate than to wrongly merge different techniques.
 
