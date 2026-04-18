@@ -73,13 +73,13 @@ function chunkText(text: string, maxWords: number = 800): string[] {
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const isAdmin = useAdmin();
+  const { isAdmin, adminLoading } = useAdmin();
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!loading && !adminLoading && !isAdmin) {
       router.replace('/app');
     }
-  }, [user, loading, router, isAdmin]);
+  }, [user, loading, adminLoading, router, isAdmin]);
 
   const [uploads, setUploads] = useState<UploadBook[]>([]);
   const [dbBooks, setDbBooks] = useState<DBBook[]>([]);

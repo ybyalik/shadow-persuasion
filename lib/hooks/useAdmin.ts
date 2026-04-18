@@ -5,14 +5,24 @@ import { useAuth } from '@/lib/auth-context';
 import { getAdminEmails } from '@/lib/admin';
 
 export function useAdmin() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
 
   useEffect(() => {
+    if (loading) return;
+    if (!user?.email) {
+      setIsAdmin(false);
+      setAdminLoading(false);
+      return;
+    }
+    setAdminLoading(true);
     getAdminEmails().then(emails => {
-      setIsAdmin(!!user?.email && emails.includes(user.email));
+      setIsAdmin(emails.includes(user.email!));
+    }).finally(() => {
+      setAdminLoading(false);
     });
-  }, [user]);
+  }, [user, loading]);
 
-  return isAdmin;
+  return { isAdmin, adminLoading };
 }

@@ -38,7 +38,7 @@ const difficultyLevels = [
 
 export default function TrainingArenaPage() {
   const { user } = useAuth();
-  const isAdmin = useAdmin();
+  const { isAdmin } = useAdmin();
   const { categories: taxonomyCategories, loading: taxonomyLoading } = useTaxonomy();
 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);

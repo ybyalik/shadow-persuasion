@@ -781,7 +781,7 @@ export default function FieldOpsPage() {
   const [generating, setGenerating] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const isAdmin = useAdmin();
+  const { isAdmin } = useAdmin();
 
   // Fetch user profile for goals, then mission pool with category filter
   useEffect(() => {

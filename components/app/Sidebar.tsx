@@ -24,7 +24,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const isAdmin = useAdmin();
+  const { isAdmin } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

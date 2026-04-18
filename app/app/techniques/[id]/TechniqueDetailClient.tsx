@@ -108,7 +108,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
   const router = useRouter();
   const { user } = useAuth();
   const { categories: taxonomyCategories } = useTaxonomy();
-  const isAdmin = useAdmin();
+  const { isAdmin } = useAdmin();
 
   // Fetch technique data
   useEffect(() => {
