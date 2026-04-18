@@ -21,9 +21,6 @@ Boulder, Colorado
 
 
 
-ewpage
-
-
 # Introduction
 
 ## How To Read This Book
@@ -63,9 +60,6 @@ Your conversations are about to change.
 Nate Harlan
 Boulder, Colorado
 
-
-
-ewpage
 
 
 # Chapter 1
@@ -248,9 +242,6 @@ You get this book.
 
 
 
-ewpage
-
-
 # Chapter 2
 
 ## The Persuasion Detector
@@ -318,15 +309,12 @@ The forty-seven tactics begin in the next chapter.
 *Field note: the detector is already firing in some of you. You are reading this and wondering if you are being persuaded right now by an author who wrote a book about persuasion. If you are asking that question, you already understand the thing this book is about.*
 
 
----
 
 # PART ONE
 
 ## Disable The Detector
 
 *The first thirty seconds of any conversation decide everything.*
-
----
 
 
 # Chapter 3
@@ -415,9 +403,6 @@ Your job in the first thirty seconds is to give the detector nothing to fire on.
 
 *Field note: Kate's wedding, Rachel's booking rate, Eliza's date, my 2018 review. Different stakes, same thirty seconds. Four ways to enter a conversation nobody in the room is braced for.*
 
-
-
-ewpage
 
 
 # Chapter 4
@@ -516,9 +501,6 @@ There is a line often attributed to the advertising legend David Ogilvy: *nothin
 
 
 
-ewpage
-
-
 # Chapter 5
 
 ## Invisible Calibration
@@ -606,15 +588,12 @@ Part One has been about the preconditions for the other kind of persuasion. What
 *Field note: mirroring a posture is a trick. Mirroring language is chemistry. One gets caught. The other gets remembered.*
 
 
----
 
 # PART TWO
 
 ## Plant The Conclusion
 
 *People defend conclusions they reached. They reject conclusions handed to them.*
-
----
 
 
 # Chapter 6
@@ -713,9 +692,6 @@ There is a line often attributed to Che Guevara (his actual authorship is disput
 
 
 
-ewpage
-
-
 # Chapter 7
 
 ## Stories Beat Pitches
@@ -790,9 +766,6 @@ Three tactics. Three ways of getting someone to reach a conclusion without being
 
 *Field note: the best persuaders I know do not sound persuasive. They sound like people who have stories.*
 
-
-
-ewpage
 
 
 # Chapter 8
@@ -891,9 +864,6 @@ These four tactics share one structure. Each uses the listener's own words, prin
 
 *Field note: no one argues with themselves out loud. If you can get the conversation to a place where they are doing that, the rest happens on its own.*
 
-
-
-ewpage
 
 
 # Chapter 9
@@ -1007,15 +977,12 @@ These four tactics close Part Two. They share the property that the listener doe
 *Field note: the best conversations end with the other person thanking you for helping them think clearly, without either of you being able to point to the sentence where the thinking happened.*
 
 
----
 
 # PART THREE
 
 ## Shift The Frame
 
 *When you cannot win the conversation that is being had, change what the conversation is about.*
-
----
 
 
 # Chapter 10
@@ -1106,9 +1073,6 @@ Four tactics. Four ways to stop playing the conversation you cannot win and star
 
 *Field note: the side that names the fight usually wins it.*
 
-
-
-ewpage
 
 
 # Chapter 11
@@ -1203,9 +1167,6 @@ Four tactics. Four things that had been under the surface, now above it. Each on
 
 
 
-ewpage
-
-
 # Chapter 12
 
 ## Changing the Dynamics
@@ -1297,15 +1258,12 @@ Four tactics. Four ways to change the dynamic underneath a conversation when the
 *Field note: some tactics work by adding. The best ones work by removing something nobody even knew was there.*
 
 
----
 
 # PART FOUR
 
 ## Lock In Without Closing
 
 *The sale is lost at the moment it feels won.*
-
----
 
 
 # Chapter 13
@@ -1378,9 +1336,6 @@ Three tactics. Three ways to let the agreement become real without marking it in
 
 *Field note: the sale is lost at the moment it feels won. Most people learn this the expensive way.*
 
-
-
-ewpage
 
 
 # Chapter 14
@@ -1477,9 +1432,6 @@ Four tactics. Four ways to deepen a commitment without asking for more than what
 
 
 
-ewpage
-
-
 # Chapter 15
 
 ## The Last Thing They Hear
@@ -1570,9 +1522,6 @@ The tactics are finished. What remains is how you actually use them.
 
 
 
-ewpage
-
-
 # Chapter 16
 
 ## The Daily Practice
@@ -1647,9 +1596,6 @@ In six months, the tactics will be part of how you talk, and this book will be s
 
 *Field note: eight years later, Dana and I still exchange emails at Christmas. She was the first person to run the counter-tactic on me. I have never forgotten it. You will have your own Dana. Pay attention when you meet her.*
 
-
-
-ewpage
 
 
 # Appendix
@@ -1819,7 +1765,5 @@ For manipulators, liars, gaslighting, narcissists, boundary violations.
 - **Tactic #41: The Waiting Period** (Ch 13). Time is often on your side, not theirs.
 
 
----
 
 *End of Shadow Persuasion, first draft.*
-
