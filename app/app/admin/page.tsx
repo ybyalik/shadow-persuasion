@@ -142,10 +142,12 @@ export default function AdminPage() {
   const [expandedChunk, setExpandedChunk] = useState<string | null>(null);
   const [loadingChunks, setLoadingChunks] = useState(false);
 
-  // Load existing books from DB
+  // Load existing books from DB once admin is confirmed
   useEffect(() => {
-    loadBooks();
-  }, []);
+    if (isAdmin && !adminLoading) {
+      loadBooks();
+    }
+  }, [isAdmin, adminLoading]);
 
   const loadBooks = async () => {
     try {
@@ -154,6 +156,10 @@ export default function AdminPage() {
       if (Array.isArray(data)) setDbBooks(data);
     } catch {}
   };
+
+  const chunkBrowserRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const loadChunks = async (bookTitle: string, page: number = 1) => {
     setLoadingChunks(true);
@@ -460,8 +466,12 @@ export default function AdminPage() {
     taxApi('PUT', { type: 'use_case', id: other.id, sort_order: uc.sort_order });
   };
 
-  if (loading || !isAdmin) {
-    return null;
+  if (loading || adminLoading || !isAdmin) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 text-[#D4A017] animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -823,7 +833,7 @@ export default function AdminPage() {
 
       {/* Chunk Browser */}
       {viewingBook && (
-        <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
+        <div ref={chunkBrowserRef} className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
           <div className="flex items-center justify-between mb-4 gap-2">
             <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider truncate min-w-0">
               Chunks: {viewingBook} ({chunkTotal} total)
