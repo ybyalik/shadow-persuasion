@@ -27,7 +27,25 @@ async function getEmbedding(text: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
+// Cache existing technique names (loaded once per request)
+let cachedTechniqueNames: string[] | null = null;
+
+async function getExistingTechniqueNames(): Promise<string[]> {
+  if (cachedTechniqueNames) return cachedTechniqueNames;
+  try {
+    const { data } = await supabase
+      .from('knowledge_chunks')
+      .select('technique_name');
+    const unique = [...new Set((data || []).map(r => r.technique_name).filter(Boolean))].sort();
+    cachedTechniqueNames = unique;
+    return unique;
+  } catch {
+    return [];
+  }
+}
+
 async function extractMetadata(chunk: string, bookTitle: string, author: string) {
+  const existingNames = await getExistingTechniqueNames();
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -44,7 +62,7 @@ Extract structured metadata from the provided book chunk. Be specific — identi
 
 ## Field definitions
 
-- "technique_name": The specific technique or concept discussed (e.g. "Door-in-the-Face", "Anchoring", "Mirroring"). Use the author's terminology. Only use "General" if the chunk is purely introductory with no identifiable technique.
+- "technique_name": The specific technique or concept discussed. IMPORTANT: Check the EXISTING TECHNIQUES list below first. If the chunk discusses a technique that matches or is very similar to an existing one, USE THE EXISTING NAME exactly. Only create a new name if the technique is genuinely not in the list. Only use "General" if the chunk is purely introductory with no identifiable technique.
 - "technique_id": A URL-safe slug of the technique name (e.g. "door-in-the-face", "anchoring", "mirroring").
 - "category": Classify into exactly one:
     - influence — broad principles of influence (reciprocity, scarcity, authority, social proof, liking, commitment)
@@ -80,8 +98,12 @@ For a chunk about Cialdini's reciprocity principle with a story about free sampl
   "risk_level": "low",
   "related_techniques": ["commitment-and-consistency", "liking-principle", "door-in-the-face"]
 }` },
-        { role: 'user', content: `From "${bookTitle}" by ${author}. Extract metadata as JSON for this chunk:
+        { role: 'user', content: `From "${bookTitle}" by ${author}. Extract metadata as JSON for this chunk.
 
+EXISTING TECHNIQUES (reuse these names when applicable):
+${existingNames.slice(0, 200).join(', ')}
+
+CHUNK TEXT:
 ${chunk.slice(0, 1500)}` }
       ],
       temperature: 0.1,

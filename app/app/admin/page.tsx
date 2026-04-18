@@ -102,6 +102,11 @@ export default function AdminPage() {
   // Attach PDF state
   const [attachingBook, setAttachingBook] = useState<string | null>(null);
 
+  // Dedup state
+  const [dedupLoading, setDedupLoading] = useState(false);
+  const [dedupResults, setDedupResults] = useState<any>(null);
+  const [dedupApplying, setDedupApplying] = useState(false);
+
   // Multi-file upload queue
   const [uploadQueue, setUploadQueue] = useState<QueueItem[]>([]);
   
@@ -839,6 +844,88 @@ export default function AdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* ===== TECHNIQUE DEDUP SECTION ===== */}
+      <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider">Technique Deduplication</h2>
+          <button
+            onClick={async () => {
+              setDedupLoading(true);
+              setDedupResults(null);
+              try {
+                const res = await fetch('/api/admin/dedup-techniques');
+                const data = await res.json();
+                setDedupResults(data);
+              } catch (err: any) {
+                alert('Failed to analyze: ' + err.message);
+              }
+              setDedupLoading(false);
+            }}
+            disabled={dedupLoading || dedupApplying}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold rounded hover:bg-[#E8B030] disabled:opacity-50 transition-colors"
+          >
+            {dedupLoading ? <><Loader2 className="h-3 w-3 animate-spin" /> Analyzing...</> : 'Scan for Duplicates'}
+          </button>
+        </div>
+
+        {!dedupResults && !dedupLoading && (
+          <p className="text-gray-500 text-sm">Click &quot;Scan for Duplicates&quot; to find technique names that should be merged.</p>
+        )}
+
+        {dedupResults && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-gray-500">Total techniques: <strong className="text-gray-300">{dedupResults.totalTechniques}</strong></span>
+              <span className="text-gray-500">Merge groups: <strong className="text-yellow-400">{dedupResults.mergeGroups}</strong></span>
+              <span className="text-gray-500">Variants to merge: <strong className="text-red-400">{dedupResults.variantsToMerge}</strong></span>
+              <span className="text-gray-500">After dedup: <strong className="text-green-400">~{dedupResults.estimatedAfter}</strong></span>
+            </div>
+
+            {dedupResults.merges?.length > 0 && (
+              <>
+                <div className="max-h-80 overflow-y-auto space-y-2">
+                  {dedupResults.merges.map((merge: any, i: number) => (
+                    <div key={i} className="p-3 bg-gray-50 dark:bg-[#222] rounded border border-gray-200 dark:border-[#333] text-sm">
+                      <span className="text-green-400 font-bold">{merge.canonical}</span>
+                      <span className="text-gray-500"> &larr; </span>
+                      <span className="text-gray-400">{merge.variants.filter((v: string) => v !== merge.canonical).join(', ')}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!confirm(`This will merge ${dedupResults.variantsToMerge} variant names into ${dedupResults.mergeGroups} canonical names. Continue?`)) return;
+                    setDedupApplying(true);
+                    try {
+                      const res = await fetch('/api/admin/dedup-techniques', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ merges: dedupResults.merges }),
+                      });
+                      const data = await res.json();
+                      alert(`Done! ${data.chunksUpdated} chunks updated.`);
+                      setDedupResults(null);
+                    } catch (err: any) {
+                      alert('Failed: ' + err.message);
+                    }
+                    setDedupApplying(false);
+                  }}
+                  disabled={dedupApplying}
+                  className="w-full py-2.5 bg-red-600 text-white font-bold rounded-lg uppercase tracking-wider hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  {dedupApplying ? <><Loader2 className="h-4 w-4 animate-spin" /> Applying Merges...</> : `Apply ${dedupResults.mergeGroups} Merges`}
+                </button>
+              </>
+            )}
+
+            {dedupResults.merges?.length === 0 && (
+              <p className="text-green-400 text-sm">No duplicates found. Technique names are clean.</p>
+            )}
           </div>
         )}
       </div>
