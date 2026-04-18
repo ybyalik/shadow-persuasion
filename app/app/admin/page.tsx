@@ -99,6 +99,9 @@ export default function AdminPage() {
   const [statusText, setStatusText] = useState('');
   const [expandedSkipped, setExpandedSkipped] = useState<string | null>(null);
 
+  // Attach PDF state
+  const [attachingBook, setAttachingBook] = useState<string | null>(null);
+
   // Multi-file upload queue
   const [uploadQueue, setUploadQueue] = useState<QueueItem[]>([]);
   
@@ -775,7 +778,7 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-800 dark:text-[#E8E8E0] font-medium">{book.title}</p>
-                      <p className="text-gray-500 text-sm">{book.author} · {book.chunks} chunks</p>
+                      <p className="text-gray-500 text-sm">{book.author} · {book.chunks} chunks{attachingBook === book.title && <span className="text-[#D4A017] ml-2">Uploading PDF...</span>}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       {book.storage_path ? (
@@ -787,6 +790,7 @@ export default function AdminPage() {
                         <button
                           className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors"
                           title="Attach PDF file"
+                          disabled={attachingBook === book.title}
                           onClick={() => {
                             const input = document.createElement('input');
                             input.type = 'file';
@@ -794,6 +798,7 @@ export default function AdminPage() {
                             input.onchange = async () => {
                               const file = input.files?.[0];
                               if (!file) return;
+                              setAttachingBook(book.title);
                               try {
                                 const formData = new FormData();
                                 formData.append('file', file);
@@ -807,12 +812,14 @@ export default function AdminPage() {
                                 }
                               } catch (err: any) {
                                 alert('Upload error: ' + err.message);
+                              } finally {
+                                setAttachingBook(null);
                               }
                             };
                             input.click();
                           }}
                         >
-                          <Upload className="h-4 w-4" />
+                          {attachingBook === book.title ? <Loader2 className="h-4 w-4 animate-spin text-[#D4A017]" /> : <Upload className="h-4 w-4" />}
                         </button>
                       )}
                       <button onClick={() => startEdit(book)}
