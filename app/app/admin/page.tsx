@@ -283,8 +283,32 @@ export default function AdminPage() {
     }, ...prev]);
 
     try {
-      // 1. Extract text FIRST (this is the critical step)
-      setStatusText('Reading file...');
+      // 1. Upload original PDF to storage (with 15s timeout so it doesn't block)
+      setStatusText('Saving original file to storage...');
+      let storagePath: string | null = null;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', bookTitle);
+        formData.append('author', bookAuthor);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData, signal: controller.signal });
+        clearTimeout(timeout);
+        const storageData = await storageRes.json();
+        if (storageData.stored && storageData.storagePath) {
+          storagePath = storageData.storagePath;
+          setStatusText('File saved. Extracting text...');
+        } else {
+          console.warn('[Storage] Upload failed:', storageData.error, storageData.errorDetail);
+          setStatusText(`Storage: ${storageData.error || 'skipped'}. Extracting text...`);
+        }
+      } catch (storageErr: any) {
+        console.warn('[Storage] Upload exception:', storageErr.name === 'AbortError' ? 'timed out after 15s' : storageErr);
+        setStatusText('Storage upload skipped. Extracting text...');
+      }
+
+      // 2. Extract text
       let text = '';
       let pageCount = 0;
 
@@ -300,9 +324,8 @@ export default function AdminPage() {
 
       if (text.length < 100) throw new Error('Could not extract enough text.');
 
-      // 2. Chunk and ingest
+      // 3. Chunk and ingest
       const allChunks = chunkText(text);
-      let storagePath: string | null = null;
       const totalChunks = allChunks.length;
 
       setUploads(prev => prev.map(b =>
@@ -346,25 +369,6 @@ export default function AdminPage() {
           b.id === bookId ? { ...b, chunks: processed, skipped: [...skipped] } : b
         ));
         setStatusText(`Processing: ${processed}/${totalChunks} chunks done${skipped.length > 0 ? ` (${skipped.length} skipped)` : ''}`);
-      }
-
-      // 3. Upload original PDF to storage (best-effort, after ingestion)
-      try {
-        setStatusText('Saving original file...');
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('title', bookTitle);
-        formData.append('author', bookAuthor);
-        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
-        const storageData = await storageRes.json();
-        if (storageData.stored) {
-          setStatusText('File saved to storage.');
-        } else {
-          console.warn('[Storage] Upload failed:', storageData.error, storageData.errorDetail);
-          setStatusText(`File storage skipped: ${storageData.error || 'unknown error'}`);
-        }
-      } catch (storageErr) {
-        console.warn('[Storage] Upload exception:', storageErr);
       }
 
       setUploads(prev => prev.map(b =>
