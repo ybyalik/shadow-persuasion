@@ -6,6 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+export const maxDuration = 60;
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -40,8 +42,7 @@ export async function POST(req: NextRequest) {
       });
 
     if (error) {
-      // If bucket doesn't exist or other storage error, skip storage but don't fail
-      console.error('[UPLOAD-FILE] Storage error (skipping):', error.message);
+      console.error('[UPLOAD-FILE] Storage error:', JSON.stringify({ message: error.message, name: (error as any).name, statusCode: (error as any).statusCode, path: storagePath }));
       return NextResponse.json({
         stored: false,
         storagePath: null,
