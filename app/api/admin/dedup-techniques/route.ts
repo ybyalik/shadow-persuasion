@@ -50,20 +50,34 @@ export async function GET() {
           messages: [
             {
               role: 'system',
-              content: `You are a deduplication expert for a psychology/influence technique database. Given a list of technique names, group ones that are clearly the same concept or very close variants.
+              content: `You are a STRICT deduplication expert for a psychology/influence technique database. Given a list of technique names, group ONLY exact duplicates or trivially different names for the SAME technique.
 
-Rules:
-- Only merge names that refer to the SAME core technique or concept
-- "Anchoring" and "Anchoring Effect" and "Anchoring Technique" = same, merge to "Anchoring"
-- "Gaslighting" and "Gaslighting Manipulation" and "Gaslighting Effect" = same, merge to "Gaslighting"
-- "Body Language" and "Body Language Analysis" = different enough to keep separate
-- "Dark Psychology" and "Dark Psychology Fundamentals" = same, merge to "Dark Psychology"
-- "Dark Psychology" and "Dark NLP" = different, don't merge
-- "Cognitive Dissonance" and "Cognitive Dissonance Management" = same, merge to "Cognitive Dissonance"
-- "Cognitive Dissonance" and "Cognitive Behavioral Therapy" = different, don't merge
-- Choose the shortest, clearest name as the canonical version
-- Generate a URL-safe slug as the canonical ID (lowercase, hyphens)
-- Only include groups that have 2+ names to merge. Don't include singletons.
+## STRICT RULES — READ CAREFULLY
+
+ONLY merge when the names are literally the same technique with slightly different wording:
+- "Anchoring" + "Anchoring Effect" + "Anchoring Technique" = SAME technique, merge to "Anchoring"
+- "Gaslighting" + "Gaslighting Tactics" = SAME technique, merge to "Gaslighting"
+- "Love Bombing" + "Love-Bombing" = SAME technique (just hyphen difference), merge
+
+NEVER merge when the names describe DIFFERENT techniques, applications, or subtypes, even if they share a word:
+- "Gaslighting" vs "Gaslighting Defense" = DIFFERENT (one is the attack, one is the defense)
+- "Smoke Screen Manipulation" vs "Victim Mentality Manipulation" = COMPLETELY DIFFERENT techniques
+- "Covert Manipulation" vs "Covert Hypnosis" vs "Covert Persuasion" = THREE DIFFERENT techniques
+- "Emotional Manipulation" vs "Emotional Intelligence" = DIFFERENT
+- "Dark Triad" vs "Dark Psychology" vs "Dark NLP" = THREE DIFFERENT concepts
+- "Body Language Reading" vs "Body Language Manipulation" = DIFFERENT (reading vs using)
+- "Brainwashing" vs "Brainwashing Through Isolation" vs "Brainwashing through Music" = DIFFERENT (different methods)
+- "Building Rapport" vs "Building Defenses Against Manipulation" = COMPLETELY DIFFERENT
+- "Frame Control" vs "Reframing" = DIFFERENT techniques
+- "Manipulation" vs "Smoke Screen Manipulation" = DIFFERENT (general vs specific type)
+
+The test: Would a teacher put these in the SAME chapter or DIFFERENT chapters? If different chapters, do NOT merge.
+
+When in doubt, DO NOT MERGE. It is far better to keep two entries separate than to wrongly merge different techniques.
+
+Choose the shortest, clearest name as the canonical version.
+Generate a URL-safe slug as the canonical ID (lowercase, hyphens).
+Only include groups that have 2+ names to merge. Don't include singletons.
 
 Respond with JSON: { "merges": [{ "canonical": "Best Name", "canonicalId": "best-name", "variants": ["Variant 1", "Variant 2"] }] }`
             },
