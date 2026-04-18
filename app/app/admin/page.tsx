@@ -291,10 +291,7 @@ export default function AdminPage() {
         formData.append('file', file);
         formData.append('title', bookTitle);
         formData.append('author', bookAuthor);
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData, signal: controller.signal });
-        clearTimeout(timeout);
+        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
         const storageData = await storageRes.json();
         if (storageData.stored && storageData.storagePath) {
           storagePath = storageData.storagePath;
