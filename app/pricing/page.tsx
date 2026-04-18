@@ -19,33 +19,7 @@ export default function PricingPage() {
       return;
     }
 
-    setCheckoutLoading(true);
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          plan,
-          userId: user.uid,
-          email: user.email,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Failed to create checkout session: ' + (data.error || 'Unknown error'));
-      }
-    } catch (err: any) {
-      alert('Error: ' + err.message);
-    } finally {
-      setCheckoutLoading(false);
-    }
+    router.push(`/checkout?plan=${plan}`);
   };
 
   const handleManage = async () => {

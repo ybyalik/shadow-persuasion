@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.2.0",
+    "@stripe/stripe-js": "^9.2.0",
     "@supabase/supabase-js": "^2.100.1",
     "ai": "^6.0.140",
     "firebase": "^12.11.0",
