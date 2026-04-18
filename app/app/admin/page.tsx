@@ -778,11 +778,34 @@ export default function AdminPage() {
                       <p className="text-gray-500 text-sm">{book.author} · {book.chunks} chunks</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      {book.storage_path && (
+                      {book.storage_path ? (
                         <button onClick={() => handleDownload(book)}
                           className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors" title="Download original file">
                           <Download className="h-4 w-4" />
                         </button>
+                      ) : (
+                        <label className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors cursor-pointer" title="Attach PDF file">
+                          <Upload className="h-4 w-4" />
+                          <input type="file" accept=".pdf" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              formData.append('bookTitle', book.title);
+                              const res = await fetch('/api/admin/upload-file', { method: 'PUT', body: formData });
+                              const data = await res.json();
+                              if (data.stored) {
+                                loadBooks();
+                              } else {
+                                alert('Upload failed: ' + (data.error || 'unknown error'));
+                              }
+                            } catch (err: any) {
+                              alert('Upload error: ' + err.message);
+                            }
+                            e.target.value = '';
+                          }} />
+                        </label>
                       )}
                       <button onClick={() => startEdit(book)}
                         className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors" title="Edit book">

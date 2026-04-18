@@ -30,8 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'file and title are required' }, { status: 400 });
     }
 
-    const titleSlug = slugify(title);
-    const storagePath = `${titleSlug}/${file.name}`;
+    const storagePath = file.name;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -65,6 +64,43 @@ export async function POST(req: NextRequest) {
       storagePath: null,
       error: error.message || 'Upload failed',
     });
+  }
+}
+
+// PUT: Attach a PDF to an existing book (upload + update storage_path on chunks)
+export async function PUT(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get('file') as File | null;
+    const bookTitle = formData.get('bookTitle') as string | null;
+
+    if (!file || !bookTitle) {
+      return NextResponse.json({ error: 'file and bookTitle are required' }, { status: 400 });
+    }
+
+    const storagePath = file.name;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { data, error } = await supabase.storage
+      .from('books')
+      .upload(storagePath, buffer, {
+        contentType: file.type || 'application/pdf',
+        upsert: true,
+      });
+
+    if (error) {
+      return NextResponse.json({ stored: false, error: error.message }, { status: 500 });
+    }
+
+    // Update storage_path on all chunks for this book
+    await supabase
+      .from('knowledge_chunks')
+      .update({ storage_path: data.path })
+      .eq('book_title', bookTitle);
+
+    return NextResponse.json({ stored: true, storagePath: data.path });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
