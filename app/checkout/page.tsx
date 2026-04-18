@@ -3,6 +3,7 @@
 import { useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
+import Footer from '@/app/(marketing)/homepage-components/Footer';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { CheckCircle, Shield, Clock, Zap, ArrowLeft, Lock, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -65,10 +66,10 @@ function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#F4ECD8]">
       {/* Minimal header — no navigation, distraction-free */}
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-4">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div />
-          <img src="/logo.png" alt="Shadow Persuasion" className="h-8" />
+          <img src="/logo.png" alt="Shadow Persuasion" className="h-12" />
           <div className="flex items-center gap-1 text-xs text-[#6B5B3E]">
             <Lock className="h-3 w-3" /> Secure Checkout
           </div>
@@ -76,7 +77,7 @@ function CheckoutPage() {
       </div>
 
       {/* Progress indicator */}
-      <div className="max-w-6xl mx-auto px-4 md:px-8 mb-6">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 mb-10 mt-4">
         <div className="flex items-center justify-center gap-3 text-xs font-mono">
           <span className="flex items-center gap-1.5 text-[#D4A017]"><span className="w-5 h-5 rounded-full bg-[#D4A017] text-[#0A0A0A] flex items-center justify-center font-bold">1</span> Choose Plan</span>
           <span className="w-8 h-px bg-[#D4A017]" />
@@ -209,6 +210,8 @@ function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { PricingPlans } from '@/components/app/PricingPlans';
 import { useSubscription } from '@/lib/subscription';
 import Link from 'next/link';
+import Footer from '@/app/(marketing)/homepage-components/Footer';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -60,6 +61,8 @@ export default function PricingPage() {
           currentPlan={isActive ? subscription?.plan : undefined}
         />
       </div>
+
+      <Footer />
     </div>
   );
 }
