@@ -359,9 +359,12 @@ export default function AdminPage() {
         const storageData = await storageRes.json();
         if (storageData.stored) {
           setStatusText('File saved to storage.');
+        } else {
+          console.warn('[Storage] Upload failed:', storageData.error, storageData.errorDetail);
+          setStatusText(`File storage skipped: ${storageData.error || 'unknown error'}`);
         }
-      } catch {
-        // Storage is best-effort, don't fail the upload
+      } catch (storageErr) {
+        console.warn('[Storage] Upload exception:', storageErr);
       }
 
       setUploads(prev => prev.map(b =>

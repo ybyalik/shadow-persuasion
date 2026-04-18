@@ -44,11 +44,13 @@ export async function POST(req: NextRequest) {
       });
 
     if (error) {
-      console.error('[UPLOAD-FILE] Storage error:', JSON.stringify({ message: error.message, name: (error as any).name, statusCode: (error as any).statusCode, path: storagePath }));
+      const errorDetail = { message: error.message, name: (error as any).name, statusCode: (error as any).statusCode, cause: (error as any).cause, path: storagePath, bufferSize: buffer.length };
+      console.error('[UPLOAD-FILE] Storage error:', JSON.stringify(errorDetail));
       return NextResponse.json({
         stored: false,
         storagePath: null,
         error: error.message,
+        errorDetail,
       });
     }
 
