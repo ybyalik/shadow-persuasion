@@ -784,28 +784,36 @@ export default function AdminPage() {
                           <Download className="h-4 w-4" />
                         </button>
                       ) : (
-                        <label className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors cursor-pointer" title="Attach PDF file">
-                          <Upload className="h-4 w-4" />
-                          <input type="file" accept=".pdf" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append('file', file);
-                              formData.append('bookTitle', book.title);
-                              const res = await fetch('/api/admin/upload-file', { method: 'PUT', body: formData });
-                              const data = await res.json();
-                              if (data.stored) {
-                                loadBooks();
-                              } else {
-                                alert('Upload failed: ' + (data.error || 'unknown error'));
+                        <button
+                          className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors"
+                          title="Attach PDF file"
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = '.pdf';
+                            input.onchange = async () => {
+                              const file = input.files?.[0];
+                              if (!file) return;
+                              try {
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                formData.append('bookTitle', book.title);
+                                const res = await fetch('/api/admin/upload-file', { method: 'PUT', body: formData });
+                                const data = await res.json();
+                                if (data.stored) {
+                                  loadBooks();
+                                } else {
+                                  alert('Upload failed: ' + (data.error || 'unknown error'));
+                                }
+                              } catch (err: any) {
+                                alert('Upload error: ' + err.message);
                               }
-                            } catch (err: any) {
-                              alert('Upload error: ' + err.message);
-                            }
-                            e.target.value = '';
-                          }} />
-                        </label>
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </button>
                       )}
                       <button onClick={() => startEdit(book)}
                         className="p-2 text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors" title="Edit book">
