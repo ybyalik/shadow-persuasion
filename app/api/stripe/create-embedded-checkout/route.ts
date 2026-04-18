@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get('origin') || 'https://shadowpersuasion.com';
 
     const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded',
+      ui_mode: 'embedded_page',
       mode: 'subscription',
       line_items: [{
         price_data: {
