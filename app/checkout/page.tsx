@@ -49,7 +49,10 @@ function CheckoutPage() {
       body: JSON.stringify({ plan: selectedPlan }),
     });
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    if (data.error) {
+      console.error('Checkout error:', data);
+      throw new Error(data.error);
+    }
     return data.clientSecret;
   }, [selectedPlan, checkoutKey]);
 

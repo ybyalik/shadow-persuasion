@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (err: any) {
-    console.error('[STRIPE EMBEDDED-CHECKOUT]', err?.message || err);
-    return NextResponse.json({ error: err?.message || 'Failed to create checkout' }, { status: 500 });
+    const msg = err?.message || String(err);
+    const code = err?.code || err?.type || 'unknown';
+    console.error('[STRIPE EMBEDDED-CHECKOUT]', JSON.stringify({ message: msg, code, type: err?.type, statusCode: err?.statusCode }));
+    return NextResponse.json({ error: msg, code }, { status: 500 });
   }
 }
