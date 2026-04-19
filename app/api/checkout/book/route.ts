@@ -90,6 +90,19 @@ export async function POST(req: Request) {
       // Non-fatal: the webhook can still create the order later.
     }
 
+    // Link the checkout lead (if exists) to the Stripe PaymentIntent so the
+    // webhook + admin can correlate lead → order after payment succeeds.
+    await supabase
+      .from('checkout_leads')
+      .update({
+        stripe_payment_intent_id: intent.id,
+        order_id: order?.id ?? null,
+        // don't overwrite terminal statuses like converted/recovered
+      })
+      .eq('email', email)
+      .eq('funnel', 'book_checkout')
+      .not('status', 'in', '("converted","recovered")');
+
     return NextResponse.json({
       clientSecret: intent.client_secret,
       orderId: order?.id ?? null,

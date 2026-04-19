@@ -122,6 +122,30 @@ export default function BookCheckoutPage() {
   const bumpCents = 1700;
   const total = bookCents + (includeBump ? bumpCents : 0);
 
+  // ── Lead capture (cart abandonment recovery) ──
+  // Debounced POST to /api/checkout/lead whenever the email becomes a valid
+  // address. Also re-fires when bump toggles so the lead row reflects the
+  // intended order. Idempotent on email+funnel.
+  useEffect(() => {
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+    const t = setTimeout(() => {
+      fetch('/api/checkout/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmed,
+          firstName: name.trim() || undefined,
+          includeBump,
+          funnel: 'book_checkout',
+        }),
+      }).catch(() => {
+        // Silent. Don't block checkout if capture fails.
+      });
+    }, 800); // 800ms debounce — lets the user finish typing
+    return () => clearTimeout(t);
+  }, [email, name, includeBump]);
+
   async function initCheckout(e: React.FormEvent) {
     e.preventDefault();
     setInitErr(null);
@@ -179,12 +203,38 @@ export default function BookCheckoutPage() {
 
   return (
     <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A] min-h-screen`}>
-      {/* Top bar */}
-      <div className="bg-black text-[#F4ECD8] py-2.5 text-center text-xs md:text-sm font-mono uppercase tracking-wider">
-        🔒  Secure Checkout · 30-Day Money-Back Guarantee
+      {/* ═════════ MINIMAL HEADER: logo + secure badge ═════════ */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-6 pb-4">
+        <div className="flex items-center justify-between">
+          <div className="w-28 md:w-36" /> {/* spacer for centering */}
+          <img src="/logo.png" alt="Shadow Persuasion" className="h-10 md:h-12" />
+          <div className="flex items-center gap-1 text-xs text-[#6B5B3E] w-28 md:w-36 justify-end">
+            <Lock className="h-3 w-3" /> Secure Checkout
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10 md:py-16 grid md:grid-cols-2 gap-8 md:gap-12">
+      {/* ═════════ STEPS INDICATOR ═════════ */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 mb-8 md:mb-10">
+        <div className="flex items-center justify-center gap-3 text-xs font-mono flex-wrap">
+          <span className="flex items-center gap-1.5 text-[#D4A017]">
+            <span className="w-5 h-5 rounded-full bg-[#D4A017] text-[#0A0A0A] flex items-center justify-center font-bold">1</span>
+            Review Order
+          </span>
+          <span className="w-8 h-px bg-[#D4A017]" />
+          <span className="flex items-center gap-1.5 text-[#D4A017] font-bold">
+            <span className="w-5 h-5 rounded-full bg-[#D4A017] text-[#0A0A0A] flex items-center justify-center font-bold">2</span>
+            Payment
+          </span>
+          <span className="w-8 h-px bg-gray-400" />
+          <span className="flex items-center gap-1.5 text-gray-400">
+            <span className="w-5 h-5 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">3</span>
+            Start Reading
+          </span>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 pb-12 grid md:grid-cols-2 gap-8 md:gap-12">
         {/* LEFT — order summary */}
         <section>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">

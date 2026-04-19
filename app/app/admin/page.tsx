@@ -10,6 +10,7 @@ import Link from 'next/link';
 import {
   Users,
   ShoppingBag,
+  UserPlus,
   BookOpen,
   Shuffle,
   FolderTree,
@@ -123,6 +124,12 @@ export default function AdminDashboardPage() {
             icon={ShoppingBag}
             title="Orders"
             body="Every one-time purchase, order bump + upsell tracking, refund actions."
+          />
+          <NavCard
+            href="/app/admin/leads"
+            icon={UserPlus}
+            title="Leads"
+            body="Checkout leads captured pre-payment, cart abandonment sequence, recovery stats."
           />
           <NavCard
             href="/app/admin/books"

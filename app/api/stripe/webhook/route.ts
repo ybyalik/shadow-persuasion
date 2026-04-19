@@ -304,6 +304,47 @@ export async function POST(req: NextRequest) {
             console.error('[STRIPE WEBHOOK] Delivery email failed:', result.error);
           }
         }
+
+        // Mark the checkout lead as converted (or recovered if recovery emails
+        // had been sent prior). For book funnel, match by email + funnel;
+        // for upsell funnel there's no lead row so this is a no-op.
+        if (funnel === 'book_checkout' && email) {
+          const { data: lead } = await supabase
+            .from('checkout_leads')
+            .select('id, recovery_emails, status')
+            .eq('email', email.toLowerCase())
+            .eq('funnel', 'book_checkout')
+            .maybeSingle();
+
+          if (lead) {
+            const recoveryEmailsSent = Array.isArray(lead.recovery_emails)
+              ? lead.recovery_emails.length
+              : 0;
+            const newStatus = recoveryEmailsSent > 0 ? 'recovered' : 'converted';
+            // Figure out which recovery email step closed the sale (if any
+            // was sent in the last 48h before conversion).
+            let recoveredByStep: number | null = null;
+            if (recoveryEmailsSent > 0) {
+              const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+              const recent = (lead.recovery_emails as Array<{ step: number; sent_at: string }>).filter(
+                (r) => r.sent_at && new Date(r.sent_at).getTime() >= cutoff
+              );
+              if (recent.length > 0) {
+                recoveredByStep = recent[recent.length - 1].step;
+              }
+            }
+
+            await supabase
+              .from('checkout_leads')
+              .update({
+                status: newStatus,
+                converted_at: new Date().toISOString(),
+                recovered_by_email_step: recoveredByStep,
+                stripe_payment_intent_id: intent.id,
+              })
+              .eq('id', lead.id);
+          }
+        }
         break;
       }
 
