@@ -121,52 +121,56 @@ def extract_toc_entries(text):
 def build_document():
     doc = Document()
 
-    # Page setup for all sections — 6x9 book trim
-    for section in doc.sections:
-        section.page_width = Inches(6)
-        section.page_height = Inches(9)
-        # Slightly larger top margin so header sits higher AND body has more breathing room
-        section.left_margin = Inches(0.75)
-        section.right_margin = Inches(0.75)
-        section.top_margin = Inches(1.1)
-        section.bottom_margin = Inches(0.9)
-        # Pull header close to top edge (logo sits high on page, well above body)
-        section.header_distance = Inches(0.3)
-        section.footer_distance = Inches(0.4)
+    # =========== SECTION 1: COVER PAGE ===========
+    # Zero margins so the image fills the entire 6x9 page edge-to-edge.
+    cover_section = doc.sections[0]
+    cover_section.page_width = Inches(6)
+    cover_section.page_height = Inches(9)
+    cover_section.top_margin = Inches(0)
+    cover_section.bottom_margin = Inches(0)
+    cover_section.left_margin = Inches(0)
+    cover_section.right_margin = Inches(0)
+    cover_section.header_distance = Inches(0)
+    cover_section.footer_distance = Inches(0)
 
-    section = doc.sections[0]
-    # Cover has no header/footer
-    section.different_first_page_header_footer = True
-
-    # =========== COVER PAGE — full-page image ===========
+    # Add the full-bleed cover image
     cover_p = doc.add_paragraph()
-    cover_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    cover_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
     cover_p.paragraph_format.space_before = Pt(0)
     cover_p.paragraph_format.space_after = Pt(0)
+    cover_p.paragraph_format.line_spacing = 1.0
+    cover_p.paragraph_format.left_indent = Inches(0)
+    cover_p.paragraph_format.right_indent = Inches(0)
+    cover_p.paragraph_format.first_line_indent = Inches(0)
     run = cover_p.add_run()
-    # The cover image is 6x9 at 300dpi. Embed it at the full content width
-    # of the page (6 inches minus margins), scaling proportionally.
-    # Using 6.5" width pushes it slightly into margins to feel edge-to-edge.
-    run.add_picture(str(COVER_IMAGE), width=Inches(6.5))
+    # Exact 6 x 9 inches fills the entire page
+    run.add_picture(str(COVER_IMAGE), width=Inches(6), height=Inches(9))
 
-    # Force next content to new page
-    pb = doc.add_paragraph()
-    pb.paragraph_format.space_after = Pt(0)
-    insert_page_break(pb)
+    # =========== SECTION 2: BODY (new section starting on new page) ===========
+    body_section = doc.add_section(WD_SECTION_START.NEW_PAGE)
+    body_section.page_width = Inches(6)
+    body_section.page_height = Inches(9)
+    body_section.top_margin = Inches(1.1)
+    body_section.bottom_margin = Inches(0.9)
+    body_section.left_margin = Inches(0.75)
+    body_section.right_margin = Inches(0.75)
+    body_section.header_distance = Inches(0.3)
+    body_section.footer_distance = Inches(0.4)
 
-    # =========== HEADER / FOOTER for all subsequent pages ===========
-    # Default header (appears on every non-first page of section)
-    header = section.header
-    header_para = header.paragraphs[0]
+    # Unlink body section's header/footer from cover section's
+    body_section.header.is_linked_to_previous = False
+    body_section.footer.is_linked_to_previous = False
+
+    # Body section header: logo right-aligned, near top edge
+    header_para = body_section.header.paragraphs[0]
     header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     header_para.paragraph_format.space_before = Pt(0)
     header_para.paragraph_format.space_after = Pt(0)
     hrun = header_para.add_run()
     hrun.add_picture(str(LOGO), width=Inches(0.9))
 
-    # Default footer
-    footer = section.footer
-    footer_para = footer.paragraphs[0]
+    # Body section footer: centered page number
+    footer_para = body_section.footer.paragraphs[0]
     footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     add_page_number(footer_para)
 

@@ -31,9 +31,8 @@ def main():
 
     # Load fonts
     title_font = ImageFont.truetype(str(FONT), 120)      # SHADOW PERSUASION
-    subtitle_font = ImageFont.truetype(str(FONT), 44)    # subtitle lines
-    author_font = ImageFont.truetype(str(FONT), 52)      # NATE HARLAN
-    tag_font = ImageFont.truetype(str(FONT), 28)         # small tagline
+    subtitle_font = ImageFont.truetype(str(FONT), 68)    # subtitle lines (bigger)
+    author_font = ImageFont.truetype(str(FONT), 56)      # NATE HARLAN
 
     # ---------- LOGO ----------
     logo = Image.open(str(LOGO)).convert("RGBA")
@@ -64,27 +63,21 @@ def main():
         fill=TEXT_ACCENT
     )
 
-    # ---------- SUBTITLE (three lines) ----------
+    # ---------- SUBTITLE (four lines, larger) ----------
     subtitle_lines = [
         "The 47 Counterintuitive",
-        "Conversation Tactics That Make People",
-        "Say Yes Without Realizing Why",
+        "Conversation Tactics",
+        "That Make People Say Yes",
+        "Without Realizing Why",
     ]
-    sub_y = rule_y + 80
+    sub_y = rule_y + 90
+    line_spacing = 98
     for line in subtitle_lines:
         line_bbox = draw.textbbox((0, 0), line, font=subtitle_font)
         line_w = line_bbox[2] - line_bbox[0]
         line_x = (WIDTH - line_w) // 2
         draw.text((line_x, sub_y), line, fill=TEXT_SECONDARY, font=subtitle_font)
-        sub_y += 68
-
-    # ---------- CLASSIFICATION TAG (small, near bottom) ----------
-    tag_text = "FIELD MANUAL  //  117 PAGES  //  47 TACTICS"
-    tag_bbox = draw.textbbox((0, 0), tag_text, font=tag_font)
-    tag_w = tag_bbox[2] - tag_bbox[0]
-    tag_x = (WIDTH - tag_w) // 2
-    tag_y = HEIGHT - 420
-    draw.text((tag_x, tag_y), tag_text, fill=TEXT_SECONDARY, font=tag_font)
+        sub_y += line_spacing
 
     # ---------- AUTHOR (bottom) ----------
     author_text = "NATE HARLAN"
