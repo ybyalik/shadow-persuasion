@@ -13,14 +13,13 @@ import {
   ArrowRight,
   CheckCircle,
   Shield,
-  Star,
   AlertTriangle,
   ChevronDown,
   Lock,
   Zap,
-  BookOpen,
-  Headphones,
-  MessageSquare,
+  ChevronsRight,
+  Briefcase,
+  Eye,
   Sparkles,
 } from 'lucide-react';
 
@@ -126,15 +125,12 @@ function Testimonial({
 }
 
 /* ─────────────── Bullet for "what you'll discover" ─────────────── */
-function DiscoveryBullet({ children, page }: { children: React.ReactNode; page: number }) {
+function DiscoveryBullet({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 py-3 border-b border-[#5C3A1E]/15 last:border-b-0">
       <CheckCircle className="h-5 w-5 text-[#D4A017] shrink-0 mt-0.5" />
       <div className="flex-1">
         <p className="text-base md:text-lg leading-relaxed text-[#1A1A1A]">{children}</p>
-        <p className="text-xs font-mono uppercase tracking-wider text-[#5C3A1E] mt-1">
-          All Explained On Page {page}
-        </p>
       </div>
     </div>
   );
@@ -205,7 +201,7 @@ export default function BookFunnelPage() {
     <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A] overflow-x-hidden`}>
       {/* ═════════ TOP BANNER — urgency strip ═════════ */}
       <div className="bg-black text-[#F4ECD8] py-2.5 text-center text-xs md:text-sm font-mono uppercase tracking-wider">
-        ⚠  Limited Time: Get The 217-Page Book For <span className="text-[#D4A017]">$7</span> (Normally $47) — <a href="#order" className="underline hover:text-[#D4A017]">Claim Now →</a>
+        ⚠  Limited Time: Get The Field Manual For <span className="text-[#D4A017]">$7</span> (Normally $47) — <a href="#order" className="underline hover:text-[#D4A017]">Claim Now →</a>
       </div>
 
       {/* ═════════ 1. HERO ═════════ */}
@@ -221,7 +217,7 @@ export default function BookFunnelPage() {
           </p>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-6">
-            New 217-Page Book Reveals The{' '}
+            New Field Manual Reveals The{' '}
             <span className="text-[#D4A017]">47 Counterintuitive Conversation Tactics</span>{' '}
             That Make People Say <HL>Yes Without Realizing Why</HL>
           </h1>
@@ -248,7 +244,7 @@ export default function BookFunnelPage() {
                     That make people say yes without realizing why
                   </p>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-[#D4A017]">
-                    [217 Pages]
+                    [Field Manual]
                   </p>
                 </div>
                 <div className="absolute -top-4 -right-4 bg-[#D4A017] text-black px-3 py-1 font-mono text-xs uppercase tracking-wider font-bold border-2 border-black rotate-12">
@@ -303,13 +299,14 @@ export default function BookFunnelPage() {
           </div>
           <div className="bg-white border-2 border-[#5C3A1E]/40 p-6 md:p-8 shadow-[8px_8px_0_0_rgba(0,0,0,0.10)]">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#5C3A1E] border-b border-[#5C3A1E]/30 pb-3 mb-5">
-              How It Works // 3 Steps
+              How It Works // 4 Parts
             </p>
-            <ol className="space-y-5">
+            <ol className="space-y-4">
               {[
-                { n: '01', title: 'Disable The Persuasion Detector', body: 'In the first 30 seconds, turn off the listener\'s "I\'m being sold" alarm.' },
-                { n: '02', title: 'Plant The Conclusion They Reach Themselves', body: 'Structure the conversation so they think your idea was their idea.' },
-                { n: '03', title: 'Lock In Without Closing', body: 'Exit in a way that prevents reversal — without using a single visible "closing" move.' },
+                { n: '01', title: 'Disable The Detector', body: 'In the first 30 seconds, turn off the listener\'s "I\'m being sold" alarm.' },
+                { n: '02', title: 'Plant The Conclusion', body: 'Structure the conversation so they reach your outcome on their own.' },
+                { n: '03', title: 'Shift The Frame', body: 'When you can\'t win the conversation being had, quietly change what it\'s about.' },
+                { n: '04', title: 'Lock In Without Closing', body: 'Exit in a way that prevents reversal — without any visible "closing" move.' },
               ].map((s) => (
                 <li key={s.n} className="flex gap-4">
                   <span className="font-mono text-3xl font-black text-[#D4A017] leading-none">{s.n}</span>
@@ -352,7 +349,7 @@ export default function BookFunnelPage() {
 
         <p>
           Would it surprise you to learn that I went from <HL>losing 90% of my important conversations</HL> to winning
-          almost every one I walk into — using the information revealed in this 217-page book?
+          almost every one I walk into — using the information revealed in this field manual?
         </p>
         <p>Skeptical?</p>
         <p>You should be.</p>
@@ -564,34 +561,39 @@ export default function BookFunnelPage() {
         <OrderBox />
       </section>
 
-      {/* ═════════ 11. THE 3-STEP SYSTEM (BIG) ═════════ */}
+      {/* ═════════ 11. THE 4-PART SYSTEM (BIG) ═════════ */}
       <section className="px-6 py-16 md:py-24 max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// THE SYSTEM //</p>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight">
-            Here&apos;s The Exact <span className="text-[#D4A017]">3-Step System</span> Revealed In The Book
+            Here&apos;s The Exact <span className="text-[#D4A017]">4-Part System</span> Revealed In The Book
           </h2>
           <p className="text-base md:text-lg text-[#3B2E1A] mt-4 max-w-2xl mx-auto">
             For winning almost any high-stakes conversation — without the other person ever knowing you tried.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
           {[
             {
               n: '01',
-              title: 'Disable The Persuasion Detector',
-              body: 'The first 30 seconds determine whether they treat your words as collaborative — or as sales. The exact opening pattern is on Page 14.',
+              title: 'Disable The Detector',
+              body: 'The first 30 seconds determine whether they treat your words as collaborative — or as sales. Ten tactics for getting the detector quiet before you say anything that matters.',
             },
             {
               n: '02',
-              title: 'Plant The Conclusion They Reach Themselves',
-              body: 'Structure the conversation so they arrive at your desired outcome on their own. People defend conclusions they reached themselves. Page 47.',
+              title: 'Plant The Conclusion',
+              body: 'Structure the conversation so they arrive at your desired outcome on their own. People defend conclusions they reached themselves. Fourteen tactics for the middle of any high-stakes conversation.',
             },
             {
               n: '03',
+              title: 'Shift The Frame',
+              body: 'Sometimes you cannot win the conversation being had. You have to quietly change what it\'s about. Twelve tactics for reframing the entire discussion without the other person noticing it happened.',
+            },
+            {
+              n: '04',
               title: 'Lock In Without Closing',
-              body: 'Exit the conversation in a way that prevents reversal — without using any of the obvious "closing" moves. Page 188.',
+              body: 'Exit in a way that prevents reversal — without using any of the obvious "closing" moves. Eleven tactics for the last thirty seconds of any important exchange.',
             },
           ].map((s) => (
             <div
@@ -640,40 +642,40 @@ export default function BookFunnelPage() {
             Here&apos;s What Else You&apos;ll Discover Inside <em>Shadow Persuasion</em>
           </h2>
           <p className="text-base md:text-lg text-[#3B2E1A] mt-4">
-            217 pages. 47 tactics. Every page-numbered.
+            47 tactics. 4 Parts. No filler.
           </p>
         </div>
 
         <div className="bg-white border-2 border-[#5C3A1E]/40 p-6 md:p-10 shadow-[8px_8px_0_0_rgba(0,0,0,0.10)]">
           {[
-            { p: 14, t: 'How to Disable Anyone\'s Persuasion Detector In The First 30 Seconds Of A Conversation (so they treat everything you say next as collaborative, not sales)' },
-            { p: 22, t: 'The Counterintuitive Reason "Building Rapport" Actually Costs You Influence (and what to do instead)' },
-            { p: 31, t: 'The Secret Behind Why Smart People Are Easier To Persuade Than Dumb People (it\'s the opposite of what every other book teaches)' },
-            { p: 38, t: 'How Trying To Sound Confident Quietly Destroys Your Credibility (and the "low-status opening" elite negotiators use instead)' },
-            { p: 47, t: 'The Step-By-Step Process To Make Anyone Reach YOUR Conclusion On Their Own (so they defend it later as if it were their idea)' },
-            { p: 56, t: 'The Little-Known "Three Word" Phrase That Ends Almost Any Argument Without Either Person Backing Down' },
-            { p: 63, t: 'Why Asking Open-Ended Questions Is A Trap (every coach teaches it; it\'s wrong; here\'s what works)' },
-            { p: 71, t: 'The "Inverse Anchor" — how to win price negotiations by NEVER mentioning a number first' },
-            { p: 80, t: 'How To Get Promoted Without Ever Asking For A Promotion (Tactic #14, used quietly by 80% of mid-career executives)' },
-            { p: 88, t: 'The "Strategic Pause" — why a single 4-second silence does more for your influence than any technique on the market' },
-            { p: 96, t: 'The Counterintuitive Way To Handle Manipulators Without Confrontation (so they back off without ever realizing you saw what they were doing)' },
-            { p: 104, t: 'Why "Mirroring" Backfires On Anyone Smarter Than A Toddler — and the subtle alternative that works on everyone' },
-            { p: 113, t: 'How To End A Toxic Relationship In One 12-Minute Conversation (Tactic #23 — used carefully)' },
-            { p: 121, t: 'The Single Word That Makes People Believe You\'re "On Their Side" (without you having to actually agree with anything)' },
-            { p: 130, t: 'Why Deploying Cialdini\'s "Scarcity" Principle Now Marks You As An Amateur (and the modern alternative that still works)' },
-            { p: 139, t: 'The Quietest Way To Take Control Of A Meeting Without Speaking First Or Loudest' },
-            { p: 147, t: 'How To Make A "Yes" Stick — the post-agreement pattern that prevents the other person from changing their mind 24 hours later' },
-            { p: 156, t: 'The Real Reason Most Sales Reps Hit Their Quota Once And Never Again (it\'s a Shadow Persuasion failure, not a sales failure)' },
-            { p: 164, t: 'How To Get An Apology From Someone Who Will Never Admit They Were Wrong (Tactic #34)' },
-            { p: 172, t: 'The "Reverse Reveal" — how to get someone to volunteer information they\'d never share if you asked directly' },
-            { p: 180, t: 'Why "Powerful Body Language" Books Are Costing You Authority (and the 3 micro-postures that actually work)' },
-            { p: 188, t: 'The Last-Word Tactic — how to end every important conversation in a position of strength without sounding aggressive' },
-            { p: 196, t: 'How To Spot When Someone Is Running A Visible Tactic On You — and the elegant counter that makes them feel exposed without you having to say a word' },
-            { p: 204, t: 'The Long-Game Reputation System — what to do over 90 days so people start saying yes to you before you even ask' },
-            { p: 211, t: 'The Shadow Persuader\'s Daily Practice — the 7-minute morning routine that makes all 47 tactics second nature within 30 days' },
-          ].map((b) => (
-            <DiscoveryBullet key={b.p} page={b.p}>
-              {b.t}
+            'How To Disable Anyone\'s Persuasion Detector In The First 30 Seconds Of A Conversation (so they treat everything you say next as collaborative, not sales)',
+            'The Counterintuitive "Cold Open" That Gets You An Audience With Anyone — Even People Who Normally Screen You Out',
+            'Why "Building Rapport" Is The Most Damaging Thing You Can Do In The First Five Minutes (and the invisible alternative that builds real trust)',
+            'The Exact Opening That Disarms A Hostile Boss, Client, Partner, Or Family Member Before They Can Attack',
+            'How Trying To Sound Confident Quietly Destroys Your Credibility (and the "low-status opening" elite negotiators use instead)',
+            'The Step-By-Step Path To Make Anyone Reach YOUR Conclusion On Their Own (so they defend it later as if it were their idea)',
+            'The "Strategic Pause" — Why A Single 4-Second Silence Does More For Your Influence Than Any Technique On The Market',
+            'How To Use Someone\'s Own Words Against Their Resistance — Without Them Ever Noticing',
+            'The Counterintuitive Way To Handle Manipulators Without Confrontation (so they back off without ever realizing you saw what they were doing)',
+            'How To End A Two-Year Recurring Fight In One 12-Minute Conversation',
+            'Why "Mirroring" Backfires On Anyone Smarter Than A Toddler — And The Subtle Alternative That Works On Everyone',
+            'The Single Word That Makes People Believe You Are "On Their Side" (without you having to actually agree with anything)',
+            'How To Spot When Someone Is Running A Visible Tactic On You — And The Elegant Counter That Makes Them Feel Exposed Without You Having To Say A Word',
+            'Why Deploying Cialdini\'s Principles Now Marks You As An Amateur (and the modern versions sophisticated listeners still fall for)',
+            'The Quietest Way To Take Control Of A Meeting Without Speaking First Or Loudest',
+            'How To Make A "Yes" Stick — The Post-Agreement Pattern That Prevents The Other Person From Changing Their Mind 24 Hours Later',
+            'The "Reverse Qualifier" That Makes Prospects, Dates, And Bosses Chase You Instead',
+            'How To Win A Price Negotiation Without Naming The First Number',
+            'The "Timeline Compression" Move That Ends A Three-Week Stalemate In A Single Email',
+            'How To Get An Apology From Someone Who Will Never Admit They Were Wrong',
+            'The One-Line Email Move That Cuts Post-Deal Reversal Rates From 31% Down To 4%',
+            'The "Volcano" Technique — How To Let A Manipulator\'s Primary Tactic Stop Working Against You Without Any Confrontation',
+            'The Last-Word Exit — How To End Every Important Conversation In A Position Of Strength Without Sounding Aggressive',
+            'The Hidden Cost Move That Collapses Someone\'s Bad Decision Before You Ever Have To Argue Against It',
+            'The 7-Minute Daily Practice That Makes All 47 Tactics Second Nature Within 30 Days',
+          ].map((text, i) => (
+            <DiscoveryBullet key={i}>
+              {text}
             </DiscoveryBullet>
           ))}
         </div>
@@ -689,7 +691,7 @@ export default function BookFunnelPage() {
           <div className="text-center mb-12">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// FREE BONUSES //</p>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight">
-              Plus You&apos;re Also Getting <span className="text-[#D4A017]">4 Free Bonuses</span> Worth $194
+              Plus You&apos;re Also Getting <span className="text-[#D4A017]">4 Free Bonuses</span> Worth $218
             </h2>
             <p className="text-base md:text-lg text-[#3B2E1A] mt-4">
               All included free with your $7 download. No upsells. No catch.
@@ -699,31 +701,31 @@ export default function BookFunnelPage() {
           <div className="space-y-6 md:space-y-8">
             <BonusCard
               num="1"
-              title="The Reactance Detector Cheat Sheet"
-              description="A visual one-pager identifying every phrase, tone, and behavior that triggers the persuasion detector — so you can permanently eliminate them from how you talk. Most people don't realize how many reactance triggers they unconsciously deploy in every conversation."
+              title="The Manipulation Tactics Decoder"
+              description="50 common manipulation tactics across five categories — emotional, language, social, informational, and power plays — with the exact red flag for each one and the counter-move that shuts it down. Laid out so you can screenshot any page to your phone and pull it up mid-conversation."
               value="$47"
-              icon={Shield}
+              icon={Eye}
             />
             <BonusCard
               num="2"
-              title="The Plant The Conclusion Script Library"
-              description="30 real conversation scripts showing the exact phrasing of Tactics 11-20 — across sales calls, salary negotiations, difficult family conversations, and first dates. Each script includes pause points and side-by-side breakdowns of why every line works."
-              value="$67"
-              icon={BookOpen}
+              title="The Power Dynamics Cheatsheet"
+              description="The one-page reference you pull up on your phone before any high-stakes conversation. Five chronological sections: Before You Walk In, First 30 Seconds, During, If You're Losing Ground, and How To End. Plain English, no jargon."
+              value="$27"
+              icon={Zap}
             />
             <BonusCard
               num="3"
-              title="The Stealth Persuasion Audio Companion"
-              description="The full 217-page book in audio format, professionally narrated for listening on commutes. Includes downloadable MP3 tracks organized by chapter."
-              value="$47"
-              icon={Headphones}
+              title="48 Salary Negotiation Scripts"
+              description="Word-for-word scripts for every phase of a compensation conversation. Every objection (all fifteen of them), every counter, every framing. Opening moves. Stating your number. Negotiating the offer. Follow-up emails. Special situations like counter-offers and 'what would make you stay?' Six parts, forty-eight scripts."
+              value="$97"
+              icon={Briefcase}
             />
             <BonusCard
               num="4"
-              title="Private Operator Channel — Lifetime Access"
-              description="Lifetime access to a private Telegram channel where I post weekly conversation breakdowns and answer questions from readers. Real screenshots. Real decoding. Real-time."
-              value="$33/year"
-              icon={MessageSquare}
+              title="The Reactance Detector Cheatsheet"
+              description="24 phrase swaps across four categories — the exact phrases that fire the listener's Persuasion Detector, and the quiet version of each one that does the same work invisibly. Plus ten signals that someone is running a tactic on YOU right now, and what to do about it."
+              value="$47"
+              icon={Shield}
             />
           </div>
         </div>
@@ -799,8 +801,8 @@ export default function BookFunnelPage() {
             </p>
             <p>How&apos;s that for the world&apos;s best money-back guarantee? I&apos;d say pretty good.</p>
             <p className="text-sm text-[#F4ECD8]/70 italic">
-              The only thing that costs you to try this is 217 pages of reading and 30 minutes of your time. What you
-              stand to gain is the ability to walk into every important conversation in your life knowing
+              The only thing that costs you to try this is an afternoon of reading and thirty minutes of your time.
+              What you stand to gain is the ability to walk into every important conversation in your life knowing
               you&apos;ll come out the other side with what you came for.
             </p>
           </div>
@@ -812,7 +814,7 @@ export default function BookFunnelPage() {
         <div className="text-center mb-10">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// CLAIM YOUR COPY //</p>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight max-w-3xl mx-auto">
-            Get The 217-Page Book + 4 Bonuses For <span className="text-[#D4A017]">Just $7</span>
+            Get The Field Manual + 4 Bonuses For <span className="text-[#D4A017]">Just $7</span>
           </h2>
         </div>
 
@@ -820,7 +822,7 @@ export default function BookFunnelPage() {
 
         <div className="max-w-2xl mx-auto mt-10 grid sm:grid-cols-3 gap-4">
           {[
-            { title: 'Instant Access', body: 'PDF + audio delivered to your inbox in 60 seconds' },
+            { title: 'Instant Access', body: 'Full PDF + all 4 bonuses delivered to your inbox in 60 seconds' },
             { title: '30-Day Guarantee', body: 'Refund + keep the book if you\'re not blown away' },
             { title: 'No Subscription', body: 'One-time $7. No hidden continuity. No surprise charges.' },
           ].map((b) => (
@@ -877,8 +879,8 @@ export default function BookFunnelPage() {
             q="What format is the book in?"
             a={
               <p>
-                Digital PDF, plus the audio companion as a free bonus. You can read it on your phone, laptop, or print
-                it. You get instant download access the moment you order.
+                Digital PDF. You can read it on your phone, laptop, or print it. The four bonuses come as separate PDFs
+                so you can keep the cheatsheets on your phone for reference. Instant download access the moment you order.
               </p>
             }
           />
@@ -911,7 +913,7 @@ export default function BookFunnelPage() {
             Stop Losing The Conversations <span className="text-[#D4A017]">That Actually Matter</span>
           </h2>
           <p className="text-base md:text-lg text-[#F4ECD8]/80 mb-10">
-            217 pages. 47 tactics. 4 free bonuses. $7. 30-day money-back guarantee. What are you waiting for?
+            47 tactics. 4 Parts. 4 free bonuses. $7. 30-day money-back guarantee. What are you waiting for?
           </p>
 
           <div className="mb-10">
