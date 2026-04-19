@@ -113,7 +113,7 @@ function UpsellPlaybooksInner() {
     <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A] overflow-x-hidden`}>
       {/* ═════════ URGENCY BANNER ═════════ */}
       <div className="bg-[#8B0000] text-[#F4ECD8] py-3 text-center font-mono uppercase tracking-wider text-sm md:text-base">
-        ⚠  <span className="font-bold">WAIT</span> — Your order isn&apos;t quite finished. This offer expires in <Countdown />.
+        ⚠  <span className="font-bold">WAIT.</span> Your order isn&apos;t quite finished. This offer expires in <Countdown />.
       </div>
 
       {/* ═════════ 1. HERO ═════════ */}
@@ -124,25 +124,24 @@ function UpsellPlaybooksInner() {
           </p>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-6">
-            Before You Close This Page...<br/>
-            <span className="text-[#D4A017]">Read This Carefully</span>
+            Before You Close This Page:<br/>
+            <span className="text-[#D4A017]">There&apos;s One Thing The Book Can&apos;t Do For You.</span>
           </h1>
 
           <div className="bg-[#1A1A1A] text-[#F4ECD8] p-6 md:p-8 max-w-3xl mx-auto border-4 border-[#D4A017] shadow-[8px_8px_0_0_rgba(0,0,0,0.2)] mb-10">
             <p className="text-lg md:text-xl leading-relaxed mb-4">
-              Your payment for <strong>Shadow Persuasion</strong> just went through. The book is being delivered to your inbox right now.
+              Your payment for <strong>Shadow Persuasion</strong> cleared. The book is hitting your inbox as you read this.
             </p>
             <p className="text-lg md:text-xl leading-relaxed">
-              But before you leave this page, I want to make you an offer you will{' '}
-              <HL>not see again</HL>. Not at this price. Not in this combination.
+              Give me ninety seconds before you close this tab. There&apos;s something the regular site doesn&apos;t sell, and I only show it to new operators right now, once, at this exact moment. <HL>Not at this price. Never bundled like this again.</HL>
             </p>
           </div>
 
           <p className="text-xl md:text-2xl text-[#3B2E1A] max-w-3xl mx-auto leading-relaxed mb-4">
-            You&apos;re about to finish reading the book. You&apos;ll know 47 tactics exist.
+            You&apos;re about to read the book. You&apos;ll know all 47 tactics exist.
           </p>
           <p className="text-xl md:text-2xl font-bold text-[#1A1A1A] max-w-3xl mx-auto leading-relaxed">
-            Here&apos;s the problem nobody warns you about...
+            Here&apos;s what the book can&apos;t do for you on Wednesday morning.
           </p>
         </div>
       </section>
@@ -151,20 +150,18 @@ function UpsellPlaybooksInner() {
       <section className="px-6 py-12 md:py-16 bg-[#EBE0C7]">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-8 text-center">
-            The Book Tells You <em>What</em> Works. It Doesn&apos;t Tell You <HL>Which Tactic Fits Your Wednesday Conversation</HL>.
+            The Book Teaches You The 47 Tactics. It Can&apos;t Tell You <HL>Which Three To Use In The Conversation You Walk Into Wednesday</HL>.
           </h2>
 
           <div className="space-y-5 text-base md:text-lg leading-relaxed text-[#1A1A1A]">
             <p>
-              You have a salary review on Tuesday. A custody mediation in two weeks. A hard conversation with your partner tonight. An estranged parent at a wedding next month. A job interview Thursday morning.
+              Pick whichever one is real for you. The salary review Tuesday. The custody mediation two weeks out. The thing you need to say to your partner tonight, except you don&apos;t know how to start it. A job interview Thursday. An estranged parent showing up at a wedding next month.
             </p>
             <p>
-              Every one of those is a different conversation with different dynamics, and{' '}
-              <strong>each one calls for a different subset of the 47 tactics</strong>. The book teaches you all 47.
-              What the book doesn&apos;t do is match them to the specific conversation in front of you.
+              Every one of those is a completely different conversation with completely different dynamics. <strong>Each one calls for three or four specific tactics out of the 47</strong>. The book gives you all 47. It doesn&apos;t hand you the exact three for Wednesday morning.
             </p>
             <p>
-              If you&apos;re like most readers, the book will sit on your shelf, you&apos;ll forget 70% of it in 30 days, and when Wednesday arrives you&apos;ll walk into the conversation doing what you&apos;ve always done.
+              So here&apos;s what usually happens. You read the book, you feel sharper for about five days, and then Wednesday arrives and you&apos;re flipping pages in the hallway trying to remember which one was the Assumption Audit. You walk in doing what you&apos;ve always done.
             </p>
             <p className="text-lg md:text-xl font-bold text-[#8B0000]">
               That&apos;s the gap this next offer closes.
@@ -182,7 +179,7 @@ function UpsellPlaybooksInner() {
             That Solve This Exact Problem
           </h2>
           <p className="text-lg md:text-xl text-[#3B2E1A] max-w-3xl mx-auto">
-            Together they make the book 10x more useful. Separately they cost $84. Today, bundled with your order: <strong className="text-[#1A1A1A]">$47.</strong>
+            Together they turn the book from something you read into something you use when it actually counts. Retail, they cost $84. Today, bundled with your order: <strong className="text-[#1A1A1A]">$47.</strong>
           </p>
         </div>
 
@@ -360,7 +357,7 @@ function UpsellPlaybooksInner() {
 
           <div className="mt-10 text-center">
             <p className="text-base md:text-lg text-[#F4ECD8]/90 italic max-w-2xl mx-auto">
-              Book = the theory. Playbooks = the situation. Vault = the edge cases. With all three, there&apos;s no conversation in your life you walk into unprepared.
+              The book gives you the theory. The Playbooks hand you the right tactic for Wednesday. The Vault is what you open when the playbooks don&apos;t cover it. Run all three and you stop walking into conversations hoping you&apos;ll figure it out.
             </p>
           </div>
         </div>
@@ -403,7 +400,7 @@ function UpsellPlaybooksInner() {
 
           <div className="bg-black text-[#F4ECD8] border-4 border-[#D4A017] p-6 md:p-8 text-center mb-6">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#D4A017] mb-3">
-              Yours Today — One-Time Upgrade
+              Yours Today · One-Time Upgrade
             </p>
             <div className="flex items-baseline justify-center gap-3 mb-2">
               <span className="text-2xl line-through text-[#F4ECD8]/40">$84</span>
@@ -421,7 +418,7 @@ function UpsellPlaybooksInner() {
             disabled={processing}
             className="block w-full bg-[#D4A017] hover:bg-[#C4901A] disabled:opacity-50 disabled:cursor-not-allowed text-black font-mono uppercase font-black text-lg md:text-2xl text-center px-6 py-5 md:py-6 tracking-wider transition-all shadow-[6px_6px_0_0_#1A1A1A] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#1A1A1A] mb-4"
           >
-            {processing ? 'Processing…' : '✓ YES — ADD THESE TO MY ORDER FOR $47'}
+            {processing ? 'Processing…' : '✓ YES. LOCK IN MY $47 UPGRADE.'}
           </button>
 
           {error && (
@@ -448,7 +445,7 @@ function UpsellPlaybooksInner() {
           <div className="bg-white border-2 border-[#5C3A1E]/30 p-6 md:p-10 shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]">
             <Sparkles className="h-8 w-8 text-[#D4A017] mx-auto mb-4" />
             <p className="text-lg md:text-xl italic text-[#1A1A1A] text-center leading-relaxed mb-6">
-              &ldquo;Bought the book. Added the Playbooks + Vault on the upsell. Within 3 weeks I used the Salary Playbook to negotiate a $31K bump, the Cheating Confrontation playbook to finally get my ex-wife to admit what was happening, and the Difficult Feedback playbook to tell my cofounder we needed to change the split. Three conversations I&apos;d been avoiding for eighteen months. Solved in three weeks.&rdquo;
+              &ldquo;The Salary Playbook paid for this bundle forty times over. I walked into a review I&apos;d been dreading for six months, used the opener almost word for word, pushed back on the first counter exactly how the playbook said to, walked out with a $31K bump. Haven&apos;t touched the Vault yet. Will eventually.&rdquo;
             </p>
             <div className="flex items-center justify-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5C3A1E] to-[#1A1A1A] flex items-center justify-center text-[#F4ECD8] font-mono font-bold">
@@ -456,7 +453,7 @@ function UpsellPlaybooksInner() {
               </div>
               <div>
                 <p className="font-mono font-bold text-[#1A1A1A]">James W.</p>
-                <p className="text-xs text-[#5C3A1E] uppercase tracking-wide">Founder · Austin, TX</p>
+                <p className="text-xs text-[#5C3A1E] uppercase tracking-wide">Senior Engineer · Austin</p>
               </div>
             </div>
           </div>
@@ -478,14 +475,14 @@ function UpsellPlaybooksInner() {
           </p>
           <ol className="space-y-3 pl-6 list-decimal marker:text-[#D4A017] marker:font-bold">
             <li>
-              <strong>They stack cleanly only with the book.</strong> The Playbooks reference the book&apos;s 47 tactics. The Vault extends them. Without the book, both products make less sense.
+              <strong>They only stack cleanly with the book.</strong> The Playbooks reference the book&apos;s 47 tactics by name. The Vault extends them. If you haven&apos;t read the book, half the value is missing.
             </li>
             <li>
-              <strong>I can only afford the discount when acquiring a customer.</strong> At my $22 advertising cost per book sale, bundling at $47 makes the unit economics work. Selling this bundle separately at the retail $84, I&apos;d still be profitable, but I wouldn&apos;t offer the discount.
+              <strong>The discount only makes sense right now, at the moment of sale.</strong> I&apos;m already paying around $22 in ad spend to get you here. Tacking on $40 of bundle margin on top of the book is the only reason I can knock $37 off retail. Come back next week, the math breaks, you pay the $84.
             </li>
           </ol>
           <p>
-            So this page is a one-time offer. If you leave it, the link dies. The next time you see these products on the site, the Playbooks will be $47 alone and the Vault will be $37 alone.
+            So this page is a one-time offer. When you leave it, the link dies. Next time you see these products on the site, the Playbooks are $47 by themselves and the Vault is $37 by itself.
           </p>
           <p className="font-bold">
             Today, bundled with your book order, they&apos;re both yours for $47.
@@ -508,11 +505,10 @@ function UpsellPlaybooksInner() {
             Same <span className="text-[#D4A017]">Money-Back Guarantee</span>{' '}As The Book
           </h2>
           <p className="text-base md:text-lg text-[#F4ECD8]/90 leading-relaxed mb-5">
-            Read the Playbooks. Use the Vault. If either one doesn&apos;t deliver, email me within 30 days for a full refund. You keep the files. No questions asked.
+            Read the Playbooks. Run the Vault on one real conversation. If you don&apos;t close that conversation better than you would have without them, email me inside 30 days and I refund the $47. You keep the files. I don&apos;t ask why.
           </p>
           <p className="text-sm text-[#F4ECD8]/70 italic">
-            The only thing you risk by taking this offer is 30 minutes of reading.
-            What you stand to gain is the ability to walk into any conversation in your life knowing which specific playbook and which specific techniques you&apos;re deploying.
+            The only thing you risk is 30 minutes of reading. What you stand to gain is walking into every conversation that matters knowing exactly which playbook you&apos;re running and which tactics you&apos;re about to deploy.
           </p>
         </div>
       </section>
@@ -545,7 +541,7 @@ function UpsellPlaybooksInner() {
             disabled={processing}
             className="block w-full bg-[#D4A017] hover:bg-[#C4901A] disabled:opacity-50 disabled:cursor-not-allowed text-black font-mono uppercase font-black text-lg md:text-xl text-center px-6 py-5 md:py-6 tracking-wider transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]"
           >
-            {processing ? 'Processing…' : '✓ YES — ADD THE PLAYBOOKS + VAULT FOR $47'}
+            {processing ? 'Processing…' : '✓ YES. LOCK IN THE PLAYBOOKS + VAULT FOR $47.'}
           </button>
         </div>
 
@@ -557,7 +553,7 @@ function UpsellPlaybooksInner() {
             className="inline-flex items-center gap-2 text-sm text-[#5C3A1E] hover:text-[#1A1A1A] underline"
           >
             <X className="h-4 w-4" />
-            No thanks — I&apos;ll pass on this one-time offer and take my book only
+            No thanks. I&apos;ll pass on this and take the book by itself.
           </a>
         </div>
       </section>
@@ -567,16 +563,16 @@ function UpsellPlaybooksInner() {
         <div className="max-w-3xl mx-auto">
           <div className="bg-white border-l-4 border-[#D4A017] p-6 md:p-8">
             <p className="font-bold text-[#1A1A1A] mb-3 text-base md:text-lg">
-              <strong>P.S.</strong> If you&apos;re on the fence, ask yourself this: what&apos;s the cost of walking into your next high-stakes conversation unprepared?
+              <strong>P.S.</strong> If you&apos;re on the fence, ask yourself what one bad conversation actually costs you.
             </p>
             <p className="text-base md:text-lg text-[#1A1A1A] mb-3">
-              A lost negotiation. A fight that didn&apos;t need to happen. A relationship that didn&apos;t reconcile. A custody arrangement you regret.
+              A lost negotiation. The fight that didn&apos;t have to happen but did. The relationship you couldn&apos;t put back together because you froze at the wrong moment. A custody deal you&apos;re going to resent for the next fourteen years.
             </p>
             <p className="text-base md:text-lg text-[#1A1A1A]">
-              The $47 for the Playbooks + Vault is less than one bad conversation costs you. And it stays with you for every conversation that follows.
+              $47 for the Playbooks + Vault is less than any single one of those costs. The files stay with you for every conversation after this one.
             </p>
             <p className="mt-4 text-[#1A1A1A] font-bold">
-              Click YES above. I&apos;ll see you on the inside.
+              Click YES. Or don&apos;t, and take the book by itself. Either way, go win Wednesday&apos;s conversation.
             </p>
             <p className="text-3xl md:text-4xl italic text-[#1A1A1A] mt-4" style={{ fontFamily: 'Brush Script MT, cursive' }}>
               Nate Harlan

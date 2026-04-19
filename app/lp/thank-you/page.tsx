@@ -74,15 +74,13 @@ function ThankYouInner() {
             // ORDER #{(paymentIntentId || 'UNKNOWN').slice(-8).toUpperCase()} //
           </p>
           <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-6">
-            You&apos;re In. <span className="text-[#D4A017]">Welcome.</span>
+            Paid. Downloaded. <span className="text-[#D4A017]">Now The Real Part.</span>
           </h1>
           <p className="text-lg md:text-xl text-[#3B2E1A] leading-relaxed max-w-2xl mx-auto">
-            Your order is complete. Everything you bought is ready below.
+            Grab your files below. I emailed them to you too, in case your laptop dies tomorrow.
             {order?.email && (
               <>
-                <br />
-                A copy of the links has also been sent to{' '}
-                <strong className="text-[#1A1A1A]">{order.email}</strong>.
+                {' '}Sent to <strong className="text-[#1A1A1A]">{order.email}</strong>.
               </>
             )}
           </p>
@@ -153,7 +151,7 @@ function ThankYouInner() {
                 Your Membership Is Live
               </h2>
               <p className="text-base md:text-lg text-[#F4ECD8]/90">
-                You now have access to the full Shadow Persuasion app — 697 techniques, real-time AI coaching, role-play, and the private community.
+                You&apos;re into the full app. 697 techniques. Real-time coaching. Role-play reps. And the private community where we trade notes on what&apos;s actually working.
               </p>
             </div>
 
@@ -179,15 +177,15 @@ function ThankYouInner() {
       {/* ═════════ NEXT STEPS ═════════ */}
       <section className="px-6 py-10 md:py-16 max-w-3xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight leading-tight mb-6 text-center">
-          What To Do Next
+          Three Things, Starting Tonight
         </h2>
         <div className="space-y-3">
           {[
             hasSub
-              ? 'Activate your app account with the email above, then run your next important conversation through the AI coach.'
-              : 'Download the files above and save them to your laptop, not just your phone.',
-            'Read Chapter 1 of the book tonight. If you don\'t feel something shift by the end of it, email me and I\'ll refund you.',
-            'When you run your first high-stakes conversation, email me with what happened. I read every email.',
+              ? 'Activate your app account with the same email you used at checkout. Then paste a real conversation you have coming up into the coach. That\'s the whole onboarding.'
+              : 'Save the files to your laptop, not just your phone. Phone downloads go to die. Then hit reply to the receipt email and tell me the one conversation you bought this for. I read every reply.',
+            'Read Chapter 1 tonight. If by the last page you don\'t have at least one "oh, that\'s what he was doing to me" moment, email me and I refund the whole order.',
+            'After your first real high-stakes conversation, email me what happened. I read every email and I write back.',
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3 bg-white border-2 border-[#5C3A1E]/30 p-4 md:p-5">
               <span className="font-mono text-xl font-black text-[#D4A017] leading-none">
@@ -206,11 +204,11 @@ function ThankYouInner() {
           <div>
             <p className="font-bold text-[#1A1A1A] mb-1">30-day money-back guarantee on everything.</p>
             <p className="text-sm text-[#3B2E1A]">
-              If you read the book, use the playbooks, run the app, and don&apos;t feel it&apos;s worth more than you paid, email{' '}
+              Read the book, use the playbooks, run the app. If you don&apos;t feel it&apos;s worth more than you paid, email{' '}
               <a href="mailto:support@shadowpersuasion.com" className="underline">
                 support@shadowpersuasion.com
               </a>{' '}
-              within 30 days. Full refund. You keep the files.
+              within 30 days. Full refund. You keep the files either way.
             </p>
           </div>
         </div>
@@ -219,7 +217,7 @@ function ThankYouInner() {
       {/* ═════════ SIGN OFF ═════════ */}
       <section className="px-6 py-10 md:py-16 max-w-3xl mx-auto">
         <p className="text-base md:text-lg text-[#1A1A1A] mb-4">
-          Thank you for the trust. Let me know how your first conversation goes.
+          Thanks for trusting me with this. Now go use it. Email me after your first real conversation. I want to hear what happened.
         </p>
         <p className="text-3xl md:text-4xl italic text-[#1A1A1A]" style={{ fontFamily: 'Brush Script MT, cursive' }}>
           Nate Harlan
@@ -246,10 +244,10 @@ function DownloadList({ items }: { items: string[] }) {
   const CATALOG: Record<string, { name: string; path: string }[]> = {
     book: [
       { name: 'Shadow Persuasion (The Book)', path: '/downloads/shadow-persuasion-book.docx' },
-      { name: 'Bonus #1 — The Manipulation Tactics Decoder', path: '/downloads/bonus-1-manipulation-decoder.docx' },
-      { name: 'Bonus #2 — The Power Dynamics Cheatsheet', path: '/downloads/bonus-2-power-dynamics-cheatsheet.docx' },
-      { name: 'Bonus #3 — 48 Salary Negotiation Scripts', path: '/downloads/bonus-3-salary-scripts.docx' },
-      { name: 'Bonus #4 — The Reactance Detector Cheatsheet', path: '/downloads/bonus-4-reactance-detector.docx' },
+      { name: 'Bonus #1: The Manipulation Tactics Decoder', path: '/downloads/bonus-1-manipulation-decoder.docx' },
+      { name: 'Bonus #2: The Power Dynamics Cheatsheet', path: '/downloads/bonus-2-power-dynamics-cheatsheet.docx' },
+      { name: 'Bonus #3: 48 Salary Negotiation Scripts', path: '/downloads/bonus-3-salary-scripts.docx' },
+      { name: 'Bonus #4: The Reactance Detector Cheatsheet', path: '/downloads/bonus-4-reactance-detector.docx' },
     ],
     briefing: [
       { name: 'The Pre-Conversation Briefing', path: '/downloads/pre-conversation-briefing.docx' },

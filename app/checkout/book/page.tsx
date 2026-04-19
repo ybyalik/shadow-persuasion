@@ -191,7 +191,7 @@ export default function BookCheckoutPage() {
             // YOUR ORDER //
           </p>
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-8">
-            Complete Your Order
+            One Step Left.
           </h1>
 
           {/* Book line */}
@@ -207,7 +207,7 @@ export default function BookCheckoutPage() {
                   Shadow Persuasion <span className="text-xs text-[#5C3A1E]">(eBook)</span>
                 </p>
                 <p className="text-xs text-[#5C3A1E] mt-1">
-                  47 tactics · 4-part system · + 4 free bonuses
+                  47 tactics. The full system. Plus 4 bonuses I normally sell separately.
                 </p>
               </div>
               <div className="text-right shrink-0">
@@ -235,23 +235,22 @@ export default function BookCheckoutPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="bg-[#D4A017] text-black px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider font-bold">
-                    ⚡ ONE-TIME ADD-ON
+                    ⚡ ADD BEFORE YOU PAY
                   </span>
                   <span className="text-xs text-[#5C3A1E] font-bold">
-                    YES! I want this too.
+                    I&apos;ve got one coming up.
                   </span>
                 </div>
                 <p className="font-bold text-base text-[#1A1A1A] mb-1">
                   Add: The Pre-Conversation Briefing
                 </p>
                 <p className="text-xs md:text-sm text-[#3B2E1A] leading-relaxed mb-2">
-                  The 10-minute worksheet I fill out before every high-stakes conversation.
-                  Pick your tactics, draft your opening, calm the nerves. Walk in prepared.
+                  The 10-minute worksheet I fill out before every high-stakes conversation. You answer seven questions the night before. Morning of, you&apos;ve got an opening line, two backup tactics, and zero shakes.
                 </p>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="text-[#5C3A1E] line-through">normally $27</span>
+                  <span className="text-[#5C3A1E] line-through">retail $27</span>
                   <span className="bg-[#D4A017] text-black px-2 py-0.5 font-bold tracking-wider">
-                    JUST $17 TODAY
+                    $17 WITH THE BOOK
                   </span>
                 </div>
               </div>
@@ -285,7 +284,7 @@ export default function BookCheckoutPage() {
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-[#D4A017] shrink-0 mt-0.5" />
-              <span>30-day money-back guarantee — keep the files regardless</span>
+              <span>30-day money-back guarantee. Keep the files either way.</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-[#D4A017] shrink-0 mt-0.5" />
@@ -319,7 +318,7 @@ export default function BookCheckoutPage() {
                     className="w-full border-2 border-[#5C3A1E]/30 px-3 py-3 font-mono text-sm focus:outline-none focus:border-[#D4A017]"
                   />
                   <p className="text-xs text-[#5C3A1E] mt-1">
-                    Where we&apos;ll send your download links.
+                    I&apos;ll send your files here. Use the one you actually check.
                   </p>
                 </div>
 

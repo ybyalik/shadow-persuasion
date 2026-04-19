@@ -96,7 +96,7 @@ function UpsellAppInner() {
     <main className={`${specialElite.className} bg-[#F4ECD8] text-[#1A1A1A] overflow-x-hidden`}>
       {/* ═════════ URGENCY BANNER ═════════ */}
       <div className="bg-[#8B0000] text-[#F4ECD8] py-3 text-center font-mono uppercase tracking-wider text-sm md:text-base">
-        ⚠  <span className="font-bold">ONE FINAL OFFER</span> — Before your order is complete.
+        ⚠  <span className="font-bold">ONE FINAL OFFER.</span> Before your order is complete.
       </div>
 
       {/* ═════════ 1. HERO ═════════ */}
@@ -107,21 +107,21 @@ function UpsellAppInner() {
           </p>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-6">
-            You Have The Manuals.<br/>
-            <span className="text-[#D4A017]">Now Get The Coach.</span>
+            You Own The Map.<br/>
+            <span className="text-[#D4A017]">The App Walks It With You.</span>
           </h1>
 
           <div className="bg-[#1A1A1A] text-[#F4ECD8] p-6 md:p-8 max-w-3xl mx-auto border-4 border-[#D4A017] shadow-[8px_8px_0_0_rgba(0,0,0,0.2)] mb-10">
             <p className="text-lg md:text-xl leading-relaxed mb-4">
-              Books teach you the tactics. Playbooks map them to 20 situations. The Vault extends them to 250 techniques.
+              It&apos;s Tuesday night. Wednesday you ask for the raise. The book has 47 tactics in it. Somewhere in there are the three you need.
             </p>
             <p className="text-lg md:text-xl leading-relaxed">
-              But none of them know <HL>the specific conversation you&apos;re about to have</HL>{' '}on Wednesday.
+              <HL>The app picks them in ten seconds.</HL>{' '}For this exact conversation. For this exact person. Based on everything the book teaches.
             </p>
           </div>
 
           <p className="text-xl md:text-2xl text-[#3B2E1A] max-w-3xl mx-auto leading-relaxed">
-            You need a coach that does.
+            That&apos;s what the books can&apos;t do.
           </p>
         </div>
       </section>
@@ -137,7 +137,7 @@ function UpsellAppInner() {
               'Know that your boss Angela responds better to written proposals than verbal pitches',
               'Remember that last time you tried the Cold Open with your father, he shut down',
               'Role-play your Wednesday salary conversation with you, 3 times, before you walk in',
-              'Tell you which of your last 5 hard conversations went well and which ones leaked detector',
+              'Tell you which of your last 5 hard conversations went well, and which ones tripped the other person\'s detector',
               'Build a review schedule so you don\'t forget the tactics in 30 days',
               'Match a specific situation you describe to the exact 3 techniques from 697 that fit it',
             ].map((item, i) => (
@@ -243,7 +243,7 @@ function UpsellAppInner() {
             ))}
           </div>
           <p className="mt-10 text-center text-lg md:text-xl text-[#F4ECD8]/90 italic max-w-2xl mx-auto">
-            The first three give you knowledge. The app is the difference between knowing and doing.
+            The first three are what you read. The app is what sits next to you on Wednesday at 2pm.
           </p>
         </div>
       </section>
@@ -256,7 +256,10 @@ function UpsellAppInner() {
             Start Your Membership Today
           </h2>
           <p className="text-base md:text-lg text-[#3B2E1A]">
-            Cancel anytime. No long-term commitment. We&apos;ll use the card you just paid with, one click.
+            One click. Same card you just used for the book. Cancel anytime with one email.
+          </p>
+          <p className="text-sm text-[#3B2E1A] mt-3 max-w-xl mx-auto italic">
+            Heads up: most operators pick annual. The daily practice takes about a year to actually rewire how you prep, which is why it&apos;s priced so the yearly plan is basically four months free.
           </p>
         </div>
 
@@ -327,7 +330,7 @@ function UpsellAppInner() {
             disabled={processing}
             className="w-full bg-[#D4A017] hover:bg-[#C4901A] disabled:opacity-50 disabled:cursor-not-allowed text-black font-mono uppercase font-black text-lg md:text-2xl text-center px-6 py-5 md:py-6 tracking-wider transition-all shadow-[6px_6px_0_0_#F4ECD8] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#F4ECD8] mb-4"
           >
-            {processing ? 'Starting Membership…' : `✓ YES — START MY MEMBERSHIP (${btnLabel})`}
+            {processing ? 'Starting Membership…' : `✓ YES. UNLOCK THE COACH (${btnLabel}).`}
           </button>
 
           {error && (
@@ -350,7 +353,7 @@ function UpsellAppInner() {
           <div className="bg-white border-2 border-[#5C3A1E]/30 p-6 md:p-10 shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]">
             <Sparkles className="h-8 w-8 text-[#D4A017] mx-auto mb-4" />
             <p className="text-lg md:text-xl italic text-[#1A1A1A] text-center leading-relaxed mb-6">
-              &ldquo;The book and the playbooks are great. But the app is what actually changed my life. I&apos;ve run 60+ important conversations through the app over four months. The role-play mode alone is worth 10x the monthly fee. I have never walked into a high-stakes conversation unprepared again.&rdquo;
+              &ldquo;I used to over-prep for two days before any pricing call with a vendor. Now I paste the Slack thread into the app the night before, get three tactics back, role-play once. Done in twenty minutes. I&apos;ve done it before twenty-three vendor calls this quarter. My calendar got its life back.&rdquo;
             </p>
             <div className="flex items-center justify-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5C3A1E] to-[#1A1A1A] flex items-center justify-center text-[#F4ECD8] font-mono font-bold">
@@ -358,7 +361,7 @@ function UpsellAppInner() {
               </div>
               <div>
                 <p className="font-mono font-bold text-[#1A1A1A]">Priya R.</p>
-                <p className="text-xs text-[#5C3A1E] uppercase tracking-wide">Product Manager · Monthly Member 4 Months</p>
+                <p className="text-xs text-[#5C3A1E] uppercase tracking-wide">Senior PM · Monthly Member</p>
               </div>
             </div>
           </div>
@@ -370,13 +373,13 @@ function UpsellAppInner() {
         <div className="max-w-3xl mx-auto text-center">
           <Shield className="h-16 w-16 text-[#D4A017] mx-auto mb-4" />
           <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-6">
-            <span className="text-[#D4A017]">30-Day Money-Back</span> — Even On The Membership
+            <span className="text-[#D4A017]">30-Day Money-Back.</span> Even On The Membership.
           </h2>
           <p className="text-base md:text-lg text-[#F4ECD8]/90 leading-relaxed mb-5">
-            Use the app for 30 days. Run real conversations through it. If it doesn&apos;t make a visible difference, email me and I&apos;ll refund the entire first payment. Monthly or annual. No questions.
+            Run five real conversations through the app in 30 days. If you can&apos;t point to at least one that went better because of it, email me the word &ldquo;refund&rdquo; and I send back the full first payment. Monthly or annual.
           </p>
           <p className="text-sm text-[#F4ECD8]/70 italic">
-            You&apos;re not committed to anything. Just try it for a month.
+            You&apos;re not committed to anything. Try it for a month.
           </p>
         </div>
       </section>
@@ -399,7 +402,7 @@ function UpsellAppInner() {
             disabled={processing}
             className="w-full bg-[#D4A017] hover:bg-[#C4901A] disabled:opacity-50 text-black font-mono uppercase font-black text-base md:text-xl text-center px-6 py-5 tracking-wider transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]"
           >
-            {processing ? 'Starting Membership…' : `✓ START MEMBERSHIP (${btnLabel})`}
+            {processing ? 'Starting Membership…' : `✓ START MEMBERSHIP (${btnLabel}).`}
           </button>
         </div>
 
@@ -410,7 +413,7 @@ function UpsellAppInner() {
             className="inline-flex items-center gap-2 text-sm text-[#5C3A1E] hover:text-[#1A1A1A] underline"
           >
             <X className="h-4 w-4" />
-            No thanks — I&apos;ll stick with what I already have
+            No thanks. I&apos;ll stick with what I already have.
           </a>
         </div>
       </section>
