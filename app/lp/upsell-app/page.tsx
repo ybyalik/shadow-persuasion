@@ -100,46 +100,96 @@ function UpsellAppInner() {
       </div>
 
       {/* ═════════ 1. HERO ═════════ */}
-      <section className="px-6 pt-10 pb-12 md:pt-16 md:pb-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#5C3A1E] mb-4">
-            // THE MISSING PIECE · MEMBERS-ONLY OFFER //
+      <section className="px-6 pt-10 pb-12 md:pt-14 md:pb-14">
+        <div className="max-w-4xl mx-auto">
+          <p className="font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#5C3A1E] mb-5 text-center">
+            // ONE-TIME OFFER · BOOK BUYERS ONLY //
           </p>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-6">
-            You Own The Map.<br/>
-            <span className="text-[#D4A017]">The App Walks It With You.</span>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.05] mb-5 text-center">
+            You Have The Book.<br/>
+            <span className="text-[#D4A017]">Now Make It Actually Usable When Real Conversations Hit.</span>
           </h1>
 
-          <div className="bg-[#1A1A1A] text-[#F4ECD8] p-6 md:p-8 max-w-3xl mx-auto border-4 border-[#D4A017] shadow-[8px_8px_0_0_rgba(0,0,0,0.2)] mb-10">
+          <p className="text-xl md:text-2xl text-[#3B2E1A] max-w-3xl mx-auto leading-snug mb-8 text-center">
+            Introducing the Shadow Persuasion app. The AI coach that picks the <HL>right 3 tactics for your specific conversation</HL>, writes your opening in your own voice, and lets you rehearse it before it&apos;s real.
+          </p>
+
+          <div className="bg-[#1A1A1A] text-[#F4ECD8] p-6 md:p-8 max-w-3xl mx-auto border-4 border-[#D4A017] shadow-[8px_8px_0_0_rgba(0,0,0,0.2)] mb-8">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#D4A017] mb-4">
+              // THE AWKWARD TRUTH ABOUT READING A 117-PAGE BOOK //
+            </p>
             <p className="text-lg md:text-xl leading-relaxed mb-4">
-              It&apos;s Tuesday night. Wednesday you ask for the raise. The book has 47 tactics in it. Somewhere in there are the three you need.
+              By Wednesday morning when your manager pulls you into her office, the 3 tactics that fit this exact situation aren&apos;t going to be at the top of your head. You&apos;ll reach for what you always reach for. The book becomes reference.
             </p>
             <p className="text-lg md:text-xl leading-relaxed">
-              <HL>The app picks them in ten seconds.</HL>{' '}For this exact conversation. For this exact person. Based on everything the book teaches.
+              Reference doesn&apos;t win conversations. Deployment does.
             </p>
           </div>
 
-          <p className="text-xl md:text-2xl text-[#3B2E1A] max-w-3xl mx-auto leading-relaxed">
-            That&apos;s what the books can&apos;t do.
-          </p>
+          <div className="bg-white border-4 border-black p-6 md:p-7 max-w-3xl mx-auto shadow-[8px_8px_0_0_#D4A017] mb-6">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#5C3A1E] mb-4">
+              // WHAT THE APP DOES, STEP BY STEP //
+            </p>
+            <p className="text-base md:text-lg text-[#1A1A1A] leading-relaxed mb-4">
+              Paste the Slack thread. Screenshot the text from your ex. Or just describe what&apos;s going on with your contractor in two sentences.
+            </p>
+            <p className="text-base md:text-lg text-[#1A1A1A] leading-relaxed mb-4">
+              Sixty seconds later the app hands you four things:
+            </p>
+            <ul className="space-y-2.5 text-base md:text-lg text-[#1A1A1A] mb-4">
+              <li className="flex items-start gap-3">
+                <span className="font-mono font-black text-[#D4A017] mt-0.5">01</span>
+                <span>The exact 3 tactics that fit (out of 700+), ranked by relevance to your specific situation.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-mono font-black text-[#D4A017] mt-0.5">02</span>
+                <span>Your opening line, written word-for-word, in a voice that already sounds like how you actually talk.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-mono font-black text-[#D4A017] mt-0.5">03</span>
+                <span>A role-play session where you rehearse against an AI playing the other person. It pushes back the way they will.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-mono font-black text-[#D4A017] mt-0.5">04</span>
+                <span>A debrief after the real conversation happens, telling you what landed and what didn&apos;t, so next time is sharper.</span>
+              </li>
+            </ul>
+            <p className="text-sm md:text-base text-[#5C3A1E] italic">
+              Everything above runs on the same 700-technique knowledge base the book was pulled from.
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto text-center">
+            <p className="text-base md:text-lg text-[#3B2E1A]">
+              Retail on the main site: <span className="text-gray-500 line-through">$99/mo</span>. For book buyers on this page: <strong className="text-[#1A1A1A]">$34.95/mo, or $195.95/yr.</strong>
+            </p>
+            <p className="text-xs md:text-sm text-[#5C3A1E] mt-2">
+              30-day money-back guarantee. Cancel anytime. Same card you just paid with.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* ═════════ 2. THE PROBLEM ═════════ */}
+
+      {/* ═════════ 2. THE PROBLEM (books can't) ═════════ */}
       <section className="px-6 py-12 md:py-16 bg-[#EBE0C7]">
         <div className="max-w-3xl mx-auto">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3 text-center">
+            // WHY THE BOOK ALONE ISN&apos;T ENOUGH //
+          </p>
           <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-8 text-center">
-            Here&apos;s What The Books Can&apos;t Do For You
+            Six Things The Book <HL>Can&apos;t Do For You</HL>.<br/>
+            The App Does All Of Them.
           </h2>
-          <div className="grid sm:grid-cols-2 gap-5">
+          <div className="grid sm:grid-cols-2 gap-4">
             {[
-              'Know that your boss Angela responds better to written proposals than verbal pitches',
-              'Remember that last time you tried the Cold Open with your father, he shut down',
-              'Role-play your Wednesday salary conversation with you, 3 times, before you walk in',
-              'Tell you which of your last 5 hard conversations went well, and which ones tripped the other person\'s detector',
-              'Build a review schedule so you don\'t forget the tactics in 30 days',
-              'Match a specific situation you describe to the exact 3 techniques from 697 that fit it',
+              'Read the screenshot of the text your ex sent last night and spot the four manipulation moves running through it',
+              'Rewrite your draft message to your boss so it sounds sharper without sounding fake',
+              'Rehearse Wednesday\'s salary talk with you three times against an AI that pushes back the way she will',
+              'Remember that your father shuts down to questions but opens up to stories, and factor that into every script',
+              'Look at your last ten hard conversations and tell you which ones you won, which ones leaked, and why',
+              'Drop a 7-minute practice mission into your inbox every day and grade how you handled it',
             ].map((item, i) => (
               <div key={i} className="flex items-start gap-3 bg-white border-2 border-[#8B0000]/30 p-4">
                 <X className="h-5 w-5 text-[#8B0000] shrink-0 mt-0.5" strokeWidth={3} />
@@ -147,8 +197,8 @@ function UpsellAppInner() {
               </div>
             ))}
           </div>
-          <p className="mt-8 text-center text-base md:text-lg text-[#1A1A1A] max-w-2xl mx-auto italic">
-            That&apos;s what the Shadow Persuasion app does. Every day. Personalized to you.
+          <p className="mt-8 text-center text-base md:text-lg text-[#1A1A1A] max-w-2xl mx-auto">
+            Every single one of those is a module inside the app.
           </p>
         </div>
       </section>
@@ -156,12 +206,12 @@ function UpsellAppInner() {
       {/* ═════════ 3. WHAT IS THE APP ═════════ */}
       <section className="px-6 py-12 md:py-20 max-w-6xl mx-auto">
         <div className="text-center mb-10">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// MEET THE APP //</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// WHAT YOU GET //</p>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight mb-4">
-            <span className="text-[#D4A017]">shadowpersuasion.com</span>
+            10 Operational Modules. <span className="text-[#D4A017]">One Coach.</span>
           </h2>
           <p className="text-lg md:text-xl text-[#3B2E1A] max-w-3xl mx-auto">
-            The AI-powered coach built on the same 697-technique knowledge base the book was derived from.
+            Every capability below is live inside the app the moment your membership starts.
           </p>
         </div>
 
@@ -169,33 +219,33 @@ function UpsellAppInner() {
           {[
             {
               icon: Brain,
-              title: 'Describe Any Situation, Get Your 3 Tactics',
-              body: 'Paste the Slack thread, describe the conversation, name the person. The AI tells you the exact 3 techniques from 697 that fit this specific situation, based on everything the book teaches. Personalized in under 10 seconds.',
+              title: 'AI Strategic Coach',
+              body: 'Describe any situation in 2 sentences. Get a full tactical game plan with word-for-word scripts in under 60 seconds. Runs 24/7. Built on 700+ techniques from the knowledge base the book was derived from.',
             },
             {
               icon: MessageSquare,
-              title: 'Role-Play Before You Walk In',
-              body: 'Rehearse Wednesday\'s salary conversation with an AI playing your manager. The AI pushes back the way she would, based on the patterns you\'ve described. Walk into the real conversation having already done it 3 times.',
-            },
-            {
-              icon: TrendingUp,
-              title: 'Daily Practice, Spaced-Repetition',
-              body: 'The 7-minute daily practice from Chapter 16, automated. One technique per day, timed to the spacing curve that actually builds long-term recall. You stop forgetting what you read.',
-            },
-            {
-              icon: Users,
-              title: '1,200+ Member Community',
-              body: 'Private community of Shadow Persuasion readers sharing wins, debriefs, and edge cases. Access real transcripts other operators have shared. Learn from conversations you\'ll never have yourself.',
+              title: 'Conversation Analysis Engine',
+              body: 'Screenshot any text thread or paste any email. The AI identifies the manipulation tactics being run on you, maps the power imbalance, surfaces hidden intentions, and hands you the counter-script for each.',
             },
             {
               icon: Target,
-              title: 'Track Every Conversation',
-              body: 'Log each important conversation, tag which tactics you used, flag what worked and what didn\'t. Over weeks the app starts recognizing YOUR patterns and flagging them back to you.',
+              title: 'Training Arena (Role-Play)',
+              body: 'Rehearse the real conversation against an AI that plays the other person. It pushes back the way they will. You get real-time coaching as you respond. Post-session debrief tells you what you missed.',
+            },
+            {
+              icon: Users,
+              title: 'Voice Profile',
+              body: 'The app learns your natural writing style over your first 10 uses. Every script it generates afterward sounds like you wrote it. Not like a persuasion robot. This is the single biggest reason people stick with it.',
             },
             {
               icon: BookOpen,
-              title: 'Access To 697 Techniques (Not Just 250)',
-              body: 'The book has 47. The Vault has 250. The app has all 697, cross-referenced by situation, tactic type, risk level, and domain. When the book isn\'t enough, the app is the last stop.',
+              title: 'People Profiles',
+              body: 'Build a profile for each person who matters: your manager, your ex, your contractor, your teenager, your cofounder. Track every interaction, log what worked. The app builds per-person strategies that get sharper every month.',
+            },
+            {
+              icon: TrendingUp,
+              title: 'Field Ops + Persuasion Score',
+              body: 'Daily missions push you to deploy one specific tactic in a real conversation. Submit a field report. The AI grades your execution. Progress tracked as XP and skill levels so you actually see yourself getting better.',
             },
           ].map((item, i) => (
             <div key={i} className="bg-white border-2 border-[#5C3A1E]/40 p-6 md:p-7 shadow-[6px_6px_0_0_rgba(0,0,0,0.08)]">
@@ -207,20 +257,27 @@ function UpsellAppInner() {
             </div>
           ))}
         </div>
+
+        <p className="mt-10 text-center text-sm md:text-base text-[#5C3A1E] italic max-w-3xl mx-auto">
+          Plus the Message Optimizer, the Quick-Fire Mode, the full 700+ technique library, and a private operator community. All included in the same membership.
+        </p>
       </section>
 
       {/* ═════════ 4. HOW IT FITS ═════════ */}
       <section className="px-6 py-12 md:py-16 bg-[#1A1A1A] text-[#F4ECD8]">
         <div className="max-w-4xl mx-auto">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#D4A017]/80 mb-3 text-center">
+            // YOUR FULL STACK AFTER TODAY //
+          </p>
           <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-10 text-center">
-            Here&apos;s How It All <span className="text-[#D4A017]">Stacks Together</span>
+            Four Layers. <span className="text-[#D4A017]">One Operator.</span>{' '}You.
           </h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { level: 'Layer 1', title: 'The Book', body: '47 tactics. The foundational knowledge.' },
-              { level: 'Layer 2', title: 'Briefing + Playbooks', body: 'Prep for specific conversations.' },
-              { level: 'Layer 3', title: 'The Vault', body: '250 techniques for edge cases.' },
-              { level: 'Layer 4', title: 'The App', body: 'Personalized real-time coach. All 697 techniques.' },
+              { level: 'Layer 1', title: 'The Book', body: '47 foundational tactics. The theory.' },
+              { level: 'Layer 2', title: 'Briefing + Playbooks', body: '20 situation scripts plus prep worksheet. The prep.' },
+              { level: 'Layer 3', title: 'The Vault', body: '250 techniques indexed for edge cases. The reference.' },
+              { level: 'Layer 4', title: 'The App', body: 'All 700+ techniques, live, picking themselves for your real conversations.' },
             ].map((item, i) => (
               <div
                 key={i}
@@ -251,15 +308,15 @@ function UpsellAppInner() {
       {/* ═════════ 5. PRICING ═════════ */}
       <section className="px-6 py-12 md:py-20 max-w-4xl mx-auto">
         <div className="text-center mb-10">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// MEMBERSHIP //</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#5C3A1E] mb-3">// LOCK IN THE BOOK-BUYER RATE //</p>
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight mb-3">
-            Start Your Membership Today
+            Pick Your Plan.
           </h2>
-          <p className="text-base md:text-lg text-[#3B2E1A]">
-            One click. Same card you just used for the book. Cancel anytime with one email.
+          <p className="text-base md:text-lg text-[#3B2E1A] max-w-xl mx-auto">
+            One click charges the same card you just used for the book. Cancel anytime with one email. 30-day money-back on the first payment.
           </p>
-          <p className="text-sm text-[#3B2E1A] mt-3 max-w-xl mx-auto italic">
-            Heads up: most operators pick annual. The daily practice takes about a year to actually rewire how you prep, which is why it&apos;s priced so the yearly plan is basically four months free.
+          <p className="text-sm text-[#3B2E1A] mt-4 max-w-xl mx-auto italic">
+            Heads up: most operators pick annual. The daily practice takes about a year to actually rewire how you prep. Which is why the yearly plan is priced so you get four months free compared to paying monthly.
           </p>
         </div>
 
@@ -285,7 +342,7 @@ function UpsellAppInner() {
               <div className="flex-1">
                 <p className="font-mono text-xs uppercase tracking-wider text-[#5C3A1E] mb-1">Monthly</p>
                 <p className="text-3xl md:text-4xl font-black text-[#1A1A1A]">$34.95<span className="text-sm font-normal text-[#5C3A1E]">/mo</span></p>
-                <p className="text-xs text-[#5C3A1E] mt-2">Cancel anytime. No commitment.</p>
+                <p className="text-xs text-[#5C3A1E] mt-2">No commitment. Cancel when you want.</p>
               </div>
             </div>
           </button>
@@ -311,9 +368,9 @@ function UpsellAppInner() {
                 className="mt-1 h-5 w-5 accent-[#D4A017]"
               />
               <div className="flex-1">
-                <p className="font-mono text-xs uppercase tracking-wider text-[#5C3A1E] mb-1">Annual</p>
+                <p className="font-mono text-xs uppercase tracking-wider text-[#5C3A1E] mb-1">Annual · Most picked</p>
                 <p className="text-3xl md:text-4xl font-black text-[#1A1A1A]">$195.95<span className="text-sm font-normal text-[#5C3A1E]">/yr</span></p>
-                <p className="text-xs text-[#5C3A1E] mt-2">~$16.33/mo · Full year access.</p>
+                <p className="text-xs text-[#5C3A1E] mt-2">Works out to $16.33/mo. Four months free vs paying monthly.</p>
               </div>
             </div>
           </button>
@@ -387,9 +444,12 @@ function UpsellAppInner() {
       {/* ═════════ 8. FINAL CTA + DECLINE ═════════ */}
       <section className="px-6 py-12 md:py-20 max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight leading-tight">
-            Ready To Stop Walking Into Conversations Unprepared?
+          <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight leading-tight mb-3">
+            Wednesday Is Still Coming.
           </h2>
+          <p className="text-base md:text-lg text-[#3B2E1A]">
+            Walk in ready, or walk in the way you always have.
+          </p>
         </div>
 
         <div className="bg-black text-[#F4ECD8] border-4 border-[#D4A017] p-6 md:p-8 shadow-[6px_6px_0_0_rgba(0,0,0,0.2)] mb-6 text-center">
