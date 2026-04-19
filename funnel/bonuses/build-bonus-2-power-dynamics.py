@@ -50,7 +50,7 @@ def build_cover():
     draw = ImageDraw.Draw(img)
 
     label_font = ImageFont.truetype(str(FONT_TTF), 40)
-    title_font = ImageFont.truetype(str(FONT_TTF), 120)
+    title_font = ImageFont.truetype(str(FONT_TTF), 110)
     subtitle_font = ImageFont.truetype(str(FONT_TTF), 58)
     author_font = ImageFont.truetype(str(FONT_TTF), 52)
 
@@ -68,28 +68,27 @@ def build_cover():
     label_y = logo_y + logo_resized.height + 80
     draw.text(((WIDTH - (bbox[2] - bbox[0])) // 2, label_y), label_text, fill=BROWN, font=label_font)
 
-    # Title — 2 lines, clean
+    # Title — 2 lines, same spacing pattern as bonus 3/4
     title_y = label_y + 120
-    title_line_spacing = 150
+    title_line_spacing = 135
 
-    title_line1 = "POWER DYNAMICS"
-    bbox = draw.textbbox((0, 0), title_line1, font=title_font)
-    draw.text(((WIDTH - (bbox[2] - bbox[0])) // 2, title_y), title_line1, fill=DARK, font=title_font)
+    title_lines = ["POWER DYNAMICS", "CHEATSHEET"]
+    for i, line in enumerate(title_lines):
+        bbox = draw.textbbox((0, 0), line, font=title_font)
+        draw.text(((WIDTH - (bbox[2] - bbox[0])) // 2, title_y + i * title_line_spacing),
+                  line, fill=DARK, font=title_font)
 
-    title_line2 = "CHEATSHEET"
-    bbox = draw.textbbox((0, 0), title_line2, font=title_font)
-    draw.text(((WIDTH - (bbox[2] - bbox[0])) // 2, title_y + title_line_spacing), title_line2, fill=DARK, font=title_font)
-
-    # Gold rule
-    rule_y = title_y + title_line_spacing + 180
+    # Gold rule — standard formula matching bonus 3/4
+    rule_y = title_y + (len(title_lines) * title_line_spacing) + 60
     draw.rectangle([(WIDTH // 2 - 200, rule_y), (WIDTH // 2 + 200, rule_y + 3)], fill=GOLD)
 
-    # Subtitle — 2 natural lines
+    # Subtitle — 3 natural lines to match rhythm of other bonuses
     subtitle_lines = [
-        "Before Any Conversation",
-        "That Matters",
+        "The One-Page Reference",
+        "For Any Conversation",
+        "That Actually Matters",
     ]
-    sub_y = rule_y + 100
+    sub_y = rule_y + 80
     for line in subtitle_lines:
         bbox = draw.textbbox((0, 0), line, font=subtitle_font)
         draw.text(((WIDTH - (bbox[2] - bbox[0])) // 2, sub_y), line, fill=BROWN, font=subtitle_font)
