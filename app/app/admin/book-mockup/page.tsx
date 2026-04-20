@@ -442,7 +442,13 @@ function Book({ settings }: { settings: Settings }) {
   // (pages compress into the cover at the binding) and a subtle
   // left/right shadow so the slab reads as cylindrical-ish rather
   // than cardboard-flat.
-  const PAPER_COLOR = '#F7F2E6'; // warm near-white — closer to real book pages than the cream we had
+  // Near-white with the faintest warm tint. Pure white (#FFFFFF)
+  // would work for dark covers but looks too sterile against the
+  // cream Shadow Persuasion covers. Cream (#F4ECD8) was the opposite
+  // problem — too warm, blended into the cover and read as flat.
+  // If a template ever needs darker or brighter pages, swap this
+  // constant or promote it to a state-driven prop.
+  const PAPER_COLOR = '#FBFAF4';
   const sidePageEdgeBg = `
     linear-gradient(
       to bottom,
