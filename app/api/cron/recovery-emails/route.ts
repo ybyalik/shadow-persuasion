@@ -1,17 +1,17 @@
 /**
  * GET /api/cron/recovery-emails
  *
- * Cart abandonment recovery cron. Intended to be triggered hourly by Vercel
- * Cron (configured in vercel.json). Walks the checkout_leads table and
+ * Cart abandonment recovery cron. Intended to be triggered hourly by
+ * Vercel Cron (configured in vercel.json). Walks checkout_leads and
  * sends whichever recovery email is due for each non-converted lead.
  *
- * Schedule:
- *   Step 1 email:  1  hour after created_at
- *   Step 2 email:  24 hours after created_at
- *   Step 3 email:  72 hours after created_at
+ * Cadence is DB-driven: each template in the `cart_recovery` sequence
+ * carries a `delay_hours` value (absolute hours from the lead's
+ * created_at). Admin can edit cadence or add a step 4 from
+ * /app/admin/emails without a deploy — the cron auto-picks it up.
  *
- * Leads flip to status='abandoned' after step 3 if still unconverted.
- * Converted / recovered leads are never touched.
+ * Leads flip to status='abandoned' after the last step if still
+ * unconverted. Converted / recovered leads are never touched.
  *
  * Security: protected by CRON_SECRET header. Set it in Vercel env and
  * include it in the Vercel Cron config.
@@ -28,36 +28,79 @@ const supabase = createClient(
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// Map current lead status → {step, minAgeHours} we should send next
-const NEXT_STEP: Record<string, { step: 1 | 2 | 3; minAgeHours: number } | null> = {
-  created:          { step: 1, minAgeHours: 1 },
-  recovery_sent_1:  { step: 2, minAgeHours: 24 },
-  recovery_sent_2:  { step: 3, minAgeHours: 72 },
-  recovery_sent_3:  null, // done
-  abandoned:        null,
-  converted:        null,
-  recovered:        null,
+type SequenceStep = {
+  step: number;
+  delay_hours: number;
 };
 
+/**
+ * Load the sequence cadence from the DB. Sorted ascending by step
+ * number so we can walk the timeline in order. Disabled templates
+ * are skipped (cron still respects the admin's enable toggle).
+ */
+async function loadRecoveryCadence(): Promise<SequenceStep[]> {
+  const { data } = await supabase
+    .from('email_templates')
+    .select('sequence_step, delay_hours, enabled')
+    .eq('sequence_key', 'cart_recovery')
+    .eq('enabled', true)
+    .order('sequence_step', { ascending: true });
+  return (data ?? [])
+    .filter((t) => typeof t.sequence_step === 'number' && typeof t.delay_hours === 'number')
+    .map((t) => ({
+      step: t.sequence_step as number,
+      delay_hours: t.delay_hours as number,
+    }));
+}
+
+/**
+ * Given a lead's current status, figure out which step number is
+ * eligible next. Lead statuses follow the pattern:
+ *   created          → step 1 next
+ *   recovery_sent_1  → step 2 next
+ *   recovery_sent_N  → step N+1 next
+ * Returns null if the lead is in a terminal status.
+ */
+function nextStepNumber(status: string): number | null {
+  if (status === 'created') return 1;
+  const m = status.match(/^recovery_sent_(\d+)$/);
+  if (m) return parseInt(m[1], 10) + 1;
+  return null;
+}
+
 export async function GET(req: Request) {
-  // Auth check
+  // Auth
   const authHeader = req.headers.get('authorization');
   const expected = `Bearer ${process.env.CRON_SECRET || ''}`;
   if (!process.env.CRON_SECRET || authHeader !== expected) {
-    // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` automatically
-    // when `schedule` is defined in vercel.json.
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    // Grab all leads that are candidates for a next email
+    const cadence = await loadRecoveryCadence();
+    if (cadence.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        processed: 0,
+        sent: 0,
+        abandoned: 0,
+        note: 'No cart_recovery templates enabled',
+      });
+    }
+
+    // Build quick lookup: step → delay_hours
+    const delayByStep: Record<number, number> = {};
+    for (const s of cadence) delayByStep[s.step] = s.delay_hours;
+    const lastStep = cadence[cadence.length - 1].step;
+
+    // Pull candidate leads. We include every non-terminal status so
+    // the loop below can handle arbitrary numbers of steps.
     const { data: leads, error } = await supabase
       .from('checkout_leads')
       .select('*')
-      .in('status', ['created', 'recovery_sent_1', 'recovery_sent_2'])
+      .not('status', 'in', '(abandoned,converted,recovered)')
       .order('created_at', { ascending: true })
       .limit(500);
-
     if (error) throw error;
     if (!leads || leads.length === 0) {
       return NextResponse.json({ ok: true, processed: 0, sent: 0, abandoned: 0 });
@@ -69,15 +112,30 @@ export async function GET(req: Request) {
     const errors: Array<{ leadId: string; error: string }> = [];
 
     for (const lead of leads) {
-      const next = NEXT_STEP[lead.status];
-      if (!next) continue;
+      const step = nextStepNumber(lead.status);
+      if (step === null) continue;
+
+      const delay = delayByStep[step];
+      // If there's no template for this step (admin hasn't added it
+      // yet), treat it as "last step done" and abandon.
+      if (delay === undefined) {
+        if (step > lastStep) {
+          await supabase
+            .from('checkout_leads')
+            .update({ status: 'abandoned' })
+            .eq('id', lead.id);
+          abandoned += 1;
+        }
+        continue;
+      }
 
       const ageHours = (now - new Date(lead.created_at).getTime()) / HOUR_MS;
-      if (ageHours < next.minAgeHours) continue;
+      if (ageHours < delay) continue;
 
-      // Leads older than 96 hours in `recovery_sent_2` state → abandon instead
-      // (prevents sending step 3 to leads that might have already been processed).
-      if (next.step === 3 && ageHours > 96) {
+      // Safety: leads sitting in the same status for more than a week
+      // past their trigger time get abandoned rather than receiving
+      // a very stale email (timezone drift, cron downtime, etc.)
+      if (ageHours > delay + 7 * 24) {
         await supabase
           .from('checkout_leads')
           .update({ status: 'abandoned' })
@@ -86,11 +144,11 @@ export async function GET(req: Request) {
         continue;
       }
 
-      // Send the recovery email
+      // Send
       const result = await sendRecoveryEmail({
         to: lead.email,
         firstName: lead.first_name,
-        step: next.step,
+        step: step as 1 | 2 | 3, // sender still types step as 1|2|3; widens if we add step 4 later
       });
 
       if (!result.ok) {
@@ -98,22 +156,17 @@ export async function GET(req: Request) {
         continue;
       }
 
-      // Record the send in the lead row
       const newEntry = {
-        step: next.step,
+        step,
         sent_at: new Date().toISOString(),
         email_id: result.id ?? null,
       };
       const existingSends = Array.isArray(lead.recovery_emails) ? lead.recovery_emails : [];
-      const nextStatus =
-        next.step === 1 ? 'recovery_sent_1'
-        : next.step === 2 ? 'recovery_sent_2'
-        : 'recovery_sent_3';
 
       await supabase
         .from('checkout_leads')
         .update({
-          status: nextStatus,
+          status: `recovery_sent_${step}`,
           recovery_emails: [...existingSends, newEntry],
         })
         .eq('id', lead.id);
@@ -121,19 +174,12 @@ export async function GET(req: Request) {
       sent += 1;
     }
 
-    // Also flip any recovery_sent_3 leads older than 7 days to abandoned
-    const weekAgo = new Date(now - 7 * 24 * HOUR_MS).toISOString();
-    const { count: stillUnresolved } = await supabase
-      .from('checkout_leads')
-      .update({ status: 'abandoned' }, { count: 'exact' })
-      .eq('status', 'recovery_sent_3')
-      .lt('created_at', weekAgo);
-
     return NextResponse.json({
       ok: true,
       processed: leads.length,
       sent,
-      abandoned: abandoned + (stillUnresolved ?? 0),
+      abandoned,
+      cadence: cadence.map((c) => `step ${c.step} @ ${c.delay_hours}h`),
       errors,
     });
   } catch (err) {

@@ -22,6 +22,8 @@ import {
   Plus,
   ExternalLink,
   Lock,
+  ListFilter,
+  UserX,
 } from 'lucide-react';
 
 type Template = {
@@ -162,6 +164,20 @@ export default function EmailsListPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Link
+            href="/app/admin/emails/sends"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] hover:border-[#D4A017] font-mono text-xs uppercase tracking-wider"
+          >
+            <ListFilter className="h-3.5 w-3.5" />
+            Sends Log
+          </Link>
+          <Link
+            href="/app/admin/emails/unsubscribes"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] hover:border-[#D4A017] font-mono text-xs uppercase tracking-wider"
+          >
+            <UserX className="h-3.5 w-3.5" />
+            Unsubscribes
+          </Link>
           <button
             onClick={load}
             disabled={loading}

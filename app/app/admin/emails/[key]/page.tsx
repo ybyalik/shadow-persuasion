@@ -39,6 +39,8 @@ type Template = {
   enabled: boolean;
   sequence_key: string | null;
   sequence_step: number | null;
+  delay_hours: number | null;
+  is_transactional: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -119,6 +121,10 @@ export default function EmailEditorPage() {
           from_email: tpl.from_email,
           variables: tpl.variables,
           enabled: tpl.enabled,
+          sequence_key: tpl.sequence_key,
+          sequence_step: tpl.sequence_step,
+          delay_hours: tpl.delay_hours,
+          is_transactional: tpl.is_transactional,
         }),
       });
       const d = await res.json();
@@ -301,6 +307,48 @@ export default function EmailEditorPage() {
               />
               Enabled (disabled templates are skipped on send)
             </label>
+            <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-[#F4ECD8]/70">
+              <input
+                type="checkbox"
+                checked={tpl.is_transactional}
+                onChange={(e) => patch('is_transactional', e.target.checked)}
+                className="accent-[#D4A017]"
+              />
+              Transactional (bypasses unsubscribe — only for receipts / required delivery)
+            </label>
+          </div>
+
+          {/* Sequence & cadence */}
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-4 space-y-3">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-[#D4A017]">
+              Sequence & cadence
+            </p>
+            <p className="text-xs text-gray-600 dark:text-[#F4ECD8]/60">
+              Group a template into a sequence (e.g. <span className="font-mono">cart_recovery</span>) and
+              the cron will fire it automatically. <span className="font-mono">delay_hours</span> is the
+              absolute number of hours after the triggering event (lead created, order placed, etc.) before
+              this email sends.
+            </p>
+            <LabeledInput
+              label="Sequence key"
+              value={tpl.sequence_key ?? ''}
+              onChange={(v) => patch('sequence_key', v || null)}
+              hint='Blank for standalone templates. Example: "cart_recovery"'
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <LabeledNumberInput
+                label="Step"
+                value={tpl.sequence_step}
+                onChange={(v) => patch('sequence_step', v)}
+                hint="1, 2, 3…"
+              />
+              <LabeledNumberInput
+                label="Delay hours"
+                value={tpl.delay_hours}
+                onChange={(v) => patch('delay_hours', v)}
+                hint="Hours after trigger"
+              />
+            </div>
           </div>
 
           {/* Trigger description (read-only context) */}
@@ -479,6 +527,44 @@ function LabeledInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        className="w-full mt-1 px-3 py-2 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] text-sm font-mono focus:outline-none focus:border-[#D4A017]"
+      />
+      {hint && (
+        <p className="text-[10px] font-mono text-gray-500 dark:text-[#F4ECD8]/50 mt-0.5">
+          {hint}
+        </p>
+      )}
+    </label>
+  );
+}
+
+function LabeledNumberInput({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (v: number | null) => void;
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4A017]">
+        {label}
+      </span>
+      <input
+        type="number"
+        value={value ?? ''}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === '') onChange(null);
+          else {
+            const parsed = parseInt(raw, 10);
+            onChange(Number.isFinite(parsed) ? parsed : null);
+          }
+        }}
         className="w-full mt-1 px-3 py-2 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] text-sm font-mono focus:outline-none focus:border-[#D4A017]"
       />
       {hint && (

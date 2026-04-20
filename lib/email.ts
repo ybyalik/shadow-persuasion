@@ -22,6 +22,8 @@ import {
   renderTemplate,
   logSend,
   buildFromAddress,
+  buildUnsubscribeUrl,
+  isUnsubscribed,
   type TemplateRecord,
 } from './email-templates';
 
@@ -113,6 +115,8 @@ export async function sendDeliveryEmail(opts: {
     return { ok: false, error: 'template disabled' };
   }
 
+  // Delivery is transactional — Stripe requires we deliver what the
+  // customer paid for. So we do NOT check the unsubscribe list here.
   const body = tpl ?? deliveryFallback();
   const vars: Record<string, string> = {
     greeting: opts.firstName ? `${opts.firstName},` : 'Hey,',
@@ -120,6 +124,7 @@ export async function sendDeliveryEmail(opts: {
     download_plural: opts.items.length > 1 ? 's' : '',
     download_rows: renderDownloadRowsHtml(opts.items),
     download_rows_text: renderDownloadRowsText(opts.items),
+    unsubscribe_url: buildUnsubscribeUrl(opts.to), // harmless if the template doesn't reference it
   };
 
   const subject = renderTemplate(body.subject, vars);
@@ -178,12 +183,21 @@ export async function sendDeliveryEmail(opts: {
 
 const RECOVERY_URL = `${SITE_URL}/checkout/book`;
 
-type RecoveryStep = 1 | 2 | 3;
+/**
+ * Any positive integer step. Legacy code used the literal `1 | 2 | 3`
+ * but the DB-driven cron needs to support arbitrary counts now that
+ * admins can add step 4+.
+ */
+type RecoveryStep = number;
 
 /**
  * Minimal fallback copy for each recovery step. Used if the DB row
  * for the corresponding template key is missing. Kept intentionally
  * terse — the seed in 016_email_templates.sql has the full copy.
+ *
+ * Only covers steps 1-3 (the originally-shipped sequence). If admin
+ * adds step 4+ and the DB lookup later fails, we return step 3's
+ * copy as a very-last-resort fallback.
  */
 function recoveryFallback(step: RecoveryStep): Pick<TemplateRecord, 'subject' | 'body_html' | 'body_text' | 'from_name' | 'from_email'> {
   const base = {
@@ -206,6 +220,7 @@ function recoveryFallback(step: RecoveryStep): Pick<TemplateRecord, 'subject' | 
       body_text: `{{greeting}}\n\nShadow Persuasion works because the other person doesn't see it running: {{cta_url}}\n\nNate`,
     };
   }
+  // Step 3 and anything beyond (if a future step's DB row goes missing)
   return {
     ...base,
     subject: 'Last one from me',
@@ -217,7 +232,7 @@ function recoveryFallback(step: RecoveryStep): Pick<TemplateRecord, 'subject' | 
 export async function sendRecoveryEmail(opts: {
   to: string;
   firstName?: string | null;
-  step: RecoveryStep;
+  step: RecoveryStep; // widened to any positive integer for DB-driven sequences
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   if (!resend) {
     console.warn('[email] RESEND_API_KEY not set — skipping recovery send');
@@ -237,10 +252,27 @@ export async function sendRecoveryEmail(opts: {
     return { ok: false, error: 'template disabled' };
   }
 
+  // Honor unsubscribes for non-transactional sends. Recovery emails
+  // are marketing, so check the opt-out list before sending.
+  // (If the template flag isn't set, default to treating sequences as
+  // non-transactional — safer default.)
+  const nonTransactional = tpl ? !tpl.is_transactional : true;
+  if (nonTransactional && (await isUnsubscribed(opts.to))) {
+    await logSend({
+      template_key: key,
+      to: opts.to,
+      subject: '',
+      status: 'skipped',
+      error: 'recipient unsubscribed',
+    });
+    return { ok: false, error: 'recipient unsubscribed' };
+  }
+
   const body = tpl ?? recoveryFallback(opts.step);
   const vars: Record<string, string> = {
     greeting: opts.firstName ? `${opts.firstName},` : opts.step === 2 ? 'Hey again,' : 'Hey,',
     cta_url: RECOVERY_URL,
+    unsubscribe_url: buildUnsubscribeUrl(opts.to),
   };
 
   const subject = renderTemplate(body.subject, vars);

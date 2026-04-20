@@ -69,6 +69,14 @@ export async function PUT(req: Request, { params }: Params) {
     if (typeof body?.from_email === 'string' || body?.from_email === null) patch.from_email = body.from_email;
     if (Array.isArray(body?.variables)) patch.variables = body.variables;
     if (typeof body?.enabled === 'boolean') patch.enabled = body.enabled;
+    // Cadence + sequence membership + transactional flag — new in 017
+    if (typeof body?.sequence_key === 'string' || body?.sequence_key === null)
+      patch.sequence_key = body.sequence_key;
+    if (typeof body?.sequence_step === 'number' || body?.sequence_step === null)
+      patch.sequence_step = body.sequence_step;
+    if (typeof body?.delay_hours === 'number' || body?.delay_hours === null)
+      patch.delay_hours = body.delay_hours;
+    if (typeof body?.is_transactional === 'boolean') patch.is_transactional = body.is_transactional;
 
     const { data, error } = await supabase
       .from('email_templates')
