@@ -396,12 +396,23 @@ export default function BookMockupPage() {
 /* ──────────────────────────────────────────────────────────
    The book itself.
 
-   CSS 3D trick: we render the FRONT of the book as a styled
-   <img>, then add a sibling div for the SPINE (rotated 90°
-   off the left edge, z-translated by -thickness). Together
-   they form a visible 3D edge. Page striations on the spine
-   come from a repeating linear gradient. Shadow below uses
-   filter blur on a transparent oval.
+   CSS 3D setup: the parent div is `transform-style: preserve-3d`
+   and holds 6 faces of the book (front cover, back, spine, right
+   page edge, top page edge, bottom page edge) plus a floor shadow.
+   Each face is a div positioned on one edge of the cover and
+   rotated so it extends BACKWARD (into -Z) to form the book's
+   volume. The +Z direction is toward the viewer, so every side
+   face folds into -Z.
+
+   Geometry recipe (each side face hinges on its FRONT edge and
+   rotates backward by 90°):
+     SPINE:  at left:0,  hinge=left center,   rotateY( 90deg)
+     RIGHT:  at right:0, hinge=right center,  rotateY(-90deg)
+     TOP:    at top:0,   hinge=top center,    rotateX(-90deg)
+     BOTTOM: at bottom:0, hinge=bottom center, rotateX( 90deg)
+
+   If any of those signs flip, the face tips FORWARD instead and
+   you get a detached-sliver look at the top/bottom of the book.
    ────────────────────────────────────────────────────────── */
 
 function Book({ settings }: { settings: Settings }) {
@@ -418,6 +429,16 @@ function Book({ settings }: { settings: Settings }) {
   const height = 450;
 
   const shadowOpacity = shadow / 100;
+
+  // Repeating cream-colored paper striations used on every
+  // page-edge face (top / bottom / right).
+  const pageEdgeBg = `repeating-linear-gradient(
+    to right,
+    #F4ECD8 0px,
+    #F4ECD8 1px,
+    #E8DCC0 1px,
+    #E8DCC0 2px
+  )`;
 
   return (
     <div
@@ -450,7 +471,7 @@ function Book({ settings }: { settings: Settings }) {
           }}
         />
 
-        {/* BACK cover — just a dark slab, translated back by thickness */}
+        {/* BACK cover — dark slab at the back plane of the book */}
         <div
           style={{
             position: 'absolute',
@@ -461,7 +482,7 @@ function Book({ settings }: { settings: Settings }) {
           }}
         />
 
-        {/* SPINE — rotated 90° around Y so it's perpendicular to the cover */}
+        {/* SPINE — hinges on the FRONT-LEFT edge, folds backward */}
         <div
           style={{
             position: 'absolute',
@@ -469,8 +490,8 @@ function Book({ settings }: { settings: Settings }) {
             left: 0,
             width: thickness,
             height,
-            transform: `translateX(${-thickness}px) rotateY(-90deg)`,
-            transformOrigin: 'right center',
+            transformOrigin: 'left center',
+            transform: 'rotateY(90deg)',
             background: `
               linear-gradient(
                 to right,
@@ -493,7 +514,7 @@ function Book({ settings }: { settings: Settings }) {
           }}
         />
 
-        {/* TOP page edge */}
+        {/* TOP page edge — hinges on the FRONT-TOP edge, folds backward */}
         <div
           style={{
             position: 'absolute',
@@ -501,20 +522,13 @@ function Book({ settings }: { settings: Settings }) {
             left: 0,
             width,
             height: thickness,
-            transform: `translateY(0) rotateX(90deg)`,
             transformOrigin: 'top center',
-            background: `repeating-linear-gradient(
-              to right,
-              #F4ECD8 0px,
-              #F4ECD8 1px,
-              #E8DCC0 1px,
-              #E8DCC0 2px
-            )`,
-            borderTop: '1px solid #8B7355',
+            transform: 'rotateX(-90deg)',
+            background: pageEdgeBg,
           }}
         />
 
-        {/* BOTTOM page edge */}
+        {/* BOTTOM page edge — hinges on the FRONT-BOTTOM edge, folds backward */}
         <div
           style={{
             position: 'absolute',
@@ -522,20 +536,13 @@ function Book({ settings }: { settings: Settings }) {
             left: 0,
             width,
             height: thickness,
-            transform: `translateY(${thickness}px) rotateX(-90deg)`,
-            transformOrigin: 'top center',
-            background: `repeating-linear-gradient(
-              to right,
-              #F4ECD8 0px,
-              #F4ECD8 1px,
-              #E8DCC0 1px,
-              #E8DCC0 2px
-            )`,
-            borderBottom: '1px solid #8B7355',
+            transformOrigin: 'bottom center',
+            transform: 'rotateX(90deg)',
+            background: pageEdgeBg,
           }}
         />
 
-        {/* RIGHT page edge (opposite the spine) */}
+        {/* RIGHT page edge — hinges on the FRONT-RIGHT edge, folds backward */}
         <div
           style={{
             position: 'absolute',
@@ -543,8 +550,8 @@ function Book({ settings }: { settings: Settings }) {
             right: 0,
             width: thickness,
             height,
-            transform: `translateX(${thickness}px) rotateY(90deg)`,
-            transformOrigin: 'left center',
+            transformOrigin: 'right center',
+            transform: 'rotateY(-90deg)',
             background: `repeating-linear-gradient(
               to bottom,
               #F4ECD8 0px,
@@ -552,7 +559,6 @@ function Book({ settings }: { settings: Settings }) {
               #E8DCC0 1px,
               #E8DCC0 2px
             )`,
-            borderRight: '1px solid #8B7355',
           }}
         />
 
