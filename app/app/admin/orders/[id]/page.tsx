@@ -80,6 +80,7 @@ type OrderDetail = {
     plan: string;
     status: string;
     current_period_end: string | null;
+    created_at: string | null;
   } | null;
 };
 
@@ -88,6 +89,16 @@ const ITEM_LABELS: Record<string, string> = {
   briefing: 'The Pre-Conversation Briefing',
   playbooks: 'The Situation Playbooks',
   vault: 'The Shadow Persuasion Vault',
+};
+
+// Inline pricing for the recurring plans so the subscription card can
+// show its amount. Must stay in sync with lib/pricing and the upsell-app
+// API. (Plan amounts are not stored on the subscriptions row — Stripe
+// holds the Price object, we just stamp the plan key.)
+const PLAN_PRICING: Record<string, { cents: number; intervalLabel: string }> = {
+  weekly:  { cents: 995,   intervalLabel: '/wk'  },
+  monthly: { cents: 3495,  intervalLabel: '/mo'  },
+  yearly:  { cents: 19595, intervalLabel: '/yr'  },
 };
 
 export default function OrderDetailPage() {
@@ -205,11 +216,33 @@ export default function OrderDetailPage() {
     a.created_at.localeCompare(b.created_at)
   );
 
-  // Session totals
+  // Build a unified timeline of one-time orders + the recurring
+  // subscription (if any) so the page shows ONE picture of everything
+  // the customer bought. Each item has a sortable `at` timestamp.
+  type TimelineItem =
+    | { kind: 'order'; at: string; order: OrderRow }
+    | { kind: 'subscription'; at: string };
+  const timeline: TimelineItem[] = allOrders.map((o) => ({
+    kind: 'order' as const,
+    at: o.created_at,
+    order: o,
+  }));
+  if (subscription) {
+    timeline.push({
+      kind: 'subscription' as const,
+      at: subscription.created_at || allOrders[allOrders.length - 1]?.created_at || new Date().toISOString(),
+    });
+  }
+  timeline.sort((a, b) => a.at.localeCompare(b.at));
+
+  // Session totals (one-time orders only; recurring shown separately)
   const paidCents = allOrders.filter((o) => o.status === 'paid').reduce((s, o) => s + o.amount_cents, 0);
   const pendingCents = allOrders.filter((o) => o.status === 'pending').reduce((s, o) => s + o.amount_cents, 0);
   const refundedCents = allOrders.filter((o) => o.status === 'refunded').reduce((s, o) => s + o.amount_cents, 0);
   const sessionCurrency = allOrders[0]?.currency || 'usd';
+
+  // Subscription display helpers (amount + interval lookup)
+  const subPricing = subscription ? PLAN_PRICING[subscription.plan] : null;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl">
@@ -247,64 +280,131 @@ export default function OrderDetailPage() {
       {/* ─────────── Session totals ─────────── */}
       <Section title="Session totals">
         <div className="grid md:grid-cols-4 gap-x-8 gap-y-3">
-          <Field label="Paid" value={fmt(paidCents, sessionCurrency)} highlight />
+          <Field label="Paid (one-time)" value={fmt(paidCents, sessionCurrency)} highlight />
           <Field label="Pending" value={fmt(pendingCents, sessionCurrency)} />
           <Field label="Refunded" value={fmt(refundedCents, sessionCurrency)} />
-          <Field label="Orders" value={String(allOrders.length)} />
+          <Field label="Purchases" value={String(timeline.length)} />
+          {subscription && subPricing && (
+            <Field
+              label="Recurring"
+              value={`${fmt(subPricing.cents)}${subPricing.intervalLabel}`}
+              highlight
+            />
+          )}
+          {subscription && (
+            <Field
+              label="Sub status"
+              value={`${subscription.status}${subscription.plan ? ` · ${subscription.plan}` : ''}`}
+            />
+          )}
           <Field label="Customer" value={order.stripe_customer_id || '—'} mono />
           <Field label="Email" value={order.email} />
         </div>
       </Section>
 
-      {/* ─────────── Subscription (once for the session) ─────────── */}
-      <Section title="Member / Subscription">
-        {subscription ? (
-          <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
-              <Field label="Plan" value={subscription.plan} highlight />
-              <Field label="Status" value={subscription.status} />
-              <Field label="Current Period End" value={fmtDate(subscription.current_period_end)} />
-              <Field label="Stripe Sub ID" value={subscription.stripe_subscription_id || '—'} mono />
-            </div>
-            <div className="flex gap-2 flex-wrap pt-3 border-t border-gray-200 dark:border-[#D4A017]/10">
-              <button
-                onClick={() => cancelSub('period_end')}
-                disabled={busy === 'cancel_sub' || subscription.status === 'cancelled'}
-                className="px-3 py-1.5 bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/40 text-gray-900 dark:text-[#F4ECD8] hover:border-[#D4A017] disabled:opacity-50 font-mono text-xs uppercase tracking-wider"
-              >
-                Cancel at Period End
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm('Cancel subscription IMMEDIATELY? This cannot be undone.')) {
-                    cancelSub('immediately');
-                  }
-                }}
-                disabled={busy === 'cancel_sub' || subscription.status === 'cancelled'}
-                className="px-3 py-1.5 bg-red-600 text-white dark:bg-red-900/30 dark:text-red-300 border border-red-600 hover:bg-red-700 dark:hover:bg-red-900/50 disabled:opacity-50 font-mono text-xs uppercase tracking-wider"
-              >
-                Cancel Immediately
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-[#F4ECD8]/50 font-mono text-sm">
-            This buyer does not have a SaaS subscription.
-          </p>
-        )}
-      </Section>
-
-      {/* ─────────── Each order in the session ─────────── */}
-      <Section title={`Orders (${allOrders.length})`}>
+      {/* ─────────── Unified purchase timeline ─────────── */}
+      <Section title={`Purchases (${timeline.length})`}>
         <div className="space-y-4">
-          {allOrders.map((o) => {
+          {timeline.map((item, idx) => {
+            if (item.kind === 'subscription' && subscription) {
+              const amountLabel = subPricing
+                ? `${fmt(subPricing.cents)}${subPricing.intervalLabel}`
+                : subscription.plan;
+              const subCancelled =
+                subscription.status === 'cancelled' || subscription.status === 'canceled';
+              return (
+                <div
+                  key={`sub-${subscription.id}`}
+                  className="border border-[#D4A017]/40 dark:border-[#D4A017]/30 bg-[#D4A017]/5 dark:bg-[#D4A017]/5 p-4"
+                >
+                  {/* Subscription header */}
+                  <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
+                    <div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <StatusBadge status={subscription.status} />
+                        <span className="text-[#D4A017] font-bold">
+                          {amountLabel}
+                        </span>
+                        <span className="font-mono text-[10px] text-gray-500 dark:text-[#F4ECD8]/50">
+                          {subscription.created_at ? fmtDate(subscription.created_at) : '—'}
+                        </span>
+                        <span className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-[#D4A017] text-[#0A0A0A] font-bold">
+                          Subscription
+                        </span>
+                      </div>
+                      <p className="font-mono text-[10px] text-gray-400 dark:text-[#F4ECD8]/40 mt-1">
+                        {subscription.stripe_subscription_id?.slice(0, 13) || subscription.id.slice(0, 13)}…
+                      </p>
+                    </div>
+                    {subscription.stripe_subscription_id && (
+                      <a
+                        href={`https://dashboard.stripe.com/subscriptions/${subscription.stripe_subscription_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-[#D4A017] hover:underline font-mono uppercase tracking-wider"
+                      >
+                        Stripe <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* What they got */}
+                  <div className="space-y-1.5 mb-3">
+                    <div className="flex items-center gap-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/10 px-3 py-2 font-mono text-sm">
+                      <FileCheck className="h-4 w-4 text-[#D4A017]" />
+                      <span className="text-gray-900 dark:text-[#F4ECD8]">
+                        Shadow Persuasion App — {subscription.plan} plan
+                      </span>
+                      <span className="ml-auto text-gray-400 dark:text-[#F4ECD8]/40 text-xs uppercase">
+                        recurring
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Timestamps */}
+                  <div className="grid md:grid-cols-2 gap-x-8 gap-y-1 mb-3 text-xs">
+                    <Field label="Plan" value={subscription.plan} />
+                    <Field
+                      label={subCancelled ? 'Ends' : 'Current period end'}
+                      value={fmtDate(subscription.current_period_end)}
+                    />
+                  </div>
+
+                  {/* Sub action row */}
+                  <div className="flex gap-2 flex-wrap pt-3 border-t border-[#D4A017]/20">
+                    <button
+                      onClick={() => cancelSub('period_end')}
+                      disabled={busy === 'cancel_sub' || subCancelled}
+                      className="px-3 py-1.5 bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/40 text-gray-900 dark:text-[#F4ECD8] hover:border-[#D4A017] disabled:opacity-50 font-mono text-xs uppercase tracking-wider"
+                    >
+                      Cancel at Period End
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Cancel subscription IMMEDIATELY? This cannot be undone.')) {
+                          cancelSub('immediately');
+                        }
+                      }}
+                      disabled={busy === 'cancel_sub' || subCancelled}
+                      className="px-3 py-1.5 bg-red-600 text-white dark:bg-red-900/30 dark:text-red-300 border border-red-600 hover:bg-red-700 dark:hover:bg-red-900/50 disabled:opacity-50 font-mono text-xs uppercase tracking-wider inline-flex items-center gap-1.5"
+                    >
+                      <AlertTriangle className="h-3 w-3" />
+                      Cancel Immediately
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            if (item.kind !== 'order') return null;
+            const o = item.order;
             const canRefund = o.status === 'paid' && !!o.stripe_payment_intent_id;
             const isRefundOpen = refundOpenFor === o.id;
             const isPrimary = o.id === order.id;
 
             return (
               <div
-                key={o.id}
+                key={`order-${o.id}-${idx}`}
                 className="border border-gray-200 dark:border-[#D4A017]/20 bg-gray-50 dark:bg-[#0A0A0A] p-4"
               >
                 {/* Order header */}
