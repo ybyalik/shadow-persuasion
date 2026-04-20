@@ -18,6 +18,7 @@ import {
   Shuffle,
   FolderTree,
   Mail,
+  Box,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -32,6 +33,7 @@ const NAV = [
   { href: '/app/admin/books',      label: 'Books',     icon: BookOpen },
   { href: '/app/admin/techniques', label: 'Techniques', icon: Shuffle },
   { href: '/app/admin/taxonomy',   label: 'Taxonomy',  icon: FolderTree },
+  { href: '/app/admin/book-mockup', label: 'Book Mockup', icon: Box },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
