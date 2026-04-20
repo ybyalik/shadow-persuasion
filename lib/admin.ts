@@ -9,7 +9,7 @@ export async function getAdminEmails(): Promise<string[]> {
     const res = await fetch('/api/settings?key=admin_emails');
     if (res.ok) {
       const data = await res.json();
-      cachedAdminEmails = data.value || FALLBACK_ADMIN_EMAILS;
+      cachedAdminEmails = (data.value as string[] | null) || FALLBACK_ADMIN_EMAILS;
       return cachedAdminEmails;
     }
   } catch {

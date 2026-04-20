@@ -6,9 +6,10 @@ import { useState, useRef } from 'react';
 interface ChatInputProps {
   onSend: (input: string, image?: { file: File; preview: string; base64: string }) => void;
   isLoading: boolean;
+  placeholder?: string;
 }
 
-export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, placeholder }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
               handleSubmit(e);
             }
           }}
-          placeholder={imageFile ? "Add a message about this image..." : "Ask the Handler..."}
+          placeholder={imageFile ? "Add a message about this image..." : (placeholder || "Ask the Handler...")}
           rows={1}
           className="flex-1 p-2 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
           disabled={isLoading}

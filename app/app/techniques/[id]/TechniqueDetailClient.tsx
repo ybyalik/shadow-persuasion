@@ -927,14 +927,15 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
               </p>
               <button
                 onClick={() => {
-                  const allVisible = Object.values(showBreakdown).filter(Boolean).length === synthesized.conversationExamples.length;
+                  const examples = synthesized?.conversationExamples ?? [];
+                  const allVisible = Object.values(showBreakdown).filter(Boolean).length === examples.length;
                   const newState: Record<number, boolean> = {};
-                  synthesized.conversationExamples.forEach((_, i) => { newState[i] = !allVisible; });
+                  examples.forEach((_, i) => { newState[i] = !allVisible; });
                   setShowBreakdown(newState);
                 }}
                 className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono uppercase rounded-lg border border-[#D4A017]/30 text-[#D4A017] hover:bg-[#D4A017]/10 transition-colors"
               >
-                {Object.values(showBreakdown).filter(Boolean).length === synthesized.conversationExamples.length ? (
+                {Object.values(showBreakdown).filter(Boolean).length === (synthesized?.conversationExamples?.length ?? 0) ? (
                   <><EyeOff className="h-3.5 w-3.5" /> Hide Technique Breakdown</>
                 ) : (
                   <><Eye className="h-3.5 w-3.5" /> Show Technique Breakdown</>
@@ -963,7 +964,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
                           <ContextIcon className="h-4 w-4 text-[#D4A017]" />
                         </div>
                         <div>
-                          <span className="text-[10px] font-mono uppercase text-gray-400 block">Scenario {exIdx + 1} of {synthesized.conversationExamples.length}</span>
+                          <span className="text-[10px] font-mono uppercase text-gray-400 block">Scenario {exIdx + 1} of {synthesized?.conversationExamples?.length ?? 0}</span>
                           <h3 className="text-sm font-bold text-gray-900 dark:text-white">{example.title}</h3>
                         </div>
                         <span className="px-2.5 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono uppercase ml-2">{example.context}</span>

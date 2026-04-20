@@ -46,7 +46,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {isActive && (
+        {isActive && subscription && (
           <div className="max-w-md mx-auto mb-8 p-4 bg-green-50 border border-green-300 rounded-lg text-center">
             <p className="text-green-800 font-bold">You have an active {subscription.plan} subscription</p>
             <button onClick={handleManage} className="mt-2 text-sm text-[#D4A017] hover:underline">
