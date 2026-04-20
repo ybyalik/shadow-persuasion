@@ -430,43 +430,49 @@ function Book({ settings }: { settings: Settings }) {
 
   const shadowOpacity = shadow / 100;
 
-  // Page texture recipe — the old one had too much contrast between
-  // the two cream bands, so the edge read as corrugated cardboard
-  // instead of stacked paper. Two fixes layered here:
-  //   (a) much lower contrast between bands (~4 RGB units instead
-  //       of ~16) so individual lines don't pop
-  //   (b) a soft top/bottom shadow overlay suggesting paper
-  //       compressing into the cover at the spine/binding, which is
-  //       what gives a real book edge its sense of depth
-  const PAPER_LIGHT = '#F4ECD8';
-  const PAPER_DARK = '#EFE5CB';
-  const pageDepthShadow = `linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.22) 0%,
-    rgba(0, 0, 0, 0) 8%,
-    rgba(0, 0, 0, 0) 92%,
-    rgba(0, 0, 0, 0.22) 100%
-  )`;
-  // Stripes direction depends on how the face will look after its
-  // 90° fold. Side faces (spine + right edge) show pages stacked
-  // vertically, so the stripes run horizontally (to bottom). The
-  // top and bottom faces show pages running across the book's
-  // width, so their stripes also repeat along the element's height
-  // — which after rotation aligns with the book's depth.
-  const stripePattern = `repeating-linear-gradient(
-    to bottom,
-    ${PAPER_LIGHT} 0px,
-    ${PAPER_LIGHT} 1px,
-    ${PAPER_DARK} 1px,
-    ${PAPER_DARK} 2px
-  )`;
-  // Vertical side faces (spine + right edge) layer the depth shadow
-  // on top of the stripes.
-  const sidePageEdgeBg = `${pageDepthShadow}, ${stripePattern}`;
-  // Horizontal top/bottom faces just use the stripes — depth shadow
-  // there doesn't track reality (those faces sit flush with the
-  // cover, no binding compression).
-  const topBottomPageEdgeBg = stripePattern;
+  // Page-edge color recipe. Key lesson from iterating here:
+  // professional book mockups (Insofta, Placeit, etc.) do NOT try
+  // to render individual page lines — at screen resolution those
+  // stripes read as corrugated cardboard or a canvas pattern, not
+  // paper. The brain reads "stacked paper" from the book's shape
+  // and subtle edge shadows alone, so the winning move is a solid
+  // warm-white slab with gentle shadowing at the compression points.
+  //
+  // Side faces (spine + right edge) add a top/bottom depth shadow
+  // (pages compress into the cover at the binding) and a subtle
+  // left/right shadow so the slab reads as cylindrical-ish rather
+  // than cardboard-flat.
+  const PAPER_COLOR = '#F7F2E6'; // warm near-white — closer to real book pages than the cream we had
+  const sidePageEdgeBg = `
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.18) 0%,
+      rgba(0, 0, 0, 0) 6%,
+      rgba(0, 0, 0, 0) 94%,
+      rgba(0, 0, 0, 0.18) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.04) 0%,
+      rgba(0, 0, 0, 0) 35%,
+      rgba(0, 0, 0, 0) 65%,
+      rgba(0, 0, 0, 0.04) 100%
+    ),
+    ${PAPER_COLOR}
+  `;
+  // Top/bottom faces use a left/right shadow (the page edges there
+  // meet the spine on one side and the outer book edge on the other
+  // — both darken slightly).
+  const topBottomPageEdgeBg = `
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.10) 0%,
+      rgba(0, 0, 0, 0) 5%,
+      rgba(0, 0, 0, 0) 95%,
+      rgba(0, 0, 0, 0.10) 100%
+    ),
+    ${PAPER_COLOR}
+  `;
 
   return (
     <div
