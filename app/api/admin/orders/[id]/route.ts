@@ -34,9 +34,17 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Enrich with Stripe data
-    let paymentIntent = null;
-    let charges: Array<{
+    // Stripe enrichment helpers — fetch PI + charges for a given PI id.
+    // Wrapped so we can call it per-order and once for the primary.
+    type StripePiSummary = {
+      id: string;
+      status: string;
+      amount: number;
+      amount_received: number;
+      currency: string;
+      created: number;
+    };
+    type StripeChargeSummary = {
       id: string;
       amount: number;
       status: string;
@@ -44,38 +52,46 @@ export async function GET(
       amount_refunded: number;
       created: number;
       receipt_url: string | null;
-    }> = [];
-
-    if (order.stripe_payment_intent_id) {
+    };
+    async function fetchPiAndCharges(piId: string | null | undefined): Promise<{
+      paymentIntent: StripePiSummary | null;
+      charges: StripeChargeSummary[];
+    }> {
+      if (!piId) return { paymentIntent: null, charges: [] };
       try {
-        const pi = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
-        paymentIntent = {
-          id: pi.id,
-          status: pi.status,
-          amount: pi.amount,
-          amount_received: pi.amount_received,
-          currency: pi.currency,
-          created: pi.created,
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        const chargesResp = await stripe.charges.list({ payment_intent: piId, limit: 10 });
+        return {
+          paymentIntent: {
+            id: pi.id,
+            status: pi.status,
+            amount: pi.amount,
+            amount_received: pi.amount_received,
+            currency: pi.currency,
+            created: pi.created,
+          },
+          charges: chargesResp.data.map((c) => ({
+            id: c.id,
+            amount: c.amount,
+            status: c.status,
+            refunded: c.refunded,
+            amount_refunded: c.amount_refunded,
+            created: c.created,
+            receipt_url: c.receipt_url,
+          })),
         };
-
-        // Fetch the charges for this PI
-        const charges_ = await stripe.charges.list({
-          payment_intent: order.stripe_payment_intent_id,
-          limit: 10,
-        });
-        charges = charges_.data.map((c) => ({
-          id: c.id,
-          amount: c.amount,
-          status: c.status,
-          refunded: c.refunded,
-          amount_refunded: c.amount_refunded,
-          created: c.created,
-          receipt_url: c.receipt_url,
-        }));
       } catch (err) {
-        console.warn('[admin/orders GET] stripe fetch failed:', err);
+        console.warn('[admin/orders GET] stripe fetch failed for', piId, ':', err);
+        return { paymentIntent: null, charges: [] };
       }
     }
+
+    // Primary order's Stripe detail — kept in the top-level response for
+    // back-compat with the existing page code that still references
+    // `paymentIntent` + `charges`.
+    const { paymentIntent, charges } = await fetchPiAndCharges(
+      order.stripe_payment_intent_id
+    );
 
     // Find any related orders (same customer OR same email) so the detail
     // page can render the full customer session on one screen.
@@ -130,12 +146,74 @@ export async function GET(
       subscription = sub;
     }
 
+    // ─────────── Stripe enrichment for EVERY order in the session ───────
+    // The UI used to only show Stripe data for the primary order, which
+    // meant upsell #1 (playbooks/vault) orders never surfaced their PI
+    // or charges unless you drilled into that specific order. Now we
+    // fetch for the primary + every related order so the detail page
+    // can render Stripe info per-card across the whole funnel.
+    const stripeByOrderId: Record<string, {
+      paymentIntent: StripePiSummary | null;
+      charges: StripeChargeSummary[];
+    }> = {};
+    stripeByOrderId[order.id] = { paymentIntent, charges };
+    await Promise.all(
+      relatedOrders.map(async (r) => {
+        stripeByOrderId[r.id] = await fetchPiAndCharges(r.stripe_payment_intent_id);
+      })
+    );
+
+    // ─────────── Stripe enrichment for the SUBSCRIPTION ─────────────────
+    // The subscription card couldn't show Stripe detail before because
+    // we never queried Stripe for it. Pull the 5 most recent invoices
+    // so the admin can see each recurring charge (amount, status, date,
+    // receipt link).
+    type InvoiceSummary = {
+      id: string;
+      status: string | null;
+      amount_paid: number;
+      amount_due: number;
+      currency: string;
+      created: number;
+      hosted_invoice_url: string | null;
+      charge_id: string | null;
+    };
+    let subscriptionInvoices: InvoiceSummary[] = [];
+    if (subscription?.stripe_subscription_id) {
+      try {
+        const invResp = await stripe.invoices.list({
+          subscription: subscription.stripe_subscription_id,
+          limit: 10,
+        });
+        subscriptionInvoices = invResp.data.map((inv) => ({
+          id: inv.id ?? '',
+          status: inv.status ?? null,
+          amount_paid: inv.amount_paid,
+          amount_due: inv.amount_due,
+          currency: inv.currency,
+          created: inv.created,
+          hosted_invoice_url: inv.hosted_invoice_url ?? null,
+          // @ts-expect-error — older Stripe SDK exposes charge on invoice
+          charge_id: (inv.charge as string | null) ?? null,
+        }));
+      } catch (err) {
+        console.warn(
+          '[admin/orders GET] stripe invoice fetch failed for',
+          subscription.stripe_subscription_id,
+          ':',
+          err
+        );
+      }
+    }
+
     return NextResponse.json({
       order,
       paymentIntent,
       charges,
       relatedOrders,
       subscription,
+      stripeByOrderId,
+      subscriptionInvoices,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

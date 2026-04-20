@@ -82,6 +82,42 @@ type OrderDetail = {
     current_period_end: string | null;
     created_at: string | null;
   } | null;
+  // Stripe detail keyed by Supabase order id. Covers the primary order
+  // AND every related order, so the detail page can show Stripe info
+  // for book + bump + playbooks + vault in one place.
+  stripeByOrderId?: Record<
+    string,
+    {
+      paymentIntent: {
+        id: string;
+        status: string;
+        amount: number;
+        amount_received: number;
+        currency: string;
+        created: number;
+      } | null;
+      charges: Array<{
+        id: string;
+        amount: number;
+        status: string;
+        refunded: boolean;
+        amount_refunded: number;
+        created: number;
+        receipt_url: string | null;
+      }>;
+    }
+  >;
+  // Recent invoices for the recurring subscription (if any).
+  subscriptionInvoices?: Array<{
+    id: string;
+    status: string | null;
+    amount_paid: number;
+    amount_due: number;
+    currency: string;
+    created: number;
+    hosted_invoice_url: string | null;
+    charge_id: string | null;
+  }>;
 };
 
 const ITEM_LABELS: Record<string, string> = {
@@ -209,7 +245,12 @@ export default function OrderDetailPage() {
   }
   if (!data) return null;
 
-  const { order, paymentIntent, charges, relatedOrders, subscription } = data;
+  // Stripe detail for the primary order is accessed via stripeByOrderId
+  // below; relatedOrders provides the rest of the session; subscription
+  // owns the recurring side.
+  const { order, relatedOrders, subscription } = data;
+  const stripeByOrderId = data.stripeByOrderId || {};
+  const subscriptionInvoices = data.subscriptionInvoices || [];
 
   // Build the full session: primary + related, chronological.
   const allOrders: OrderRow[] = [order, ...(relatedOrders as OrderRow[])].sort((a, b) =>
@@ -552,62 +593,191 @@ export default function OrderDetailPage() {
         </div>
       </Section>
 
-      {/* ─────────── Stripe detail for the primary order ─────────── */}
-      <Section title="Stripe detail (linked order)" collapsed>
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
-          <Field label="Customer ID" value={order.stripe_customer_id || '—'} mono />
-          <Field label="Payment Intent" value={order.stripe_payment_intent_id || '—'} mono />
-          {paymentIntent && (
-            <>
-              <Field label="PI Status" value={paymentIntent.status} />
-              <Field label="PI Created" value={fmtUnix(paymentIntent.created)} />
-            </>
-          )}
-        </div>
-        {charges.length > 0 && (
-          <div className="mt-5">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/50 font-mono mb-2">
-              Charges ({charges.length})
-            </p>
-            <div className="space-y-2">
-              {charges.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center gap-3 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#D4A017]/20 px-3 py-2 text-xs font-mono"
-                >
-                  <span className="text-gray-900 dark:text-[#F4ECD8]">{fmt(c.amount)}</span>
-                  <span
-                    className={`px-2 py-0.5 uppercase tracking-wider ${
-                      c.status === 'succeeded'
-                        ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400'
-                        : 'bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400'
-                    }`}
-                  >
-                    {c.status}
-                  </span>
-                  {c.refunded && (
-                    <span className="px-2 py-0.5 uppercase tracking-wider bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400">
-                      Refunded {fmt(c.amount_refunded)}
-                    </span>
-                  )}
-                  <span className="text-gray-400 dark:text-[#F4ECD8]/40 ml-auto">
-                    {fmtUnix(c.created)}
-                  </span>
-                  {c.receipt_url && (
-                    <a
-                      href={c.receipt_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#D4A017] hover:underline inline-flex items-center gap-1"
-                    >
-                      Receipt <ExternalLink className="h-3 w-3" />
-                    </a>
+      {/* ─────────── Stripe detail for EVERY order + the subscription ───
+          Each Supabase order has its own Stripe payment intent (book+bump
+          share one PI; playbooks/vault use a second PI); the subscription
+          has its own recurring invoices. Render all of them so the admin
+          can audit the whole session's Stripe activity without clicking
+          around. */}
+      <Section title="Stripe detail" collapsed>
+        <div className="space-y-6">
+          {/* Per-order Stripe detail */}
+          {allOrders.map((o) => {
+            const s = stripeByOrderId[o.id];
+            const itemLabels = (o.items || [])
+              .map((slug) => ITEM_LABELS[slug] || slug)
+              .join(' + ');
+            return (
+              <div
+                key={`stripe-${o.id}`}
+                className="border border-gray-200 dark:border-[#D4A017]/20 p-4"
+              >
+                <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+                  <p className="font-mono text-xs uppercase tracking-wider text-[#D4A017]">
+                    {itemLabels || 'Order'}
+                  </p>
+                  <p className="font-mono text-[10px] text-gray-400 dark:text-[#F4ECD8]/40">
+                    {fmtDate(o.created_at)}
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-x-8 gap-y-3 mb-3">
+                  <Field
+                    label="Payment Intent"
+                    value={o.stripe_payment_intent_id || '—'}
+                    mono
+                  />
+                  {s?.paymentIntent ? (
+                    <>
+                      <Field label="PI Status" value={s.paymentIntent.status} />
+                      <Field label="PI Amount" value={fmt(s.paymentIntent.amount, s.paymentIntent.currency)} />
+                      <Field label="PI Created" value={fmtUnix(s.paymentIntent.created)} />
+                    </>
+                  ) : (
+                    <Field label="Stripe lookup" value="unavailable" />
                   )}
                 </div>
-              ))}
+                {s && s.charges.length > 0 && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/50 font-mono mb-2">
+                      Charges ({s.charges.length})
+                    </p>
+                    <div className="space-y-2">
+                      {s.charges.map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-3 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#D4A017]/20 px-3 py-2 text-xs font-mono"
+                        >
+                          <span className="text-gray-900 dark:text-[#F4ECD8]">
+                            {fmt(c.amount)}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 uppercase tracking-wider ${
+                              c.status === 'succeeded'
+                                ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400'
+                                : 'bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400'
+                            }`}
+                          >
+                            {c.status}
+                          </span>
+                          {c.refunded && (
+                            <span className="px-2 py-0.5 uppercase tracking-wider bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400">
+                              Refunded {fmt(c.amount_refunded)}
+                            </span>
+                          )}
+                          <span className="text-gray-400 dark:text-[#F4ECD8]/40 ml-auto">
+                            {fmtUnix(c.created)}
+                          </span>
+                          {c.receipt_url && (
+                            <a
+                              href={c.receipt_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#D4A017] hover:underline inline-flex items-center gap-1"
+                            >
+                              Receipt <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {o.stripe_payment_intent_id && (
+                  <a
+                    href={`https://dashboard.stripe.com/payments/${o.stripe_payment_intent_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-3 text-xs text-[#D4A017] hover:underline font-mono uppercase tracking-wider"
+                  >
+                    Open PI in Stripe <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Subscription invoices */}
+          {subscription && (
+            <div className="border border-[#D4A017]/40 dark:border-[#D4A017]/30 p-4 bg-[#D4A017]/5">
+              <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+                <p className="font-mono text-xs uppercase tracking-wider text-[#D4A017]">
+                  Subscription — {subscription.plan}
+                </p>
+                <p className="font-mono text-[10px] text-gray-400 dark:text-[#F4ECD8]/40">
+                  {subscription.created_at ? fmtDate(subscription.created_at) : '—'}
+                </p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-x-8 gap-y-3 mb-3">
+                <Field
+                  label="Subscription ID"
+                  value={subscription.stripe_subscription_id || '—'}
+                  mono
+                />
+                <Field label="Status" value={subscription.status} />
+              </div>
+              {subscriptionInvoices.length > 0 ? (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/50 font-mono mb-2">
+                    Invoices ({subscriptionInvoices.length})
+                  </p>
+                  <div className="space-y-2">
+                    {subscriptionInvoices.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex items-center gap-3 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#D4A017]/20 px-3 py-2 text-xs font-mono"
+                      >
+                        <span className="text-gray-900 dark:text-[#F4ECD8]">
+                          {fmt(
+                            inv.amount_paid > 0 ? inv.amount_paid : inv.amount_due,
+                            inv.currency
+                          )}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 uppercase tracking-wider ${
+                            inv.status === 'paid'
+                              ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400'
+                              : inv.status === 'open'
+                              ? 'bg-yellow-100 dark:bg-yellow-600/20 text-yellow-700 dark:text-yellow-400'
+                              : 'bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-[#F4ECD8]/70'
+                          }`}
+                        >
+                          {inv.status || 'unknown'}
+                        </span>
+                        <span className="text-gray-400 dark:text-[#F4ECD8]/40 ml-auto">
+                          {fmtUnix(inv.created)}
+                        </span>
+                        {inv.hosted_invoice_url && (
+                          <a
+                            href={inv.hosted_invoice_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#D4A017] hover:underline inline-flex items-center gap-1"
+                          >
+                            Invoice <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-[#F4ECD8]/50 font-mono">
+                  No invoices found yet (new subscription, or Stripe lookup failed).
+                </p>
+              )}
+              {subscription.stripe_subscription_id && (
+                <a
+                  href={`https://dashboard.stripe.com/subscriptions/${subscription.stripe_subscription_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-3 text-xs text-[#D4A017] hover:underline font-mono uppercase tracking-wider"
+                >
+                  Open Sub in Stripe <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </Section>
 
       {/* ─────────── Raw metadata ─────────── */}
