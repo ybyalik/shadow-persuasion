@@ -151,14 +151,30 @@ function BonusCard({
   value: string;
   icon: React.ComponentType<{ className?: string }>;
 }) {
+  // Map bonus number → product cover slug. Admin uploads at
+  // /app/admin/files are keyed by these slugs.
+  const slug = `bonus_${num}`;
   return (
     <div className="bg-white border-2 border-black relative shadow-[6px_6px_0_0_#D4A017]">
       <div className="absolute -top-3 -left-3 bg-[#D4A017] text-black px-3 py-1 text-xs font-mono uppercase tracking-wider font-bold border-2 border-black">
         Free Bonus #{num}
       </div>
       <div className="p-6 md:p-8 flex gap-5 items-start">
-        <div className="w-16 h-16 md:w-20 md:h-20 bg-[#F4ECD8] border-2 border-black flex items-center justify-center shrink-0">
-          <Icon className="h-8 w-8 md:h-10 md:w-10 text-[#D4A017]" />
+        {/* Cover thumbnail — admin-uploaded image replaces the
+            placeholder icon once /app/admin/files has a cover for
+            this bonus. The icon fallback keeps the page looking
+            right until then. */}
+        <div className="w-20 md:w-24 h-28 md:h-32 bg-[#F4ECD8] border-2 border-black shrink-0 overflow-hidden">
+          <ProductCover
+            slug={slug}
+            alt={`${title} cover`}
+            fit="contain"
+            fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                <Icon className="h-8 w-8 md:h-10 md:w-10 text-[#D4A017]" />
+              </div>
+            }
+          />
         </div>
         <div className="flex-1">
           <h3 className="text-lg md:text-xl font-bold uppercase tracking-wider text-[#1A1A1A] mb-2">{title}</h3>
