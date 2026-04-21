@@ -40,6 +40,17 @@ export async function POST(req: Request) {
     const userAgent = req.headers.get('user-agent') || null;
     const referrer = req.headers.get('referer') || null;
 
+    // UTM attribution — captured client-side from the URL and forwarded here.
+    // Absent when the user arrived organically (no marketing link). If the
+    // user clicked a recovery email, utm_source='email', utm_medium='recovery',
+    // utm_content='step_N' — the webhook reads that on conversion to
+    // deterministically attribute the sale to the right email.
+    const utmSource = body?.utm_source ? String(body.utm_source) : null;
+    const utmMedium = body?.utm_medium ? String(body.utm_medium) : null;
+    const utmCampaign = body?.utm_campaign ? String(body.utm_campaign) : null;
+    const utmContent = body?.utm_content ? String(body.utm_content) : null;
+    const hasUtms = utmSource || utmMedium || utmCampaign || utmContent;
+
     // Compute intended amount (book $7, bump $17)
     const amountCents = 700 + (includeBump ? 1700 : 0);
 
@@ -54,16 +65,28 @@ export async function POST(req: Request) {
     if (existing) {
       // Update include_bump + amount_cents (they may toggle the bump), but
       // don't overwrite converted/recovered statuses.
+      // Only overwrite UTM fields if the new request actually brought UTMs —
+      // avoids wiping attribution on a plain reload.
       const preserveStatus =
         existing.status === 'converted' || existing.status === 'recovered';
+      const patch: Record<string, unknown> = {
+        first_name: firstName || undefined,
+        include_bump: includeBump,
+        amount_cents: amountCents,
+        ...(preserveStatus ? {} : { status: 'created' }),
+      };
+      if (hasUtms) {
+        patch.utm_source = utmSource;
+        patch.utm_medium = utmMedium;
+        patch.utm_campaign = utmCampaign;
+        // Store utm_content inside metadata since the column we have from
+        // migration 015 is utm_source/medium/campaign only. Keeping content
+        // in metadata is fine because the webhook only needs to read it.
+        patch.metadata = { utm_content: utmContent };
+      }
       const { error } = await supabase
         .from('checkout_leads')
-        .update({
-          first_name: firstName || undefined,
-          include_bump: includeBump,
-          amount_cents: amountCents,
-          ...(preserveStatus ? {} : { status: 'created' }),
-        })
+        .update(patch)
         .eq('id', existing.id);
       if (error) throw error;
       return NextResponse.json({ ok: true, leadId: existing.id });
@@ -82,6 +105,10 @@ export async function POST(req: Request) {
         ip_address: ip,
         user_agent: userAgent,
         referrer,
+        utm_source: utmSource,
+        utm_medium: utmMedium,
+        utm_campaign: utmCampaign,
+        metadata: utmContent ? { utm_content: utmContent } : {},
       })
       .select('id')
       .single();

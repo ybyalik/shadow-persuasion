@@ -184,6 +184,26 @@ export async function sendDeliveryEmail(opts: {
 const RECOVERY_URL = `${SITE_URL}/checkout/book`;
 
 /**
+ * Build a recovery CTA with UTM params baked in so attribution is
+ * deterministic. When the user clicks this link, the checkout page
+ * captures the UTMs into sessionStorage and the next lead/order
+ * API call stores them on the lead row. The webhook then uses
+ * `utm_content='step_N'` as the authoritative answer for
+ * recovered_by_email_step instead of relying on the 72h heuristic.
+ *
+ * We use the standard UTM names so these URLs also light up in
+ * Google Analytics out of the box if anyone plugs that in later.
+ */
+function buildRecoveryCtaUrl(step: number): string {
+  const url = new URL(RECOVERY_URL);
+  url.searchParams.set('utm_source', 'email');
+  url.searchParams.set('utm_medium', 'recovery');
+  url.searchParams.set('utm_campaign', 'cart_recovery');
+  url.searchParams.set('utm_content', `step_${step}`);
+  return url.toString();
+}
+
+/**
  * Any positive integer step. Legacy code used the literal `1 | 2 | 3`
  * but the DB-driven cron needs to support arbitrary counts now that
  * admins can add step 4+.
@@ -271,7 +291,7 @@ export async function sendRecoveryEmail(opts: {
   const body = tpl ?? recoveryFallback(opts.step);
   const vars: Record<string, string> = {
     greeting: opts.firstName ? `${opts.firstName},` : opts.step === 2 ? 'Hey again,' : 'Hey,',
-    cta_url: RECOVERY_URL,
+    cta_url: buildRecoveryCtaUrl(opts.step),
     unsubscribe_url: buildUnsubscribeUrl(opts.to),
   };
 

@@ -311,7 +311,7 @@ export async function POST(req: NextRequest) {
         if (funnel === 'book_checkout' && email) {
           const { data: lead } = await supabase
             .from('checkout_leads')
-            .select('id, recovery_emails, status')
+            .select('id, recovery_emails, status, utm_source, utm_medium, utm_campaign, metadata')
             .eq('email', email.toLowerCase())
             .eq('funnel', 'book_checkout')
             .maybeSingle();
@@ -320,13 +320,44 @@ export async function POST(req: NextRequest) {
             const recoveryEmailsSent = Array.isArray(lead.recovery_emails)
               ? lead.recovery_emails.length
               : 0;
-            const newStatus = recoveryEmailsSent > 0 ? 'recovered' : 'converted';
-            // Figure out which recovery email step closed the sale (if any
-            // was sent in the last 72h before conversion).
-            // Matches the sequence cadence: step 3 sends at 72h, so a
-            // click-through + 24h-to-buy still lands inside the window.
+
+            /**
+             * Decide which recovery email (if any) closed the sale.
+             *
+             * PRIMARY signal — UTMs. If the user clicked a recovery
+             * email CTA, the checkout page captured
+             *   utm_source='email', utm_medium='recovery',
+             *   utm_content='step_N'
+             * into sessionStorage and our lead endpoint stored them on
+             * the lead row. That's a hard confirmation they came from
+             * a specific email.
+             *
+             * FALLBACK — time-based 72h window. For legacy leads that
+             * don't have UTMs (e.g. the user already had a lead, we
+             * sent them a recovery email before this system shipped,
+             * and they converted without clicking the link), we credit
+             * the most recent email sent within 72h of conversion.
+             * Not perfect, but the best we can do when the click
+             * signal is missing.
+             *
+             * Status: `recovered` if the recovery sequence is
+             * credited (either signal); `converted` for organic
+             * (no emails sent at all).
+             */
             let recoveredByStep: number | null = null;
-            if (recoveryEmailsSent > 0) {
+            const meta = (lead.metadata as { utm_content?: string } | null) || {};
+            const utmContent = meta.utm_content || null;
+            const isUtmRecovery =
+              lead.utm_source === 'email' &&
+              lead.utm_medium === 'recovery' &&
+              (lead.utm_campaign === 'cart_recovery' || !lead.utm_campaign);
+
+            if (isUtmRecovery && utmContent) {
+              const m = utmContent.match(/^step_(\d+)$/);
+              if (m) recoveredByStep = parseInt(m[1], 10);
+            }
+
+            if (recoveredByStep === null && recoveryEmailsSent > 0) {
               const cutoff = Date.now() - 72 * 60 * 60 * 1000;
               const recent = (lead.recovery_emails as Array<{ step: number; sent_at: string }>).filter(
                 (r) => r.sent_at && new Date(r.sent_at).getTime() >= cutoff
@@ -335,6 +366,12 @@ export async function POST(req: NextRequest) {
                 recoveredByStep = recent[recent.length - 1].step;
               }
             }
+
+            // status = 'recovered' if an email contributed (UTM match
+            // OR any email sent at all), otherwise 'converted'.
+            const emailContributed =
+              recoveredByStep !== null || recoveryEmailsSent > 0;
+            const newStatus = emailContributed ? 'recovered' : 'converted';
 
             await supabase
               .from('checkout_leads')

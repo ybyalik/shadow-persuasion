@@ -17,6 +17,7 @@ import { loadStripe, Stripe as StripeJS } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Special_Elite } from 'next/font/google';
 import { Lock, Shield, Zap, CheckCircle, ArrowRight } from 'lucide-react';
+import { captureUtms, getUtms } from '@/lib/utm';
 
 const specialElite = Special_Elite({ subsets: ['latin'], weight: '400' });
 
@@ -122,14 +123,27 @@ export default function BookCheckoutPage() {
   const bumpCents = 1700;
   const total = bookCents + (includeBump ? bumpCents : 0);
 
+  // Capture ?utm_* params on first mount. Runs once; sessionStorage
+  // persists across the rest of the visit.
+  useEffect(() => {
+    captureUtms();
+  }, []);
+
   // ── Lead capture (cart abandonment recovery) ──
   // Debounced POST to /api/checkout/lead whenever the email becomes a valid
   // address. Also re-fires when bump toggles so the lead row reflects the
   // intended order. Idempotent on email+funnel.
+  //
+  // Attaches any UTMs captured from the URL so when the user eventually
+  // converts, the webhook can read the lead's utm_content to deterministically
+  // attribute the sale back to the specific recovery email that closed it
+  // (utm_content = "step_1" | "step_2" | "step_3"). Without UTMs we fall
+  // back to the 72h time-based heuristic.
   useEffect(() => {
     const trimmed = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
     const t = setTimeout(() => {
+      const utms = getUtms();
       fetch('/api/checkout/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -138,6 +152,7 @@ export default function BookCheckoutPage() {
           firstName: name.trim() || undefined,
           includeBump,
           funnel: 'book_checkout',
+          ...utms,
         }),
       }).catch(() => {
         // Silent. Don't block checkout if capture fails.
