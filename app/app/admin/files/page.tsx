@@ -40,12 +40,36 @@ type ProductFile = {
   updated_at: string;
 };
 
+/**
+ * Options for download assignment (dropdown on each download row).
+ * Downloads stick to the 4 purchasable product slugs.
+ */
 const PRODUCT_OPTIONS = [
   { slug: 'book',      label: 'Book + Bonuses' },
   { slug: 'briefing',  label: 'Pre-Conversation Briefing' },
   { slug: 'playbooks', label: 'Situation Playbooks' },
   { slug: 'vault',     label: 'Shadow Persuasion Vault' },
 ];
+
+/**
+ * Cover image slots per top-level product. Each product can expose
+ * sub-covers (e.g. the book has 4 bonus covers in addition to its
+ * own). The `slug` is the product_slug stored in product_files,
+ * consumed by <ProductCover slug={...} /> across the site.
+ */
+type CoverSlotDef = { slug: string; label: string };
+const COVER_SLOTS: Record<string, CoverSlotDef[]> = {
+  book: [
+    { slug: 'book',     label: 'Shadow Persuasion (The Book)' },
+    { slug: 'bonus_1',  label: 'Bonus #1 — The Manipulation Tactics Decoder' },
+    { slug: 'bonus_2',  label: 'Bonus #2 — The Power Dynamics Cheatsheet' },
+    { slug: 'bonus_3',  label: 'Bonus #3 — 48 Salary Negotiation Scripts' },
+    { slug: 'bonus_4',  label: 'Bonus #4 — The Reactance Detector Cheatsheet' },
+  ],
+  briefing:  [{ slug: 'briefing',  label: 'The Pre-Conversation Briefing' }],
+  playbooks: [{ slug: 'playbooks', label: 'The Situation Playbooks' }],
+  vault:     [{ slug: 'vault',     label: 'The Shadow Persuasion Vault' }],
+};
 
 export default function FilesAdminPage() {
   const [files, setFiles] = useState<ProductFile[]>([]);
@@ -302,7 +326,9 @@ export default function FilesAdminPage() {
         <div className="space-y-5">
           {PRODUCT_OPTIONS.map((p) => {
             const downloadItems = downloadsByProduct[p.slug] || [];
-            const cover = activeCoverFor(p.slug);
+            const coverSlots = COVER_SLOTS[p.slug] || [
+              { slug: p.slug, label: p.label },
+            ];
             return (
               <div
                 key={p.slug}
@@ -312,17 +338,30 @@ export default function FilesAdminPage() {
                   {p.label}
                 </p>
 
-                {/* ─ Cover image slot ─ */}
+                {/* ─ Cover image slot(s) — book has 5 (main + 4 bonuses),
+                     other products have 1. ─ */}
                 <div className="mb-5 pb-5 border-b border-gray-100 dark:border-[#D4A017]/10">
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/60 mb-2">
-                    Cover image
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/60 mb-3">
+                    Cover image{coverSlots.length > 1 ? 's' : ''}
                   </p>
-                  <CoverSlot
-                    productSlug={p.slug}
-                    current={cover}
-                    onChanged={load}
-                    onDelete={() => cover && handleDelete(cover)}
-                  />
+                  <div className="space-y-4">
+                    {coverSlots.map((slot) => {
+                      const cover = activeCoverFor(slot.slug);
+                      return (
+                        <div key={slot.slug}>
+                          <p className="text-[11px] font-mono text-gray-700 dark:text-[#F4ECD8]/80 mb-1.5">
+                            {slot.label}
+                          </p>
+                          <CoverSlot
+                            productSlug={slot.slug}
+                            current={cover}
+                            onChanged={load}
+                            onDelete={() => cover && handleDelete(cover)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* ─ Downloads list ─ */}
