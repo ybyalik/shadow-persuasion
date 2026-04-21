@@ -50,6 +50,10 @@ export async function POST(req: Request) {
     const sortOrderRaw = formData.get('sortOrder');
     const sortOrder =
       sortOrderRaw != null && sortOrderRaw !== '' ? Number(sortOrderRaw) : null;
+    // 'download' (default) for delivered PDFs, 'cover' for product
+    // cover images rendered across the site.
+    const rawFileType = String(formData.get('fileType') || 'download');
+    const fileType = rawFileType === 'cover' ? 'cover' : 'download';
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 });
@@ -62,9 +66,11 @@ export async function POST(req: Request) {
     }
 
     // Generate a unique storage key so a second upload of the same
-    // filename never overwrites the first.
+    // filename never overwrites the first. Covers live in a
+    // subfolder so they're easy to spot in the bucket listing.
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filePath = `${productSlug}/${Date.now()}-${safeName}`;
+    const subdir = fileType === 'cover' ? 'covers' : productSlug;
+    const filePath = `${subdir}/${productSlug}-${Date.now()}-${safeName}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const { error: uploadErr } = await supabase.storage
@@ -86,17 +92,33 @@ export async function POST(req: Request) {
       data: { publicUrl },
     } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
-    // Pick sort_order: explicit wins, otherwise MAX+1 within the product.
+    // Pick sort_order: explicit wins, otherwise MAX+1 within the
+    // same (product, file_type) bucket — so covers don't interleave
+    // with downloads.
     let effectiveSort = sortOrder;
     if (effectiveSort == null) {
       const { data: existing } = await supabase
         .from('product_files')
         .select('sort_order')
         .eq('product_slug', productSlug)
+        .eq('file_type', fileType)
         .order('sort_order', { ascending: false })
         .limit(1)
         .maybeSingle();
       effectiveSort = ((existing?.sort_order as number | null) ?? -1) + 1;
+    }
+
+    // For covers, deactivate any existing active cover for this
+    // product — we only want ONE visible cover at a time. The old
+    // row stays in the DB (so admin can "re-activate" it later);
+    // site just won't show it.
+    if (fileType === 'cover') {
+      await supabase
+        .from('product_files')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('product_slug', productSlug)
+        .eq('file_type', 'cover')
+        .eq('is_active', true);
     }
 
     const { data: row, error: insertErr } = await supabase
@@ -111,6 +133,7 @@ export async function POST(req: Request) {
         sort_order: effectiveSort,
         is_active: true,
         source: 'supabase',
+        file_type: fileType,
       })
       .select('*')
       .single();

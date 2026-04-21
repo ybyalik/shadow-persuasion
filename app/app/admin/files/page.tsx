@@ -35,6 +35,7 @@ type ProductFile = {
   sort_order: number;
   is_active: boolean;
   source: 'static' | 'supabase';
+  file_type: 'download' | 'cover';
   created_at: string;
   updated_at: string;
 };
@@ -151,10 +152,21 @@ export default function FilesAdminPage() {
     }
   }
 
-  const byProduct: Record<string, ProductFile[]> = {};
+  // Separate downloads from covers so the UI can render them in
+  // distinct sections per product.
+  const downloadsByProduct: Record<string, ProductFile[]> = {};
+  const coversByProduct: Record<string, ProductFile[]> = {};
   for (const f of files) {
-    if (!byProduct[f.product_slug]) byProduct[f.product_slug] = [];
-    byProduct[f.product_slug].push(f);
+    const bucket = (f.file_type || 'download') === 'cover'
+      ? coversByProduct
+      : downloadsByProduct;
+    if (!bucket[f.product_slug]) bucket[f.product_slug] = [];
+    bucket[f.product_slug].push(f);
+  }
+  // The active cover per product = first active cover in the bucket
+  // (the upload endpoint guarantees at most one is active).
+  function activeCoverFor(slug: string): ProductFile | null {
+    return (coversByProduct[slug] || []).find((f) => f.is_active) || null;
   }
 
   const fmtSize = (bytes: number | null) => {
@@ -289,22 +301,41 @@ export default function FilesAdminPage() {
       ) : (
         <div className="space-y-5">
           {PRODUCT_OPTIONS.map((p) => {
-            const items = byProduct[p.slug] || [];
+            const downloadItems = downloadsByProduct[p.slug] || [];
+            const cover = activeCoverFor(p.slug);
             return (
               <div
                 key={p.slug}
                 className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-5"
               >
                 <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#D4A017] mb-3">
-                  {p.label} ({items.length} file{items.length === 1 ? '' : 's'})
+                  {p.label}
                 </p>
-                {items.length === 0 ? (
+
+                {/* ─ Cover image slot ─ */}
+                <div className="mb-5 pb-5 border-b border-gray-100 dark:border-[#D4A017]/10">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/60 mb-2">
+                    Cover image
+                  </p>
+                  <CoverSlot
+                    productSlug={p.slug}
+                    current={cover}
+                    onChanged={load}
+                    onDelete={() => cover && handleDelete(cover)}
+                  />
+                </div>
+
+                {/* ─ Downloads list ─ */}
+                <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-[#F4ECD8]/60 mb-2">
+                  Downloads ({downloadItems.length})
+                </p>
+                {downloadItems.length === 0 ? (
                   <p className="text-xs text-gray-500 dark:text-[#F4ECD8]/50 font-mono">
                     No files. Customers who buy this product won&apos;t receive any downloads.
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {items.map((f) => (
+                    {downloadItems.map((f) => (
                       <FileRow
                         key={f.id}
                         file={f}
@@ -321,7 +352,7 @@ export default function FilesAdminPage() {
           })}
 
           {/* Catch-all: files on an unrecognized product_slug */}
-          {Object.keys(byProduct)
+          {Object.keys(downloadsByProduct)
             .filter((slug) => !PRODUCT_OPTIONS.some((p) => p.slug === slug))
             .map((slug) => (
               <div
@@ -329,10 +360,10 @@ export default function FilesAdminPage() {
                 className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-5"
               >
                 <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#D4A017] mb-3">
-                  Other: {slug} ({byProduct[slug].length} files)
+                  Other: {slug} ({downloadsByProduct[slug].length} files)
                 </p>
                 <div className="space-y-2">
-                  {byProduct[slug].map((f) => (
+                  {downloadsByProduct[slug].map((f) => (
                     <FileRow
                       key={f.id}
                       file={f}
@@ -468,6 +499,117 @@ function FileRow({
             <Trash2 className="h-3 w-3" />
             Delete
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────── Cover slot: thumbnail + upload/replace ─────────── */
+
+function CoverSlot({
+  productSlug,
+  current,
+  onChanged,
+  onDelete,
+}: {
+  productSlug: string;
+  current: ProductFile | null;
+  onChanged: () => void;
+  onDelete: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setErr('Pick an image file (PNG or JPG).');
+      e.target.value = '';
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('productSlug', productSlug);
+      fd.append('name', `${productSlug} cover`);
+      fd.append('fileType', 'cover');
+      const res = await fetch('/api/admin/files', { method: 'POST', body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      onChanged();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : String(e2));
+    } finally {
+      setBusy(false);
+      e.target.value = '';
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-4 flex-wrap">
+      {/* Thumbnail */}
+      <div className="w-24 h-32 border border-gray-200 dark:border-[#D4A017]/20 bg-gray-50 dark:bg-[#0A0A0A] flex items-center justify-center shrink-0 overflow-hidden">
+        {current ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={current.storage_url}
+            alt={`${productSlug} cover`}
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <span className="text-[9px] font-mono uppercase tracking-wider text-gray-400 dark:text-[#F4ECD8]/30 text-center px-2">
+            No cover
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex-1 min-w-0 space-y-2">
+        <p className="text-xs text-gray-600 dark:text-[#F4ECD8]/60">
+          {current
+            ? 'Replace with a new image. The new upload deactivates this one automatically.'
+            : 'Upload a PNG or JPG to show on landing pages, checkout, and the order bump.'}
+        </p>
+        {err && (
+          <p className="text-xs text-red-700 dark:text-red-400 font-mono">{err}</p>
+        )}
+        <div className="flex gap-2 flex-wrap">
+          <label className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#D4A017] text-[#0A0A0A] hover:bg-[#B8860B] cursor-pointer font-mono text-[10px] uppercase tracking-wider font-bold">
+            <Upload className="h-3 w-3" />
+            {busy ? 'Uploading…' : current ? 'Replace' : 'Upload'}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={busy}
+              onChange={handlePick}
+              className="hidden"
+            />
+          </label>
+          {current && (
+            <button
+              onClick={onDelete}
+              disabled={busy}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#111] border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-mono text-[10px] uppercase tracking-wider"
+            >
+              <Trash2 className="h-3 w-3" />
+              Remove
+            </button>
+          )}
+          {current && (
+            <a
+              href={current.storage_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/40 text-gray-700 dark:text-[#F4ECD8]/80 hover:border-[#D4A017] font-mono text-[10px] uppercase tracking-wider"
+            >
+              <ExternalLink className="h-3 w-3" />
+              View
+            </a>
+          )}
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { Special_Elite } from 'next/font/google';
 import Link from 'next/link';
+import { ProductCover } from '@/components/ProductCover';
 import {
   ArrowRight,
   CheckCircle,
@@ -224,30 +225,41 @@ export default function BookFunnelPage() {
             and working in real everyday conversations. Not just pitches and negotiations.
           </p>
 
-          {/* Book mockup placeholder */}
+          {/* Book mockup — replaced by the admin-uploaded cover at
+              /app/admin/files if one exists; otherwise falls back
+              to the original CSS mockup so the page always looks
+              right. */}
           <div className="my-12 flex justify-center">
-            <div className="relative">
-              <div className="w-56 md:w-72 h-72 md:h-96 bg-gradient-to-br from-[#1A1A1A] via-[#2A1F0E] to-[#0A0A0A] border-4 border-[#D4A017] shadow-[12px_12px_0_0_rgba(0,0,0,0.4)] flex flex-col justify-between p-6 md:p-8 transform -rotate-2">
-                <div>
-                  <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#D4A017] mb-3">
-                    Shadow Persuasion
-                  </p>
-                  <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-[#F4ECD8] leading-tight">
-                    The 47 Counter-<br/>intuitive Conversation Tactics
-                  </h2>
-                </div>
-                <div>
-                  <p className="text-xs md:text-sm text-[#F4ECD8]/70 italic mb-2">
-                    That make people say yes without realizing why
-                  </p>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-[#D4A017]">
-                    [Field Manual]
-                  </p>
-                </div>
-                <div className="absolute -top-4 -right-4 bg-[#D4A017] text-black px-3 py-1 font-mono text-xs uppercase tracking-wider font-bold border-2 border-black rotate-12">
-                  $7
-                </div>
+            <div className="relative w-56 md:w-72 h-72 md:h-96 transform -rotate-2">
+              <div className="absolute -top-4 -right-4 bg-[#D4A017] text-black px-3 py-1 font-mono text-xs uppercase tracking-wider font-bold border-2 border-black rotate-12 z-10">
+                $7
               </div>
+              <ProductCover
+                slug="book"
+                alt="Shadow Persuasion book cover"
+                className="drop-shadow-[12px_12px_0_rgba(0,0,0,0.4)]"
+                fit="contain"
+                fallback={
+                  <div className="w-full h-full bg-gradient-to-br from-[#1A1A1A] via-[#2A1F0E] to-[#0A0A0A] border-4 border-[#D4A017] shadow-[12px_12px_0_0_rgba(0,0,0,0.4)] flex flex-col justify-between p-6 md:p-8">
+                    <div>
+                      <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#D4A017] mb-3">
+                        Shadow Persuasion
+                      </p>
+                      <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-[#F4ECD8] leading-tight">
+                        The 47 Counter-<br/>intuitive Conversation Tactics
+                      </h2>
+                    </div>
+                    <div>
+                      <p className="text-xs md:text-sm text-[#F4ECD8]/70 italic mb-2">
+                        That make people say yes without realizing why
+                      </p>
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-[#D4A017]">
+                        [Field Manual]
+                      </p>
+                    </div>
+                  </div>
+                }
+              />
             </div>
           </div>
 

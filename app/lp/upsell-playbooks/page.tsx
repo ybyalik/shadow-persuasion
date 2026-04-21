@@ -14,6 +14,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Special_Elite } from 'next/font/google';
+import { ProductCover } from '@/components/ProductCover';
 import {
   ArrowRight,
   CheckCircle,
@@ -207,26 +208,36 @@ function UpsellPlaybooksInner() {
         {/* Product 1: Situation Playbooks */}
         <div className="bg-white border-4 border-black p-6 md:p-10 shadow-[10px_10px_0_0_#D4A017] mb-10">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Cover mockup */}
+            {/* Cover — admin-uploaded image with CSS mockup fallback */}
             <div className="shrink-0 mx-auto md:mx-0">
-              <div className="w-48 md:w-56 h-64 md:h-80 bg-[#F4ECD8] border-4 border-[#5C3A1E] p-5 transform -rotate-2 shadow-[8px_8px_0_0_rgba(0,0,0,0.2)]">
-                <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#5C3A1E] text-center mb-3">
-                  // THE FIELD LIBRARY //
-                </p>
-                <h3 className="text-xl md:text-2xl font-black uppercase text-[#1A1A1A] text-center leading-tight mb-4">
-                  The Situation Playbooks
-                </h3>
-                <div className="w-16 h-[2px] bg-[#D4A017] mx-auto mb-3" />
-                <p className="text-[10px] text-[#5C3A1E] italic text-center mb-6">
-                  20 Playbooks For The Conversations That Actually Decide Your Life
-                </p>
-                <div className="bg-[#1A1A1A] text-[#D4A017] font-mono font-black text-3xl text-center py-2">
-                  20
-                </div>
-                <p className="text-[9px] text-[#5C3A1E] uppercase tracking-wider text-center mt-2">PLAYBOOKS</p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C3A1E] text-center mt-6">
-                  NATE HARLAN
-                </p>
+              <div className="w-48 md:w-56 h-64 md:h-80 transform -rotate-2">
+                <ProductCover
+                  slug="playbooks"
+                  alt="The Situation Playbooks cover"
+                  className="drop-shadow-[8px_8px_0_rgba(0,0,0,0.2)]"
+                  fit="contain"
+                  fallback={
+                    <div className="w-full h-full bg-[#F4ECD8] border-4 border-[#5C3A1E] p-5 shadow-[8px_8px_0_0_rgba(0,0,0,0.2)]">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#5C3A1E] text-center mb-3">
+                        // THE FIELD LIBRARY //
+                      </p>
+                      <h3 className="text-xl md:text-2xl font-black uppercase text-[#1A1A1A] text-center leading-tight mb-4">
+                        The Situation Playbooks
+                      </h3>
+                      <div className="w-16 h-[2px] bg-[#D4A017] mx-auto mb-3" />
+                      <p className="text-[10px] text-[#5C3A1E] italic text-center mb-6">
+                        20 Playbooks For The Conversations That Actually Decide Your Life
+                      </p>
+                      <div className="bg-[#1A1A1A] text-[#D4A017] font-mono font-black text-3xl text-center py-2">
+                        20
+                      </div>
+                      <p className="text-[9px] text-[#5C3A1E] uppercase tracking-wider text-center mt-2">PLAYBOOKS</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C3A1E] text-center mt-6">
+                        NATE HARLAN
+                      </p>
+                    </div>
+                  }
+                />
               </div>
             </div>
 
@@ -277,26 +288,36 @@ function UpsellPlaybooksInner() {
         {/* Product 2: The Vault */}
         <div className="bg-white border-4 border-black p-6 md:p-10 shadow-[10px_10px_0_0_#D4A017]">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Cover mockup */}
+            {/* Cover — admin-uploaded image with CSS mockup fallback */}
             <div className="shrink-0 mx-auto md:mx-0">
-              <div className="w-48 md:w-56 h-64 md:h-80 bg-[#F4ECD8] border-4 border-[#5C3A1E] p-5 transform rotate-2 shadow-[8px_8px_0_0_rgba(0,0,0,0.2)]">
-                <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#5C3A1E] text-center mb-3">
-                  // THE COMPLETE VAULT //
-                </p>
-                <h3 className="text-xl md:text-2xl font-black uppercase text-[#1A1A1A] text-center leading-tight mb-4">
-                  Shadow Persuasion<br/>Vault
-                </h3>
-                <div className="w-16 h-[2px] bg-[#D4A017] mx-auto mb-3" />
-                <p className="text-[10px] text-[#5C3A1E] italic text-center mb-6">
-                  250 Field-Tested Techniques With Full Deployment Breakdowns
-                </p>
-                <div className="bg-[#1A1A1A] text-[#D4A017] font-mono font-black text-3xl text-center py-2">
-                  250
-                </div>
-                <p className="text-[9px] text-[#5C3A1E] uppercase tracking-wider text-center mt-2">TECHNIQUES</p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C3A1E] text-center mt-6">
-                  NATE HARLAN
-                </p>
+              <div className="w-48 md:w-56 h-64 md:h-80 transform rotate-2">
+                <ProductCover
+                  slug="vault"
+                  alt="Shadow Persuasion Vault cover"
+                  className="drop-shadow-[8px_8px_0_rgba(0,0,0,0.2)]"
+                  fit="contain"
+                  fallback={
+                    <div className="w-full h-full bg-[#F4ECD8] border-4 border-[#5C3A1E] p-5 shadow-[8px_8px_0_0_rgba(0,0,0,0.2)]">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#5C3A1E] text-center mb-3">
+                        // THE COMPLETE VAULT //
+                      </p>
+                      <h3 className="text-xl md:text-2xl font-black uppercase text-[#1A1A1A] text-center leading-tight mb-4">
+                        Shadow Persuasion<br/>Vault
+                      </h3>
+                      <div className="w-16 h-[2px] bg-[#D4A017] mx-auto mb-3" />
+                      <p className="text-[10px] text-[#5C3A1E] italic text-center mb-6">
+                        250 Field-Tested Techniques With Full Deployment Breakdowns
+                      </p>
+                      <div className="bg-[#1A1A1A] text-[#D4A017] font-mono font-black text-3xl text-center py-2">
+                        250
+                      </div>
+                      <p className="text-[9px] text-[#5C3A1E] uppercase tracking-wider text-center mt-2">TECHNIQUES</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C3A1E] text-center mt-6">
+                        NATE HARLAN
+                      </p>
+                    </div>
+                  }
+                />
               </div>
             </div>
 
