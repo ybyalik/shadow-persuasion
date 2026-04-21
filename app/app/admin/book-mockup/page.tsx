@@ -65,6 +65,11 @@ export default function BookMockupPage() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Export target — an inner wrapper that never renders the
+  // checkerboard. The stage div shows the checkerboard visually
+  // (so admins know it's transparent), but we export this inner
+  // node so the PNG doesn't bake the checkerboard in.
+  const exportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function applyPreset(preset: Preset) {
@@ -96,18 +101,25 @@ export default function BookMockupPage() {
   }
 
   async function handleExport() {
-    if (!stageRef.current) return;
+    // Target the inner export wrapper, NOT the outer stage. The
+    // outer stage has a checkerboard CSS background for visual
+    // transparency preview — if we pointed toPng at it, the
+    // checkerboard would render into the PNG. The inner wrapper
+    // has either no background (transparent mode) or the chosen
+    // solid color baked into its own style, which is the correct
+    // source of truth for export.
+    if (!exportRef.current) return;
     setExporting(true);
     setError(null);
     try {
-      const bg =
-        s.bg === 'transparent' ? undefined
-        : s.bg === 'white' ? '#ffffff'
-        : s.bgCustom;
-
-      const dataUrl = await toPng(stageRef.current, {
+      // `backgroundColor: undefined` with a node whose own CSS is
+      // also transparent produces a true-transparent PNG. For
+      // white / custom modes the inner wrapper already paints the
+      // color, so we also pass undefined here to avoid double-
+      // painting.
+      const dataUrl = await toPng(exportRef.current, {
         pixelRatio: s.scale,
-        backgroundColor: bg,
+        backgroundColor: undefined,
         // Skip fonts we don't need to inline (speeds up the snapshot)
         skipFonts: true,
         cacheBust: true,
@@ -130,16 +142,29 @@ export default function BookMockupPage() {
     // no-op — applyPreset already writes the preset values into state
   }, [s.preset]);
 
-  const bgStyle: React.CSSProperties =
+  // Stage = outer visual preview. In transparent mode it shows the
+  // checkerboard so the admin can visually confirm "this is
+  // transparent." In white / custom mode the stage matches the
+  // inner wrapper so there's no visible seam.
+  const stageStyle: React.CSSProperties =
     s.bg === 'transparent'
       ? {
-          // Show a checkerboard so the admin knows it's transparent
           backgroundImage:
             'linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(-45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(-45deg, transparent 75%, #ddd 75%)',
           backgroundSize: '20px 20px',
           backgroundPosition: '0 0, 0 10px, 10px -10px, 10px 0px',
           backgroundColor: '#fff',
         }
+      : s.bg === 'white'
+      ? { backgroundColor: '#ffffff' }
+      : { backgroundColor: s.bgCustom };
+
+  // Export wrapper = what we actually capture as PNG. Transparent
+  // means literally no background. White / custom paints the chosen
+  // color into the PNG.
+  const exportWrapperStyle: React.CSSProperties =
+    s.bg === 'transparent'
+      ? { backgroundColor: 'transparent' }
       : s.bg === 'white'
       ? { backgroundColor: '#ffffff' }
       : { backgroundColor: s.bgCustom };
@@ -365,28 +390,47 @@ export default function BookMockupPage() {
           </div>
         </div>
 
-        {/* RIGHT — 3D stage */}
+        {/* RIGHT — 3D stage. Outer element = visual preview (shows
+             the checkerboard when in transparent mode). Inner
+             element = export target (no checkerboard, so the PNG
+             respects the chosen bg). */}
         <div
           ref={stageRef}
           style={{
-            ...bgStyle,
+            ...stageStyle,
             minHeight: 600,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 64,
           }}
         >
-          {s.cover ? (
-            <Book settings={s} />
-          ) : (
-            <div className="text-center text-gray-500 dark:text-[#F4ECD8]/50">
-              <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-mono uppercase tracking-wider">
-                Upload a cover image to start
-              </p>
-            </div>
-          )}
+          <div
+            ref={exportRef}
+            style={{
+              ...exportWrapperStyle,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              // Padding lives on the export wrapper so it ends up in
+              // the PNG and the book isn't cropped to its own edges.
+              padding: 64,
+              // Fill available stage space so the preview looks the
+              // same for all bg modes.
+              width: '100%',
+              minHeight: 600,
+            }}
+          >
+            {s.cover ? (
+              <Book settings={s} />
+            ) : (
+              <div className="text-center text-gray-500 dark:text-[#F4ECD8]/50">
+                <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p className="text-sm font-mono uppercase tracking-wider">
+                  Upload a cover image to start
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
