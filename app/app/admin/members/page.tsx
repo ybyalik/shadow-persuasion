@@ -21,6 +21,7 @@ type UserRow = {
   subscription_plan: string | null;
   subscription_status: string | null;
   subscription_period_end: string | null;
+  is_test: boolean;
 };
 
 type OrderSummary = {
@@ -34,18 +35,25 @@ export default function MembersPage() {
   const [orderSummaries, setOrderSummaries] = useState<Map<string, OrderSummary>>(new Map());
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  // Hide test-flagged subscribers by default so the "N active" count
+  // reflects real members. Toggle on to audit test data.
+  const [includeTest, setIncludeTest] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const usersUrl = includeTest ? '/api/admin/users?includeTest=1' : '/api/admin/users';
+      const res = await fetch(usersUrl);
       const data = await res.json();
       if (Array.isArray(data)) setUsers(data);
 
       // Also fetch customer sessions to aggregate order count + total spent
       // per email. Orders API now returns `sessions` (one row per buyer),
       // each with order_count and total_cents already rolled up.
-      const ordersRes = await fetch('/api/admin/orders?limit=500');
+      const ordersUrl = includeTest
+        ? '/api/admin/orders?limit=500&includeTest=1'
+        : '/api/admin/orders?limit=500';
+      const ordersRes = await fetch(ordersUrl);
       const ordersData = await ordersRes.json();
       const byEmail = new Map<string, OrderSummary>();
       for (const s of ordersData.sessions ?? []) {
@@ -64,7 +72,8 @@ export default function MembersPage() {
 
   useEffect(() => {
     loadUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [includeTest]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return users;
@@ -116,9 +125,9 @@ export default function MembersPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-4 mb-6">
-        <div className="relative max-w-md">
+      {/* Search + include-test */}
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-4 mb-6 flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-[#F4ECD8]/40" />
           <input
             type="text"
@@ -128,6 +137,15 @@ export default function MembersPage() {
             className="w-full pl-10 pr-3 py-2 bg-white dark:bg-[#0A0A0A] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] text-sm font-mono focus:outline-none focus:border-[#D4A017]"
           />
         </div>
+        <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-[#F4ECD8]/70">
+          <input
+            type="checkbox"
+            checked={includeTest}
+            onChange={(e) => setIncludeTest(e.target.checked)}
+            className="accent-[#D4A017]"
+          />
+          Include test members
+        </label>
       </div>
 
       {/* Table */}
@@ -157,9 +175,16 @@ export default function MembersPage() {
               filtered.map((u) => {
                 const summary = u.email ? orderSummaries.get(u.email.toLowerCase()) : null;
                 return (
-                  <tr key={u.user_id} className="border-b border-gray-100 dark:border-[#D4A017]/10 hover:bg-gray-50 dark:hover:bg-[#0A0A0A]">
+                  <tr key={u.user_id} className={`border-b border-gray-100 dark:border-[#D4A017]/10 hover:bg-gray-50 dark:hover:bg-[#0A0A0A] ${u.is_test ? 'opacity-60' : ''}`}>
                     <td className="px-3 py-2.5" title={u.user_id}>
-                      <div className="text-gray-900 dark:text-[#F4ECD8] text-xs">{u.email || u.user_id.slice(0, 12) + '…'}</div>
+                      <div className="text-gray-900 dark:text-[#F4ECD8] text-xs flex items-center gap-2 flex-wrap">
+                        {u.email || u.user_id.slice(0, 12) + '…'}
+                        {u.is_test && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-purple-600 text-white font-bold">
+                            Test
+                          </span>
+                        )}
+                      </div>
                       {u.display_name && <div className="text-gray-500 dark:text-[#F4ECD8]/50 text-[10px]">{u.display_name}</div>}
                     </td>
                     <td className="px-3 py-2.5 text-gray-600 dark:text-[#F4ECD8]/70 text-xs">{fmtDate(u.registered_at)}</td>

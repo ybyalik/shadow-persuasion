@@ -6,8 +6,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Match the is_test handling on /admin/orders + /admin/leads:
+    // hide test subs from members view by default, accept
+    // ?includeTest=1 to surface them for debugging.
+    const includeTest = req.nextUrl.searchParams.get('includeTest') === '1';
     // 1. Fetch all registered users
     const { data: registeredUsers, error: usersError } = await supabase
       .from('users')
@@ -18,10 +22,14 @@ export async function GET() {
     }
 
     // 2. Fetch all subscriptions (include email so guest-checkout subs with
-    // user_id = stripe_cus_* still show the real buyer address in admin)
-    const { data: subscriptions, error: subError } = await supabase
+    // user_id = stripe_cus_* still show the real buyer address in admin).
+    // is_test is pulled so the UI can tag test rows AND so we can
+    // optionally filter them out when includeTest=false.
+    let subsQuery = supabase
       .from('subscriptions')
-      .select('user_id, email, plan, status, current_period_end, stripe_customer_id, updated_at');
+      .select('user_id, email, plan, status, current_period_end, stripe_customer_id, updated_at, is_test');
+    if (!includeTest) subsQuery = subsQuery.eq('is_test', false);
+    const { data: subscriptions, error: subError } = await subsQuery;
 
     if (subError) {
       console.error('[ADMIN_USERS] subscriptions query error:', subError);
@@ -77,6 +85,7 @@ export async function GET() {
       current_period_end: string | null;
       stripe_customer_id: string | null;
       email: string | null;
+      is_test: boolean;
     };
     const subMap: Record<string, SubInfo> = {};
     const subByEmail: Record<string, SubInfo> = {};
@@ -88,6 +97,7 @@ export async function GET() {
         current_period_end: sub.current_period_end || null,
         stripe_customer_id: sub.stripe_customer_id || null,
         email: sub.email || null,
+        is_test: sub.is_test === true,
       };
       subMap[sub.user_id] = info;
       if (sub.email) subByEmail[sub.email.toLowerCase()] = info;
@@ -130,6 +140,7 @@ export async function GET() {
         subscription_plan: sub?.plan || null,
         subscription_period_end: sub?.current_period_end || null,
         stripe_customer_id: sub?.stripe_customer_id || null,
+        is_test: sub?.is_test === true,
       });
     }
 
@@ -153,6 +164,7 @@ export async function GET() {
         subscription_plan: sub?.plan || null,
         subscription_period_end: sub?.current_period_end || null,
         stripe_customer_id: sub?.stripe_customer_id || null,
+        is_test: sub?.is_test === true,
       });
     }
 
