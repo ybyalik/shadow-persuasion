@@ -263,10 +263,22 @@ export default function BookCheckoutPage() {
           {/* Book line */}
           <div className="bg-white border-2 border-black p-5 mb-4 shadow-[6px_6px_0_0_#D4A017]">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-20 shrink-0 bg-gradient-to-br from-[#1A1A1A] via-[#2A1F0E] to-[#0A0A0A] border-2 border-[#D4A017] flex items-center justify-center">
-                <span className="text-[#D4A017] text-[9px] font-mono uppercase tracking-widest text-center leading-tight px-1">
-                  Shadow<br/>Persuasion
-                </span>
+              {/* Book cover — admin-uploaded image from /app/admin/files,
+                  falls back to the tiny CSS mockup if no cover yet. No
+                  bg/border on the outer wrapper so the PNG shows clean. */}
+              <div className="w-16 h-20 shrink-0 overflow-hidden">
+                <ProductCover
+                  slug="book"
+                  alt="Shadow Persuasion book cover"
+                  fit="contain"
+                  fallback={
+                    <div className="w-full h-full bg-gradient-to-br from-[#1A1A1A] via-[#2A1F0E] to-[#0A0A0A] border-2 border-[#D4A017] flex items-center justify-center">
+                      <span className="text-[#D4A017] text-[9px] font-mono uppercase tracking-widest text-center leading-tight px-1">
+                        Shadow<br/>Persuasion
+                      </span>
+                    </div>
+                  }
+                />
               </div>
               <div className="flex-1">
                 <p className="font-bold text-[#1A1A1A]">
