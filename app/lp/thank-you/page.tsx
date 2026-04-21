@@ -243,20 +243,20 @@ function DownloadList({ items }: { items: string[] }) {
   // matching what lib/pricing.ts defines on the server
   const CATALOG: Record<string, { name: string; path: string }[]> = {
     book: [
-      { name: 'Shadow Persuasion (The Book)', path: '/downloads/shadow-persuasion-book.docx' },
-      { name: 'Bonus #1: The Manipulation Tactics Decoder', path: '/downloads/bonus-1-manipulation-decoder.docx' },
-      { name: 'Bonus #2: The Power Dynamics Cheatsheet', path: '/downloads/bonus-2-power-dynamics-cheatsheet.docx' },
-      { name: 'Bonus #3: 48 Salary Negotiation Scripts', path: '/downloads/bonus-3-salary-scripts.docx' },
-      { name: 'Bonus #4: The Reactance Detector Cheatsheet', path: '/downloads/bonus-4-reactance-detector.docx' },
+      { name: 'Shadow Persuasion (The Book)', path: '/downloads/shadow-persuasion-book.pdf' },
+      { name: 'Bonus #1: The Manipulation Tactics Decoder', path: '/downloads/bonus-1-manipulation-decoder.pdf' },
+      { name: 'Bonus #2: The Power Dynamics Cheatsheet', path: '/downloads/bonus-2-power-dynamics-cheatsheet.pdf' },
+      { name: 'Bonus #3: 48 Salary Negotiation Scripts', path: '/downloads/bonus-3-salary-scripts.pdf' },
+      { name: 'Bonus #4: The Reactance Detector Cheatsheet', path: '/downloads/bonus-4-reactance-detector.pdf' },
     ],
     briefing: [
-      { name: 'The Pre-Conversation Briefing', path: '/downloads/pre-conversation-briefing.docx' },
+      { name: 'The Pre-Conversation Briefing', path: '/downloads/pre-conversation-briefing.pdf' },
     ],
     playbooks: [
-      { name: 'The Situation Playbooks', path: '/downloads/situation-playbooks.docx' },
+      { name: 'The Situation Playbooks', path: '/downloads/situation-playbooks.pdf' },
     ],
     vault: [
-      { name: 'The Shadow Persuasion Vault', path: '/downloads/shadow-persuasion-vault.docx' },
+      { name: 'The Shadow Persuasion Vault', path: '/downloads/shadow-persuasion-vault.pdf' },
     ],
   };
 
