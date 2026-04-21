@@ -298,18 +298,17 @@ export default function BookCheckoutPage() {
                 onChange={(e) => setIncludeBump(e.target.checked)}
                 className="mt-1 h-5 w-5 accent-[#D4A017] cursor-pointer"
               />
-              {/* Product cover thumbnail — shown once admin uploads one
-                  for the briefing product at /app/admin/files. Hidden
-                  placeholder box so there's no layout shift when the
-                  image arrives. */}
-              <div className="shrink-0 w-20 md:w-24 h-24 md:h-32 bg-white border border-[#5C3A1E]/30 hidden sm:block">
+              {/* Product cover thumbnail — PNG upload replaces this
+                  once set at /app/admin/files. No bg/border on the
+                  box itself; fallback handles its own placeholder
+                  styling. */}
+              <div className="shrink-0 w-20 md:w-24 h-24 md:h-32 hidden sm:block">
                 <ProductCover
                   slug="briefing"
                   alt="Pre-Conversation Briefing cover"
-                  className=""
                   fit="contain"
                   fallback={
-                    <div className="w-full h-full flex items-center justify-center bg-[#F4ECD8] border border-[#5C3A1E]/20">
+                    <div className="w-full h-full flex items-center justify-center bg-[#F4ECD8] border border-[#5C3A1E]/30">
                       <span className="font-mono text-[8px] uppercase tracking-wider text-[#5C3A1E]/60 text-center px-1">
                         Pre-Convo<br/>Briefing
                       </span>

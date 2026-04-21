@@ -15,7 +15,6 @@ import {
   CheckCircle,
   Download,
   Mail,
-  Sparkles,
   ArrowRight,
   Shield,
 } from 'lucide-react';
@@ -69,7 +68,14 @@ function ThankYouInner() {
       {/* ═════════ HERO ═════════ */}
       <section className="px-6 pt-12 pb-10 md:pt-16 md:pb-12">
         <div className="max-w-3xl mx-auto text-center">
-          <Sparkles className="h-14 w-14 text-[#D4A017] mx-auto mb-4" />
+          {/* Logo replaces the generic Sparkles icon — ties the
+              thank-you page back to the brand the moment it loads. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Shadow Persuasion"
+            className="h-16 md:h-20 w-auto mx-auto mb-4"
+          />
           <p className="font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#5C3A1E] mb-4">
             // ORDER #{(paymentIntentId || 'UNKNOWN').slice(-8).toUpperCase()} //
           </p>

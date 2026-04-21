@@ -162,15 +162,17 @@ function BonusCard({
       <div className="p-6 md:p-8 flex gap-5 items-start">
         {/* Cover thumbnail — admin-uploaded image replaces the
             placeholder icon once /app/admin/files has a cover for
-            this bonus. The icon fallback keeps the page looking
-            right until then. */}
-        <div className="w-20 md:w-24 h-28 md:h-32 bg-[#F4ECD8] border-2 border-black shrink-0 overflow-hidden">
+            this bonus. The icon fallback keeps a visible placeholder
+            (with the page's cream background + border) until the
+            cover is uploaded. Once uploaded, the PNG's own background
+            shows through — no border or box color fights it. */}
+        <div className="w-20 md:w-24 h-28 md:h-32 shrink-0 overflow-hidden">
           <ProductCover
             slug={slug}
             alt={`${title} cover`}
             fit="contain"
             fallback={
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full h-full flex items-center justify-center bg-[#F4ECD8] border-2 border-black">
                 <Icon className="h-8 w-8 md:h-10 md:w-10 text-[#D4A017]" />
               </div>
             }
