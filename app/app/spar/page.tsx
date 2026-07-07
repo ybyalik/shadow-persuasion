@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Mic, MicOff, Loader2, Play, Square, Trophy, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Mic, Loader2, Play, PhoneOff, Trophy, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { usePeople, PersonPicker } from '@/components/app/PersonPicker';
 
@@ -99,6 +99,8 @@ export default function SparPage() {
   const inRateRef = useRef(24000);
   const startedAtRef = useRef(0);
   const pitchesRef = useRef<number[]>([]);
+  const assistantBufRef = useRef('');
+  const userPendingRef = useRef<{ text: string; committed: boolean }>({ text: '', committed: false });
 
   const cleanup = () => {
     try { wsRef.current?.close(); } catch {}
@@ -159,6 +161,8 @@ export default function SparPage() {
     silenceMsRef.current = 0;
     wasSpeakingRef.current = false;
     pitchesRef.current = [];
+    assistantBufRef.current = '';
+    userPendingRef.current = { text: '', committed: false };
 
     // 1) session token + persona
     let session: any;
@@ -218,7 +222,13 @@ export default function SparPage() {
           instructions: session.instructions,
           turn_detection: { type: 'server_vad' },
           audio: {
-            input: { format: { type: 'audio/pcm', rate: Math.round(inCtx.sampleRate) } },
+            input: {
+              format: { type: 'audio/pcm', rate: Math.round(inCtx.sampleRate) },
+              // Transcribe the user's speech so we can show the transcript and
+              // build the debrief. Without this, the mic audio is never turned
+              // into text.
+              transcription: { model: 'grok-transcribe' },
+            },
             output: { format: { type: 'audio/pcm', rate: 24000 } },
           },
         },
@@ -264,19 +274,67 @@ export default function SparPage() {
       }, 1000);
     };
 
+    const flushUser = () => {
+      const txt = userPendingRef.current.text.trim();
+      if (txt && !userPendingRef.current.committed) {
+        pushTurn('user', txt);
+        userPendingRef.current = { text: '', committed: true };
+      }
+    };
+    const flushAssistant = () => {
+      const txt = assistantBufRef.current.trim();
+      if (txt) pushTurn('assistant', txt);
+      assistantBufRef.current = '';
+    };
+
     ws.onmessage = (evt) => {
       let msg: any;
       try { msg = JSON.parse(evt.data); } catch { return; }
-      if (msg.type === 'response.output_audio.delta' && msg.delta) {
+      const t: string = msg.type || '';
+      // Lightweight trace (skips the high-frequency audio chunks) so the exact
+      // transcript event names can be confirmed from the browser console.
+      if (t && t !== 'response.output_audio.delta') console.log('[spar] event:', t);
+
+      // AI audio out
+      if (t === 'response.output_audio.delta' && msg.delta) {
+        // A new AI turn is starting: commit whatever the user just said.
+        flushUser();
         playDelta(msg.delta);
-      } else if (msg.type === 'conversation.item.created' && msg.item?.type === 'message') {
-        const role = msg.item.role === 'assistant' ? 'assistant' : 'user';
-        const text = (msg.item.content || [])
-          .map((c: any) => c.text || c.transcript || '')
-          .join(' ')
-          .trim();
-        pushTurn(role, text);
-      } else if (msg.type === 'error') {
+        return;
+      }
+      // AI transcript (streamed alongside its audio)
+      if (t === 'response.output_audio_transcript.delta' || t === 'response.audio_transcript.delta') {
+        flushUser();
+        if (typeof msg.delta === 'string') assistantBufRef.current += msg.delta;
+        return;
+      }
+      if (t === 'response.output_audio_transcript.done' || t === 'response.audio_transcript.done') {
+        if (typeof msg.transcript === 'string' && msg.transcript.trim()) {
+          assistantBufRef.current = msg.transcript;
+        }
+        flushAssistant();
+        return;
+      }
+      if (t === 'response.done') {
+        flushAssistant();
+        return;
+      }
+      // User speech transcript
+      if (t === 'conversation.item.input_audio_transcription.completed') {
+        const finalTxt = (typeof msg.transcript === 'string' ? msg.transcript : userPendingRef.current.text).trim();
+        if (finalTxt) pushTurn('user', finalTxt);
+        userPendingRef.current = { text: '', committed: true };
+        return;
+      }
+      if (
+        t === 'conversation.item.input_audio_transcription.updated' ||
+        t === 'conversation.item.input_audio_transcription.delta'
+      ) {
+        if (typeof msg.transcript === 'string') userPendingRef.current = { text: msg.transcript, committed: false };
+        else if (typeof msg.delta === 'string') userPendingRef.current = { text: userPendingRef.current.text + msg.delta, committed: false };
+        return;
+      }
+      if (t === 'error') {
         console.error('[spar] realtime error', msg);
       }
     };
@@ -291,6 +349,15 @@ export default function SparPage() {
 
   const stop = async () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    // Commit any speech still in progress before reading the transcript.
+    if (userPendingRef.current.text.trim() && !userPendingRef.current.committed) {
+      pushTurn('user', userPendingRef.current.text.trim());
+      userPendingRef.current = { text: '', committed: true };
+    }
+    if (assistantBufRef.current.trim()) {
+      pushTurn('assistant', assistantBufRef.current.trim());
+      assistantBufRef.current = '';
+    }
     const turns = transcriptRef.current;
 
     // Compute delivery metrics from the captured audio + transcript.
@@ -463,7 +530,7 @@ export default function SparPage() {
 
         <div className="mt-6 flex justify-center">
           <button onClick={stop} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 font-semibold text-white">
-            <Square className="h-4 w-4" /> End & get feedback
+            <PhoneOff className="h-4 w-4" /> End & get feedback
           </button>
         </div>
       </div>
