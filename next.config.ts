@@ -18,8 +18,10 @@ const nextConfig: NextConfig = {
         value: 'max-age=63072000; includeSubDomains; preload',
       },
       {
+        // Allow the site's own pages to use the microphone (Live Sparring
+        // voice practice). Camera and geolocation stay disabled (unused).
         key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=()',
+        value: 'camera=(), microphone=(self), geolocation=()',
       },
     ];
     return [{ source: '/:path*', headers: securityHeaders }];
