@@ -1,33 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const limit = parseInt(req.nextUrl.searchParams.get('limit') || '20');
 
-    let query = supabase
+    const { data, error } = await supabase
       .from('quickfire_history')
       .select('id, situation, context, classification, technique, created_at')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (userId) query = query.eq('user_id', userId);
-
-    const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      return apiError('Failed to fetch history.', 500, '[QUICKFIRE_HISTORY]', error);
+    }
 
     return NextResponse.json({ history: data || [] });
   } catch (error) {
-    console.error('[QUICKFIRE_HISTORY]', error);
-    return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to fetch history.', 500, '[QUICKFIRE_HISTORY]', error);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
 
     const { data, error } = await supabase
@@ -46,29 +48,38 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      return apiError('Failed to save.', 500, '[QUICKFIRE_HISTORY]', error);
+    }
+
     return NextResponse.json({ id: data.id });
   } catch (error) {
-    console.error('[QUICKFIRE_HISTORY]', error);
-    return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to save.', 500, '[QUICKFIRE_HISTORY]', error);
   }
 }
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
-    let query = supabase.from('quickfire_history').delete().eq('id', id);
-    if (userId) query = query.eq('user_id', userId);
+    const { error } = await supabase
+      .from('quickfire_history')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
-    const { error } = await query;
-    if (error) throw error;
+    if (error) {
+      return apiError('Failed to delete.', 500, '[QUICKFIRE_HISTORY]', error);
+    }
 
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error('[QUICKFIRE_HISTORY]', error);
-    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to delete.', 500, '[QUICKFIRE_HISTORY]', error);
   }
 }

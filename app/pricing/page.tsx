@@ -13,6 +13,8 @@ export default function PricingPage() {
   const { user, loading: authLoading } = useAuth();
   const { subscription, loading: subLoading, isActive } = useSubscription();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState(false);
 
   const handleSelect = async (plan: 'weekly' | 'monthly' | 'yearly') => {
     router.push(`/checkout?plan=${plan}`);
@@ -20,6 +22,8 @@ export default function PricingPage() {
 
   const handleManage = async () => {
     if (!subscription?.customerId) return;
+    setPortalError(false);
+    setPortalLoading(true);
     try {
       const token = await user?.getIdToken();
       const res = await fetch('/api/stripe/portal', {
@@ -31,8 +35,18 @@ export default function PricingPage() {
         body: JSON.stringify({ customerId: subscription.customerId }),
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch {}
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      // Reached Stripe but got no portal link back.
+      setPortalError(true);
+      setPortalLoading(false);
+    } catch {
+      // Network/Stripe hiccup — surface a retry instead of failing silently.
+      setPortalError(true);
+      setPortalLoading(false);
+    }
   };
 
   return (
@@ -49,9 +63,12 @@ export default function PricingPage() {
         {isActive && subscription && (
           <div className="max-w-md mx-auto mb-8 p-4 bg-green-50 border border-green-300 rounded-lg text-center">
             <p className="text-green-800 font-bold">You have an active {subscription.plan} subscription</p>
-            <button onClick={handleManage} className="mt-2 text-sm text-[#D4A017] hover:underline">
-              Manage Subscription
+            <button onClick={handleManage} disabled={portalLoading} className="mt-2 text-sm text-[#D4A017] hover:underline disabled:opacity-60">
+              {portalLoading ? 'Opening…' : 'Manage Subscription'}
             </button>
+            {portalError && (
+              <p className="mt-2 text-sm text-red-700">Could not open billing portal, please try again.</p>
+            )}
           </div>
         )}
 

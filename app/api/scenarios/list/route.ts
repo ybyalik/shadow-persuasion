@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    // Logged-in only: keeps the shared scenario library (and its ids) from
+    // being enumerated by anonymous callers.
+    await requireAuth(req);
+
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
 
@@ -39,7 +45,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ scenarios });
   } catch (err) {
-    console.error('[SCENARIOS/LIST]', err);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Failed to fetch scenarios.', 500, '[SCENARIOS/LIST]', err);
   }
 }

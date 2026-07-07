@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
@@ -8,6 +10,10 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Require a logged-in user: the generation path makes a paid GPT-4o call
+    // and overwrites the cached summary every real user sees.
+    await requireAuth(req);
+
     const { techniqueId, force } = await req.json();
 
     if (!techniqueId) {
@@ -171,7 +177,8 @@ ${chunkText}`;
       },
     });
   } catch (err) {
-    console.error('Synthesize error:', err);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[SYNTHESIZE]', err);
   }
 }

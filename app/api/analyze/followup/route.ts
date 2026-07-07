@@ -1,20 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { getVoiceProfile } from '@/lib/voice-profile';
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const voiceContext = await getVoiceProfile(userId);
 
     const { originalText, analysisResult, context, messages } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'Messages are required.' }, { status: 400 });
+      return apiError('Messages are required.', 400);
     }
 
     // Build analysis summary for system prompt
@@ -80,8 +81,7 @@ Be direct, tactical, and specific. Provide exact wording when suggesting respons
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ANALYZE_FOLLOWUP]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[ANALYZE_FOLLOWUP]', `OpenRouter ${response.status}: ${errorText}`);
     }
 
     // Stream through to client
@@ -93,10 +93,8 @@ Be direct, tactical, and specific. Provide exact wording when suggesting respons
       },
     });
   } catch (error) {
-    console.error('[ANALYZE_FOLLOWUP]', error);
-    return NextResponse.json(
-      { error: 'Failed to process follow-up request.' },
-      { status: 500 }
-    );
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to process follow-up request.', 500, '[ANALYZE_FOLLOWUP]', error);
   }
 }

@@ -40,7 +40,7 @@ export async function GET(req: Request) {
       .contains('metadata', { original_pi: pi });
 
     if (!primary && (!related || related.length === 0)) {
-      return NextResponse.json({ items: [], email: null }, { status: 200 });
+      return NextResponse.json({ items: [] }, { status: 200 });
     }
 
     const allItems = new Set<string>();
@@ -51,14 +51,15 @@ export async function GET(req: Request) {
       }
     }
 
+    // Intentionally does NOT return the buyer's email. This endpoint is public
+    // (keyed only by the payment-intent id), so returning the email would leak
+    // it to anyone who obtains that id. Items are product names, not personal data.
     return NextResponse.json({
-      email: primary?.email ?? null,
       items: Array.from(allItems),
       status: primary?.status ?? 'unknown',
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[orders/by-pi] error:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[orders/by-pi] error:', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

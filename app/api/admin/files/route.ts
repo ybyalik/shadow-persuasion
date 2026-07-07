@@ -16,6 +16,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,9 +25,11 @@ const supabase = createClient(
 );
 
 const BUCKET = 'product-files';
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const { data, error } = await supabase
       .from('product_files')
       .select('*')
@@ -35,14 +39,16 @@ export async function GET() {
     if (error) throw error;
     return NextResponse.json({ files: data ?? [] });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/files GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/files GET]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    await requireAdmin(req);
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const productSlug = String(formData.get('productSlug') || '').trim();
@@ -65,6 +71,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
+    // Validate file type and size. Covers must be images; delivered
+    // downloads must be PDFs. This stops an arbitrary/executable file
+    // from being uploaded and later delivered to buyers.
+    const type = file.type || '';
+    if (fileType === 'cover') {
+      if (!type.startsWith('image/')) {
+        return NextResponse.json({ error: 'Cover files must be an image.' }, { status: 400 });
+      }
+    } else if (type !== 'application/pdf') {
+      return NextResponse.json({ error: 'Product files must be a PDF.' }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'That file is too large (max 50 MB).' }, { status: 400 });
+    }
+
     // Generate a unique storage key so a second upload of the same
     // filename never overwrites the first. Covers live in a
     // subfolder so they're easy to spot in the bucket listing.
@@ -80,10 +101,9 @@ export async function POST(req: Request) {
         upsert: false,
       });
     if (uploadErr) {
+      console.error('[admin/files POST] storage upload failed:', uploadErr.message);
       return NextResponse.json(
-        {
-          error: `Storage upload failed: ${uploadErr.message}. Does the '${BUCKET}' bucket exist in Supabase?`,
-        },
+        { error: 'File upload failed. Please try again.' },
         { status: 500 }
       );
     }
@@ -141,8 +161,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ file: row });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/files POST]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/files POST]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-client';
 import {
   RefreshCw,
   Mail,
@@ -52,12 +53,14 @@ export default function EmailsListPage() {
 
   async function load() {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/api/admin/emails');
+      const res = await apiFetch('/api/admin/emails');
       const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to load templates');
       setTemplates(d.templates ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +78,7 @@ export default function EmailsListPage() {
     if (!newKey) return;
     setBusy(`clone:${key}`);
     try {
-      const res = await fetch(`/api/admin/emails/${key}`, {
+      const res = await apiFetch(`/api/admin/emails/${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'clone', newKey }),
@@ -94,7 +97,7 @@ export default function EmailsListPage() {
     if (!confirm(`Delete template "${tpl.name}"? This cannot be undone.`)) return;
     setBusy(`delete:${tpl.key}`);
     try {
-      const res = await fetch(`/api/admin/emails/${tpl.key}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/emails/${tpl.key}`, { method: 'DELETE' });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Delete failed');
       await load();
@@ -108,7 +111,7 @@ export default function EmailsListPage() {
   async function handleToggleEnabled(tpl: Template) {
     setBusy(`enable:${tpl.key}`);
     try {
-      const res = await fetch(`/api/admin/emails/${tpl.key}`, {
+      const res = await apiFetch(`/api/admin/emails/${tpl.key}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !tpl.enabled }),

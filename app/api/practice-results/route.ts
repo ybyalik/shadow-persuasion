@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// GET: List practice results, filterable by type and date range
+// GET: List the signed-in user's practice results, filterable by type and date range
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const from = searchParams.get('from');
@@ -19,11 +20,8 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from('practice_results')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
 
     if (type) {
       query = query.eq('type', type);
@@ -40,21 +38,21 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[PRACTICE_RESULTS]', 'Error fetching practice results:', error);
-      return NextResponse.json({ error: 'Failed to fetch practice results' }, { status: 500 });
+      return apiError('Failed to fetch practice results.', 500, '[PRACTICE_RESULTS]', error);
     }
 
     return NextResponse.json({ results: data || [] });
   } catch (error) {
-    console.error('[PRACTICE_RESULTS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PRACTICE_RESULTS]', error);
   }
 }
 
-// POST: Save a practice result
+// POST: Save a practice result for the signed-in user
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { type, reference_id, score, xp_earned, techniques_used, feedback } = await req.json();
 
     if (!type) {
@@ -76,13 +74,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[PRACTICE_RESULTS]', 'Error saving practice result:', error);
-      return NextResponse.json({ error: 'Failed to save practice result' }, { status: 500 });
+      return apiError('Failed to save practice result.', 500, '[PRACTICE_RESULTS]', error);
     }
 
     return NextResponse.json({ result: data });
   } catch (error) {
-    console.error('[PRACTICE_RESULTS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PRACTICE_RESULTS]', error);
   }
 }

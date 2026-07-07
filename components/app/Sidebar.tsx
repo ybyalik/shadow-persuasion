@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, MessageSquare, Edit, Users, Swords, ClipboardList, BookOpen, Trophy, Upload, LogOut, Sun, Moon, ChevronUp, Settings, Menu, X } from 'lucide-react';
+import { Home, Search, MessageSquare, Edit, Users, Swords, ClipboardList, BookOpen, Trophy, Upload, LogOut, Sun, Moon, ChevronUp, Settings, Menu, X, Shield, Mic, Target, Zap, Route } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
 import { useAdmin } from '@/lib/hooks/useAdmin';
@@ -11,9 +11,14 @@ import { useAdmin } from '@/lib/hooks/useAdmin';
 const navItems = [
   { href: '/app', icon: Home, label: 'Dashboard' },
   { href: '/app/analyze', icon: Search, label: 'Analyze' },
+  { href: '/app/defense', icon: Shield, label: 'Defense' },
+  { href: '/app/assist', icon: Zap, label: 'Live Assist' },
   { href: '/app/chat', icon: MessageSquare, label: 'Strategic Coach' },
   { href: '/app/rewrite', icon: Edit, label: 'Message Optimizer' },
   { href: '/app/people', icon: Users, label: 'People' },
+  { href: '/app/campaigns', icon: Route, label: 'Campaigns' },
+  { href: '/app/spar', icon: Mic, label: 'Live Sparring' },
+  { href: '/app/warroom', icon: Target, label: 'War Room' },
   { href: '/app/training', icon: Swords, label: 'Training Arena' },
   { href: '/app/field-ops', icon: ClipboardList, label: 'Field Ops' },
   { href: '/app/techniques', icon: BookOpen, label: 'Techniques' },

@@ -128,6 +128,12 @@ export default function BookCheckoutPage() {
   // persists across the rest of the visit.
   useEffect(() => {
     captureUtms();
+    // If the publishable key is missing the checkout can't load. Log the
+    // real cause for debugging; the customer only ever sees a friendly
+    // "temporarily unavailable" message, never the env-var name.
+    if (!stripePromise) {
+      console.error('[checkout/book] Stripe publishable key is not configured — payment form cannot load');
+    }
   }, []);
 
   // ── Lead capture (cart abandonment recovery) ──
@@ -468,7 +474,11 @@ export default function BookCheckoutPage() {
               </>
             ) : (
               <p className="text-sm text-[#8B0000]">
-                Stripe is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.
+                Checkout is temporarily unavailable. Please try again shortly, or email{' '}
+                <a href="mailto:support@shadowpersuasion.com" className="underline hover:text-[#D4A017]">
+                  support@shadowpersuasion.com
+                </a>{' '}
+                and we&apos;ll get you sorted.
               </p>
             )}
           </div>

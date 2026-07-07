@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 import { supabase, searchKnowledge } from '@/lib/rag';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
@@ -8,7 +10,21 @@ const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
 export async function POST(req: NextRequest) {
   try {
+    // Require a logged-in user: this streams paid Claude Sonnet output, so
+    // anonymous callers must not be able to burn OpenRouter credits.
+    await requireAuth(req);
+
     const { messages, scenarioId } = await req.json();
+
+    // messages may legitimately be an empty array for the opening turn (the
+    // client requests the AI's first in-character line), so only require that
+    // it is an array.
+    if (!Array.isArray(messages)) {
+      return NextResponse.json({ error: 'No messages provided.' }, { status: 400 });
+    }
+    if (!scenarioId || typeof scenarioId !== 'string') {
+      return NextResponse.json({ error: 'Scenario id is required.' }, { status: 400 });
+    }
 
     const { data: scenario, error: scenarioError } = await supabase
       .from('scenarios')
@@ -118,7 +134,8 @@ The coaching annotation must be valid JSON inside the COACHING comment. Score 1-
     });
 
   } catch (error) {
-    console.error('[SCENARIOS]', error);
-    return NextResponse.json({ error: 'Failed to get scenario response.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to get scenario response.', 500, '[SCENARIOS]', error);
   }
 }

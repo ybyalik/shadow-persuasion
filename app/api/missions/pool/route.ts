@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { searchKnowledge } from '@/lib/rag';
+import { requireAuth, requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,14 +35,16 @@ function getMissionCategoriesForTaxonomy(taxonomyIds: string[]): Set<string> {
 // Optional query param: ?categories=career,dating,defense (taxonomy category IDs)
 export async function GET(req: NextRequest) {
   try {
+    // Missions are an app feature behind login.
+    await requireAuth(req);
+
     const { data, error } = await supabase
       .from('missions')
       .select('*')
       .order('id', { ascending: true });
 
     if (error) {
-      console.error('[MISSIONS_POOL] Error fetching missions:', error);
-      return NextResponse.json({ error: 'Failed to fetch missions' }, { status: 500 });
+      return apiError('Failed to fetch missions.', 500, '[MISSIONS_POOL]', error);
     }
 
     // Map DB columns to camelCase for frontend compatibility
@@ -71,8 +75,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ missions });
   } catch (error) {
-    console.error('[MISSIONS_POOL]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MISSIONS_POOL]', error);
   }
 }
 
@@ -81,7 +86,13 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { count = 5 } = await req.json().catch(() => ({}));
+    // Admin-only: generating missions costs money and writes into the shared
+    // missions table that every user sees.
+    await requireAdmin(req);
+
+    const { count: rawCount } = await req.json().catch(() => ({}));
+    // Clamp count to a safe integer range before it reaches the LLM prompt.
+    const count = Math.min(Math.max(parseInt(String(rawCount ?? 5), 10) || 5, 1), 20);
 
     // Search knowledge chunks for techniques
     const knowledgeContext = await searchKnowledge(
@@ -90,10 +101,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (!knowledgeContext) {
-      return NextResponse.json(
-        { error: 'No knowledge base content found. Upload books first.' },
-        { status: 400 }
-      );
+      return apiError('No knowledge base content found. Upload books first.', 400);
     }
 
     // Get existing mission titles to avoid duplicates
@@ -155,17 +163,21 @@ Rules:
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[MISSIONS_POOL] OpenRouter error:', errText);
-      return NextResponse.json({ error: 'Failed to generate missions' }, { status: 500 });
+      return apiError('Failed to generate missions. Please try again.', 502, '[MISSIONS_POOL]', `OpenRouter ${response.status}: ${errText}`);
     }
 
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content;
     if (!content) {
-      return NextResponse.json({ error: 'Empty AI response' }, { status: 500 });
+      return apiError('Failed to generate missions. Please try again.', 502, '[MISSIONS_POOL]');
     }
 
-    const parsed = JSON.parse(content);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch (parseErr) {
+      return apiError('AI returned an invalid response. Please try again.', 502, '[MISSIONS_POOL]', content?.slice?.(0, 200) ?? parseErr);
+    }
     const newMissions = parsed.missions || [];
 
     // Filter out duplicates
@@ -174,7 +186,7 @@ Rules:
     );
 
     if (uniqueMissions.length === 0) {
-      return NextResponse.json({ error: 'All generated missions were duplicates. Try again.' }, { status: 409 });
+      return apiError('All generated missions were duplicates. Try again.', 409);
     }
 
     // Insert into database
@@ -196,8 +208,7 @@ Rules:
       .select();
 
     if (insertError) {
-      console.error('[MISSIONS_POOL] Insert error:', insertError);
-      return NextResponse.json({ error: 'Failed to save generated missions' }, { status: 500 });
+      return apiError('Failed to save generated missions.', 500, '[MISSIONS_POOL]', insertError);
     }
 
     return NextResponse.json({
@@ -215,7 +226,8 @@ Rules:
       })),
     });
   } catch (error) {
-    console.error('[MISSIONS_POOL]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MISSIONS_POOL]', error);
   }
 }

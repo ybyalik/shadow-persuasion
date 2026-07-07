@@ -4,19 +4,19 @@ import { useState } from 'react';
 import { Briefcase, Crown, DollarSign, Wallet, Heart, Users, Baby, Flame, AlertTriangle, MessageCircle, Megaphone, Shield, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const categories: { icon: LucideIcon; name: string; count: number; uses: string[]; moreUses: string[] }[] = [
-  { icon: Briefcase, name: 'Career & Work', count: 15, uses: ['Get a raise', 'Land a promotion', 'Win workplace conflict', 'Survive office politics'], moreUses: ['Get your idea approved', 'Make your boss rely on you', 'Neutralize workplace rivals', 'Get credit for your work', 'Be taken seriously when youngest', 'Recover your reputation after a mistake', 'Reverse a rejection'] },
-  { icon: Crown, name: 'Leadership', count: 8, uses: ['Get team buy-in', 'Handle underperformers', 'Earn respect as new leader', 'Drive change adoption'], moreUses: ['Make people work hard for you', 'Stop team going around you', 'Get buy-in from non-reporters', 'Make hard decisions and keep trust'] },
-  { icon: DollarSign, name: 'Business & Sales', count: 12, uses: ['Close hesitant deals', 'Stop client ghosting', 'Charge higher prices', 'Win negotiations'], moreUses: ['Get investors interested', 'Turn one-time clients to retainers', 'Increase cold outreach reply rate', 'Get overdue invoices paid', 'Win back clients who left'] },
-  { icon: Wallet, name: 'Personal Finance', count: 6, uses: ['Negotiate big purchases', 'Get refunds when policy says no', 'Exit contracts cleanly', 'Get exceptions made'], moreUses: ['Get doctors to take you seriously', 'Talk someone out of a bad financial decision'] },
-  { icon: Heart, name: 'Dating & Attraction', count: 14, uses: ['Build tension and chemistry', 'Get out of the friend zone', 'Read mixed signals', 'Make them commit'], moreUses: ['Get an ex back', 'Get a date with someone out of your league', 'Become more attractive through behavior', 'Re-ignite attraction long-term', 'Handle a partner pulling away'] },
-  { icon: Users, name: 'Relationships', count: 15, uses: ['Set boundaries', 'Repair trust', 'Handle toxic people', 'Defuse conflicts'], moreUses: ['Get a narcissist off your back', 'Make new friends as an adult', 'Handle passive-aggressive people', 'Get someone to forgive you', 'Convince someone to go to therapy'] },
-  { icon: Baby, name: 'Parenting', count: 5, uses: ['Get teens to listen', 'Co-parent with difficult ex', 'Enforce boundaries with respect', 'Have hard conversations'], moreUses: ['Stop your child tuning you out'] },
-  { icon: Flame, name: 'Personal Power', count: 13, uses: ['Stop people-pleasing', 'Build unshakeable confidence', 'Command a room', 'Overcome imposter syndrome'], moreUses: ['Stay calm under pressure', 'Reinvent how people see you', 'Become a natural leader', 'Stop self-sabotaging', 'Handle rejection without losing confidence'] },
-  { icon: AlertTriangle, name: 'High Stakes', count: 7, uses: ['Win custody situations', 'Get second chances', 'Convince someone to get help', 'Handle public failure'], moreUses: ['Talk someone out of a bad decision', 'Get a partner on board with major change', 'Get an exception when the official answer is no'] },
-  { icon: MessageCircle, name: 'Texting & Online', count: 5, uses: ['Get more DM replies', 'Recover dead conversations', 'Close over text', 'Improve dating app results'], moreUses: ['Get someone to respond to your message'] },
-  { icon: Megaphone, name: 'Influence & Audience', count: 5, uses: ['Build a trusted audience', 'Write content that converts', 'Make your brand stand out', 'Grow social following'], moreUses: ['Write a compelling bio or profile'] },
-  { icon: Shield, name: 'Defend & Protect', count: 10, uses: ['Spot manipulation', 'Detect liars', 'Shut down gaslighting', 'Recognize toxic people early'], moreUses: ['Protect from being taken advantage of', 'Know when you are being played in a negotiation', 'Detect fake friendships', 'Set limits with people who ignore them'] },
+const categories: { icon: LucideIcon; name: string; uses: string[]; moreUses: string[] }[] = [
+  { icon: Briefcase, name: 'Career & Work', uses: ['Get a raise', 'Land a promotion', 'Win workplace conflict', 'Survive office politics'], moreUses: ['Get your idea approved', 'Make your boss rely on you', 'Neutralize workplace rivals', 'Get credit for your work', 'Be taken seriously when youngest', 'Recover your reputation after a mistake', 'Reverse a rejection'] },
+  { icon: Crown, name: 'Leadership', uses: ['Get team buy-in', 'Handle underperformers', 'Earn respect as new leader', 'Drive change adoption'], moreUses: ['Make people work hard for you', 'Stop team going around you', 'Get buy-in from non-reporters', 'Make hard decisions and keep trust'] },
+  { icon: DollarSign, name: 'Business & Sales', uses: ['Close hesitant deals', 'Stop client ghosting', 'Charge higher prices', 'Win negotiations'], moreUses: ['Get investors interested', 'Turn one-time clients to retainers', 'Increase cold outreach reply rate', 'Get overdue invoices paid', 'Win back clients who left'] },
+  { icon: Wallet, name: 'Personal Finance', uses: ['Negotiate big purchases', 'Get refunds when policy says no', 'Exit contracts cleanly', 'Get exceptions made'], moreUses: ['Get doctors to take you seriously', 'Talk someone out of a bad financial decision'] },
+  { icon: Heart, name: 'Dating & Attraction', uses: ['Build tension and chemistry', 'Get out of the friend zone', 'Read mixed signals', 'Make them commit'], moreUses: ['Get an ex back', 'Get a date with someone out of your league', 'Become more attractive through behavior', 'Re-ignite attraction long-term', 'Handle a partner pulling away'] },
+  { icon: Users, name: 'Relationships', uses: ['Set boundaries', 'Repair trust', 'Handle toxic people', 'Defuse conflicts'], moreUses: ['Get a narcissist off your back', 'Make new friends as an adult', 'Handle passive-aggressive people', 'Get someone to forgive you', 'Convince someone to go to therapy'] },
+  { icon: Baby, name: 'Parenting', uses: ['Get teens to listen', 'Co-parent with difficult ex', 'Enforce boundaries with respect', 'Have hard conversations'], moreUses: ['Stop your child tuning you out'] },
+  { icon: Flame, name: 'Personal Power', uses: ['Stop people-pleasing', 'Build unshakeable confidence', 'Command a room', 'Overcome imposter syndrome'], moreUses: ['Stay calm under pressure', 'Reinvent how people see you', 'Become a natural leader', 'Stop self-sabotaging', 'Handle rejection without losing confidence'] },
+  { icon: AlertTriangle, name: 'High Stakes', uses: ['Win custody situations', 'Get second chances', 'Convince someone to get help', 'Handle public failure'], moreUses: ['Talk someone out of a bad decision', 'Get a partner on board with major change', 'Get an exception when the official answer is no'] },
+  { icon: MessageCircle, name: 'Texting & Online', uses: ['Get more DM replies', 'Recover dead conversations', 'Close over text', 'Improve dating app results'], moreUses: ['Get someone to respond to your message'] },
+  { icon: Megaphone, name: 'Influence & Audience', uses: ['Build a trusted audience', 'Write content that converts', 'Make your brand stand out', 'Grow social following'], moreUses: ['Write a compelling bio or profile'] },
+  { icon: Shield, name: 'Defend & Protect', uses: ['Spot manipulation', 'Detect liars', 'Shut down gaslighting', 'Recognize toxic people early'], moreUses: ['Protect from being taken advantage of', 'Know when you are being played in a negotiation', 'Detect fake friendships', 'Set limits with people who ignore them'] },
 ];
 
 const capabilities = [
@@ -95,10 +95,14 @@ export const SystemCapabilities = () => {
 function PracticalApplications() {
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
+  // Derive the totals from the data so the header and each card can never
+  // disagree with the actual list of use cases shown.
+  const totalUseCases = categories.reduce((sum, c) => sum + c.uses.length + c.moreUses.length, 0);
+
   return (
     <div className="mt-12">
       <h3 className="text-2xl font-bold text-black mb-2 text-center">PRACTICAL APPLICATIONS</h3>
-      <p className="text-center text-gray-600 text-base mb-8 font-mono uppercase tracking-wider">121 use cases across 12 categories</p>
+      <p className="text-center text-gray-600 text-base mb-8 font-mono uppercase tracking-wider">{totalUseCases} use cases across {categories.length} categories</p>
       {/* Click-outside overlay to close expanded popup */}
       {expandedCat && (
         <div
@@ -128,7 +132,7 @@ function PracticalApplications() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-[#D4A017] font-mono mt-3 tracking-wide">+{cat.count - cat.uses.length} more &rarr;</p>
+              <p className="text-xs text-[#D4A017] font-mono mt-3 tracking-wide">+{cat.moreUses.length} more &rarr;</p>
 
               {/* Expanded popup */}
               {isExpanded && (
@@ -142,7 +146,7 @@ function PracticalApplications() {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 font-mono mb-3">ALL {cat.count} USE CASES</p>
+                  <p className="text-xs text-gray-500 font-mono mb-3">ALL {cat.uses.length + cat.moreUses.length} USE CASES</p>
                   <ul className="text-sm text-gray-800 space-y-1.5 max-h-[300px] overflow-y-auto">
                     {[...cat.uses, ...cat.moreUses].map((u) => (
                       <li key={u} className="flex items-start gap-1.5">

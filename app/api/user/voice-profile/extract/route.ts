@@ -17,6 +17,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Image file is required' }, { status: 400 });
     }
 
+    // Guard against cost abuse: only accept real images, and cap the size.
+    const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    if (!file.type || !file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Please upload an image file.' }, { status: 400 });
+    }
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'That image is too large. Please upload one under 10 MB.' }, { status: 400 });
+    }
+
     const bytes = await file.arrayBuffer();
     const base64 = `data:${file.type};base64,${Buffer.from(bytes).toString('base64')}`;
 

@@ -11,6 +11,7 @@ import {
   Upload, Trash2, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp,
   RefreshCw, Eye, ChevronLeft, ChevronRight, Pencil, Check, X, Download, Clock, XCircle,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type BookStatus = 'extracting' | 'processing' | 'done' | 'error';
 type UploadBook = {
@@ -56,7 +57,12 @@ type Chunk = {
 // PDF text extraction (runs client-side via pdfjs-dist)
 async function extractPdfText(file: File): Promise<{ text: string; pages: number }> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  // Serve the worker from our own bundle instead of a third-party CDN so PDF
+  // uploads never depend on cdnjs being reachable.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let fullText = '';
@@ -133,7 +139,7 @@ export default function BooksPage() {
 
   const loadBooks = async () => {
     try {
-      const res = await fetch('/api/admin/books');
+      const res = await apiFetch('/api/admin/books');
       const data = await res.json();
       if (Array.isArray(data)) setDbBooks(data);
     } catch {}
@@ -146,7 +152,7 @@ export default function BooksPage() {
   const loadChunks = async (bookTitle: string, page: number = 1) => {
     setLoadingChunks(true);
     try {
-      const res = await fetch(`/api/admin/chunks?book=${encodeURIComponent(bookTitle)}&page=${page}`);
+      const res = await apiFetch(`/api/admin/chunks?book=${encodeURIComponent(bookTitle)}&page=${page}`);
       const data = await res.json();
       setChunks(data.chunks || []);
       setChunkTotal(data.total || 0);
@@ -173,7 +179,7 @@ export default function BooksPage() {
     if (!editingBook || (!editTitle.trim() && !editAuthor.trim())) return;
     setSavingEdit(true);
     try {
-      const res = await fetch('/api/admin/books', {
+      const res = await apiFetch('/api/admin/books', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,9 +191,13 @@ export default function BooksPage() {
       if (res.ok) {
         await loadBooks();
         cancelEdit();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert('Could not save the book: ' + (data.error || 'Please try again.'));
       }
     } catch (e) {
       console.error('Failed to update book:', e);
+      alert('Could not save the book. Please try again.');
     } finally {
       setSavingEdit(false);
     }
@@ -251,7 +261,7 @@ export default function BooksPage() {
     for (let i = 0; i < skippedTexts.length; i += BATCH_SIZE) {
       const batch = skippedTexts.slice(i, i + BATCH_SIZE);
       try {
-        const res = await fetch('/api/admin/ingest', {
+        const res = await apiFetch('/api/admin/ingest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chunks: batch, title: upload.title, author: upload.author }),
@@ -318,7 +328,7 @@ export default function BooksPage() {
         formData.append('file', file);
         formData.append('title', bookTitle);
         formData.append('author', bookAuthor);
-        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
+        const storageRes = await apiFetch('/api/admin/upload-file', { method: 'POST', body: formData });
         const storageData = await storageRes.json();
         if (storageData.stored && storageData.storagePath) {
           storagePath = storageData.storagePath;
@@ -358,7 +368,7 @@ export default function BooksPage() {
       for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
         const batch = allChunks.slice(i, i + BATCH_SIZE);
         try {
-          const res = await fetch('/api/admin/ingest', {
+          const res = await apiFetch('/api/admin/ingest', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -474,7 +484,7 @@ export default function BooksPage() {
   const handleDelete = async (bookTitle: string) => {
     if (!confirm(`Delete all chunks from "${bookTitle}"?`)) return;
     try {
-      await fetch('/api/admin/ingest', {
+      await apiFetch('/api/admin/ingest', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: bookTitle }),
@@ -490,7 +500,7 @@ export default function BooksPage() {
   const handleDownload = async (book: DBBook) => {
     if (!book.storage_path) return;
     try {
-      const res = await fetch(`/api/admin/upload-file?path=${encodeURIComponent(book.storage_path)}`);
+      const res = await apiFetch(`/api/admin/upload-file?path=${encodeURIComponent(book.storage_path)}`);
       const data = await res.json();
       if (data.url) window.open(data.url, '_blank');
     } catch (err) {
@@ -858,7 +868,7 @@ export default function BooksPage() {
                                 const formData = new FormData();
                                 formData.append('file', file);
                                 formData.append('bookTitle', book.title);
-                                const res = await fetch('/api/admin/upload-file', { method: 'PUT', body: formData });
+                                const res = await apiFetch('/api/admin/upload-file', { method: 'PUT', body: formData });
                                 const data = await res.json();
                                 if (data.stored) loadBooks();
                                 else alert('Upload failed: ' + (data.error || 'unknown error'));

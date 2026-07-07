@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,6 +11,7 @@ const supabase = createClient(
 // PUT: Update book title and/or author across all chunks
 export async function PUT(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { oldTitle, newTitle, newAuthor } = await req.json();
 
     if (!oldTitle) {
@@ -25,21 +28,24 @@ export async function PUT(req: NextRequest) {
 
     const { error, count } = await supabase
       .from('knowledge_chunks')
-      .update(updates)
+      .update(updates, { count: 'exact' })
       .eq('book_title', oldTitle);
 
     if (error) throw error;
 
     return NextResponse.json({ updated: count });
-  } catch (error: any) {
-    console.error('[ADMIN_BOOKS]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/books PUT]', error);
   }
 }
 
 // GET: List all books with chunk counts
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    await requireAdmin(req);
+
     // Try with storage_path first, fall back without it if column doesn't exist
     let data: any[] | null = null;
     let hasStoragePath = true;
@@ -74,7 +80,9 @@ export async function GET() {
     }
 
     return NextResponse.json(Object.values(bookMap));
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/books GET]', error);
   }
 }

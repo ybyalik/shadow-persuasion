@@ -9,6 +9,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Users, Search, ShoppingBag, DollarSign } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type UserRow = {
   user_id: string;
@@ -34,6 +35,7 @@ export default function MembersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [orderSummaries, setOrderSummaries] = useState<Map<string, OrderSummary>>(new Map());
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   // Hide test-flagged subscribers by default so the "N active" count
   // reflects real members. Toggle on to audit test data.
@@ -43,7 +45,7 @@ export default function MembersPage() {
     setLoading(true);
     try {
       const usersUrl = includeTest ? '/api/admin/users?includeTest=1' : '/api/admin/users';
-      const res = await fetch(usersUrl);
+      const res = await apiFetch(usersUrl);
       const data = await res.json();
       if (Array.isArray(data)) setUsers(data);
 
@@ -53,7 +55,7 @@ export default function MembersPage() {
       const ordersUrl = includeTest
         ? '/api/admin/orders?limit=500&includeTest=1'
         : '/api/admin/orders?limit=500';
-      const ordersRes = await fetch(ordersUrl);
+      const ordersRes = await apiFetch(ordersUrl);
       const ordersData = await ordersRes.json();
       const byEmail = new Map<string, OrderSummary>();
       for (const s of ordersData.sessions ?? []) {
@@ -91,14 +93,19 @@ export default function MembersPage() {
     d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—';
 
   async function act(userId: string, action: string, plan?: string) {
+    setError(null);
     try {
-      await fetch('/api/admin/users', {
+      const res = await apiFetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, userId, plan }),
       });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'That change did not save. Please try again.');
       loadUsers();
-    } catch {}
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That change did not save. Please try again.');
+    }
   }
 
   return (
@@ -124,6 +131,12 @@ export default function MembersPage() {
           Refresh
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 p-3 mb-5 font-mono text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Search + include-test */}
       <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-4 mb-6 flex items-center gap-4 flex-wrap">

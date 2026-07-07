@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
     const msg = err?.message || String(err);
     const code = err?.code || err?.type || 'unknown';
     console.error('[STRIPE EMBEDDED-CHECKOUT]', JSON.stringify({ message: msg, code, type: err?.type, statusCode: err?.statusCode }));
-    return NextResponse.json({ error: msg, code }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not start checkout. Please try again.' },
+      { status: 500 }
+    );
   }
 }

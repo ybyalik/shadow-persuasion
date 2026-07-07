@@ -270,6 +270,40 @@ function recoveryFallback(step: RecoveryStep): Pick<TemplateRecord, 'subject' | 
   };
 }
 
+/**
+ * Append a plain, working unsubscribe footer to a marketing email.
+ *
+ * We add this automatically for non-transactional sends instead of
+ * trusting each template body to include {{unsubscribe_url}}. A
+ * missing opt-out link is both a US email-law (CAN-SPAM) problem and a
+ * deliverability one: readers with no unsubscribe link hit "mark as
+ * spam" instead, which trains inbox providers to junk every email from
+ * the domain, including the paid download links people bought.
+ *
+ * If the template body already dropped the link in (it contains the
+ * exact unsubscribe URL), we leave it alone so there's no double footer.
+ */
+function appendUnsubscribeFooterHtml(html: string, unsubscribeUrl: string): string {
+  if (html.includes(unsubscribeUrl)) return html;
+  const footer = `
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+  <tr><td style="padding-top:16px;border-top:1px solid #5C3A1E22;font-family:Georgia,serif;font-size:12px;line-height:1.6;color:#8A7355;">
+    You're getting this because you started checkout on shadowpersuasion.com.
+    <a href="${unsubscribeUrl}" style="color:#8A7355;text-decoration:underline;">Unsubscribe here</a>
+    and we'll stop sending these.
+  </td></tr>
+</table>`;
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, `${footer}\n</body>`);
+  }
+  return html + footer;
+}
+
+function appendUnsubscribeFooterText(text: string, unsubscribeUrl: string): string {
+  if (text.includes(unsubscribeUrl)) return text;
+  return `${text}\n\nYou're getting this because you started checkout on shadowpersuasion.com.\nUnsubscribe here: ${unsubscribeUrl}`;
+}
+
 export async function sendRecoveryEmail(opts: {
   to: string;
   firstName?: string | null;
@@ -310,16 +344,32 @@ export async function sendRecoveryEmail(opts: {
   }
 
   const body = tpl ?? recoveryFallback(opts.step);
+  const unsubscribeUrl = buildUnsubscribeUrl(opts.to);
   const vars: Record<string, string> = {
     greeting: opts.firstName ? `${opts.firstName},` : opts.step === 2 ? 'Hey again,' : 'Hey,',
     cta_url: buildRecoveryCtaUrl(opts.step),
-    unsubscribe_url: buildUnsubscribeUrl(opts.to),
+    unsubscribe_url: unsubscribeUrl,
   };
 
   const subject = renderTemplate(body.subject, vars);
-  const html = renderTemplate(body.body_html, vars);
-  const text = renderTemplate(body.body_text, vars);
+  let html = renderTemplate(body.body_html, vars);
+  let text = renderTemplate(body.body_text, vars);
   const from = buildFromAddress(tpl);
+
+  // Marketing sends must always carry a working opt-out. For
+  // non-transactional emails, append the unsubscribe footer (so the
+  // link is there even if the template body forgot it) and set the
+  // standard one-click unsubscribe headers so inbox providers show
+  // their native "Unsubscribe" button next to the sender.
+  let headers: Record<string, string> | undefined;
+  if (nonTransactional) {
+    html = appendUnsubscribeFooterHtml(html, unsubscribeUrl);
+    text = appendUnsubscribeFooterText(text, unsubscribeUrl);
+    headers = {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    };
+  }
 
   try {
     const result = await resend.emails.send({
@@ -328,6 +378,7 @@ export async function sendRecoveryEmail(opts: {
       subject,
       html,
       text,
+      ...(headers ? { headers } : {}),
     });
     if (result.error) {
       await logSend({

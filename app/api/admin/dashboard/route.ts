@@ -7,21 +7,61 @@
  *   - Members: total / active
  *   - Knowledge base: books / chunks
  *
- * (Admin-gated by client-side useAdmin check; API itself is not currently
- * locked down — we trust the browser redirect for non-admins. Fix later
- * with a server-side admin token if needed.)
+ * Server-gated by requireAdmin (verified Firebase token + admin email
+ * check). The client-side useAdmin redirect is defense-in-depth only.
  */
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+// Supabase returns at most 1000 rows per request. Page through with
+// .range() so aggregate metrics stay correct past 1000 rows instead of
+// silently capping (which would understate revenue / counts as sales grow).
+const PAGE_SIZE = 1000;
+
+async function fetchAllOrders() {
+  const rows: Array<{ email: string | null; amount_cents: number | null; status: string; created_at: string }> = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('email, amount_cents, status, created_at')
+      .eq('is_test', false)
+      .order('created_at', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+  return rows;
+}
+
+async function fetchAllBookTitles() {
+  const titles: string[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('knowledge_chunks')
+      .select('book_title')
+      .order('book_title', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    for (const c of data) titles.push(c.book_title);
+    if (data.length < PAGE_SIZE) break;
+  }
+  return titles;
+}
+
+export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -29,13 +69,8 @@ export async function GET() {
     // Test orders (is_test = true) are filtered out so dashboard metrics
     // reflect real revenue / conversions only. The admin can still see
     // test orders individually in /app/admin/orders with the "Include
-    // test orders" toggle.
-    const { data: ordersAll } = await supabase
-      .from('orders')
-      .select('email, amount_cents, status, created_at')
-      .eq('is_test', false);
-
-    const rawOrders = ordersAll ?? [];
+    // test orders" toggle. Paged so totals don't cap at 1000 rows.
+    const rawOrders = await fetchAllOrders();
 
     // Bucket by email for customer-session semantics
     const sessionsByEmail = new Map<string, {
@@ -91,14 +126,15 @@ export async function GET() {
       .in('status', ['active', 'trialing'])
       .eq('is_test', false);
 
-    // Knowledge base: count distinct books via SQL RPC would be best, but a
-    // simple select+dedup gets us there without migration.
-    const { data: chunksAll } = await supabase
+    // Knowledge base: total chunk count via an exact head count (not capped
+    // at 1000), and distinct book titles by paging through all rows.
+    const { count: chunksCount } = await supabase
       .from('knowledge_chunks')
-      .select('book_title');
+      .select('*', { count: 'exact', head: true });
 
-    const chunks = chunksAll ?? [];
-    const uniqueBooks = new Set(chunks.map((c) => c.book_title).filter(Boolean)).size;
+    const bookTitles = await fetchAllBookTitles();
+    const uniqueBooks = new Set(bookTitles.filter(Boolean)).size;
+    const chunksTotal = chunksCount ?? bookTitles.length;
 
     return NextResponse.json({
       stats: {
@@ -114,12 +150,12 @@ export async function GET() {
         membersTotal: membersTotal ?? 0,
         membersActive: membersActive ?? 0,
         booksTotal: uniqueBooks,
-        chunksTotal: chunks.length,
+        chunksTotal,
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/dashboard]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/dashboard]', err);
   }
 }

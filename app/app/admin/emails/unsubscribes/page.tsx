@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, RefreshCw, Search, UserX, UserCheck, Plus } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type Unsub = {
   id: string;
@@ -42,7 +43,7 @@ export default function UnsubscribesPage() {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (showAll) params.set('showAll', '1');
-      const res = await fetch(`/api/admin/emails/unsubscribes?${params.toString()}`);
+      const res = await apiFetch(`/api/admin/emails/unsubscribes?${params.toString()}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to load');
       setList(d.unsubscribes ?? []);
@@ -64,7 +65,7 @@ export default function UnsubscribesPage() {
     setAddBusy(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/emails/unsubscribes', {
+      const res = await apiFetch('/api/admin/emails/unsubscribes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: newEmail, reason: newReason || undefined }),
@@ -87,7 +88,7 @@ export default function UnsubscribesPage() {
     if (!confirm(`Resubscribe ${u.email}? They'll start receiving marketing emails again.`))
       return;
     try {
-      const res = await fetch(`/api/admin/emails/unsubscribes?email=${encodeURIComponent(u.email)}`, {
+      const res = await apiFetch(`/api/admin/emails/unsubscribes?email=${encodeURIComponent(u.email)}`, {
         method: 'DELETE',
       });
       const d = await res.json();

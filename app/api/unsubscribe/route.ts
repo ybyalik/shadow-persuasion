@@ -37,10 +37,10 @@ export async function GET(req: Request) {
   });
 
   if (!result.ok) {
+    // Log the real error server-side only; never put it in the redirect URL
+    // where the customer (and their browser history) would see it.
     console.error('[unsubscribe]', result.error);
-    return NextResponse.redirect(
-      new URL(`/unsubscribe?error=${encodeURIComponent(result.error ?? 'failed')}`, req.url)
-    );
+    return NextResponse.redirect(new URL('/unsubscribe?error=failed', req.url));
   }
 
   return NextResponse.redirect(

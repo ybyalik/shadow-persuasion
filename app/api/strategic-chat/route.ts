@@ -51,8 +51,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No messages provided.' }, { status: 400 });
     }
 
-    // Resolve or create session for persistence
-    let activeSessionId = session_id;
+    // Resolve or create session for persistence. If the client passes a
+    // session_id, confirm it belongs to this user before writing to it;
+    // otherwise ignore it and start a fresh session so nobody can inject
+    // messages into another user's chat history.
+    let activeSessionId: string | null = session_id || null;
+    if (activeSessionId) {
+      const { data: ownedSession } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('id', activeSessionId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!ownedSession) {
+        activeSessionId = null;
+      }
+    }
     if (!activeSessionId) {
       try {
         const { data: newSession } = await supabase
@@ -66,7 +80,7 @@ export async function POST(req: NextRequest) {
           })
           .select('id')
           .single();
-        activeSessionId = newSession?.id;
+        activeSessionId = newSession?.id ?? null;
       } catch (e) {
         console.error('[STRATEGIC_CHAT]', 'Failed to create session:', e);
       }

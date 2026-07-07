@@ -238,6 +238,7 @@ export default function DashboardPage() {
   const [completions, setCompletions] = useState<MissionCompletion[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [missionPool, setMissionPool] = useState<Mission[]>([]);
+  const [missionLoadFailed, setMissionLoadFailed] = useState(false);
   const [userGoals, setUserGoals] = useState<string[]>([]);
   const [lowPoolWarning, setLowPoolWarning] = useState(false);
   const [editingFocus, setEditingFocus] = useState(false);
@@ -343,6 +344,7 @@ export default function DashboardPage() {
         if (completionsRes?.completions) setCompletions(completionsRes.completions);
         if (conversationsRes?.sessions) setSessions(conversationsRes.sessions);
         if (poolRes?.missions) setMissionPool(poolRes.missions);
+        else setMissionLoadFailed(true);
 
         // Check if onboarding was requested via settings or user is brand new
         const forceOnboarding = localStorage.getItem('shadow-force-onboarding') === 'true';
@@ -350,10 +352,15 @@ export default function DashboardPage() {
           localStorage.removeItem('shadow-force-onboarding');
           setOnboardingComplete(false);
         } else {
+          // Only decide "brand new user" when the history requests actually
+          // succeeded. A transient fetch failure returns null, which must NOT
+          // be treated as an empty account (that would drop an existing
+          // customer into the new-user onboarding flow).
+          const requestsSucceeded = progressRes !== null && conversationsRes !== null;
           const hasActivity = (progressRes?.recentActivity?.length ?? 0) > 0;
           const hasSessions = (conversationsRes?.sessions?.length ?? 0) > 0;
           const hasXP = (progressRes?.totalXP ?? 0) > 0;
-          if (!hasActivity && !hasSessions && !hasXP) {
+          if (requestsSucceeded && !hasActivity && !hasSessions && !hasXP) {
             setOnboardingComplete(false);
           }
         }
@@ -1031,9 +1038,12 @@ export default function DashboardPage() {
               )}
             </>
           ) : (
-            <div className="flex items-center gap-2 text-gray-500">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#D4A017]" />
-              <span className="text-sm">Loading missions...</span>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {missionLoadFailed
+                ? "We couldn't load today's mission. Please refresh the page to try again."
+                : userGoals.length > 0
+                  ? 'No missions match your focus areas right now. New missions are generated from your knowledge base — check back soon.'
+                  : 'No missions available right now. Check back soon.'}
             </div>
           )}
         </div>

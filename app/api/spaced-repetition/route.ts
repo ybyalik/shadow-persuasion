@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,23 +10,18 @@ const supabase = createClient(
 
 const TABLE = 'spaced_repetition';
 
-// GET: Get all SR cards for the user (optionally ?due=true to filter only due cards)
+// GET: Get the signed-in user's SR cards (optionally ?due=true for only due cards)
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const dueOnly = searchParams.get('due') === 'true';
 
     let query = supabase
       .from(TABLE)
       .select('*')
+      .eq('user_id', userId)
       .order('next_review_at', { ascending: true });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
 
     if (dueOnly) {
       query = query.lte('next_review_at', new Date().toISOString());
@@ -34,24 +30,25 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[SPACED_REPETITION]', 'Error fetching SR cards:', error);
-      return NextResponse.json({ error: 'Failed to fetch SR cards' }, { status: 500 });
+      return apiError('Failed to fetch SR cards.', 500, '[SPACED_REPETITION]', error);
     }
 
     return NextResponse.json({ cards: data || [] });
   } catch (error) {
-    console.error('[SPACED_REPETITION]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[SPACED_REPETITION]', error);
   }
 }
 
 // POST: Update a card after review (upsert on user_id + technique_id)
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
 
-    const { technique_id, ...cardData } = body;
+    const { technique_id, user_id: _ignored, ...cardData } = body;
+    void _ignored;
 
     if (!technique_id) {
       return NextResponse.json({ error: 'technique_id is required' }, { status: 400 });
@@ -71,13 +68,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[SPACED_REPETITION]', 'Error updating SR card:', error);
-      return NextResponse.json({ error: 'Failed to update SR card' }, { status: 500 });
+      return apiError('Failed to update SR card.', 500, '[SPACED_REPETITION]', error);
     }
 
     return NextResponse.json({ card: data });
   } catch (error) {
-    console.error('[SPACED_REPETITION]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[SPACED_REPETITION]', error);
   }
 }

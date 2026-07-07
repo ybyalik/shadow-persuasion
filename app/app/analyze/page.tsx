@@ -361,7 +361,7 @@ export default function AnalyzePage() {
           }),
         });
         if (res.ok) {
-          const newPerson = await res.json();
+          const newPerson = (await res.json()).profile;
           setSaveToast(`Saved to ${newPersonName.trim()}'s profile`);
           // Link analysis history to newly created person
           if (lastAnalysisId && newPerson?.id) {
@@ -1310,15 +1310,7 @@ export default function AnalyzePage() {
                         {msg.role === 'user' ? msg.content : (
                           <div
                             className="prose prose-sm dark:prose-invert max-w-none [&_strong]:text-[#D4A017] [&_a]:text-[#D4A017]"
-                            dangerouslySetInnerHTML={{ __html: msg.content
-                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                              .replace(/^(\d+)\.\s/gm, '<br/><strong>$1.</strong> ')
-                              .replace(/^[-•]\s(.*)/gm, '<br/>→ $1')
-                              .replace(/\(Source: "(.*?)" by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full">📖 $1</span>')
-                              .replace(/\n\n/g, '<br/><br/>')
-                              .replace(/\n/g, '<br/>')
-                            }}
+                            dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
                           />
                         )}
                       </div>

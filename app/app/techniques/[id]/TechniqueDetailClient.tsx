@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useAdmin } from '@/lib/hooks/useAdmin';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
 import { getCategoryIcon } from '@/lib/category-icons';
+import { renderMarkdown } from '@/lib/markdown';
 const formatLabel = (s: string) => s.split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 import NextLink from 'next/link';
 // Scenarios are fetched dynamically from the API
@@ -471,11 +472,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
                     ? 'bg-[#D4A017]/20 text-gray-900 dark:text-white border border-[#D4A017]/30 rounded-br-none'
                     : 'bg-gray-100 dark:bg-[#222222] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-[#333333] rounded-bl-none'
                 }`}>
-                  <span dangerouslySetInnerHTML={{ __html: msg.content
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/\n/g, '<br/>')
-                  }} />
+                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
                 </div>
               </div>
 
@@ -493,7 +490,7 @@ export default function TechniqueDetailClient({ techniqueId }: { techniqueId: st
 
                   {expandedCoaching[i] && (
                     <div className="mt-2 p-3 bg-[#D4A017]/5 border border-[#D4A017]/20 rounded-lg text-sm space-y-2">
-                      <p className="text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: msg.coaching.feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      <div className="text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.coaching.feedback) }} />
                       {msg.coaching.idealResponse && (
                         <div>
                           <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Ideal Response</p>

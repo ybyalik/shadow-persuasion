@@ -13,6 +13,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-client';
 import {
   ArrowLeft,
   CircleCheck,
@@ -153,7 +154,7 @@ export default function OrderDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/orders/${id}`);
+      const res = await apiFetch(`/api/admin/orders/${id}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to load');
       setData(d);
@@ -177,7 +178,7 @@ export default function OrderDetailPage() {
     setBusy(key);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await apiFetch(`/api/admin/orders/${orderId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, ...body }),
@@ -199,7 +200,7 @@ export default function OrderDetailPage() {
     setBusy('cancel_sub');
     setError(null);
     try {
-      const res = await fetch(`/api/admin/subscriptions/${data.subscription.id}`, {
+      const res = await apiFetch(`/api/admin/subscriptions/${data.subscription.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel', when }),
@@ -321,7 +322,7 @@ export default function OrderDetailPage() {
               ? `Mark this whole customer session as TEST? All orders (${allOrders.length}), the subscription (if any), and the checkout lead for ${order.email} will be excluded from dashboard metrics.`
               : `Un-mark this customer session as test? It will start counting in revenue, leads, and conversions again.`)) return;
             try {
-              const res = await fetch(`/api/admin/orders/${order.id}`, {
+              const res = await apiFetch(`/api/admin/orders/${order.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'mark_test', isTest: next }),

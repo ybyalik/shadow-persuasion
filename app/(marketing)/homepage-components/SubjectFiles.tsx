@@ -4,7 +4,13 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useState } from 'react';
 
-const FileCard = ({ file, title, description, classification, style = {} }) => (
+const FileCard = ({ file, title, description, classification, style = {} }: {
+  file: string;
+  title: string;
+  description: string;
+  classification: string;
+  style?: Record<string, string | number>;
+}) => (
   <div className="bg-[#E8DCC8] p-6 shadow-md relative border-l-4 border-gray-400" style={style}>
     <div className="absolute -top-4 left-4 bg-gray-300 px-3 py-1 text-sm font-bold border-t-2 border-x-2 border-gray-400 rounded-t-md">{file}</div>
     <p className="text-red-700 font-bold absolute top-4 right-4 text-sm">{classification}</p>

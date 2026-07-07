@@ -20,7 +20,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireUser } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
+import { escapeLike } from '@/lib/db-utils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,16 +50,16 @@ async function isAdminEmail(email: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    // Verified identity from the Firebase token — never trust the body email
+    // for the entitlement gate, or a non-payer could pass a payer's address.
+    const { uid: userId, email: verifiedEmail } = await requireUser(req);
 
-    const { email, displayName } = await req.json();
-    const emailLower = email ? String(email).toLowerCase() : null;
+    const { displayName } = await req.json().catch(() => ({}));
+    const emailLower = verifiedEmail ? verifiedEmail.toLowerCase() : null;
 
-    // If a row already exists for this firebase_uid, they've been
-    // admitted before — just refresh last_login_at and move on.
+    // If a row already exists for this firebase_uid, they've registered
+    // before. We still re-check entitlement below so lapsed/cancelled
+    // members are booted, not grandfathered in forever.
     const { data: existing } = await supabase
       .from('users')
       .select('firebase_uid')
@@ -66,24 +68,22 @@ export async function POST(req: NextRequest) {
 
     const isFirstRegistration = !existing;
 
-    // First-time registration → enforce the entitlement gate.
-    if (isFirstRegistration) {
-      if (!emailLower) {
+    // Enforce the entitlement gate on EVERY login, not just the first, so a
+    // customer who cancels stops getting in. Admins always pass.
+    if (!emailLower) {
+      return NextResponse.json(
+        { error: 'not_entitled', reason: 'missing_email' },
+        { status: 403 }
+      );
+    }
+    const isAdmin = await isAdminEmail(emailLower);
+    if (!isAdmin) {
+      const entitled = await checkEntitlement(emailLower);
+      if (!entitled) {
         return NextResponse.json(
-          { error: 'not_entitled', reason: 'missing_email' },
+          { error: 'not_entitled', reason: 'no_subscription' },
           { status: 403 }
         );
-      }
-      // Admin bypass — never block admin emails.
-      const isAdmin = await isAdminEmail(emailLower);
-      if (!isAdmin) {
-        const entitled = await checkEntitlement(emailLower);
-        if (!entitled) {
-          return NextResponse.json(
-            { error: 'not_entitled', reason: 'no_subscription' },
-            { status: 403 }
-          );
-        }
       }
     }
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       .upsert(
         {
           firebase_uid: userId,
-          email: email || null,
+          email: verifiedEmail || null,
           display_name: displayName || null,
           last_login_at: new Date().toISOString(),
         },
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       const { data: guestSubs } = await supabase
         .from('subscriptions')
         .select('user_id')
-        .ilike('email', emailLower)
+        .ilike('email', escapeLike(emailLower))
         .like('user_id', 'stripe_%');
 
       for (const s of guestSubs ?? []) {
@@ -127,9 +127,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error('[USER_REGISTER]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    console.error('[USER_REGISTER]', error);
+    return NextResponse.json(
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -139,10 +143,11 @@ export async function POST(req: NextRequest) {
  * check endpoint.
  */
 async function checkEntitlement(email: string): Promise<boolean> {
+  const emailPattern = escapeLike(email);
   const { data: subs } = await supabase
     .from('subscriptions')
     .select('status, current_period_end')
-    .ilike('email', email);
+    .ilike('email', emailPattern);
 
   const now = new Date();
   const hasValidSub = (subs ?? []).some((s) => {
@@ -160,7 +165,7 @@ async function checkEntitlement(email: string): Promise<boolean> {
   const { data: recentOrders } = await supabase
     .from('orders')
     .select('items, status')
-    .ilike('email', email)
+    .ilike('email', emailPattern)
     .eq('status', 'paid')
     .order('created_at', { ascending: false })
     .limit(5);

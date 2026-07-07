@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth, requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
+// Build a scenario row id on the server so clients can never pick an id that
+// collides with (and overwrites) an existing shared scenario.
+function makeScenarioId(title: unknown): string {
+  const slug = String(title || 'scenario')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 40) || 'scenario';
+  return `${slug}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Action: save — insert previewed scenarios into the database
+    // Action: save — insert previewed scenarios into the shared library.
+    // Admin only: these rows are shown to every user, so a stranger must not
+    // be able to add or overwrite training content.
     if (body.action === 'save') {
+      await requireAdmin(req);
+
       const { scenarios } = body;
       if (!Array.isArray(scenarios) || scenarios.length === 0) {
         return NextResponse.json({ error: 'No scenarios to save.' }, { status: 400 });
       }
 
+      // Server-generated ids + plain insert (no upsert): a client-supplied id
+      // can never overwrite an existing row, and an accidental collision fails
+      // rather than clobbering.
       const toInsert = scenarios.map((s: any) => ({
-        id: s.id,
+        id: makeScenarioId(s.title),
         title: s.title,
         category: s.category,
         difficulty: s.difficulty || 1,
@@ -31,7 +51,7 @@ export async function POST(req: NextRequest) {
 
       const { data: inserted, error: insertError } = await supabase
         .from('scenarios')
-        .upsert(toInsert, { onConflict: 'id' })
+        .insert(toInsert)
         .select();
 
       if (insertError) {
@@ -42,7 +62,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ scenarios: inserted || toInsert });
     }
 
-    // Default action: generate — return scenarios WITHOUT saving
+    // Default action: generate — return scenarios WITHOUT saving.
+    // Require a logged-in user so anonymous callers can't run up GPT-4o costs.
+    await requireAuth(req);
+
     const { categories, count = 5 } = body;
 
     // Build search query from categories
@@ -168,7 +191,8 @@ Use actual technique names and book titles from the knowledge base excerpts.`;
 
     return NextResponse.json({ scenarios: generated });
   } catch (err) {
-    console.error('[SCENARIOS/GENERATE]', err);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[SCENARIOS/GENERATE]', err);
   }
 }

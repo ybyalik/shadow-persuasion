@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Loader2, RefreshCw, Pencil, Check, X, Plus, Power, ArrowUp, ArrowDown, Trash2, ChevronDown, ChevronUp,
+  Loader2, RefreshCw, Pencil, Check, X, Plus, Power, ArrowUp, ArrowDown, Trash2, ChevronDown, ChevronUp, AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -33,6 +33,7 @@ export default function TaxonomyPage() {
   const [categories, setCategories] = useState<TaxCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editCat, setEditCat] = useState({ name: '', emoji: '', description: '' });
@@ -52,12 +53,16 @@ export default function TaxonomyPage() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const headers = await getAuthHeaders();
       const res = await fetch('/api/taxonomy/admin', { headers });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load categories');
       if (data.categories) setCategories(data.categories);
-    } catch {}
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load categories. Please try again.');
+    }
     setLoading(false);
   };
 
@@ -68,6 +73,7 @@ export default function TaxonomyPage() {
 
   const api = async (method: string, body?: unknown, params?: string) => {
     setSaving(true);
+    setError(null);
     try {
       const headers = await getAuthHeaders();
       const url = '/api/taxonomy/admin' + (params || '');
@@ -77,12 +83,12 @@ export default function TaxonomyPage() {
         body: body ? JSON.stringify(body) : undefined,
       });
       if (!res.ok) {
-        const d = await res.json();
-        console.error(d.error);
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'The change could not be saved.');
       }
       await load();
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : 'The change could not be saved. Please try again.');
     }
     setSaving(false);
   };
@@ -164,6 +170,13 @@ export default function TaxonomyPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 p-3 mb-4 font-mono text-sm flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span className="flex-1 break-words">{error}</span>
+        </div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-8">

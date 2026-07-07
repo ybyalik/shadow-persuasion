@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,12 +73,9 @@ function calculateStreak(completions: any[]): { current: number; longest: number
 // GET: Aggregated progress data for the user
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
 
-    const userFilter = (query: any) => {
-      if (userId) return query.eq('user_id', userId);
-      return query.is('user_id', null);
-    };
+    const userFilter = (query: any) => query.eq('user_id', userId);
 
     // Fetch all data sources in parallel
     const [missionsRes, practiceRes, reportsRes, feedbackRes, analysesRes] = await Promise.all([
@@ -236,13 +234,18 @@ export async function GET(req: NextRequest) {
         streak: streak.current,
         techniquesMastered: Array.from(techUsage.values()).filter(t => t.count >= 3).length,
         fieldReports: reports.length,
-        sparringSessions: practiceResults.filter(p => p.type === 'scenario' || p.type === 'sparring').length,
+        sparringSessions: practiceResults.filter((p: any) => p.type === 'scenario' || p.type === 'sparring').length,
         missionsCompleted: missions.length,
         analysesRun: analyses.length,
       },
     });
   } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[USER_PROGRESS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Something went wrong loading your progress.' },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
+import { requireUser } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const PLAN_CONFIG = {
   weekly: {
@@ -21,11 +23,15 @@ const PLAN_CONFIG = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, userId, email } = await req.json();
+    // Identity comes from the verified token, NOT the request body, so a
+    // request can't bind a subscription to someone else's account.
+    const { uid: userId, email: verifiedEmail } = await requireUser(req);
+    const { plan } = await req.json();
+    const email = verifiedEmail;
 
-    if (!plan || !userId || !email) {
+    if (!plan || !email) {
       return NextResponse.json(
-        { error: 'Missing required fields: plan, userId, email' },
+        { error: 'Missing required fields: plan, email' },
         { status: 400 }
       );
     }
@@ -90,9 +96,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
     console.error('[STRIPE CREATE-CHECKOUT]', err?.message || err);
     return NextResponse.json(
-      { error: err?.message || 'Failed to create checkout session' },
+      { error: 'Could not start checkout. Please try again.' },
       { status: 500 }
     );
   }

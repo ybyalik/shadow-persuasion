@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
@@ -133,6 +135,11 @@ function defaultMetadata() {
 // POST: Process a BATCH of chunks (client sends 3 at a time)
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin(req);
+    // Refresh the technique-name cache at the start of each batch so
+    // names created by earlier batches in the same ingest are reused
+    // instead of being duplicated.
+    cachedTechniqueNames = null;
     const { chunks, title, author, storagePath } = await req.json();
 
     if (!chunks || !Array.isArray(chunks) || !title || !author) {
@@ -175,19 +182,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, processed: successCount });
 
   } catch (error: any) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[INGEST] Error:', error);
-    return NextResponse.json({ error: error.message || 'Ingestion failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Ingestion failed. Please try again.' }, { status: 500 });
   }
 }
 
 // DELETE
 export async function DELETE(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { title } = await req.json();
+    if (!title) {
+      return NextResponse.json({ error: 'title is required' }, { status: 400 });
+    }
     const { error } = await supabase.from('knowledge_chunks').delete().eq('book_title', title);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    console.error('[INGEST DELETE]', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

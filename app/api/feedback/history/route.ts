@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,53 +13,58 @@ const TABLE = 'user_feedback';
 // GET: List all feedback for the user
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error('[FEEDBACK_HISTORY]', 'Error fetching feedback:', error);
-      return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+      return apiError('Failed to fetch feedback.', 500, '[FEEDBACK_HISTORY]', error);
     }
 
     return NextResponse.json({ feedback: data || [] });
   } catch (error) {
-    console.error('[FEEDBACK_HISTORY]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[FEEDBACK_HISTORY]', error);
   }
 }
 
 // POST: Save feedback record
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
+
+    // Whitelist the columns a client may set; user_id always comes from the
+    // verified token so nobody can write into another user's history.
+    const record = {
+      type: body.type,
+      reference_id: body.reference_id ?? body.referenceId ?? null,
+      original_advice: body.original_advice ?? body.originalAdvice ?? null,
+      outcome: body.outcome ?? null,
+      notes: body.notes ?? null,
+      ai_analysis: body.ai_analysis ?? body.aiAnalysis ?? {},
+      user_id: userId,
+    };
 
     const { data, error } = await supabase
       .from(TABLE)
-      .insert({ ...body, user_id: userId })
+      .insert(record)
       .select()
       .single();
 
     if (error) {
-      console.error('[FEEDBACK_HISTORY]', 'Error saving feedback:', error);
-      return NextResponse.json({ error: 'Failed to save feedback' }, { status: 500 });
+      return apiError('Failed to save feedback.', 500, '[FEEDBACK_HISTORY]', error);
     }
 
     return NextResponse.json({ feedback: data });
   } catch (error) {
-    console.error('[FEEDBACK_HISTORY]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[FEEDBACK_HISTORY]', error);
   }
 }

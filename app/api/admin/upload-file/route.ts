@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,10 +22,10 @@ function slugify(text: string): string {
 // POST: Upload a file to Supabase Storage bucket "books"
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const title = formData.get('title') as string | null;
-    const author = formData.get('author') as string | null;
 
     if (!file || !title) {
       return NextResponse.json({ error: 'file and title are required' }, { status: 400 });
@@ -42,13 +44,11 @@ export async function POST(req: NextRequest) {
       });
 
     if (error) {
-      const errorDetail = { message: error.message, name: (error as any).name, statusCode: (error as any).statusCode, cause: (error as any).cause, path: storagePath, bufferSize: buffer.length };
-      console.error('[UPLOAD-FILE] Storage error:', JSON.stringify(errorDetail));
+      console.error('[UPLOAD-FILE] Storage error:', error.message, 'path:', storagePath);
       return NextResponse.json({
         stored: false,
         storagePath: null,
-        error: error.message,
-        errorDetail,
+        error: 'Upload failed. Please try again.',
       });
     }
 
@@ -57,11 +57,13 @@ export async function POST(req: NextRequest) {
       storagePath: data.path,
     });
   } catch (error: any) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[UPLOAD-FILE] Error:', error);
     return NextResponse.json({
       stored: false,
       storagePath: null,
-      error: error.message || 'Upload failed',
+      error: 'Upload failed. Please try again.',
     });
   }
 }
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
 // PUT: Attach a PDF to an existing book (upload + update storage_path on chunks)
 export async function PUT(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const bookTitle = formData.get('bookTitle') as string | null;
@@ -88,7 +91,8 @@ export async function PUT(req: NextRequest) {
       });
 
     if (error) {
-      return NextResponse.json({ stored: false, error: error.message }, { status: 500 });
+      console.error('[UPLOAD-FILE PUT] storage error:', error.message);
+      return NextResponse.json({ stored: false, error: 'Upload failed. Please try again.' }, { status: 500 });
     }
 
     // Update storage_path on all chunks for this book
@@ -99,13 +103,17 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ stored: true, storagePath: data.path });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    console.error('[UPLOAD-FILE PUT]', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
 // GET: Generate a signed download URL for a file in Supabase Storage
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { searchParams } = new URL(req.url);
     const path = searchParams.get('path');
 
@@ -118,11 +126,15 @@ export async function GET(req: NextRequest) {
       .createSignedUrl(path, 3600); // 1 hour expiry
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[UPLOAD-FILE GET] signed url error:', error.message);
+      return NextResponse.json({ error: 'Could not generate a download link.' }, { status: 500 });
     }
 
     return NextResponse.json({ url: data.signedUrl });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    console.error('[UPLOAD-FILE GET]', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

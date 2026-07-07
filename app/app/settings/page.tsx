@@ -17,11 +17,12 @@ export default function SettingsPage() {
   const [sampleTexts, setSampleTexts] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [extracting, setExtracting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<{ name: string; preview: string }[]>([]);
 
-  const getHeaders = useCallback(async () => {
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);
@@ -101,6 +102,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
     try {
       const headers = await getHeaders();
       const samples = sampleTexts
@@ -108,7 +110,7 @@ export default function SettingsPage() {
         .map(s => s.trim())
         .filter(Boolean);
 
-      await fetch('/api/user/voice-profile', {
+      const res = await fetch('/api/user/voice-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({
@@ -118,10 +120,12 @@ export default function SettingsPage() {
           sampleTexts: samples,
         }),
       });
+      if (!res.ok) throw new Error('Save failed');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
       console.error('Failed to save voice profile:', e);
+      setSaveError("We couldn't save your voice profile. Please check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -358,6 +362,12 @@ export default function SettingsPage() {
             )}
             <p className="text-xs text-gray-400 mt-2">Upload screenshots of emails, texts, or DMs you&apos;ve sent. AI will extract the text and learn your voice.</p>
           </div>
+
+          {saveError && (
+            <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3">
+              <p className="text-sm text-red-700 dark:text-red-400">{saveError}</p>
+            </div>
+          )}
 
           <button
             onClick={handleSave}

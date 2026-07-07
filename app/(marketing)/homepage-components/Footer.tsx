@@ -8,9 +8,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
         {/* Links row */}
         <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-10">
-          <a href="#features" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Features</a>
-          <a href="#pricing" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Pricing</a>
-          <a href="#faq" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">FAQ</a>
+          <Link href="/pricing" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Pricing</Link>
           <Link href="/terms" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Terms and Conditions</Link>
           <Link href="/privacy" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Privacy Policy</Link>
         </div>

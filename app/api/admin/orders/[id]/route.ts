@@ -8,6 +8,9 @@ import { createClient } from '@supabase/supabase-js';
 import { stripe } from '@/lib/stripe';
 import { sendDeliveryEmail } from '@/lib/email';
 import type { ProductSlug } from '@/lib/pricing';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
+import { escapeLike } from '@/lib/db-utils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,10 +20,11 @@ const supabase = createClient(
 /* ─────────────────────── GET ─────────────────────── */
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin(req);
     const { id } = await params;
 
     const { data: order, error } = await supabase
@@ -216,9 +220,10 @@ export async function GET(
       subscriptionInvoices,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/orders/:id GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/orders/:id GET]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
@@ -236,6 +241,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin(req);
     const { id } = await params;
     const body = (await req.json()) as ActionBody;
 
@@ -347,7 +353,7 @@ export async function POST(
           await supabase
             .from('orders')
             .update({ is_test: isTest })
-            .ilike('email', email);
+            .ilike('email', escapeLike(email));
         } else {
           await supabase.from('orders').update({ is_test: isTest }).eq('id', id);
         }
@@ -368,7 +374,7 @@ export async function POST(
           await supabase
             .from('checkout_leads')
             .update({ is_test: isTest })
-            .ilike('email', email);
+            .ilike('email', escapeLike(email));
         }
 
         return NextResponse.json({ ok: true, isTest });
@@ -378,8 +384,9 @@ export async function POST(
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/orders/:id POST]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/orders/:id POST]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

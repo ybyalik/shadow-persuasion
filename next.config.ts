@@ -1,13 +1,28 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Type errors now fail the build (source is type-clean), so broken types
+  // can't silently ship to production.
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
+  },
+  async headers() {
+    const securityHeaders = [
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=()',
+      },
+    ];
+    return [{ source: '/:path*', headers: securityHeaders }];
   },
 };
 

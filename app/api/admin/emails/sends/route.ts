@@ -14,6 +14,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +24,7 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const url = new URL(req.url);
     const template = url.searchParams.get('template') || 'all';
     const status = url.searchParams.get('status') || 'all';
@@ -88,8 +91,8 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails/sends]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails/sends]', err);
   }
 }

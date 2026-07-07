@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,10 +71,7 @@ function calculateStreak(completions: any[], tzOffsetMin = 0): { current: number
 // GET: Get all completions for the user, calculates streak from data
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ completions: [], streak: { current: 0, longest: 0 } });
-    }
+    const userId = await requireAuth(req);
 
     const { data, error } = await supabase
       .from(TABLE)
@@ -82,8 +80,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[MISSION_COMPLETIONS]', 'Error fetching completions:', error);
-      return NextResponse.json({ error: 'Failed to fetch completions' }, { status: 500 });
+      return apiError('Failed to fetch completions.', 500, '[MISSION_COMPLETIONS]', error);
     }
 
     const completions = data || [];
@@ -93,31 +90,48 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ completions, streak });
   } catch (error) {
-    console.error('[MISSION_COMPLETIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MISSION_COMPLETIONS]', error);
   }
 }
 
 // POST: Save a mission completion
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
+
+    // Allow-list the fields a client may set. user_id comes from the verified
+    // token, and server-managed columns (id, completed_at) are never taken from
+    // the request body so a caller can't forge streaks/stats or overwrite rows.
+    const record = {
+      missionId: body.missionId,
+      date: body.date,
+      whatHappened: body.whatHappened,
+      didItWork: body.didItWork,
+      notes: body.notes,
+      grade: body.grade,
+      feedback: body.feedback,
+      xpEarned: body.xpEarned,
+      insight: body.insight,
+      user_id: userId,
+    };
 
     const { data, error } = await supabase
       .from(TABLE)
-      .insert({ ...body, user_id: userId })
+      .insert(record)
       .select()
       .single();
 
     if (error) {
-      console.error('[MISSION_COMPLETIONS]', 'Error saving completion:', error);
-      return NextResponse.json({ error: 'Failed to save completion' }, { status: 500 });
+      return apiError('Failed to save completion.', 500, '[MISSION_COMPLETIONS]', error);
     }
 
     return NextResponse.json({ completion: data });
   } catch (error) {
-    console.error('[MISSION_COMPLETIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MISSION_COMPLETIONS]', error);
   }
 }

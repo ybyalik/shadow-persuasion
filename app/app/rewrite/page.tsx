@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Copy, Check, Lightbulb, Zap } from 'lucide-react';
 import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
+import { apiFetch } from '@/lib/api-client';
 
 interface RewriteResult {
     versions: {
@@ -64,7 +65,7 @@ export default function RewritePage() {
         setResult(null);
 
         try {
-            const response = await fetch('/api/rewrite', {
+            const response = await apiFetch('/api/rewrite', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

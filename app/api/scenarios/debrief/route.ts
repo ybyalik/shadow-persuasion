@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
@@ -8,6 +10,9 @@ const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
 export async function POST(req: NextRequest) {
   try {
+    // Require a logged-in user: this endpoint makes a paid GPT-4o call.
+    await requireAuth(req);
+
     const { messages, scenarioId } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -110,7 +115,8 @@ Be specific. Reference actual messages from the conversation. Ground your analys
     }
 
   } catch (error) {
-    console.error('[DEBRIEF]', error);
-    return NextResponse.json({ error: 'Failed to generate debrief.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to generate debrief.', 500, '[DEBRIEF]', error);
   }
 }

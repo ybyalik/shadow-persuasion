@@ -121,7 +121,7 @@ function ThankYouInner() {
               </p>
             </div>
           ) : (
-            <DownloadList items={order.items} />
+            <DownloadList items={order.items} pi={paymentIntentId} />
           )}
         </div>
       </section>
@@ -251,12 +251,12 @@ function ThankYouInner() {
    is reflected here on the next page load — no redeploy. */
 type DownloadFile = { name: string; path: string };
 
-function DownloadList({ items }: { items: string[] }) {
+function DownloadList({ items, pi }: { items: string[]; pi: string | null }) {
   const [files, setFiles] = useState<DownloadFile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 || !pi) {
       setFiles([]);
       setLoading(false);
       return;
@@ -265,7 +265,9 @@ function DownloadList({ items }: { items: string[] }) {
     (async () => {
       try {
         const qs = encodeURIComponent(items.join(','));
-        const res = await fetch(`/api/product-files?items=${qs}`);
+        const res = await fetch(
+          `/api/product-files?items=${qs}&pi=${encodeURIComponent(pi)}`
+        );
         const d = await res.json();
         if (!cancelled) {
           setFiles(Array.isArray(d.files) ? d.files : []);

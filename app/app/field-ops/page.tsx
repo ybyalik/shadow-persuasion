@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { formatWithCitations } from '@/lib/format-citations';
 import {
   Flame, Clock, Trophy, Target, CheckCircle, XCircle, Loader2,
@@ -123,10 +123,12 @@ function getDateString(date: Date = new Date()): string {
 }
 
 function getMinutesUntilReset(): number {
+  // Missions rotate at UTC midnight (the daily seed uses the UTC date string),
+  // so the countdown must target the next UTC midnight to stay in sync.
   const now = new Date();
   const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  tomorrow.setUTCHours(0, 0, 0, 0);
   return Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60));
 }
 
@@ -209,18 +211,22 @@ function CompletionForm({
   mission,
   onSubmit,
   onCancel,
+  initialValues,
+  submitting = false,
 }: {
   mission: Mission;
   onSubmit: (data: { whatHappened: string; didItWork: 'Yes' | 'Somewhat' | 'No'; notes: string }) => void;
   onCancel: () => void;
+  initialValues?: { whatHappened: string; didItWork: 'Yes' | 'Somewhat' | 'No'; notes: string } | null;
+  submitting?: boolean;
 }) {
-  const [whatHappened, setWhatHappened] = useState('');
-  const [didItWork, setDidItWork] = useState<'Yes' | 'Somewhat' | 'No'>('Somewhat');
-  const [notes, setNotes] = useState('');
+  const [whatHappened, setWhatHappened] = useState(initialValues?.whatHappened ?? '');
+  const [didItWork, setDidItWork] = useState<'Yes' | 'Somewhat' | 'No'>(initialValues?.didItWork ?? 'Somewhat');
+  const [notes, setNotes] = useState(initialValues?.notes ?? '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!whatHappened.trim()) return;
+    if (!whatHappened.trim() || submitting) return;
     onSubmit({ whatHappened, didItWork, notes });
   };
 
@@ -283,9 +289,10 @@ function CompletionForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
+          disabled={submitting || !whatHappened.trim()}
+          className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit for Grading
+          {submitting ? 'Submitting...' : 'Submit for Grading'}
         </button>
         <button
           type="button"
@@ -304,9 +311,11 @@ function CompletionForm({
 function NewReportForm({
   onSubmit,
   onCancel,
+  submitting = false,
 }: {
   onSubmit: (report: Omit<JournalReport, 'id' | 'date' | 'aiAnalysis'>) => void;
   onCancel: () => void;
+  submitting?: boolean;
 }) {
   const [who, setWho] = useState('');
   const [situation, setSituation] = useState('');
@@ -333,7 +342,7 @@ function NewReportForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!situation.trim() || !whatIDid.trim()) return;
+    if (!situation.trim() || !whatIDid.trim() || submitting) return;
     onSubmit({ who, situation, goal, techniques: selectedTechniques, whatIDid, theirResponse, outcome, notes });
   };
 
@@ -459,14 +468,16 @@ function NewReportForm({
         <div className="flex gap-3 pt-2">
           <button
             type="submit"
-            className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
+            disabled={submitting || !situation.trim() || !whatIDid.trim()}
+            className="flex-1 py-2.5 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit & Get Debrief
+            {submitting ? 'Submitting...' : 'Submit & Get Debrief'}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 border border-gray-200 dark:border-[#333333] rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors"
+            disabled={submitting}
+            className="px-6 py-2.5 border border-gray-200 dark:border-[#333333] rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222222] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -748,7 +759,7 @@ function WeeklyReviewSection({ reports, getHeaders }: { reports: JournalReport[]
 export default function FieldOpsPage() {
   const { user } = useAuth();
 
-  const getHeaders = useCallback(async () => {
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);
@@ -756,7 +767,12 @@ export default function FieldOpsPage() {
   // ── Mission state ──
   const [missionsData, setMissionsData] = useState<MissionsData>(getDefaultMissionsData());
   const [showCompletionForm, setShowCompletionForm] = useState(false);
+  const [completionDraft, setCompletionDraft] = useState<{ whatHappened: string; didItWork: 'Yes' | 'Somewhat' | 'No'; notes: string } | null>(null);
   const [grading, setGrading] = useState(false);
+  // In-flight guards to prevent double-submits (buttons are also disabled, but a
+  // rapid double-click can fire before React re-renders while a token refreshes)
+  const gradingRef = useRef(false);
+  const submittingRef = useRef(false);
   const [gradeResult, setGradeResult] = useState<{
     grade: string;
     feedback: string;
@@ -776,6 +792,7 @@ export default function FieldOpsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [missionPool, setMissionPool] = useState<Mission[]>([]);
   const [poolLoading, setPoolLoading] = useState(true);
+  const [poolError, setPoolError] = useState(false);
   const [userGoals, setUserGoals] = useState<string[]>([]);
   const [lowPoolWarning, setLowPoolWarning] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -813,9 +830,12 @@ export default function FieldOpsPage() {
         if (res.ok) {
           const data = await res.json();
           setMissionPool(data.missions || []);
+        } else {
+          setPoolError(true);
         }
       } catch (err) {
         console.error('Failed to fetch mission pool:', err);
+        setPoolError(true);
       } finally {
         setPoolLoading(false);
       }
@@ -853,6 +873,9 @@ export default function FieldOpsPage() {
   const todayStr = getDateString();
   const todayMission = useMemo(() => getDailyMission(filteredPool, todayStr, completedIds), [filteredPool, todayStr, completedIds]);
   const todayCompleted = missionsData.completions.some((c) => c.date === todayStr);
+  // When the pool is empty (failed load or genuinely no matching missions),
+  // getDailyMission returns a placeholder — never treat that as a real mission.
+  const noMissions = filteredPool.length === 0;
 
   // Streak
   const streakInfo = useMemo(() => calculateStreak(missionsData), [missionsData]);
@@ -921,7 +944,12 @@ export default function FieldOpsPage() {
     didItWork: 'Yes' | 'Somewhat' | 'No';
     notes: string;
   }) => {
+    if (gradingRef.current) return;
+    gradingRef.current = true;
     setGrading(true);
+    setSaveError(null);
+    // Preserve the typed report so it isn't lost if grading fails
+    setCompletionDraft(completionData);
     setShowCompletionForm(false);
 
     try {
@@ -935,10 +963,13 @@ export default function FieldOpsPage() {
           completion: completionData,
         }),
       });
+      if (!res.ok) throw new Error('Grading request failed');
       const result = await res.json();
+      if (result.error) throw new Error('Grading returned an error');
 
-      if (!result.error) {
+      {
         setGradeResult(result);
+        setCompletionDraft(null);
 
         const newCompletion: MissionCompletion = {
           missionId: todayMission.id,
@@ -1079,8 +1110,12 @@ export default function FieldOpsPage() {
       }
     } catch (e) {
       console.error('Failed to grade mission:', e);
+      // Grading failed — keep the report and re-open the form so nothing is lost
+      setSaveError("We couldn't grade your mission just now. Your report was kept — please try submitting again.");
+      setShowCompletionForm(true);
     } finally {
       setGrading(false);
+      gradingRef.current = false;
     }
   };
 
@@ -1088,6 +1123,8 @@ export default function FieldOpsPage() {
   const handleSubmitReport = async (
     reportData: Omit<JournalReport, 'id' | 'date' | 'aiAnalysis'>
   ) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     const authHeaders = await getHeaders();
     const newReport: JournalReport = {
@@ -1150,6 +1187,7 @@ export default function FieldOpsPage() {
       console.error('Failed to get AI debrief:', e);
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
@@ -1265,6 +1303,21 @@ export default function FieldOpsPage() {
       {/* ── Section 1: Today's Mission ── */}
       <div className="bg-white dark:bg-[#1A1A1A] border border-[#D4A017]/40 rounded-xl overflow-hidden">
         <div className="bg-gradient-to-r from-[#D4A017]/10 to-transparent p-6">
+          {noMissions ? (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-mono text-gray-500 uppercase">Today&apos;s Mission</span>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300">
+                {poolError
+                  ? "We couldn't load today's mission. Please refresh the page to try again."
+                  : userGoals.length > 0
+                    ? 'No missions match your focus areas right now. New missions are generated from your knowledge base — check back soon.'
+                    : 'No missions available right now. Check back soon.'}
+              </p>
+            </div>
+          ) : (
+          <>
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 flex-wrap">
@@ -1329,7 +1382,9 @@ export default function FieldOpsPage() {
             <CompletionForm
               mission={todayMission}
               onSubmit={handleComplete}
-              onCancel={() => setShowCompletionForm(false)}
+              onCancel={() => { setShowCompletionForm(false); setCompletionDraft(null); }}
+              initialValues={completionDraft}
+              submitting={grading}
             />
           ) : (
             <button
@@ -1339,6 +1394,8 @@ export default function FieldOpsPage() {
               <CheckCircle className="h-5 w-5" />
               Complete Mission
             </button>
+          )}
+          </>
           )}
         </div>
       </div>
@@ -1542,7 +1599,7 @@ export default function FieldOpsPage() {
 
       {/* ── New Report Form Modal ── */}
       {showForm && (
-        <NewReportForm onSubmit={handleSubmitReport} onCancel={() => setShowForm(false)} />
+        <NewReportForm onSubmit={handleSubmitReport} onCancel={() => setShowForm(false)} submitting={submitting} />
       )}
     </div>
   );

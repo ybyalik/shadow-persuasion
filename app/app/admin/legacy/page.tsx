@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Upload, Trash2, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Eye, ChevronLeft, ChevronRight, Pencil, Check, X, Plus, Power, ArrowUp, ArrowDown, Download, Clock, XCircle, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useAdmin } from '@/lib/hooks/useAdmin';
+import { apiFetch } from '@/lib/api-client';
 
 type BookStatus = 'extracting' | 'processing' | 'done' | 'error';
 type UploadBook = {
@@ -52,7 +53,12 @@ type Chunk = {
 
 async function extractPdfText(file: File): Promise<{ text: string; pages: number }> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  // Serve the worker from our own bundle instead of a third-party CDN so PDF
+  // uploads never depend on cdnjs being reachable.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let fullText = '';
@@ -132,7 +138,7 @@ export default function AdminPage() {
     if (!editingBook || (!editTitle.trim() && !editAuthor.trim())) return;
     setSavingEdit(true);
     try {
-      const res = await fetch('/api/admin/books', {
+      const res = await apiFetch('/api/admin/books', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -170,7 +176,7 @@ export default function AdminPage() {
 
   const loadBooks = async () => {
     try {
-      const res = await fetch('/api/admin/books');
+      const res = await apiFetch('/api/admin/books');
       const data = await res.json();
       if (Array.isArray(data)) setDbBooks(data);
     } catch {}
@@ -183,7 +189,7 @@ export default function AdminPage() {
   const loadChunks = async (bookTitle: string, page: number = 1) => {
     setLoadingChunks(true);
     try {
-      const res = await fetch(`/api/admin/chunks?book=${encodeURIComponent(bookTitle)}&page=${page}`);
+      const res = await apiFetch(`/api/admin/chunks?book=${encodeURIComponent(bookTitle)}&page=${page}`);
       const data = await res.json();
       setChunks(data.chunks || []);
       setChunkTotal(data.total || 0);
@@ -254,7 +260,7 @@ export default function AdminPage() {
     for (let i = 0; i < skippedTexts.length; i += BATCH_SIZE) {
       const batch = skippedTexts.slice(i, i + BATCH_SIZE);
       try {
-        const res = await fetch('/api/admin/ingest', {
+        const res = await apiFetch('/api/admin/ingest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chunks: batch, title: upload.title, author: upload.author }),
@@ -299,7 +305,7 @@ export default function AdminPage() {
         formData.append('file', file);
         formData.append('title', bookTitle);
         formData.append('author', bookAuthor);
-        const storageRes = await fetch('/api/admin/upload-file', { method: 'POST', body: formData });
+        const storageRes = await apiFetch('/api/admin/upload-file', { method: 'POST', body: formData });
         const storageData = await storageRes.json();
         if (storageData.stored && storageData.storagePath) {
           storagePath = storageData.storagePath;
@@ -344,7 +350,7 @@ export default function AdminPage() {
       for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
         const batch = allChunks.slice(i, i + BATCH_SIZE);
         try {
-          const res = await fetch('/api/admin/ingest', {
+          const res = await apiFetch('/api/admin/ingest', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chunks: batch, title: bookTitle, author: bookAuthor, storagePath }),
@@ -428,7 +434,7 @@ export default function AdminPage() {
   const handleDelete = async (bookTitle: string) => {
     if (!confirm(`Delete all chunks from "${bookTitle}"?`)) return;
     try {
-      await fetch('/api/admin/ingest', {
+      await apiFetch('/api/admin/ingest', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: bookTitle }),
@@ -444,7 +450,7 @@ export default function AdminPage() {
   const handleDownload = async (book: DBBook) => {
     if (!book.storage_path) return;
     try {
-      const res = await fetch(`/api/admin/upload-file?path=${encodeURIComponent(book.storage_path)}`);
+      const res = await apiFetch(`/api/admin/upload-file?path=${encodeURIComponent(book.storage_path)}`);
       const data = await res.json();
       if (data.url) {
         window.open(data.url, '_blank');
@@ -496,14 +502,14 @@ export default function AdminPage() {
   const loadUsers = async () => {
     setUsersLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await apiFetch('/api/admin/users');
       const data = await res.json();
       if (Array.isArray(data)) setUsers(data);
     } catch {}
     setUsersLoading(false);
   };
 
-  const getAuthHeaders = async () => {
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
   };
@@ -676,7 +682,7 @@ export default function AdminPage() {
                               if (!plan) return;
                               if (!confirm(`Grant ${plan} access to ${u.user_id.slice(0, 8)}...?`)) { e.target.value = ''; return; }
                               try {
-                                await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'grant', userId: u.user_id, plan }) });
+                                await apiFetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'grant', userId: u.user_id, plan }) });
                                 loadUsers();
                               } catch {}
                               e.target.value = '';
@@ -697,7 +703,7 @@ export default function AdminPage() {
                                 if (!plan) return;
                                 if (!confirm(`Change ${u.user_id.slice(0, 8)}... to ${plan}?`)) { e.target.value = ''; return; }
                                 try {
-                                  await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'change_plan', userId: u.user_id, plan }) });
+                                  await apiFetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'change_plan', userId: u.user_id, plan }) });
                                   loadUsers();
                                 } catch {}
                                 e.target.value = '';
@@ -712,7 +718,7 @@ export default function AdminPage() {
                               onClick={async () => {
                                 if (!confirm(`Revoke access for ${u.user_id.slice(0, 8)}...?`)) return;
                                 try {
-                                  await fetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'revoke', userId: u.user_id }) });
+                                  await apiFetch('/api/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'revoke', userId: u.user_id }) });
                                   loadUsers();
                                 } catch {}
                               }}
@@ -957,7 +963,7 @@ export default function AdminPage() {
                                 const formData = new FormData();
                                 formData.append('file', file);
                                 formData.append('bookTitle', book.title);
-                                const res = await fetch('/api/admin/upload-file', { method: 'PUT', body: formData });
+                                const res = await apiFetch('/api/admin/upload-file', { method: 'PUT', body: formData });
                                 const data = await res.json();
                                 if (data.stored) {
                                   loadBooks();
@@ -1006,11 +1012,12 @@ export default function AdminPage() {
               setDedupLoading(true);
               setDedupResults(null);
               try {
-                const res = await fetch('/api/admin/dedup-techniques');
+                const res = await apiFetch('/api/admin/dedup-techniques');
                 const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'The scan could not be run.');
                 setDedupResults(data);
               } catch (err: any) {
-                alert('Failed to analyze: ' + err.message);
+                alert('Failed to analyze: ' + (err?.message || 'Please try again.'));
               }
               setDedupLoading(false);
             }}
@@ -1070,16 +1077,17 @@ export default function AdminPage() {
                       if (!confirm(`Apply ${approved.length} merges? (${dedupResults.merges.length - approved.length} rejected)`)) return;
                       setDedupApplying(true);
                       try {
-                        const res = await fetch('/api/admin/dedup-techniques', {
+                        const res = await apiFetch('/api/admin/dedup-techniques', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ merges: approved }),
                         });
                         const data = await res.json();
-                        alert(`Done! ${data.chunksUpdated} chunks updated.`);
+                        if (!res.ok) throw new Error(data.error || 'The merge could not be applied.');
+                        alert(`Done! ${data.chunksUpdated ?? 0} chunks updated.`);
                         setDedupResults(null);
                       } catch (err: any) {
-                        alert('Failed: ' + err.message);
+                        alert('Failed: ' + (err?.message || 'Please try again.'));
                       }
                       setDedupApplying(false);
                     }}

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,6 +11,7 @@ const supabase = createClient(
 // GET: List chunks for a book, with optional category filter
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { searchParams } = new URL(req.url);
     const bookTitle = searchParams.get('book');
     const category = searchParams.get('category');
@@ -35,7 +38,9 @@ export async function GET(req: NextRequest) {
       page,
       totalPages: Math.ceil((count || 0) / limit),
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/chunks GET]', error);
   }
 }

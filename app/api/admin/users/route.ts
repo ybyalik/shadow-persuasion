@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +10,7 @@ const supabase = createClient(
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin(req);
     // Match the is_test handling on /admin/orders + /admin/leads:
     // hide test subs from members view by default, accept
     // ?includeTest=1 to surface them for debugging.
@@ -180,14 +183,17 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(users);
   } catch (error: any) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[ADMIN_USERS]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
 // POST: Admin actions on a user's subscription
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { action, userId, plan, status } = await req.json();
 
     if (!userId) {
@@ -242,7 +248,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error: any) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[ADMIN_USERS]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

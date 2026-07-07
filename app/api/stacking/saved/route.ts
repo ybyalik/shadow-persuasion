@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,64 +10,62 @@ const supabase = createClient(
 
 const TABLE = 'saved_stacks';
 
-// GET: List saved stacks for the user
+// GET: List the signed-in user's saved stacks
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error('[STACKING_SAVED]', 'Error fetching saved stacks:', error);
-      return NextResponse.json({ error: 'Failed to fetch saved stacks' }, { status: 500 });
+      return apiError('Failed to fetch saved stacks.', 500, '[STACKING_SAVED]', error);
     }
 
     return NextResponse.json({ stacks: data || [] });
   } catch (error) {
-    console.error('[STACKING_SAVED]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[STACKING_SAVED]', error);
   }
 }
 
-// POST: Save a new stack
+// POST: Save a new stack for the signed-in user
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
+
+    // Never let the client pick which user owns the row; always derive it
+    // from the verified token.
+    const { user_id: _ignored, ...safeBody } = body || {};
+    void _ignored;
 
     const { data, error } = await supabase
       .from(TABLE)
-      .insert({ ...body, user_id: userId })
+      .insert({ ...safeBody, user_id: userId })
       .select()
       .single();
 
     if (error) {
-      console.error('[STACKING_SAVED]', 'Error saving stack:', error);
-      return NextResponse.json({ error: 'Failed to save stack' }, { status: 500 });
+      return apiError('Failed to save stack.', 500, '[STACKING_SAVED]', error);
     }
 
     return NextResponse.json({ stack: data });
   } catch (error) {
-    console.error('[STACKING_SAVED]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[STACKING_SAVED]', error);
   }
 }
 
-// DELETE: Delete a stack (by ?id=xxx)
+// DELETE: Delete one of the signed-in user's stacks (by ?id=xxx)
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -74,24 +73,20 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id query param is required' }, { status: 400 });
     }
 
-    let query = supabase.from(TABLE).delete().eq('id', id);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { error } = await query;
+    const { error } = await supabase
+      .from(TABLE)
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('[STACKING_SAVED]', 'Error deleting stack:', error);
-      return NextResponse.json({ error: 'Failed to delete stack' }, { status: 500 });
+      return apiError('Failed to delete stack.', 500, '[STACKING_SAVED]', error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[STACKING_SAVED]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[STACKING_SAVED]', error);
   }
 }

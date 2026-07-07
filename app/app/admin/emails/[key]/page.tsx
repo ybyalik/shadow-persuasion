@@ -19,6 +19,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Send, RefreshCw, Trash2 } from 'lucide-react';
 import EmailEditor from '@/components/admin/EmailEditor';
+import { apiFetch } from '@/lib/api-client';
 
 type Variable = { name: string; description?: string; sample?: string };
 
@@ -76,7 +77,7 @@ export default function EmailEditorPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/emails/${key}`);
+      const res = await apiFetch(`/api/admin/emails/${key}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to load');
       setTpl(d.template);
@@ -107,7 +108,7 @@ export default function EmailEditorPage() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/emails/${key}`, {
+      const res = await apiFetch(`/api/admin/emails/${key}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +149,7 @@ export default function EmailEditorPage() {
     setTestBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/emails/${key}`, {
+      const res = await apiFetch(`/api/admin/emails/${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export default function EmailEditorPage() {
     if (!tpl) return;
     if (!confirm(`Delete "${tpl.name}"? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/admin/emails/${key}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/emails/${key}`, { method: 'DELETE' });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Delete failed');
       router.push('/app/admin/emails');

@@ -20,7 +20,7 @@ let fetchPromise: Promise<TaxonomyCategory[]> | null = null;
 
 async function fetchTaxonomy(): Promise<TaxonomyCategory[]> {
   const res = await fetch('/api/taxonomy');
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`taxonomy fetch failed: ${res.status}`);
   const data = await res.json();
   return data.categories || [];
 }
@@ -43,7 +43,9 @@ export function useTaxonomy() {
 
     fetchPromise
       .then((data) => {
-        cachedCategories = data;
+        // Only cache a real result. Leaving the cache empty on an empty
+        // response lets the next mount retry instead of showing empty pickers.
+        if (data.length > 0) cachedCategories = data;
         setCategories(data);
         setError(null);
       })

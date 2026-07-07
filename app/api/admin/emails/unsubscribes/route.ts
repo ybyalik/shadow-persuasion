@@ -7,6 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +17,7 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const url = new URL(req.url);
     const search = url.searchParams.get('search')?.trim() || '';
     const showAll = url.searchParams.get('showAll') === '1'; // include resubscribed rows
@@ -32,14 +35,15 @@ export async function GET(req: Request) {
     if (error) throw error;
     return NextResponse.json({ unsubscribes: data ?? [] });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails/unsubscribes GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails/unsubscribes GET]', err);
   }
 }
 
 export async function POST(req: Request) {
   try {
+    await requireAdmin(req);
     const body = await req.json();
     const email = String(body?.email || '').trim().toLowerCase();
     if (!email || !/@/.test(email)) {
@@ -47,10 +51,12 @@ export async function POST(req: Request) {
     }
 
     // If there's already an active unsubscribe row for this address, no-op.
+    // Exact match (emails are stored lowercased) so underscores in an
+    // address aren't treated as ilike wildcards.
     const { data: existing } = await supabase
       .from('email_unsubscribes')
       .select('id')
-      .ilike('email', email)
+      .eq('email', email)
       .is('resubscribed_at', null)
       .limit(1)
       .maybeSingle();
@@ -72,7 +78,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[admin/emails/unsubscribes POST]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
@@ -98,6 +104,6 @@ export async function DELETE(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[admin/emails/unsubscribes DELETE]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

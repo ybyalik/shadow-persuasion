@@ -1,6 +1,7 @@
 'use client';
 
 import { formatWithCitations } from '@/lib/format-citations';
+import { renderMarkdown } from '@/lib/markdown';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -50,21 +51,6 @@ function parseCoaching(raw: string): { content: string; coaching?: CoachingData 
   } catch {
     return { content: raw.replace(/\s*<!--COACHING:.*?-->/s, '').trim() };
   }
-}
-
-function parseMarkdown(text: string): string {
-  return text
-    .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-800 dark:text-[#E8E8E0] mt-4 mb-1">$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-[#D4A017] mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800 dark:text-[#E8E8E0] font-semibold">$1</strong>')
-    .replace(/\[TECHNIQUE: (.*?)\]/g, '<span class="inline-block bg-[#D4A017] text-[#0A0A0A] px-2 py-0.5 rounded text-sm font-mono font-bold mt-1 mb-1">$1</span>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^(\d+)\. (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017] font-mono text-base">$1.</span><span class="text-gray-600 dark:text-[#ccc]">$2</span></div>')
-    .replace(/^[-] (.*$)/gm, '<div class="flex gap-2 ml-2 my-0.5"><span class="text-[#D4A017]">&rarr;</span><span class="text-gray-600 dark:text-[#ccc]">$1</span></div>')
-    .replace(/\(Source: "(.*?)" by (.*?)\)/g, '<span class="inline-flex items-center gap-1 text-xs bg-[#D4A017]/15 text-[#D4A017] px-2 py-0.5 rounded-full" title="From: $1 by $2">📖 $1</span>')
-    .replace(/\n\n/g, '<div class="h-3"></div>')
-    .replace(/\n/g, '<br/>');
 }
 
 function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
@@ -551,7 +537,7 @@ export default function TrainingScenarioPage() {
                 <div className="px-4 pb-3">
                   <div
                     className={`text-base leading-relaxed ${msg.role === 'user' ? 'text-[#0A0A0A]' : 'text-gray-800 dark:text-[#E8E8E0]'}`}
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.content) }}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
                   />
                 </div>
               </div>

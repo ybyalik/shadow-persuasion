@@ -12,6 +12,7 @@ import { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, Filter, RefreshCw, CircleCheck, CircleX, CircleAlert, Clock, ExternalLink, Users, TrendingDown } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type OrderRow = {
   id: string;
@@ -101,7 +102,7 @@ function OrdersPage() {
     if (search) params.set('search', search);
     if (includeTest) params.set('includeTest', '1');
     params.set('limit', '300');
-    const res = await fetch(`/api/admin/orders?${params.toString()}`);
+    const res = await apiFetch(`/api/admin/orders?${params.toString()}`);
     const data = await res.json();
     setSessions(data.sessions ?? []);
     setFunnel(data.funnel ?? null);

@@ -8,14 +8,17 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const { data, error } = await supabase
       .from('email_templates')
       .select(
@@ -28,9 +31,9 @@ export async function GET() {
     if (error) throw error;
     return NextResponse.json({ templates: data ?? [] });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails GET]', err);
   }
 }
 
@@ -44,6 +47,7 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
+    await requireAdmin(req);
     const body = await req.json();
     const key = String(body?.key || '').trim();
     if (!/^[a-z0-9_]+$/.test(key)) {
@@ -82,8 +86,8 @@ export async function POST(req: Request) {
     if (error) throw error;
     return NextResponse.json({ template: data });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails POST]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails POST]', err);
   }
 }

@@ -53,6 +53,24 @@ export async function POST(req: Request) {
       );
     }
 
+    // Idempotency guard: if this original purchase has already been upsold the
+    // playbooks bundle, return that order instead of charging again (back
+    // button / retry / double-click).
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, amount_cents, items, status')
+      .filter('metadata->>original_pi', 'eq', paymentIntentId)
+      .maybeSingle();
+    if (existingOrder) {
+      return NextResponse.json({
+        success: existingOrder.status === 'paid',
+        orderId: existingOrder.id,
+        amount: existingOrder.amount_cents,
+        items: existingOrder.items,
+        alreadyPurchased: true,
+      });
+    }
+
     // Fetch the email from the original customer for receipts + order row
     const customer = await stripe.customers.retrieve(customerId);
     const email =
@@ -61,24 +79,28 @@ export async function POST(req: Request) {
     const items: ProductSlug[] = [...UPSELL_PLAYBOOKS_BUNDLE.items];
     const amount = UPSELL_PLAYBOOKS_BUNDLE.priceCents;
 
-    // Attempt the off-session charge
+    // Attempt the off-session charge. The idempotency key makes a repeated
+    // request reuse the same charge instead of billing the card twice.
     let upsellIntent;
     try {
-      upsellIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        customer: customerId,
-        payment_method: paymentMethodId,
-        off_session: true,
-        confirm: true,
-        description: describeOrder(items),
-        receipt_email: email || undefined,
-        metadata: {
-          funnel: 'upsell_playbooks',
-          items: items.join(','),
-          original_pi: paymentIntentId,
+      upsellIntent = await stripe.paymentIntents.create(
+        {
+          amount,
+          currency: 'usd',
+          customer: customerId,
+          payment_method: paymentMethodId,
+          off_session: true,
+          confirm: true,
+          description: describeOrder(items),
+          receipt_email: email || undefined,
+          metadata: {
+            funnel: 'upsell_playbooks',
+            items: items.join(','),
+            original_pi: paymentIntentId,
+          },
         },
-      });
+        { idempotencyKey: `upsell_playbooks_${paymentIntentId}` }
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // Common path: card requires authentication (3DS). Return the intent
@@ -95,7 +117,10 @@ export async function POST(req: Request) {
         );
       }
       console.error('[upsell-playbooks] charge failed:', msg);
-      return NextResponse.json({ error: msg }, { status: 402 });
+      return NextResponse.json(
+        { error: 'We could not complete this charge. Please try again.' },
+        { status: 402 }
+      );
     }
 
     // Insert an order row for this upsell
@@ -125,6 +150,9 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[upsell-playbooks] error:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 }
+    );
   }
 }

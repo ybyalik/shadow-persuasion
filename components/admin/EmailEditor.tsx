@@ -82,6 +82,14 @@ export default function EmailEditor({ value, onChange, previewVars = {} }: Props
   // Track whether we're writing to the iframe ourselves (programmatic),
   // so we don't race with the user's input event.
   const skipNextInputRef = useRef(false);
+  // Keep the latest onChange in a ref. The parent typically passes a fresh
+  // inline arrow on every render; without this, flushFromIframe (and the
+  // effect that loads the iframe) would change identity on every keystroke,
+  // re-running the effect and blowing away the cursor mid-type.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Sync external value changes into our local draft. This fires when
   // a different template is loaded or when the parent swaps the value.
@@ -98,8 +106,8 @@ export default function EmailEditor({ value, onChange, previewVars = {} }: Props
     if (!iframe?.contentDocument) return;
     const html = serializeDocument(iframe.contentDocument);
     setHtmlDraft(html);
-    onChange(html);
-  }, [onChange]);
+    onChangeRef.current(html);
+  }, []);
 
   // When switching into Visual mode, load the current draft into
   // the iframe and wire up input listeners. When switching out,

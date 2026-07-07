@@ -13,6 +13,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendTestEmail } from '@/lib/email';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,8 +23,9 @@ const supabase = createClient(
 
 type Params = { params: Promise<{ key: string }> };
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { key } = await params;
     const { data, error } = await supabase
       .from('email_templates')
@@ -43,14 +46,15 @@ export async function GET(_req: Request, { params }: Params) {
 
     return NextResponse.json({ template: data, sends: sends ?? [] });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails GET /:key]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails GET /:key]', err);
   }
 }
 
 export async function PUT(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { key } = await params;
     const body = await req.json();
 
@@ -89,14 +93,15 @@ export async function PUT(req: Request, { params }: Params) {
 
     return NextResponse.json({ template: data });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails PUT /:key]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails PUT /:key]', err);
   }
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { key } = await params;
     const { data: existing } = await supabase
       .from('email_templates')
@@ -117,14 +122,15 @@ export async function DELETE(_req: Request, { params }: Params) {
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails DELETE /:key]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails DELETE /:key]', err);
   }
 }
 
 export async function POST(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { key } = await params;
     const body = await req.json();
     const action = String(body?.action || '');
@@ -214,8 +220,8 @@ export async function POST(req: Request, { params }: Params) {
 
     return NextResponse.json({ error: 'unknown action' }, { status: 400 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/emails POST /:key]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/emails POST /:key]', err);
   }
 }

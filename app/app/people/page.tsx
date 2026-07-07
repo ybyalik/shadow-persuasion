@@ -116,7 +116,7 @@ export default function PeoplePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [analysisCounts, setAnalysisCounts] = useState<Record<string, number>>({});
 
-  const getHeaders = useCallback(async () => {
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);
@@ -439,15 +439,21 @@ function AddProfileModal({
   onAdd,
 }: {
   onClose: () => void;
-  onAdd: (name: string, type: RelationshipType) => void;
+  onAdd: (name: string, type: RelationshipType) => void | Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<RelationshipType>('Other');
+  const [creating, setCreating] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    onAdd(name.trim(), type);
+    if (!name.trim() || creating) return;
+    setCreating(true);
+    try {
+      await onAdd(name.trim(), type);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -490,15 +496,17 @@ function AddProfileModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
+              disabled={creating}
+              className="px-6 py-3 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
+              disabled={creating || !name.trim()}
+              className="px-6 py-3 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Profile
+              {creating ? 'Creating...' : 'Create Profile'}
             </button>
           </div>
         </form>

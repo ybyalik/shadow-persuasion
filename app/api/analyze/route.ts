@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DECODE_SYSTEM_PROMPT, RAG_ENFORCEMENT } from '@/lib/prompts';
 import { searchKnowledge } from '@/lib/rag';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { getVoiceProfile } from '@/lib/voice-profile';
 import { createClient } from '@supabase/supabase-js';
 
@@ -90,10 +91,7 @@ Important rules:
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    const userId = await requireAuth(req);
     const voiceContext = await getVoiceProfile(userId);
 
     let textContent = '';
@@ -123,7 +121,7 @@ export async function POST(req: NextRequest) {
         if (single) imageFiles.push(single);
       }
       if (imageFiles.length === 0) {
-        return NextResponse.json({ error: 'At least one image file is required.' }, { status: 400 });
+        return apiError('At least one image file is required.', 400);
       }
 
       // Process each image: convert to base64 and extract text
@@ -153,7 +151,7 @@ export async function POST(req: NextRequest) {
       const body = await req.json();
       const { text } = body;
       if (!text || typeof text !== 'string') {
-        return NextResponse.json({ error: 'Text to analyze is required.' }, { status: 400 });
+        return apiError('Text to analyze is required.', 400);
       }
       textContent = text;
 
@@ -264,23 +262,21 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ANALYZE]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[ANALYZE]', `OpenRouter ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json({ error: 'No response from AI' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[ANALYZE]');
     }
 
     let parsed;
     try {
       parsed = JSON.parse(content);
     } catch {
-      console.error('[ANALYZE]', 'Failed to parse AI response:', content?.slice(0, 200));
-      return NextResponse.json({ error: 'AI returned an invalid response. Please try again.' }, { status: 502 });
+      return apiError('AI returned an invalid response. Please try again.', 502, '[ANALYZE]', content?.slice(0, 200));
     }
 
     // Include extracted text for image uploads so the frontend can display it
@@ -290,10 +286,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error('[ANALYZE]', error);
-    return NextResponse.json(
-      { error: 'Failed to process analysis request.' },
-      { status: 500 }
-    );
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to process analysis request.', 500, '[ANALYZE]', error);
   }
 }

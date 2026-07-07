@@ -1,20 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// GET: Get all messages for a session
+// Confirm the session exists and belongs to the caller. Returns true if owned.
+async function callerOwnsSession(sessionId: string, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('chat_sessions')
+    .select('id')
+    .eq('id', sessionId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  return !!data;
+}
+
+// GET: Get all messages for a session (only if the caller owns the session)
 export async function GET(req: NextRequest) {
   try {
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
-      return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
+      return apiError('session_id is required.', 400);
+    }
+
+    if (!(await callerOwnsSession(sessionId, userId))) {
+      return apiError('Conversation not found.', 404, '[MESSAGES]');
     }
 
     const { data: messages, error } = await supabase
@@ -24,28 +41,29 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('[MESSAGES]', 'Error fetching messages:', error);
-      return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
+      return apiError('Failed to fetch messages.', 500, '[MESSAGES]', error);
     }
 
     return NextResponse.json({ messages: messages || [] });
   } catch (error) {
-    console.error('[MESSAGES]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MESSAGES]', error);
   }
 }
 
-// POST: Save a message to a session
+// POST: Save a message to a session (only if the caller owns the session)
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { session_id, role, content, metadata } = await req.json();
 
     if (!session_id || !role || !content) {
-      return NextResponse.json(
-        { error: 'session_id, role, and content are required' },
-        { status: 400 }
-      );
+      return apiError('session_id, role, and content are required.', 400);
+    }
+
+    if (!(await callerOwnsSession(session_id, userId))) {
+      return apiError('Conversation not found.', 404, '[MESSAGES]');
     }
 
     const { data, error } = await supabase
@@ -61,19 +79,20 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[MESSAGES]', 'Error saving message:', error);
-      return NextResponse.json({ error: 'Failed to save message' }, { status: 500 });
+      return apiError('Failed to save message.', 500, '[MESSAGES]', error);
     }
 
     // Update session's updated_at timestamp
     await supabase
       .from('chat_sessions')
       .update({ updated_at: new Date().toISOString() })
-      .eq('id', session_id);
+      .eq('id', session_id)
+      .eq('user_id', userId);
 
     return NextResponse.json({ message: data });
   } catch (error) {
-    console.error('[MESSAGES]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MESSAGES]', error);
   }
 }

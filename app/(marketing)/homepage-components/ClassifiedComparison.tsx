@@ -59,7 +59,7 @@ const ClassifiedComparison = () => {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-black font-mono text-xs uppercase px-2 py-1 font-bold">RECOMMENDED</div>
                 <h3 className="text-2xl text-center font-bold text-amber-900">SHADOW PERSUASION MEMBER</h3>
                 <p className="text-center font-mono text-lg mb-6">
-                    <span className="text-amber-700 font-bold">$99/MO</span>
+                    <span className="text-amber-700 font-bold">$34.95/MO</span>
                 </p>
                 <ul className="space-y-4">
                     {rightFeatures.map(f => (
@@ -69,9 +69,9 @@ const ClassifiedComparison = () => {
                         </li>
                     ))}
                 </ul>
-                 <button className='w-full mt-8 bg-black text-white font-mono uppercase px-4 py-3 text-lg hover:bg-amber-700 transition-colors duration-300'>
+                 <a href="/login" className='block w-full mt-8 bg-black text-white font-mono uppercase px-4 py-3 text-lg text-center hover:bg-amber-700 transition-colors duration-300'>
                       START TRAINING NOW
-                 </button>
+                 </a>
             </div>
         </div>
       </div>

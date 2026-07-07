@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
+import { apiError } from '@/lib/api-error';
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
       .order('sort_order');
 
     if (catError) {
-      return NextResponse.json({ error: catError.message }, { status: 500 });
+      return apiError('Failed to load categories.', 500, '[TAXONOMY]', catError);
     }
 
     const { data: useCases, error: ucError } = await supabase
@@ -20,7 +21,7 @@ export async function GET() {
       .order('sort_order');
 
     if (ucError) {
-      return NextResponse.json({ error: ucError.message }, { status: 500 });
+      return apiError('Failed to load categories.', 500, '[TAXONOMY]', ucError);
     }
 
     const result = (categories || []).map((cat) => ({
@@ -34,7 +35,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ categories: result });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return apiError('Failed to load categories.', 500, '[TAXONOMY]', err);
   }
 }

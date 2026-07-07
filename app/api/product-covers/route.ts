@@ -55,7 +55,9 @@ export async function GET() {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    // Log the real detail server-side only; never return raw DB error text
+    // (table/column names) to the caller.
     console.error('[product-covers GET]', msg);
-    return NextResponse.json({ error: msg, covers: {} }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load covers.', covers: {} }, { status: 500 });
   }
 }

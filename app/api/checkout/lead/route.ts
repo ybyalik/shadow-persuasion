@@ -64,16 +64,13 @@ export async function POST(req: Request) {
 
     if (existing) {
       // Update include_bump + amount_cents (they may toggle the bump), but
-      // don't overwrite converted/recovered statuses.
-      // Only overwrite UTM fields if the new request actually brought UTMs —
-      // avoids wiping attribution on a plain reload.
-      const preserveStatus =
-        existing.status === 'converted' || existing.status === 'recovered';
+      // NEVER downgrade the status. Resetting to 'created' on a plain revisit
+      // used to restart the whole cart-recovery email sequence, spamming the
+      // customer. We keep whatever status the lead already has.
       const patch: Record<string, unknown> = {
         first_name: firstName || undefined,
         include_bump: includeBump,
         amount_cents: amountCents,
-        ...(preserveStatus ? {} : { status: 'created' }),
       };
       if (hasUtms) {
         patch.utm_source = utmSource;
@@ -116,8 +113,7 @@ export async function POST(req: Request) {
     if (insertErr) throw insertErr;
     return NextResponse.json({ ok: true, leadId: inserted.id });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[checkout/lead]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[checkout/lead]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

@@ -9,6 +9,7 @@ import {
   Search, RefreshCw, Filter, Mail, UserPlus, CircleCheck, CircleX,
   TrendingUp, DollarSign, Users, Activity,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type Lead = {
   id: string;
@@ -72,7 +73,7 @@ export default function LeadsPage() {
     if (includeTest) params.set('includeTest', '1');
     params.set('limit', '500');
     try {
-      const res = await fetch(`/api/admin/leads?${params.toString()}`);
+      const res = await apiFetch(`/api/admin/leads?${params.toString()}`);
       const data = await res.json();
       setLeads(data.leads ?? []);
       setStats(data.stats ?? null);

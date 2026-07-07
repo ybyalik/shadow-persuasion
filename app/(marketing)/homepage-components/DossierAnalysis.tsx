@@ -230,9 +230,9 @@ const DossierAnalysis = () => {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 1.2 }}
         >
-          <button className="bg-red-600 hover:bg-red-700 text-white font-mono uppercase px-8 py-4 text-lg tracking-wider border-2 border-red-500 transition-colors">
+          <a href="/login" className="inline-block bg-red-600 hover:bg-red-700 text-white font-mono uppercase px-8 py-4 text-lg tracking-wider border-2 border-red-500 transition-colors">
             ACCESS FULL PSYCHOLOGICAL WARFARE MODULE
-          </button>
+          </a>
         </motion.div>
       </div>
       

@@ -14,6 +14,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Special_Elite } from 'next/font/google';
+import { loadStripe } from '@stripe/stripe-js';
 import { ProductCover } from '@/components/ProductCover';
 import {
   ArrowRight,
@@ -30,6 +31,11 @@ import {
 } from 'lucide-react';
 
 const specialElite = Special_Elite({ subsets: ['latin'], weight: '400' });
+
+// Loaded lazily so we can complete a 3D Secure ("requiresAction") challenge
+// client-side when the bank asks for one. Null if the key isn't configured.
+const STRIPE_PK = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null;
 
 const HL = ({ children }: { children: React.ReactNode }) => (
   <span
@@ -95,13 +101,37 @@ function UpsellPlaybooksInner() {
         body: JSON.stringify({ paymentIntentId }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Charge failed. Please try again.');
+
+      // API returned a friendly error message → show it, stop here.
+      if (data.error) {
+        throw new Error(data.error);
       }
-      // Success → move on to upsell #2 (the SaaS)
+
+      // Some banks (common in the EU/UK) require the buyer to complete a
+      // quick identity check before the saved card can be charged. The API
+      // signals this with { requiresAction, clientSecret }. Finish the
+      // challenge client-side with Stripe.js, then continue on success.
+      if (data.requiresAction && data.clientSecret) {
+        const stripe = await stripePromise;
+        if (!stripe) {
+          throw new Error('We could not reach the payment processor. Please try again in a moment.');
+        }
+        const { error: confirmErr, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret);
+        if (confirmErr) {
+          throw new Error(confirmErr.message || 'We could not confirm your payment. Please try again.');
+        }
+        if (paymentIntent?.status !== 'succeeded') {
+          throw new Error('Your payment could not be completed. Please try again.');
+        }
+      } else if (!res.ok || !data.success) {
+        throw new Error('Charge failed. Please try again.');
+      }
+
+      // Success (either a straight charge or after completing 3D Secure)
+      // → move on to upsell #2 (the SaaS)
       router.push('/lp/upsell-app?pi=' + paymentIntentId + '&upsell1=accepted');
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setProcessing(false);
     }
   }

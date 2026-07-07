@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const SYSTEM_PROMPT = `${HANDLER_VOICE}
 You are an expert persuasion coach analyzing feedback on advice that was given to a user. Based on whether the advice worked, partially worked, or failed, provide actionable analysis.
@@ -28,10 +30,13 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Paid AI endpoint — require a logged-in user (cost abuse + IDOR).
+    await requireAuth(req);
+
     const { type, referenceId, originalAdvice, outcome, notes } = await req.json();
 
     if (!originalAdvice || !outcome) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+      return apiError('Missing required fields.', 400);
     }
 
     // Search for relevant knowledge to improve the advice
@@ -69,8 +74,7 @@ Analyze this outcome and provide specific improvement suggestions.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[FEEDBACK]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[FEEDBACK]', `OpenRouter ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -92,11 +96,11 @@ Analyze this outcome and provide specific improvement suggestions.`;
         },
       });
     } catch (parseError) {
-      console.error('[FEEDBACK]', 'JSON parse error:', parseError);
-      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
+      return apiError('AI returned an invalid response. Please try again.', 502, '[FEEDBACK]', parseError);
     }
   } catch (error) {
-    console.error('[FEEDBACK]', error);
-    return NextResponse.json({ error: 'Failed to process feedback.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to process feedback.', 500, '[FEEDBACK]', error);
   }
 }

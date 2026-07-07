@@ -6,7 +6,8 @@
    ════════════════════════════════════════════════════════════ */
 
 import { useState } from 'react';
-import { Loader2, Shuffle } from 'lucide-react';
+import { Loader2, Shuffle, AlertTriangle } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type MergeGroup = {
   canonical: string;
@@ -26,16 +27,19 @@ export default function TechniquesPage() {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [results, setResults] = useState<DedupResults | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function scan() {
     setLoading(true);
     setResults(null);
+    setError(null);
     try {
-      const res = await fetch('/api/admin/dedup-techniques');
+      const res = await apiFetch('/api/admin/dedup-techniques');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'The scan could not be run.');
       setResults(data);
     } catch (err) {
-      alert('Failed to analyze: ' + (err instanceof Error ? err.message : String(err)));
+      setError(err instanceof Error ? err.message : 'The scan could not be run. Please try again.');
     }
     setLoading(false);
   }
@@ -49,17 +53,20 @@ export default function TechniquesPage() {
     }
     if (!confirm(`Apply ${approved.length} merges? (${results.merges.length - approved.length} rejected)`)) return;
     setApplying(true);
+    setError(null);
     try {
-      const res = await fetch('/api/admin/dedup-techniques', {
+      const res = await apiFetch('/api/admin/dedup-techniques', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ merges: approved }),
       });
       const data = await res.json();
-      alert(`Done! ${data.chunksUpdated} chunks updated.`);
+      if (!res.ok) throw new Error(data.error || 'The merge could not be applied.');
+      alert(`Done! ${data.chunksUpdated ?? 0} chunks updated.`);
       setResults(null);
     } catch (err) {
-      alert('Failed: ' + (err instanceof Error ? err.message : String(err)));
+      // Leave the reviewed merge list in place so nothing is lost on failure.
+      setError(err instanceof Error ? err.message : 'The merge could not be applied. Please try again.');
     }
     setApplying(false);
   }
@@ -101,7 +108,14 @@ export default function TechniquesPage() {
         </button>
       </div>
 
-      {!results && !loading && (
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 p-3 mb-5 font-mono text-sm flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span className="flex-1 break-words">{error}</span>
+        </div>
+      )}
+
+      {!results && !loading && !error && (
         <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#D4A017]/20 p-6 text-sm text-gray-600 dark:text-[#F4ECD8]/70">
           Click <strong>Scan for Duplicates</strong> to find technique names that should be merged.
         </div>

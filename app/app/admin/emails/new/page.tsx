@@ -15,6 +15,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 const DEFAULT_HTML_BODY = `<!DOCTYPE html>
 <html>
@@ -101,7 +102,7 @@ export default function NewEmailTemplatePage() {
         });
       }
 
-      const res = await fetch('/api/admin/emails', {
+      const res = await apiFetch('/api/admin/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

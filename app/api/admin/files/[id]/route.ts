@@ -11,6 +11,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,6 +25,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { id } = await params;
     const body = await req.json();
 
@@ -49,14 +52,16 @@ export async function PUT(req: Request, { params }: Params) {
 
     return NextResponse.json({ file: data });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/files PUT]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/files PUT]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(req: Request, { params }: Params) {
   try {
+    await requireAdmin(req);
     const { id } = await params;
 
     const { data: row } = await supabase
@@ -82,8 +87,9 @@ export async function DELETE(_req: Request, { params }: Params) {
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/files DELETE]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/files DELETE]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

@@ -58,7 +58,7 @@ export default function TechniquesPage() {
   const { techniques: apiTechniques, loading: techniquesLoading } = useTechniques();
   const [activeTab, setActiveTab] = useState<'library' | 'stacking'>('library');
 
-  const getHeaders = useCallback(async () => {
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);
@@ -445,9 +445,10 @@ function StackingTab({ getHeaders, apiTechniques }: { getHeaders: () => Promise<
         body.requiredTechniques = requiredTechniques;
       }
 
+      const headers = await getHeaders();
       const res = await fetch('/api/stacking', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
       });
 

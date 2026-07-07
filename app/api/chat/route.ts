@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
 import { searchKnowledge, getEmbedding, supabase } from '@/lib/rag';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { getVoiceProfile } from '@/lib/voice-profile';
 
 export const maxDuration = 60;
@@ -47,13 +48,32 @@ async function searchKnowledgeWithSources(query: string, limit: number = 5): Pro
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    const userId = await requireAuth(req);
     const voiceContext = await getVoiceProfile(userId);
 
     const { messages, session_id } = await req.json();
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return apiError('Messages are required.', 400);
+    }
+
+    // If a session id was supplied, confirm it belongs to the caller BEFORE
+    // spending an LLM call or writing any messages into it (prevents IDOR write).
+    if (session_id) {
+      const { data: ownedSession, error: ownErr } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('id', session_id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (ownErr) {
+        return apiError('Failed to load conversation.', 500, '[CHAT]', ownErr);
+      }
+      if (!ownedSession) {
+        return apiError('Conversation not found.', 404, '[CHAT]');
+      }
+    }
+
     const recentMessages = messages.slice(-10);
     
     // Get the latest user message for RAG search
@@ -89,12 +109,11 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[CHAT]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[CHAT]', `OpenRouter ${response.status}: ${errorText}`);
     }
 
     if (!response.body) {
-      return NextResponse.json({ error: 'No response body from AI service' }, { status: 502 });
+      return apiError('AI service is unavailable right now. Please try again.', 502, '[CHAT]');
     }
 
     const encoder = new TextEncoder();
@@ -122,7 +141,7 @@ export async function POST(req: NextRequest) {
       Promise.resolve(
         supabase
           .from('chat_messages')
-          .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content })
+          .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content, user_id: userId })
           .then(({ error }) => { if (error) console.error('[CHAT]', 'Save user msg error:', error); })
       ).catch((e: unknown) => console.error('[CHAT]', 'Save user msg exception:', e));
     }
@@ -175,6 +194,7 @@ export async function POST(req: NextRequest) {
                   role: 'assistant',
                   content: cleanContent,
                   metadata: ragResult.sources.length > 0 ? { sources: ragResult.sources } : {},
+                  user_id: userId,
                 })
                 .then(({ error }) => { if (error) console.error('[CHAT]', 'Save assistant msg error:', error); })
             ).catch((e: unknown) => console.error('[CHAT]', 'Save assistant msg exception:', e));
@@ -200,7 +220,8 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[CHAT]', error);
-    return NextResponse.json({ error: 'Failed to get chat response.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to get chat response.', 500, '[CHAT]', error);
   }
 }

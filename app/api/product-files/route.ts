@@ -1,19 +1,25 @@
 /**
- * GET /api/product-files?items=book,briefing
+ * GET /api/product-files?items=book,briefing&pi=<payment_intent_id>
  *
- * Public endpoint — returns the file list the buyer should see on
- * the thank-you page. Queries the `product_files` table (the same
- * source the delivery email reads from), so admin changes at
- * /app/admin/files are reflected here without a deploy.
+ * Returns the download file list for a buyer's thank-you page. The caller
+ * must pass the PaymentIntent id (`pi`) from their purchase. We only return
+ * files for products that actually appear on a real order tied to that PI,
+ * so a non-buyer can no longer enumerate every product's download links by
+ * calling this endpoint with a guessed items list.
  *
- * No auth: the thank-you page is public and the URLs returned are
- * public URLs anyway (either /downloads/*.pdf on the site or
- * Supabase Storage public URLs on our product-files bucket).
- * Nothing sensitive leaks.
+ * NOTE: the returned URLs are still public URLs. To fully protect paid files
+ * they should be moved to a PRIVATE Supabase Storage bucket and served as
+ * short-lived signed URLs. That is a storage-config change tracked separately.
  */
 
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { fetchProductFiles, type ProductSlug } from '@/lib/pricing';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const ALLOWED: ProductSlug[] = ['book', 'briefing', 'playbooks', 'vault'];
 
@@ -21,20 +27,51 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const raw = url.searchParams.get('items') || '';
-    const slugs = raw
+    const pi = (url.searchParams.get('pi') || '').trim();
+
+    const requested = raw
       .split(',')
       .map((s) => s.trim())
       .filter((s): s is ProductSlug => ALLOWED.includes(s as ProductSlug));
 
-    if (slugs.length === 0) {
+    if (requested.length === 0 || !pi) {
       return NextResponse.json({ files: [] });
     }
 
-    const files = await fetchProductFiles(slugs);
+    // Collect the items actually purchased under this PaymentIntent: the
+    // primary order plus any upsell orders whose metadata.original_pi points
+    // at it. Possession of a valid order PI is what authorizes the download.
+    const purchased = new Set<string>();
+    const { data: primary } = await supabase
+      .from('orders')
+      .select('items')
+      .eq('stripe_payment_intent_id', pi)
+      .maybeSingle();
+    for (const it of (primary?.items as string[] | undefined) ?? []) purchased.add(it);
+
+    const { data: related } = await supabase
+      .from('orders')
+      .select('items, status')
+      .contains('metadata', { original_pi: pi });
+    for (const row of related ?? []) {
+      if (row.status === 'paid') {
+        for (const it of (row.items as string[] | undefined) ?? []) purchased.add(it);
+      }
+    }
+
+    // Only serve files for products this buyer actually paid for.
+    const allowed = requested.filter((s) => purchased.has(s));
+    if (allowed.length === 0) {
+      return NextResponse.json({ files: [] });
+    }
+
+    const files = await fetchProductFiles(allowed);
     return NextResponse.json({ files });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[product-files GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[product-files GET]', err);
+    return NextResponse.json(
+      { error: 'Could not load your files. Please refresh.' },
+      { status: 500 }
+    );
   }
 }

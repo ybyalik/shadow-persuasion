@@ -13,6 +13,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { stripe } from '@/lib/stripe';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +31,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin(req);
     const { id } = await params;
     const body = (await req.json()) as ActionBody;
 
@@ -146,8 +149,9 @@ export async function POST(
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/subscriptions/:id POST]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/subscriptions/:id POST]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

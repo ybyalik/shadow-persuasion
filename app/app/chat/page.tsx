@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, ArrowLeft, Trash2, Zap } from 'lucide-react';
 import { GoalSelector } from '@/components/app/GoalSelector';
 import { StrategicChat } from '@/components/app/StrategicChat';
 import { formatDate } from '@/lib/format-date';
+import { apiFetch } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 
 interface Goal {
     id: string;
@@ -52,6 +54,7 @@ interface QuickfireResponse {
 
 export default function ChatListPage() {
   const router = useRouter();
+  const { loading: authLoading } = useAuth();
   const [mode, setMode] = useState<'list' | 'strategic' | 'quickfire'>('list');
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [showGoalSelector, setShowGoalSelector] = useState(false);
@@ -70,10 +73,11 @@ export default function ChatListPage() {
   const [qfHistoryExpanded, setQfHistoryExpanded] = useState(false);
   const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
   const [resumeMessages, setResumeMessages] = useState<any[]>([]);
+  const resumeHandledRef = useRef(false);
 
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await fetch('/api/conversations');
+      const res = await apiFetch('/api/conversations');
       if (res.ok) {
         const data = await res.json();
         setConversations(data.sessions || []);
@@ -86,8 +90,11 @@ export default function ChatListPage() {
   }, []);
 
   useEffect(() => {
+    // Wait until Firebase auth is ready so the request carries the user's token
+    // (otherwise the server rejects it and the list comes back empty).
+    if (authLoading) return;
     fetchConversations();
-  }, [fetchConversations]);
+  }, [authLoading, fetchConversations]);
 
   // Auto-start strategic session from onboarding context
   useEffect(() => {
@@ -116,7 +123,7 @@ export default function ChatListPage() {
 
   const handleNewGeneralChat = async () => {
     try {
-      const res = await fetch('/api/conversations', {
+      const res = await apiFetch('/api/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'New Chat', session_type: 'general' }),
@@ -134,12 +141,49 @@ export default function ChatListPage() {
     e.preventDefault();
     e.stopPropagation();
     try {
-      await fetch(`/api/conversations?id=${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/conversations?id=${id}`, { method: 'DELETE' });
       setConversations(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       console.error('Failed to delete session:', err);
     }
   };
+
+  // Open a conversation: strategic sessions resume inline, general ones route to /app/chat/[id]
+  const openConversation = useCallback(async (convo: ChatSession) => {
+    if (convo.session_type === 'strategic' && convo.goal_title) {
+      try {
+        const res = await apiFetch(`/api/conversations/messages?session_id=${convo.id}`);
+        const data = await res.json();
+        const msgs = (data.messages || []).map((m: any) => ({
+          id: m.id,
+          role: m.role,
+          // Strip [Context: ...] prefix from stored user messages for display
+          content: m.role === 'user' ? m.content.replace(/^\[Context:[\s\S]*?\]\s*\n*/m, '') : m.content,
+          sources: m.metadata?.sources || undefined,
+        }));
+        setResumeSessionId(convo.id);
+        setResumeMessages(msgs);
+        setSelectedGoal({ id: convo.goal || 'all', title: convo.goal_title || 'General', description: '', icon: null, color: '', examples: [] });
+        setMode('strategic');
+      } catch (e) {
+        console.error('Failed to load session:', e);
+      }
+    } else {
+      router.push(`/app/chat/${convo.id}`);
+    }
+  }, [router]);
+
+  // Resume a session linked from the dashboard: /app/chat?session=<id>
+  useEffect(() => {
+    if (resumeHandledRef.current || isLoadingConversations) return;
+    const sessionParam = new URLSearchParams(window.location.search).get('session');
+    if (!sessionParam) return;
+    const convo = conversations.find(c => c.id === sessionParam);
+    if (convo) {
+      resumeHandledRef.current = true;
+      openConversation(convo);
+    }
+  }, [isLoadingConversations, conversations, openConversation]);
 
 
   const handleSelectGoal = (goal: Goal) => {
@@ -166,7 +210,7 @@ export default function ChatListPage() {
   // Quick-Fire handlers
   const fetchQfHistory = useCallback(async () => {
     try {
-      const res = await fetch('/api/quickfire/history?limit=10');
+      const res = await apiFetch('/api/quickfire/history?limit=10');
       if (res.ok) {
         const data = await res.json();
         setQfHistory(data.history || []);
@@ -182,7 +226,7 @@ export default function ChatListPage() {
     setQfResponse(null);
 
     try {
-      const res = await fetch('/api/quickfire', {
+      const res = await apiFetch('/api/quickfire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,7 +243,7 @@ export default function ChatListPage() {
       setQfResponse(data);
 
       // Auto-save to history
-      fetch('/api/quickfire/history', {
+      apiFetch('/api/quickfire/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -534,7 +578,7 @@ export default function ChatListPage() {
                   <button
                     onClick={async () => {
                       try {
-                        await fetch(`/api/quickfire/history?id=${item.id}`, { method: 'DELETE' });
+                        await apiFetch(`/api/quickfire/history?id=${item.id}`, { method: 'DELETE' });
                         setQfHistory(prev => prev.filter(h => h.id !== item.id));
                       } catch {}
                     }}
@@ -593,32 +637,7 @@ export default function ChatListPage() {
           {conversations.map(convo => (
             <div
               key={convo.id}
-              onClick={async () => {
-                if (convo.session_type === 'strategic' && convo.goal_title) {
-                  // Load messages and resume in StrategicChat
-                  try {
-                    const res = await fetch(`/api/conversations/messages?session_id=${convo.id}`);
-                    const data = await res.json();
-                    const msgs = (data.messages || []).map((m: any) => ({
-                      id: m.id,
-                      role: m.role,
-                      // Strip [Context: ...] prefix from stored user messages for display
-                      content: m.role === 'user' ? m.content.replace(/^\[Context:[\s\S]*?\]\s*\n*/m, '') : m.content,
-                      sources: m.metadata?.sources || undefined,
-                    }));
-                    setResumeSessionId(convo.id);
-                    setResumeMessages(msgs);
-                    // Find matching goal or use generic
-                    setSelectedGoal({ id: convo.goal || 'all', title: convo.goal_title || 'General', description: '', icon: null, color: '', examples: [] });
-                    setMode('strategic');
-                  } catch (e) {
-                    console.error('Failed to load session:', e);
-                  }
-                } else {
-                  // Navigate to legacy chat page
-                  window.location.href = `/app/chat/${convo.id}`;
-                }
-              }}
+              onClick={() => openConversation(convo)}
               className="block p-4 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] relative group cursor-pointer">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">

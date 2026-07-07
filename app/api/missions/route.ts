@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
@@ -8,6 +10,9 @@ const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
 export async function POST(req: NextRequest) {
   try {
+    // Paid AI endpoint — require a logged-in user (cost abuse).
+    await requireAuth(req);
+
     const body = await req.json();
     const { action } = body;
 
@@ -15,15 +20,20 @@ export async function POST(req: NextRequest) {
       return handleGrade(body);
     }
 
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    return apiError('Unknown action.', 400);
   } catch (error) {
-    console.error('[MISSIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[MISSIONS]', error);
   }
 }
 
 async function handleGrade(body: any) {
   const { mission, completion } = body;
+
+  if (!mission || !completion) {
+    return apiError('Mission and completion details are required.', 400);
+  }
 
   // RAG search for the mission's technique
   const ragContext = await searchKnowledge(
@@ -83,8 +93,7 @@ Notes: ${completion.notes || 'None'}`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[MISSIONS]', 'OpenRouter error:', response.status, errorText);
-    return NextResponse.json({ error: 'AI service error' }, { status: 502 });
+    return apiError('AI service is unavailable right now. Please try again.', 502, '[MISSIONS]', `OpenRouter ${response.status}: ${errorText}`);
   }
 
   const data = await response.json();
@@ -94,7 +103,6 @@ Notes: ${completion.notes || 'None'}`;
     const result = JSON.parse(content);
     return NextResponse.json(result);
   } catch {
-    console.error('[MISSIONS]', 'Failed to parse AI response:', content);
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 502 });
+    return apiError('AI returned an invalid response. Please try again.', 502, '[MISSIONS]', content?.slice?.(0, 200));
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +11,7 @@ const supabase = createClient(
 // GET: List all chat sessions with last message preview
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const search = searchParams.get('search');
@@ -18,28 +19,26 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from('chat_sessions')
       .select('*')
+      .eq('user_id', userId)
       .order('updated_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      // No authenticated user — only return sessions with no user_id
-      query = query.is('user_id', null);
-    }
 
     if (type) {
       query = query.eq('session_type', type);
     }
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,goal_title.ilike.%${search}%`);
+      // Strip PostgREST filter metacharacters so the value can't break out of
+      // the .or() filter (defensive: no search box wires into this yet).
+      const safeSearch = search.replace(/[,()%*\\]/g, ' ').trim();
+      if (safeSearch) {
+        query = query.or(`title.ilike.%${safeSearch}%,goal_title.ilike.%${safeSearch}%`);
+      }
     }
 
     const { data: sessions, error } = await query;
 
     if (error) {
-      console.error('[CONVERSATIONS]', 'Error fetching sessions:', error);
-      return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
+      return apiError('Failed to fetch sessions.', 500, '[CONVERSATIONS]', error);
     }
 
     // Fetch last message for all sessions in a single query
@@ -73,15 +72,16 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ sessions: sessionsWithPreview });
   } catch (error) {
-    console.error('[CONVERSATIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[CONVERSATIONS]', error);
   }
 }
 
 // POST: Create a new chat session
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
     const { title, goal, goal_title, session_type, scenario_id } = body;
 
@@ -99,47 +99,43 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[CONVERSATIONS]', 'Error creating session:', error);
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+      return apiError('Failed to create session.', 500, '[CONVERSATIONS]', error);
     }
 
     return NextResponse.json({ session: data });
   } catch (error) {
-    console.error('[CONVERSATIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[CONVERSATIONS]', error);
   }
 }
 
 // DELETE: Delete a chat session by id
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Session id is required' }, { status: 400 });
+      return apiError('Session id is required.', 400);
     }
 
-    let query = supabase
+    // Scope the delete to the caller so nobody can erase another user's session.
+    const { error } = await supabase
       .from('chat_sessions')
       .delete()
-      .eq('id', id);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { error } = await query;
+      .eq('id', id)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('[CONVERSATIONS]', 'Error deleting session:', error);
-      return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
+      return apiError('Failed to delete session.', 500, '[CONVERSATIONS]', error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[CONVERSATIONS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[CONVERSATIONS]', error);
   }
 }

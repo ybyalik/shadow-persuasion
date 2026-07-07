@@ -255,28 +255,45 @@ export async function POST(req: NextRequest) {
               ))
             : '');
 
-        // Flip the existing order row to paid (book_checkout pre-creates it).
-        // For upsells the row may already exist from the API route; upsert is safe.
-        const { error: updateErr } = await supabase
+        const paymentMethodId =
+          typeof intent.payment_method === 'string'
+            ? intent.payment_method
+            : intent.payment_method?.id || null;
+
+        // Idempotency: Stripe can redeliver this event. If we already recorded
+        // this order as paid AND delivered, this is a duplicate — do nothing
+        // (otherwise we'd email the customer their downloads twice).
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id, status, delivered_at')
+          .eq('stripe_payment_intent_id', intent.id)
+          .maybeSingle();
+
+        if (existingOrder?.status === 'paid' && existingOrder?.delivered_at) {
+          break;
+        }
+
+        // Flip the pre-created order row to paid. Use .select() so we can tell
+        // whether a row actually matched — an UPDATE that matches zero rows is
+        // NOT an error in Supabase, so we must check the count ourselves.
+        const { data: updatedRows, error: updateErr } = await supabase
           .from('orders')
           .update({
             status: 'paid',
-            stripe_payment_method_id:
-              typeof intent.payment_method === 'string'
-                ? intent.payment_method
-                : intent.payment_method?.id || null,
-            delivered_at: new Date().toISOString(),
+            stripe_payment_method_id: paymentMethodId,
           })
-          .eq('stripe_payment_intent_id', intent.id);
+          .eq('stripe_payment_intent_id', intent.id)
+          .select('id');
 
         if (updateErr) {
           console.error('[STRIPE WEBHOOK] Order update failed:', updateErr);
         }
 
-        // Fallback: if update didn't match (e.g. race with API insert), insert
-        if (updateErr || !email) {
-          // Try to upsert by payment_intent_id
-          await supabase.from('orders').upsert(
+        // Fallback: if no existing row matched (e.g. the checkout-time insert
+        // failed), create the paid order now so the sale is never lost.
+        const matched = (updatedRows?.length ?? 0) > 0;
+        if (!matched) {
+          const { error: insertErr } = await supabase.from('orders').upsert(
             {
               email: email || 'unknown@unknown.com',
               stripe_customer_id:
@@ -286,22 +303,13 @@ export async function POST(req: NextRequest) {
               amount_cents: intent.amount,
               currency: intent.currency,
               status: 'paid',
-              stripe_payment_method_id:
-                typeof intent.payment_method === 'string'
-                  ? intent.payment_method
-                  : intent.payment_method?.id || null,
-              delivered_at: new Date().toISOString(),
+              stripe_payment_method_id: paymentMethodId,
               metadata: { funnel },
             },
             { onConflict: 'stripe_payment_intent_id' }
           );
-        }
-
-        // Deliver the goods via Resend
-        if (email && items.length > 0) {
-          const result = await sendDeliveryEmail({ to: email, items });
-          if (!result.ok) {
-            console.error('[STRIPE WEBHOOK] Delivery email failed:', result.error);
+          if (insertErr) {
+            console.error('[STRIPE WEBHOOK] Order fallback insert failed:', insertErr);
           }
         }
 
@@ -382,6 +390,26 @@ export async function POST(req: NextRequest) {
                 stripe_payment_intent_id: intent.id,
               })
               .eq('id', lead.id);
+          }
+        }
+
+        // Deliver the goods LAST, and only mark the order delivered once the
+        // email actually sends. If it fails, return 500 so Stripe retries this
+        // event; the idempotency guard above stops a duplicate email once the
+        // send eventually succeeds.
+        if (email && items.length > 0) {
+          const result = await sendDeliveryEmail({ to: email, items });
+          if (result.ok) {
+            await supabase
+              .from('orders')
+              .update({ delivered_at: new Date().toISOString() })
+              .eq('stripe_payment_intent_id', intent.id);
+          } else {
+            console.error('[STRIPE WEBHOOK] Delivery email failed:', result.error);
+            return NextResponse.json(
+              { error: 'Delivery email failed, will retry' },
+              { status: 500 }
+            );
           }
         }
         break;

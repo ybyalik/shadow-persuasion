@@ -144,32 +144,49 @@ export async function GET(req: Request) {
         continue;
       }
 
-      // Send
-      const result = await sendRecoveryEmail({
-        to: lead.email,
-        firstName: lead.first_name,
-        step: step as 1 | 2 | 3, // sender still types step as 1|2|3; widens if we add step 4 later
-      });
-
-      if (!result.ok) {
-        errors.push({ leadId: lead.id, error: result.error ?? 'unknown' });
-        continue;
-      }
-
+      // Advance the lead's status BEFORE sending. If this write fails
+      // we skip the send this run and let the next run retry, rather
+      // than sending an email we can't record. Recording after the send
+      // used to mean a single failed write would resend the exact same
+      // recovery email every hour. Sending late (or once skipping) is
+      // far better than spamming the shopper every hour.
+      const existingSends = Array.isArray(lead.recovery_emails) ? lead.recovery_emails : [];
       const newEntry = {
         step,
         sent_at: new Date().toISOString(),
-        email_id: result.id ?? null,
+        email_id: null as string | null,
       };
-      const existingSends = Array.isArray(lead.recovery_emails) ? lead.recovery_emails : [];
 
-      await supabase
+      const { error: markError } = await supabase
         .from('checkout_leads')
         .update({
           status: `recovery_sent_${step}`,
           recovery_emails: [...existingSends, newEntry],
         })
         .eq('id', lead.id);
+
+      if (markError) {
+        // Couldn't record the send. Do NOT send now — if we did, the
+        // lead would still look un-sent and repeat next hour. Surface
+        // it so the admin sees the failed run, and retry next run.
+        console.error('[cron/recovery-emails] status update failed for lead', lead.id, markError.message);
+        errors.push({ leadId: lead.id, error: 'could not record send; skipped to avoid duplicate' });
+        continue;
+      }
+
+      // Send. The status is already advanced, so a send failure here
+      // means this lead skips this step (logged below) instead of being
+      // retried and risking a duplicate.
+      const result = await sendRecoveryEmail({
+        to: lead.email,
+        firstName: lead.first_name,
+        step,
+      });
+
+      if (!result.ok) {
+        errors.push({ leadId: lead.id, error: result.error ?? 'unknown' });
+        continue;
+      }
 
       sent += 1;
     }
@@ -185,6 +202,6 @@ export async function GET(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[cron/recovery-emails]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Recovery run failed.' }, { status: 500 });
   }
 }

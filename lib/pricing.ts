@@ -89,7 +89,17 @@ export function flattenDownloads(slugs: ProductSlug[]): DownloadFile[] {
  * product slug, we fall back to the hardcoded `PRODUCTS[slug].downloads`
  * so delivery never silently breaks while migrations are being applied.
  */
-export async function fetchProductFiles(slugs: ProductSlug[]): Promise<DownloadFile[]> {
+// Private bucket holding the paid PDFs. Files here are served ONLY as signed,
+// expiring links — never public URLs — so non-buyers can't grab them.
+const PAID_DOWNLOADS_BUCKET = 'paid-downloads';
+// Signed links must stay valid long enough that a receipt email opened weeks
+// later still works, while remaining unguessable. One year.
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
+
+export async function fetchProductFiles(
+  slugs: ProductSlug[],
+  expiresIn: number = SIGNED_URL_TTL_SECONDS
+): Promise<DownloadFile[]> {
   // Dynamic import so this module doesn't pull supabase on pages that
   // only use the sync helpers above (keeps client bundles small).
   const { createClient } = await import('@supabase/supabase-js');
@@ -100,9 +110,10 @@ export async function fetchProductFiles(slugs: ProductSlug[]): Promise<DownloadF
     );
     const { data, error } = await supabase
       .from('product_files')
-      .select('product_slug, name, storage_url, sort_order')
+      .select('product_slug, name, file_path, storage_url, source, sort_order')
       .in('product_slug', slugs)
       .eq('is_active', true)
+      .eq('file_type', 'download') // only deliverable files, never cover images
       .order('sort_order', { ascending: true });
     if (error) throw error;
 
@@ -113,18 +124,37 @@ export async function fetchProductFiles(slugs: ProductSlug[]): Promise<DownloadF
     for (const slug of slugs) {
       const forSlug = rows.filter((r) => r.product_slug === slug);
       if (forSlug.length === 0) {
-        // DB has nothing for this slug → fall back to hardcoded list.
-        out.push(...(PRODUCTS[slug]?.downloads ?? []));
-      } else {
-        for (const r of forSlug) {
-          out.push({ name: r.name as string, path: r.storage_url as string });
+        // No active file rows for this slug. We used to fall back to the
+        // hardcoded /downloads/*.pdf list, but those public files were removed
+        // when the PDFs moved to the private bucket — returning them now would
+        // be a dead link. Skip instead.
+        continue;
+      }
+      for (const r of forSlug) {
+        // Paid files (source 'supabase', stored in the private bucket) are
+        // handed out as short-lived signed links generated on demand.
+        if (r.source === 'supabase' && r.file_path) {
+          const { data: signed, error: signErr } = await supabase.storage
+            .from(PAID_DOWNLOADS_BUCKET)
+            .createSignedUrl(r.file_path as string, expiresIn);
+          if (signErr || !signed?.signedUrl) {
+            console.warn('[fetchProductFiles] sign failed for', r.file_path, signErr?.message);
+            continue; // skip rather than hand out a broken or public link
+          }
+          out.push({ name: r.name as string, path: signed.signedUrl });
+        } else {
+          // Legacy/static rows: use whatever URL is stored.
+          out.push({ name: r.name as string, path: (r.storage_url as string) ?? '' });
         }
       }
     }
     return out;
   } catch (err) {
-    console.warn('[fetchProductFiles] DB lookup failed, falling back to static:', err);
-    return flattenDownloads(slugs);
+    // On a DB/storage failure we can't produce valid signed links, and the old
+    // static files are gone, so return nothing rather than dead public links.
+    // Callers show a "check your email / contact support" message on empty.
+    console.error('[fetchProductFiles] lookup failed; returning no links:', err);
+    return [];
   }
 }
 

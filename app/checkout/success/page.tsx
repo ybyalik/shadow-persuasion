@@ -35,9 +35,9 @@ function CheckoutSuccessPage() {
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-3">Payment Successful!</h1>
-        <p className="text-lg text-[#5C4B32] mb-4">Your subscription is active. Create your account to start training.</p>
-        <p className="text-sm text-[#6B5B3E] mb-8">Use the same email address you used for payment. Your subscription will be automatically linked to your account.</p>
+        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-3">Thank You for Your Order!</h1>
+        <p className="text-lg text-[#5C4B32] mb-4">You&apos;re one step from training. Create your account to get started.</p>
+        <p className="text-sm text-[#6B5B3E] mb-8">Use the same email address you used at checkout. Once your payment is confirmed, your subscription is linked to your account automatically.</p>
         <Link href="/login" className="inline-flex items-center gap-2 bg-[#D4A017] text-[#0A0A0A] font-bold text-lg px-10 py-4 rounded-lg hover:bg-[#E8B830] transition-colors">
           Create Your Account <ArrowRight className="h-5 w-5" />
         </Link>

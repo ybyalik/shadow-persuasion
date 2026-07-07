@@ -2,9 +2,12 @@
 
 
 import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Send } from 'lucide-react';
 import { ChatInput } from '@/components/app/ChatInput';
 import { ChatMessage } from '@/components/app/ChatMessage';
+import { apiFetch } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 
 type Source = { book: string; author: string; technique: string; similarity: number };
 type Message = {
@@ -14,7 +17,11 @@ type Message = {
   sources?: Source[];
 };
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage() {
+  // Next.js 16: route params arrive via the useParams() hook (the params prop is a Promise)
+  const params = useParams();
+  const routeId = params.id as string;
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -22,33 +29,32 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
-  const [sessionId, setSessionId] = useState<string | null>(params.id !== 'new' ? params.id : null);
 
-  // Load existing messages from DB
+  const [sessionId, setSessionId] = useState<string | null>(routeId !== 'new' ? routeId : null);
+
+  // Load existing messages from DB (once auth is ready so the token is attached)
   useEffect(() => {
-    if (params.id !== 'new') {
-      fetch(`/api/conversations/messages?session_id=${params.id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.messages && data.messages.length > 0) {
-            setMessages(
-              data.messages.map((m: any) => ({
-                id: m.id,
-                role: m.role,
-                content: m.content,
-                sources: m.metadata?.sources || undefined,
-              }))
-            );
-          }
-        })
-        .catch(e => console.error('Failed to load messages:', e));
-    }
-  }, [params.id]);
+    if (routeId === 'new' || !user) return;
+    apiFetch(`/api/conversations/messages?session_id=${routeId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.messages && data.messages.length > 0) {
+          setMessages(
+            data.messages.map((m: any) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              sources: m.metadata?.sources || undefined,
+            }))
+          );
+        }
+      })
+      .catch(e => console.error('Failed to load messages:', e));
+  }, [routeId, user]);
 
 
   const handleSend = async (input: string, image?: { file: File; preview: string; base64: string }) => {
@@ -59,7 +65,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       try {
         const fd = new FormData();
         fd.append('image', image.file);
-        const extractRes = await fetch('/api/user/voice-profile/extract', { method: 'POST', body: fd });
+        const extractRes = await apiFetch('/api/user/voice-profile/extract', { method: 'POST', body: fd });
         if (extractRes.ok) {
           const extractData = await extractRes.json();
           if (extractData.extractedText) {
@@ -75,7 +81,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await apiFetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: [...messages, userMessage], session_id: sessionId }),

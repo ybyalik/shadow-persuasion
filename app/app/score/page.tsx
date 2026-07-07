@@ -175,7 +175,7 @@ export default function ScorePage() {
     recommendation: 'Complete your first activity to get personalized recommendations.',
   });
 
-  const getHeaders = useCallback(async () => {
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);

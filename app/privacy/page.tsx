@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-lg font-bold text-white mb-3">10. Contact Us</h2>
-            <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:yury@onbiz.com" className="text-[#D4A017] hover:underline">yury@onbiz.com</a></p>
+            <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:support@shadowpersuasion.com" className="text-[#D4A017] hover:underline">support@shadowpersuasion.com</a></p>
           </section>
         </div>
       </div>

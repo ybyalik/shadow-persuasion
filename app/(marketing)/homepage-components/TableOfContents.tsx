@@ -1,6 +1,12 @@
 'use client';
 
-const TOCEntry = ({ number, title, page, redacted = false, id }) => (
+const TOCEntry = ({ number, title, page, redacted = false, id }: {
+  number: string | number;
+  title: string;
+  page: string | number;
+  redacted?: boolean;
+  id: string;
+}) => (
   <a href={`#${id}`} className="block">
     <li className="flex items-end justify-between py-2 text-lg font-special-elite cursor-pointer hover:bg-gray-200 px-2 rounded-sm">
       <div className="flex items-end">

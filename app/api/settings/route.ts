@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,10 @@ const supabase = createClient(
 );
 
 const FALLBACK_ADMIN_EMAILS = ['ybyalik@gmail.com'];
+
+// Only this key may be read without admin auth — the client uses it to decide
+// whether to show admin UI. All other settings are admin-only.
+const PUBLIC_SETTING_KEYS = new Set(['admin_emails']);
 
 // GET: Fetch a setting by key
 export async function GET(req: NextRequest) {
@@ -19,6 +24,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Any key other than the public one requires an admin.
+    if (!PUBLIC_SETTING_KEYS.has(key)) {
+      try {
+        await requireAdmin(req);
+      } catch (err) {
+        const authFail = passthroughAuthError(err);
+        if (authFail) return authFail;
+        throw err;
+      }
+    }
+
     const { data, error } = await supabase
       .from('app_settings')
       .select('value')
@@ -39,40 +55,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PUT: Update a setting (admin only)
+// PUT: Update a setting (admin only). Admin identity is verified from a real,
+// signed Firebase token — the email claim can no longer be forged.
 export async function PUT(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Get the user's email from the auth token
-    // We need to check against current admin list
-    const { data: currentSetting } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'admin_emails')
-      .single();
-
-    const adminEmails: string[] = currentSetting?.value || FALLBACK_ADMIN_EMAILS;
-
-    // We need to verify the user is admin — get email from Firebase token
-    const authHeader = req.headers.get('Authorization');
-    let userEmail: string | null = null;
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.slice(7);
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        userEmail = payload.email;
-      } catch {
-        // ignore
-      }
-    }
-
-    if (!userEmail || !adminEmails.includes(userEmail)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    await requireAdmin(req);
 
     const body = await req.json();
     const { key, value } = body;
@@ -92,7 +79,9 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, key, value });
   } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
     console.error('[SETTINGS]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

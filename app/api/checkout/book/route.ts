@@ -113,6 +113,9 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[checkout/book] error:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not start checkout. Please try again.' },
+      { status: 500 }
+    );
   }
 }

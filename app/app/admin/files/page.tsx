@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-client';
 import {
   Upload,
   Trash2,
@@ -88,7 +89,7 @@ export default function FilesAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/files');
+      const res = await apiFetch('/api/admin/files');
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to load');
       setFiles(d.files ?? []);
@@ -120,7 +121,7 @@ export default function FilesAdminPage() {
       fd.append('file', uploadFile);
       fd.append('productSlug', uploadSlug);
       fd.append('name', uploadName.trim());
-      const res = await fetch('/api/admin/files', { method: 'POST', body: fd });
+      const res = await apiFetch('/api/admin/files', { method: 'POST', body: fd });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Upload failed');
       setFlash(`Uploaded: ${d.file.name}`);
@@ -141,7 +142,7 @@ export default function FilesAdminPage() {
     setBusy(id);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/files/${id}`, {
+      const res = await apiFetch(`/api/admin/files/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
@@ -163,7 +164,7 @@ export default function FilesAdminPage() {
     setBusy(f.id);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/files/${f.id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/admin/files/${f.id}`, { method: 'DELETE' });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Delete failed');
       setFiles((prev) => prev.filter((x) => x.id !== f.id));
@@ -576,7 +577,7 @@ function CoverSlot({
       fd.append('productSlug', productSlug);
       fd.append('name', `${productSlug} cover`);
       fd.append('fileType', 'cover');
-      const res = await fetch('/api/admin/files', { method: 'POST', body: fd });
+      const res = await apiFetch('/api/admin/files', { method: 'POST', body: fd });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Upload failed');
       onChanged();

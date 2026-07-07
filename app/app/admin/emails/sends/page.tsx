@@ -12,6 +12,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Search, ArrowLeft } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type Send = {
   id: string;
@@ -46,20 +47,21 @@ export default function SendsPage() {
 
   async function load() {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       if (template !== 'all') params.set('template', template);
       if (status !== 'all') params.set('status', status);
       if (search) params.set('search', search);
       params.set('limit', '300');
-      const res = await fetch(`/api/admin/emails/sends?${params.toString()}`);
+      const res = await apiFetch(`/api/admin/emails/sends?${params.toString()}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to load');
       setSends(d.sends ?? []);
       setStats(d.stats ?? null);
       setTemplates(d.templates ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 300;
 
@@ -12,8 +14,9 @@ const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
 
 // GET: Analyze duplicates and return proposed merges
 // POST: Execute merges
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    await requireAdmin(req);
     // Get all unique technique names
     const { data, error } = await supabase
       .from('knowledge_chunks')
@@ -115,15 +118,17 @@ Respond with JSON: { "merges": [{ "canonical": "Best Name", "canonicalId": "best
       estimatedAfter: uniqueNames.length - totalVariants,
       merges: allMerges,
     });
-  } catch (error: any) {
-    console.error('[DEDUP]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/dedup GET]', error);
   }
 }
 
 // POST: Execute the merges
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin(req);
     const { merges } = await req.json();
 
     if (!merges || !Array.isArray(merges)) {
@@ -141,7 +146,7 @@ export async function POST(req: NextRequest) {
 
         const { error, count } = await supabase
           .from('knowledge_chunks')
-          .update({ technique_name: canonical, technique_id: canonicalId })
+          .update({ technique_name: canonical, technique_id: canonicalId }, { count: 'exact' })
           .eq('technique_name', variant);
 
         if (!error && count) totalUpdated += count;
@@ -149,8 +154,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, chunksUpdated: totalUpdated });
-  } catch (error: any) {
-    console.error('[DEDUP]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[admin/dedup POST]', error);
   }
 }

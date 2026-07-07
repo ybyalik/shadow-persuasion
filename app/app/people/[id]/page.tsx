@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -163,7 +163,13 @@ export default function ProfileDetailPage() {
   const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
   const [analysesLoading, setAnalysesLoading] = useState(true);
 
-  const getHeaders = useCallback(async () => {
+  // Keep a ref to the latest profile so saveProfile can roll back on failure
+  const profileRef = useRef<Profile | null>(null);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
+
+  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await user?.getIdToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [user]);
@@ -219,19 +225,25 @@ export default function ProfileDetailPage() {
   // Effective risk level: manual override takes precedence
   const effectiveRiskLevel = profile?.manualRiskOverride || autoRiskLevel || profile?.riskLevel || null;
 
-  // Save profile changes
+  // Save profile changes (optimistic — rolls back and warns if the save fails)
   const saveProfile = useCallback(
     async (updated: Profile) => {
+      const previous = profileRef.current;
       setProfile(updated);
       try {
         const headers = await getHeaders();
-        await fetch('/api/profiler/people', {
+        const res = await fetch('/api/profiler/people', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', ...headers },
           body: JSON.stringify(updated),
         });
+        if (!res.ok) throw new Error('Save failed');
+        setErrorBanner(null);
       } catch (e) {
         console.error('Failed to save profile:', e);
+        // Roll back the optimistic change so the UI matches what was actually saved
+        if (previous) setProfile(previous);
+        setErrorBanner("We couldn't save your change. Please check your connection and try again.");
       }
     },
     [getHeaders]
@@ -433,6 +445,16 @@ export default function ProfileDetailPage() {
         <ArrowLeft className="h-4 w-4" />
         <span className="text-sm font-mono uppercase">Back to People</span>
       </button>
+
+      {/* Save error banner */}
+      {errorBanner && (
+        <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-sm text-red-700 dark:text-red-400">{errorBanner}</p>
+          <button onClick={() => setErrorBanner(null)} className="text-red-500 hover:text-red-700 ml-4">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">

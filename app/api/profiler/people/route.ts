@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,61 +32,53 @@ function mapProfile(row: any) {
   };
 }
 
-// GET: List all people profiles for the user
+// GET: List the signed-in user's people profiles
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
 
-    // Support fetching a single profile by ID
+    // Support fetching a single profile by ID (scoped to the caller)
     const singleId = searchParams.get('id');
     if (singleId) {
-      let query = supabase
+      const { data, error } = await supabase
         .from(TABLE)
         .select('*')
-        .eq('id', singleId);
+        .eq('id', singleId)
+        .eq('user_id', userId)
+        .single();
 
-      if (userId) {
-        query = query.eq('user_id', userId);
-      } else {
-        query = query.is('user_id', null);
-      }
-
-      const { data, error } = await query.single();
       if (error || !data) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
       return NextResponse.json({ profile: mapProfile(data) });
     }
 
-    let query = supabase
+    const { data, error } = await supabase
       .from(TABLE)
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error('[PROFILER_PEOPLE]', 'Error fetching profiles:', error);
-      return NextResponse.json({ error: 'Failed to fetch people profiles', details: error.message, code: error.code }, { status: 500 });
+      return apiError('Failed to fetch people profiles.', 500, '[PROFILER_PEOPLE]', error);
     }
 
     return NextResponse.json({ profiles: (data || []).map(mapProfile) });
   } catch (error) {
-    console.error('[PROFILER_PEOPLE]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PROFILER_PEOPLE]', error);
   }
 }
 
-// POST: Create a new person profile
+// POST: Create a new person profile for the signed-in user
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
+
+    if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+      return NextResponse.json({ error: 'name is required' }, { status: 400 });
+    }
 
     const insertPayload = {
       name: body.name,
@@ -95,32 +88,28 @@ export async function POST(req: NextRequest) {
       interactions: body.interactions || [],
     };
 
-    console.log('[PROFILER_PEOPLE] INSERT payload:', JSON.stringify({ userId, name: body.name, hasTraits: !!body.traits }));
-
     const { data, error } = await supabase
       .from(TABLE)
       .insert(insertPayload)
       .select()
       .single();
 
-    console.log('[PROFILER_PEOPLE] INSERT result:', JSON.stringify({ data: data?.id, error: error?.message }));
-
     if (error) {
-      console.error('[PROFILER_PEOPLE]', 'Error creating profile:', error);
-      return NextResponse.json({ error: 'Failed to create profile', details: error.message, code: error.code }, { status: 500 });
+      return apiError('Failed to create profile.', 500, '[PROFILER_PEOPLE]', error);
     }
 
     return NextResponse.json({ profile: mapProfile(data) });
   } catch (error) {
-    console.error('[PROFILER_PEOPLE]', error);
-    return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PROFILER_PEOPLE]', error);
   }
 }
 
-// PUT: Update a person profile (by id in body)
+// PUT: Update one of the signed-in user's person profiles (by id in body)
 export async function PUT(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const body = await req.json();
     const { id, ...updates } = body;
 
@@ -128,32 +117,30 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    let query = supabase.from(TABLE).update(updates).eq('id', id);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data, error } = await query.select().single();
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
     if (error) {
-      console.error('[PROFILER_PEOPLE]', 'Error updating profile:', error);
-      return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+      return apiError('Failed to update profile.', 500, '[PROFILER_PEOPLE]', error);
     }
 
     return NextResponse.json({ profile: mapProfile(data) });
   } catch (error) {
-    console.error('[PROFILER_PEOPLE]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PROFILER_PEOPLE]', error);
   }
 }
 
-// DELETE: Delete a person profile (by ?id=xxx)
+// DELETE: Delete one of the signed-in user's person profiles (by ?id=xxx)
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    const userId = await requireAuth(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -161,24 +148,20 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id query param is required' }, { status: 400 });
     }
 
-    let query = supabase.from(TABLE).delete().eq('id', id);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { error } = await query;
+    const { error } = await supabase
+      .from(TABLE)
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('[PROFILER_PEOPLE]', 'Error deleting profile:', error);
-      return NextResponse.json({ error: 'Failed to delete profile' }, { status: 500 });
+      return apiError('Failed to delete profile.', 500, '[PROFILER_PEOPLE]', error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[PROFILER_PEOPLE]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Something went wrong. Please try again.', 500, '[PROFILER_PEOPLE]', error);
   }
 }

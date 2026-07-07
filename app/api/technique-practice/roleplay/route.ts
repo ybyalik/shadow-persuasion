@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { getVoiceProfile } from '@/lib/voice-profile';
 
 export const maxDuration = 60;
@@ -69,7 +70,9 @@ const CONTEXT_CHARACTERS: Record<string, { role: string; setting: string }> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
+    // Require a logged-in user before the paid GPT-4o call. Previously the uid
+    // was read but never enforced, leaving this open as a free chatbot.
+    const userId = await requireAuth(req);
     const voiceContext = await getVoiceProfile(userId);
 
     const { techniqueId, techniqueName, context, messages } = await req.json();
@@ -175,7 +178,8 @@ ${voiceContext}${knowledgeBlock}`;
       },
     });
   } catch (error) {
-    console.error('[ROLEPLAY]', error);
-    return NextResponse.json({ error: 'Failed to process roleplay.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to process roleplay.', 500, '[ROLEPLAY]', error);
   }
 }

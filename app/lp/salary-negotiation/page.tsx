@@ -25,7 +25,7 @@ function MidPageCTA({ headline }: { headline: string }) {
     <div className="flex justify-center px-6 py-12 md:py-16">
       <div className="max-w-2xl w-full bg-[#1A1A1A] rounded-2xl px-8 py-10 md:px-12 md:py-14 text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-[#F4ECD8] mb-6">{headline}</h2>
-        <div className="mb-2"><span className="text-4xl md:text-5xl font-bold text-[#D4A017]">$99</span><span className="text-lg text-[#F4ECD8]/70">/month</span></div>
+        <div className="mb-2"><span className="text-4xl md:text-5xl font-bold text-[#D4A017]">$34.95</span><span className="text-lg text-[#F4ECD8]/70">/month</span></div>
         <p className="text-sm text-[#F4ECD8]/50 mb-8">Cancel anytime. One raise pays for years.</p>
         <a href="/login" className="inline-block bg-[#D4A017] hover:bg-[#C49A3A] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-lg tracking-wide transition-colors">GET YOUR COUNTER-STRATEGY</a>
         <p className="mt-6 text-sm text-[#F4ECD8]/40">Join 2,000+ members already training</p>
@@ -74,7 +74,7 @@ export default function SalaryNegotiationLP() {
             <a href="/login" className="inline-flex items-center bg-black text-white font-mono uppercase font-bold text-lg px-10 py-4 hover:bg-gray-800 transition-colors tracking-wider">
               GET YOUR COUNTER-STRATEGY <ArrowRight className="ml-2" />
             </a>
-            <p className="text-sm text-[#6B5B3E]">$99/month. Cancel anytime. 30-day money-back guarantee.</p>
+            <p className="text-sm text-[#6B5B3E]">$34.95/month. Cancel anytime. 30-day money-back guarantee.</p>
           </div>
         </div>
       </section>
@@ -548,7 +548,7 @@ export default function SalaryNegotiationLP() {
             <div className="border-2 border-amber-500 p-6 bg-[#fffef7] shadow-2xl relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-black font-mono text-xs uppercase px-2 py-1 font-bold">RECOMMENDED</div>
               <h3 className="text-2xl text-center font-bold text-amber-900">SHADOW PERSUASION MEMBER</h3>
-              <p className="text-center font-mono text-lg mb-6"><span className="text-amber-700 font-bold">$99/MO</span></p>
+              <p className="text-center font-mono text-lg mb-6"><span className="text-amber-700 font-bold">$34.95/MO</span></p>
               <ul className="space-y-4">
                 {["Analyzes YOUR boss's exact words and tactics", 'Word-for-word counter-scripts for your situation', 'AI role-play to practice before the real meeting', '700+ negotiation techniques from proprietary research', 'Voice Profile so you sound like you, not a script', '24/7 AI coach for every conversation that matters', 'Persuasion Score and progress tracking', 'Daily field missions with AI grading'].map((f) => (
                   <li key={f} className="flex justify-between items-center text-lg"><span>{f}</span><span className="text-green-600 font-bold">&#10003;</span></li>
@@ -593,8 +593,8 @@ export default function SalaryNegotiationLP() {
             <AccordionItem question="Is my conversation data private?">
               <p>Yes. All data is encrypted. We never share, sell, or use your conversations for training. You can delete your data at any time.</p>
             </AccordionItem>
-            <AccordionItem question="Is $99/month worth it for a salary negotiation?">
-              <p>Members report salary increases of $5,000 to $50,000+. A single successful negotiation pays for years of membership. And the system is not just for salary. You get access to all 121 use cases across career, business, relationships, and more.</p>
+            <AccordionItem question="Is $34.95/month worth it for a salary negotiation?">
+              <p>Members report salary increases of $5,000 to $50,000+. A single successful negotiation pays for years of membership. And the system is not just for salary. You get access to all 91 use cases across career, business, relationships, and more.</p>
             </AccordionItem>
           </div>
         </div>
@@ -604,7 +604,7 @@ export default function SalaryNegotiationLP() {
       <section className="bg-[#F4ECD8] px-6 md:px-12 py-10 md:py-14">
         <div className="max-w-md mx-auto text-center border-4 border-black p-8">
           <h2 className="text-3xl font-bold mb-4">Get Your Raise</h2>
-          <p className="text-lg mb-4">$99/month (less than $3.30/day)</p>
+          <p className="text-lg mb-4">$34.95/month (about $1.17/day)</p>
           <ul className="space-y-3 text-lg mb-8 text-left">
             {['AI Conversation Analyzer for salary talks', 'Word-for-word counter-scripts', 'AI role-play to practice before the meeting', '700+ negotiation techniques', '30-day money-back guarantee'].map((item) => (
               <li key={item} className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-green-700 mt-0.5 shrink-0" /><span>{item}</span></li>

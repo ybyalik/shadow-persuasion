@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { getVoiceProfile } from '@/lib/voice-profile';
 
 const REWRITE_SYSTEM_PROMPT = `You are a message optimization expert specializing in psychological influence and persuasion. Your task is to transform weak, boring, or ineffective messages into psychologically optimized communications.
@@ -43,10 +44,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    const userId = await requireAuth(req);
     const voiceContext = await getVoiceProfile(userId);
 
     const { message, goal } = await req.json();
@@ -110,21 +108,19 @@ export async function POST(req: NextRequest) {
       const result = JSON.parse(content);
       return NextResponse.json(result);
     } catch (parseError) {
-      console.error('[REWRITE]', 'Failed to parse AI response as JSON:', content);
+      // Log the real detail server-side only; never return raw model text
+      // or parser internals to the customer.
+      console.error('[REWRITE]', 'Failed to parse AI response as JSON:', content?.slice(0, 500));
       console.error('[REWRITE]', 'Parse error:', parseError);
-      
-      // Return a fallback response
-      return NextResponse.json({
-        error: 'AI response parsing failed',
-        debug: {
-          contentPreview: content.slice(0, 500),
-          parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error'
-        }
-      }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to rewrite message. Please try again.' },
+        { status: 502 }
+      );
     }
 
   } catch (error) {
-    console.error('[REWRITE]', error);
-    return NextResponse.json({ error: 'Failed to rewrite message.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to rewrite message. Please try again.', 500, '[REWRITE]', error);
   }
 }

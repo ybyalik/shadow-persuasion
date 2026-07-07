@@ -94,13 +94,14 @@ const CoverPage = () => {
         </div>
 
         {/* CTA button */}
-        <motion.button
-          className="mt-8 bg-[#0D0D0D] text-[#F4ECD8] py-3 px-8 text-lg font-bold flex items-center justify-center mx-auto hover:bg-[#1A1A1A] transition-colors duration-300 border border-[#A0884A]/30"
+        <motion.a
+          href="/login"
+          className="mt-8 bg-[#0D0D0D] text-[#F4ECD8] py-3 px-8 text-lg font-bold flex w-fit items-center justify-center mx-auto hover:bg-[#1A1A1A] transition-colors duration-300 border border-[#A0884A]/30"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          START YOUR TRAINING: $99/MONTH <ArrowRight className="ml-2" />
-        </motion.button>
+          START YOUR TRAINING: $34.95/MONTH <ArrowRight className="ml-2" />
+        </motion.a>
 
         {/* Footer text */}
         <div className="mt-6 text-sm text-[#7A6543] max-w-2xl mx-auto">

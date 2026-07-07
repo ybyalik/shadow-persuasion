@@ -65,6 +65,27 @@ export async function POST(req: Request) {
       );
     }
 
+    // Idempotency guard: if this customer already has a subscription on file,
+    // don't create a second one (back button, retry, double-click would
+    // otherwise start a duplicate monthly charge that our single-row-per-user
+    // storage would then hide).
+    const userId = `stripe_${customerId}`;
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('stripe_subscription_id, plan, status')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle();
+    if (existingSub?.stripe_subscription_id) {
+      return NextResponse.json({
+        success:
+          existingSub.status === 'active' || existingSub.status === 'trialing',
+        subscriptionId: existingSub.stripe_subscription_id,
+        status: existingSub.status,
+        plan: existingSub.plan,
+        alreadySubscribed: true,
+      });
+    }
+
     // Attach payment method as default for invoices on the customer
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: paymentMethodId },
@@ -72,28 +93,36 @@ export async function POST(req: Request) {
 
     // Stripe subscription `price_data` doesn't support inline product_data,
     // so create a Price (with product_data, which Prices DO support) first,
-    // then attach the Price to the subscription.
-    const price = await stripe.prices.create({
-      currency: 'usd',
-      unit_amount: config.amount,
-      recurring: { interval: config.interval, interval_count: 1 },
-      product_data: { name: `Shadow Persuasion - ${config.name}` },
-      metadata: { plan, funnel: 'upsell_app' },
-    });
-
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: price.id }],
-      default_payment_method: paymentMethodId,
-      off_session: true,
-      payment_behavior: 'error_if_incomplete',
-      metadata: {
-        plan,
-        funnel: 'upsell_app',
-        original_pi: paymentIntentId,
+    // then attach the Price to the subscription. Idempotency keys make a
+    // repeated request reuse the same Price/Subscription instead of making
+    // duplicates.
+    const price = await stripe.prices.create(
+      {
+        currency: 'usd',
+        unit_amount: config.amount,
+        recurring: { interval: config.interval, interval_count: 1 },
+        product_data: { name: `Shadow Persuasion - ${config.name}` },
+        metadata: { plan, funnel: 'upsell_app' },
       },
-      expand: ['latest_invoice.payment_intent'],
-    });
+      { idempotencyKey: `upsell_app_price_${paymentIntentId}_${plan}` }
+    );
+
+    const subscription = await stripe.subscriptions.create(
+      {
+        customer: customerId,
+        items: [{ price: price.id }],
+        default_payment_method: paymentMethodId,
+        off_session: true,
+        payment_behavior: 'error_if_incomplete',
+        metadata: {
+          plan,
+          funnel: 'upsell_app',
+          original_pi: paymentIntentId,
+        },
+        expand: ['latest_invoice.payment_intent'],
+      },
+      { idempotencyKey: `upsell_app_sub_${paymentIntentId}_${plan}` }
+    );
 
     // Also pull email from customer (for the subscriptions row).
     const customer = await stripe.customers.retrieve(customerId);
@@ -113,7 +142,6 @@ export async function POST(req: Request) {
     // customer.subscription.created webhook event (which some Stripe dashboards
     // don't expose in their selector UI). The webhook can still flow through
     // customer.subscription.updated/deleted for lifecycle changes.
-    const userId = `stripe_${customerId}`;
     const { error: subInsertErr } = await supabase.from('subscriptions').upsert(
       {
         user_id: userId,
@@ -140,7 +168,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // If Stripe returned a structured error with a requires_action payment intent,
-    // surface that so the client could do 3DS auth (rare for saved cards).
+    // surface that so the client can do 3DS auth (rare for saved cards).
     const stripeErr = err as { raw?: { payment_intent?: { client_secret?: string } } };
     if (stripeErr?.raw?.payment_intent?.client_secret) {
       return NextResponse.json(
@@ -152,6 +180,9 @@ export async function POST(req: Request) {
       );
     }
     console.error('[upsell-app] error:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: 'We could not start your subscription. Your card was not charged. Please try again.' },
+      { status: 500 }
+    );
   }
 }

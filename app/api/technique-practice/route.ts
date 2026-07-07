@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const PRACTICE_SYSTEM_PROMPT = `You are a psychology instructor creating interactive practice scenarios for influence techniques. Generate realistic practice scenarios that test understanding of specific psychological principles.
 
@@ -49,6 +51,9 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Require a logged-in user: this endpoint makes a paid GPT-4o call.
+    await requireAuth(req);
+
     const { techniqueId, techniqueName, description } = await req.json();
 
     if (!techniqueName) {
@@ -140,7 +145,8 @@ export async function POST(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error('[TECHNIQUE_PRACTICE]', error);
-    return NextResponse.json({ error: 'Failed to generate practice scenarios.' }, { status: 500 });
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to generate practice scenarios.', 500, '[TECHNIQUE_PRACTICE]', error);
   }
 }

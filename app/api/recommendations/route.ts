@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const SYSTEM_PROMPT = `You are an expert persuasion coach. Given a user's goal, their recently practiced techniques, and their weak areas, recommend 3-5 techniques they should focus on next.
 

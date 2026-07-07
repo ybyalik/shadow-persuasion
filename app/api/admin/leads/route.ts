@@ -17,6 +17,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/auth-api';
+import { passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +27,7 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   try {
+    await requireAdmin(req);
     const url = new URL(req.url);
     const status = url.searchParams.get('status') || 'all';
     const search = url.searchParams.get('search')?.trim().toLowerCase() || '';
@@ -111,8 +114,9 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[admin/leads GET]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const authFail = passthroughAuthError(err);
+    if (authFail) return authFail;
+    console.error('[admin/leads GET]', err);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

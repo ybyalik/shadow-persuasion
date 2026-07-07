@@ -39,25 +39,44 @@ export default function CheckoutPageWrapper() {
 
 function CheckoutPage() {
   const searchParams = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState<PlanKey>((searchParams.get('plan') as PlanKey) || 'monthly');
+  // Only trust known plan names. A hand-written link, ad, or email could
+  // pass anything (e.g. "annual" or "Yearly"); fall back to monthly so the
+  // page never crashes on an unknown plan.
+  const rawPlan = searchParams.get('plan');
+  const initialPlan: PlanKey = rawPlan && rawPlan in PLANS ? (rawPlan as PlanKey) : 'monthly';
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>(initialPlan);
   const [checkoutKey, setCheckoutKey] = useState(0);
+  const [checkoutError, setCheckoutError] = useState(false);
 
   const fetchClientSecret = useCallback(async () => {
-    const res = await fetch('/api/stripe/create-embedded-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: selectedPlan }),
-    });
-    const data = await res.json();
-    if (data.error) {
-      console.error('Checkout error:', data);
-      throw new Error(data.error);
+    try {
+      const res = await fetch('/api/stripe/create-embedded-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error || !data.clientSecret) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+      return data.clientSecret as string;
+    } catch (err) {
+      // Log the real reason for debugging; show the customer a friendly
+      // retry box instead of a blank payment area.
+      console.error('[checkout] could not start checkout session', err);
+      setCheckoutError(true);
+      throw err;
     }
-    return data.clientSecret;
   }, [selectedPlan, checkoutKey]);
 
   const handlePlanChange = (plan: PlanKey) => {
+    setCheckoutError(false);
     setSelectedPlan(plan);
+    setCheckoutKey(k => k + 1);
+  };
+
+  const retryCheckout = () => {
+    setCheckoutError(false);
     setCheckoutKey(k => k + 1);
   };
 
@@ -197,9 +216,24 @@ function CheckoutPage() {
 
             {/* Stripe form */}
             <div className="bg-white border border-gray-300 border-t-0 rounded-b-xl p-1 min-h-[350px]">
-              <EmbeddedCheckoutProvider key={checkoutKey} stripe={stripePromise} options={{ fetchClientSecret }}>
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
+              {checkoutError ? (
+                <div className="flex flex-col items-center justify-center text-center px-6 py-12 min-h-[350px]">
+                  <p className="font-bold text-[#1A1A1A] mb-2">We couldn&apos;t start checkout</p>
+                  <p className="text-sm text-[#6B5B3E] mb-6 max-w-xs">
+                    Something went wrong on our end and the payment form didn&apos;t load. Please try again in a moment.
+                  </p>
+                  <button
+                    onClick={retryCheckout}
+                    className="bg-[#D4A017] text-[#0A0A0A] font-bold px-8 py-3 rounded-lg hover:bg-[#E8B830] transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+                <EmbeddedCheckoutProvider key={checkoutKey} stripe={stripePromise} options={{ fetchClientSecret }}>
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              )}
             </div>
 
             {/* Security badge below form */}

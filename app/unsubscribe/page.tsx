@@ -102,7 +102,6 @@ function UnsubscribePage() {
                 </p>
               </div>
             </div>
-            <p className="text-[10px] font-mono text-[#5C3A1E]">error: {error}</p>
           </>
         )}
 

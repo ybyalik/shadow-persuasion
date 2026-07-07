@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchKnowledge } from '@/lib/rag';
 import { RAG_ENFORCEMENT } from '@/lib/prompts';
+import { requireAuth } from '@/lib/auth-api';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth(req);
     const body = await req.json();
     const { action } = body;
 
@@ -17,11 +20,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (error) {
-    console.error('[PROFILER]', error);
-    return NextResponse.json(
-      { error: 'Failed to process profiler request.' },
-      { status: 500 }
-    );
+    const authFail = passthroughAuthError(error);
+    if (authFail) return authFail;
+    return apiError('Failed to process profiler request.', 500, '[PROFILER]', error);
   }
 }
 

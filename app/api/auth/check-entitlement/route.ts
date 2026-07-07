@@ -21,6 +21,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { escapeLike } from '@/lib/db-utils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,10 +68,13 @@ export async function POST(req: Request) {
 
     // Primary signal: subscriptions table. Anyone with a sub row whose
     // status is active/trialing, OR whose period hasn't ended yet, gets in.
+    // Exact (case-insensitive) email match. Escape LIKE wildcards so a value
+    // such as "%" cannot match every subscriber and grant free access.
+    const emailPattern = escapeLike(email);
     const { data: subs, error: subErr } = await supabase
       .from('subscriptions')
       .select('status, current_period_end, plan')
-      .ilike('email', email);
+      .ilike('email', emailPattern);
     if (subErr) throw subErr;
 
     const now = new Date();
@@ -101,7 +105,7 @@ export async function POST(req: Request) {
     const { data: recentOrders } = await supabase
       .from('orders')
       .select('items, status, created_at')
-      .ilike('email', email)
+      .ilike('email', emailPattern)
       .eq('status', 'paid')
       .order('created_at', { ascending: false })
       .limit(5);
@@ -117,11 +121,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ entitled: false, reason: 'no_subscription' });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[auth/check-entitlement]', msg);
+    console.error('[auth/check-entitlement]', err);
     // Fail closed — if the DB is down, don't create orphan Firebase users.
+    // Do not leak the raw error to the browser.
     return NextResponse.json(
-      { entitled: false, reason: 'error', error: msg },
+      { entitled: false, reason: 'error' },
       { status: 500 }
     );
   }

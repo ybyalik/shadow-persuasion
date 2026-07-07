@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-client';
 import {
   Users,
   ShoppingBag,
@@ -38,7 +39,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/dashboard')
+    apiFetch('/api/admin/dashboard')
       .then((r) => r.json())
       .then((data) => setStats(data.stats ?? null))
       .catch(() => {})
