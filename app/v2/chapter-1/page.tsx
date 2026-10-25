@@ -1,9 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
 import { CHAPTER_ONE_HTML } from '@/lib/sp2/content.generated';
+import { FREE_CHAPTER_V3_HTML, FREE_CHAPTER_V3_TITLE } from '@/lib/sp2/free-chapter-v3.generated';
+import { IS_V3 } from '@/lib/edition';
+
+const FREE_HTML = IS_V3 ? FREE_CHAPTER_V3_HTML : CHAPTER_ONE_HTML;
+const FREE_KICKER = IS_V3 ? 'Free chapter · Chapter 4' : 'Free chapter · Chapter 1';
+const FREE_TITLE = IS_V3 ? FREE_CHAPTER_V3_TITLE : 'The 3 A.M. Replay';
 
 // The chapter text comes from lib/sp2/content.generated.ts (maintained separately). Its title below must match it.
-export const metadata = { title: 'Chapter 1: The 3 A.M. Replay | Shadow Persuasion: The Hidden Rules of Power' };
+export const metadata = { title: `Free chapter: ${FREE_TITLE} | Shadow Persuasion: The Hidden Rules of Power` };
 
 export default async function ChapterOnePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { welcome } = await searchParams;
@@ -20,8 +26,8 @@ export default async function ChapterOnePage({ searchParams }: { searchParams: P
         </div>
         <div className="max-w-[720px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-6">
           <img src="/v2/lino/replay.jpg" alt="" aria-hidden className="w-full" />
-          <p className="sp2-kicker mt-10">Free chapter · Chapter 1</p>
-          <h1 className="sp2-h1">The 3 A.M. Replay</h1>
+          <p className="sp2-kicker mt-10">{FREE_KICKER}</p>
+          <h1 className="sp2-h1">{FREE_TITLE}</h1>
         </div>
       </header>
 
@@ -31,7 +37,7 @@ export default async function ChapterOnePage({ searchParams }: { searchParams: P
             You&apos;re in. We&apos;ve also emailed you a link to this chapter, so you can come back to it anytime.
           </div>
         )}
-        <div className="sp2-prose" dangerouslySetInnerHTML={{ __html: CHAPTER_ONE_HTML }} />
+        <div className="sp2-prose" dangerouslySetInnerHTML={{ __html: FREE_HTML }} />
 
         <div className="mt-16 rounded-xl overflow-hidden bg-[color:var(--sp2-night)] text-[#e9e2d6] shadow-2xl">
           <img src="/v2/img/bundle-hero.jpg" alt="The Shadow Persuasion paperback with the journal and bonuses" className="w-full aspect-[16/9] object-cover" />

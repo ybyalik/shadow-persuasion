@@ -589,7 +589,7 @@ export default async function AnglePage({ params }: { params: Promise<{ angle: s
             <img src={`${LINO}/desk.jpg`} alt="A desk at night with an open notebook under a lamp" className="w-full sp2-soft" loading="lazy" />
           </div>
           <div className="lg:col-span-5 lg:col-start-8">
-            <Heading kicker="Not sure yet?">Read the opening free.</Heading>
+            <Heading kicker="Not sure yet?">Read a chapter free.</Heading>
             <p className="sp2-lead mt-6 mb-8 text-[color:var(--sp2-muted)]">It starts with the conversation people replay at 3 a.m., and what that replay is telling them.</p>
             <SubscribeForm />
           </div>

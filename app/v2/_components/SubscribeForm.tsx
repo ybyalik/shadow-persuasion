@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { captureUtms, getUtms } from '@/lib/utm';
 
-export function SubscribeForm({ buttonLabel = 'Send me Chapter 1', compact = false }: { buttonLabel?: string; compact?: boolean }) {
+export function SubscribeForm({ buttonLabel = 'Send me the free chapter', compact = false }: { buttonLabel?: string; compact?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');

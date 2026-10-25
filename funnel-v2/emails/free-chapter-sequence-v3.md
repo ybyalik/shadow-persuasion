@@ -6,7 +6,7 @@
 
 **From:** Nate Harlan
 
-**Assumes:** the free chapter is Chapter 1, "Power Is Having a Say". If the funnel gives away a different chapter, change Emails 1 and 2.
+**Assumes:** the free chapter is Chapter 4, "The Voice That Keeps You Stuck" (it opens with the 3 a.m. replay), served at /v2/chapter-1. If the funnel gives away a different chapter, change Emails 1 and 2.
 
 **Offer facts used (check before launch):** paperback $67 with US shipping included; the digital edition; The 21-Day Power Reset Journal; three bonuses (The Tactic Spotter, The Conversation Planner, The Power Map and Decision Cards); 60 days of the companion app, then $9.99 a month if you keep it, cancel anytime; 30-day money-back guarantee.
 
@@ -14,8 +14,8 @@
 
 | # | Send on | Subject |
 |---|---|---|
-| 1 | Day 0 | Your free chapter (and four questions) |
-| 2 | Day 1 | The question most people skip |
+| 1 | Day 0 | Your free chapter (the 3 a.m. replay) |
+| 2 | Day 1 | Always almost ready |
 | 3 | Day 2 | The fastest habit to change |
 | 4 | Day 3 | Rules you never agreed to |
 | 5 | Day 5 | What's in the book, and in what order |
@@ -39,20 +39,20 @@
 
 ## Email 1 (Day 0)
 
-**Subject:** Your free chapter (and four questions)
-**Preview:** Start with one situation where you felt you had no say.
+**Subject:** Your free chapter (the 3 a.m. replay)
+**Preview:** The perfect reply always shows up twelve hours late.
 
 Hi {{first_name}},
 
-Here's your free chapter of *Shadow Persuasion: The Hidden Rules of Power*: "Power Is Having a Say."
+Here's your free chapter of *Shadow Persuasion: The Hidden Rules of Power*: "The Voice That Keeps You Stuck."
 
-[Read Chapter 1]({{chapter_link}})
+[Read the free chapter]({{chapter_link}})
 
-It starts with Marcus, who runs a warehouse shift of forty people. At work, his word settles things. Then his brother calls about their father's house, and Marcus agrees to a plan he hasn't even thought through.
+It opens at 3:10 in the morning. Andre runs a small remodeling company and handles difficult customers every week without trouble. But at Sunday dinner, his brother-in-law made a joke about his business, everyone laughed, and Andre passed the potatoes. Now he's awake, rewriting what he should have said.
 
-He is the same capable person in both places. What changes is something he can't quite see: who decides, who depends on whom, and the unspoken rules of the family he grew up in.
+The chapter is about why that happens, and about the quiet voice that argues for the other side: "It was just a joke. Don't be so sensitive." It also shows what Andre does instead of another speech at 3 a.m.
 
-At the end of the chapter there are four short questions. Pick one situation from the last month that left you feeling you had no say, and write down your answers. It takes a few minutes. Don't act on them yet.
+At the end there's one small thing to try today. It takes a few minutes, and it's worth doing tonight rather than someday.
 
 Over the next few weeks I'll send you some short notes, each one with a single idea you can use straight away. If they're not useful, the unsubscribe link is at the bottom.
 
@@ -62,22 +62,20 @@ Nate
 
 ## Email 2 (Day 1)
 
-**Subject:** The question most people skip
-**Preview:** What will you do if the answer is no?
+**Subject:** Always almost ready
+**Preview:** The email that sat in drafts for five months.
 
 Hi {{first_name}},
 
-If you tried the four questions from Chapter 1, the last one was probably the hardest:
+In the free chapter there's a woman named Natalie. For two years she has wanted to apply for the team lead role. First she wanted to finish a course. Then to wait until after the reorganization. Then she drafted an email asking what the role required. It sat in her drafts folder for five months.
 
-**What will I do if the answer is no?**
+The book calls this being "always almost ready": preparing endlessly, waiting to feel confident, polishing the draft that never gets sent. It feels responsible. It also protects you, because as long as you're still getting ready, nobody can say no.
 
-Most people skip it. They plan what to say, and they hope. But if you have no plan for a no, you will accept almost anything to avoid hearing one.
+The cost is slower and larger. Someone else asks. The years pass.
 
-You don't need a dramatic answer. "I'll ask someone else." "I'll stop covering the extra shift." "I'll get the estimate in writing before I agree to pay." Any real option you could live with changes how the next conversation feels.
+Readiness is usually a feeling that comes after action, not before it. So today, pick one thing you've been almost ready to do, and do the smallest real part of it. Send the one question. Book the call. Ask what the requirements are.
 
-The book calls this the No-Agreement Plan: what you will do if the answer is still no. It's introduced in Chapter 18 and covered in full in Chapter 28.
-
-For now, go back to your answers and write one line under question four.
+Then notice what the voice in your head predicted, and what actually happened.
 
 Nate
 
