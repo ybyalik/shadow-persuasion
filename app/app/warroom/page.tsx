@@ -2,11 +2,16 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Bookmark, Check, Mic, Trash2, Wind } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Bookmark, Check, Mic, Printer, Trash2, Wind } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { usePeople, PersonPicker } from '@/components/app/PersonPicker';
 import { PageHeader, Card, Label, Button, inputClass, Notice, BookRef, friendlyError } from '@/components/app/ui';
-import { BONUSES, CHAPTERS_V3, byEdition } from '@/lib/edition';
+import { BONUSES, CHAPTERS_V3, IS_V3, byEdition } from '@/lib/edition';
+import { FAIR_TESTS } from '@/lib/tool-cards';
+import type { PlanFairness, PlanNoAgreement, PlanPowerMap } from '@/app/api/warroom/route';
+
+type Primer = { reframe: string; grounding: string; powerAnchor: string; mantra: string };
 
 type Plan = {
   safety: string | null;
@@ -20,7 +25,13 @@ type Plan = {
   ifItGoesBadly: string;
   close: { goodEnding: string; lockIn: string; firstStep: string };
   breathe: string;
+  walkInLine?: string;
+  powerMap?: PlanPowerMap;
+  noAgreement?: PlanNoAgreement;
+  fairness?: PlanFairness;
 };
+
+const FAIR_KEYS = ['honest', 'know', 'choice', 'power'] as const;
 
 type Inputs = { personId: string; counterpart: string; situation: string; goal: string; fear: string };
 
@@ -62,6 +73,9 @@ const PLAN_REFS = byEdition({
     opening: { chapter: 21, title: 'Being Heard Without a Fight' },
     hold: { chapter: 10, title: 'Week 3, Hold' },
     close: { chapter: 25, title: 'Making It Stick' },
+    powerMap: { chapter: 2, title: CHAPTERS_V3[2] },
+    noAgreement: { chapter: 28, title: CHAPTERS_V3[28] },
+    fairness: { chapter: 30, title: CHAPTERS_V3[30] },
     planner: 'The Hard Conversation Planner (free bonus)',
   },
   v3: {
@@ -69,6 +83,9 @@ const PLAN_REFS = byEdition({
     opening: { chapter: 17, title: CHAPTERS_V3[17] },
     hold: { chapter: 34, title: CHAPTERS_V3[34] },
     close: { chapter: 22, title: CHAPTERS_V3[22] },
+    powerMap: { chapter: 2, title: CHAPTERS_V3[2] },
+    noAgreement: { chapter: 28, title: CHAPTERS_V3[28] },
+    fairness: { chapter: 30, title: CHAPTERS_V3[30] },
     planner: `${BONUSES.planner} (comes with the book)`,
   },
 });
@@ -101,6 +118,23 @@ function PlanConversation() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<Saved[]>([]);
+  // The reader's own edits to a saved plan (No-Agreement Plan, fairness ticks) not yet saved.
+  const [dirty, setDirty] = useState(false);
+  const [primer, setPrimer] = useState<Primer | null>(null);
+  const [primerLoading, setPrimerLoading] = useState(false);
+  const [primerError, setPrimerError] = useState(false);
+  // 'card' while printing just the walk-in card.
+  const [printing, setPrinting] = useState<'card' | null>(null);
+
+  useEffect(() => {
+    const done = () => setPrinting(null);
+    window.addEventListener('afterprint', done);
+    return () => window.removeEventListener('afterprint', done);
+  }, []);
+
+  useEffect(() => {
+    if (printing) window.print();
+  }, [printing]);
 
   const set = (k: keyof Inputs) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -139,6 +173,8 @@ function PlanConversation() {
       setPlan(data.result);
       setPlanInputs(inputs);
       setSavedId(null);
+      setDirty(false);
+      setPrimer(null);
       window.scrollTo({ top: 0 });
     } catch {
       setError('Could not reach the app. Check your connection and try again.');
@@ -171,6 +207,55 @@ function PlanConversation() {
     }
   };
 
+  const getPrimer = async () => {
+    if (!planInputs || primerLoading) return;
+    setPrimerLoading(true);
+    setPrimerError(false);
+    try {
+      const res = await apiFetch('/api/primer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ situation: planInputs.situation, goal: planInputs.goal, counterpart: planInputs.counterpart }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.result) setPrimer(data.result);
+      else setPrimerError(true);
+    } catch {
+      setPrimerError(true);
+    } finally {
+      setPrimerLoading(false);
+    }
+  };
+
+  /** The reader edits their No-Agreement Plan or ticks a fairness box. */
+  const editPlan = (fn: (p: Plan) => Plan) => {
+    setPlan((p) => (p ? fn(p) : p));
+    if (savedId) setDirty(true);
+  };
+
+  const saveChanges = async () => {
+    if (!plan || !savedId || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await apiFetch('/api/warroom/plans', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: savedId, plan }),
+      });
+      if (!res.ok) {
+        setError(await friendlyError(res, "Couldn't save your changes. Please try again."));
+        return;
+      }
+      setDirty(false);
+      setSaved((list) => list.map((s) => (s.id === savedId ? { ...s, plan } : s)));
+    } catch {
+      setError('Could not reach the app. Check your connection and try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const remove = async (id: string) => {
     if (!window.confirm('Remove this saved plan?')) return;
     const res = await apiFetch(`/api/warroom/plans?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => null);
@@ -188,6 +273,8 @@ function PlanConversation() {
       fear: s.fear || '',
     });
     setSavedId(s.id);
+    setDirty(false);
+    setPrimer(null);
     setError(null);
     window.scrollTo({ top: 0 });
   };
@@ -204,22 +291,40 @@ function PlanConversation() {
   // ---------- THE PLAN ----------
   if (plan && planInputs) {
     const who = planInputs.counterpart || 'them';
+    // While printing the walk-in card, everything else is left off the page.
+    const notCard = printing === 'card' ? 'print:hidden' : '';
+    const showV3 = IS_V3;
+    const pm = showV3 ? plan.powerMap : undefined;
+    const na = showV3 ? plan.noAgreement : undefined;
+    const fair = showV3 ? plan.fairness : undefined;
+    const setNa = (k: keyof PlanNoAgreement) => (v: string) =>
+      editPlan((p) => (p.noAgreement ? { ...p, noAgreement: { ...p.noAgreement, [k]: v } } : p));
+    const toggleTick = (i: number) =>
+      editPlan((p) => {
+        if (!p.fairness) return p;
+        const ticks = [0, 1, 2, 3].map((j) => Boolean(p.fairness?.ticks?.[j]));
+        ticks[i] = !ticks[i];
+        return { ...p, fairness: { ...p.fairness, ticks } };
+      });
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <button
           onClick={() => setPlan(null)}
-          className="mb-4 inline-flex min-h-[44px] items-center gap-1 text-[15px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]"
+          className="mb-4 print:hidden inline-flex min-h-[44px] items-center gap-1 text-[15px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
 
-        <PageHeader
-          kicker="Your plan"
-          title={planInputs.counterpart ? `Talking with ${planInputs.counterpart}` : 'Your conversation plan'}
-          subtitle={planInputs.situation}
-        />
+        <div className={notCard}>
+          <PageHeader
+            kicker="Your plan"
+            title={planInputs.counterpart ? `Talking with ${planInputs.counterpart}` : 'Your conversation plan'}
+            subtitle={planInputs.situation}
+          />
+        </div>
 
         <div className="space-y-4">
+          <div className={`space-y-4 ${notCard}`}>
           {plan.safety && <Notice tone="warn">{plan.safety}</Notice>}
           {plan.fairerGoal && <Notice>{plan.fairerGoal}</Notice>}
           {error && <Notice tone="error">{error}</Notice>}
@@ -238,15 +343,113 @@ function PlanConversation() {
             </p>
           </Card>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 print:hidden">
             <Button href={rehearseHref(planInputs)} variant="gold">
               <Mic className="h-4 w-4" /> Rehearse this
             </Button>
-            <Button variant="ghost" onClick={save} loading={saving} disabled={Boolean(savedId)}>
-              {savedId ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-              {savedId ? 'Saved' : 'Save this plan'}
-            </Button>
+            {savedId && dirty ? (
+              <Button variant="ghost" onClick={saveChanges} loading={saving}>
+                <Bookmark className="h-4 w-4" /> Save changes
+              </Button>
+            ) : (
+              <Button variant="ghost" onClick={save} loading={saving} disabled={Boolean(savedId)}>
+                {savedId ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                {savedId ? 'Saved' : 'Save this plan'}
+              </Button>
+            )}
           </div>
+
+          {/* Steady your nerves (the calm primer, /api/primer) */}
+          <div className="print:hidden">
+            {!primer ? (
+              <div>
+                <Button variant="ghost" onClick={getPrimer} loading={primerLoading}>
+                  {!primerLoading && <Wind className="h-4 w-4" />}
+                  {primerLoading ? 'One moment...' : 'Nervous? Steady your nerves'}
+                </Button>
+                {primerError && (
+                  <p className="mt-2 text-[14px] text-[color:var(--app-muted)]">That didn&apos;t load just now. Try again in a moment.</p>
+                )}
+              </div>
+            ) : (
+              <Card>
+                <Label>Steady your nerves</Label>
+                <p className="text-[16px] leading-relaxed">{primer.reframe}</p>
+                {primer.grounding && (
+                  <p className="mt-3 text-[15px] leading-relaxed">
+                    <span className="font-semibold">Right now:</span> {primer.grounding}
+                  </p>
+                )}
+                {primer.powerAnchor && (
+                  <p className="mt-2 text-[15px] leading-relaxed">
+                    <span className="font-semibold">Why it&apos;s fair to ask:</span> {primer.powerAnchor}
+                  </p>
+                )}
+                <p className="app-serif mt-4 text-[20px] leading-snug">&ldquo;{primer.mantra}&rdquo;</p>
+              </Card>
+            )}
+          </div>
+          </div>
+
+          {/* Walk-in card: a pocket summary, printable on its own */}
+          <Card tone="gold" className="print:border-black print:bg-white print:text-black">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <Label>Walk-in card</Label>
+              <button
+                onClick={() => setPrinting('card')}
+                className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)] print:hidden"
+              >
+                <Printer className="h-4 w-4" /> Print card
+              </button>
+            </div>
+            <p className="app-type text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-muted)] print:text-black">Open with</p>
+            <p className="app-serif mt-1 text-[19px] leading-snug">&ldquo;{plan.openingLine}&rdquo;</p>
+            <p className="app-type mt-4 text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-muted)] print:text-black">Three moves</p>
+            <ol className="mt-1 space-y-1 text-[16px] leading-snug">
+              {plan.threeMoves?.slice(0, 3).map((m, i) => (
+                <li key={i}>
+                  {i + 1}. {m.move}
+                </li>
+              ))}
+            </ol>
+            <p className="app-type mt-4 text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-muted)] print:text-black">Remember</p>
+            <p className="mt-1 text-[16px] font-semibold leading-snug">{plan.walkInLine || plan.wontDo}</p>
+          </Card>
+
+          <div className={`space-y-4 ${notCard}`}>
+          {pm && (
+            <Card>
+              <Label>The Power Map of this decision</Label>
+              <p className="mb-3 text-[15px] text-[color:var(--app-muted)]">
+                Who decides, what each person needs, and where authority, resources and alternatives sit. Anything marked guess is a guess, however sure it feels.
+              </p>
+              <dl className="space-y-3 text-[16px] leading-relaxed">
+                <MapRow label="Who decides">{pm.whoDecides}</MapRow>
+                {pm.needs?.length > 0 && (
+                  <MapRow label="What each person needs">
+                    <ul className="space-y-1">
+                      {pm.needs.map((n, i) => (
+                        <li key={i}>
+                          <span className="font-semibold">{n.who}:</span> {n.need}{' '}
+                          <span className="app-type text-[11px] uppercase tracking-[0.12em] text-[color:var(--app-muted)]">({n.basis || 'guess'})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </MapRow>
+                )}
+                <MapRow label="Resources">{pm.resources}</MapRow>
+                <MapRow label="Who knows what">{pm.whoKnows}</MapRow>
+                <MapRow label="Options if this doesn't work out">{pm.options}</MapRow>
+                <MapRow label="One fact to check before you talk">{pm.factToCheck}</MapRow>
+              </dl>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <BookRef chapter={PLAN_REFS.powerMap.chapter} title={PLAN_REFS.powerMap.title} />
+                <Link href="/app/power-map" className="text-[14px] text-[color:var(--app-accent)] underline print:hidden">
+                  Map it in full
+                </Link>
+              </div>
+            </Card>
+          )}
 
           <Card>
             <Label>What&apos;s going on for them</Label>
@@ -333,6 +536,65 @@ function PlanConversation() {
             <p className="mt-2 text-[15px] text-[color:var(--app-muted)]">Leaving a conversation isn&apos;t losing it.</p>
           </Card>
 
+          {na && (
+            <Card>
+              <Label>My No-Agreement Plan</Label>
+              <p className="mb-4 text-[15px] text-[color:var(--app-muted)]">
+                What you will do if the answer is still no. It&apos;s for your own steadiness, not a threat. Change anything so it fits your life.
+              </p>
+              <div className="space-y-4">
+                <EditField label="If they say no, I will" value={na.ifNo} onChange={setNa('ifNo')} />
+                <EditField label="While I wait for something better, I will" value={na.meanwhile} onChange={setNa('meanwhile')} />
+                <div className="rounded-lg bg-[color:var(--app-paper-2)] p-4">
+                  <p className="mb-2 text-[15px] font-semibold">My line</p>
+                  <div className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+                    <span className="text-[15px]">If</span>
+                    <input aria-label="If this" value={na.ifNot} onChange={(e) => setNa('ifNot')(e.target.value)} className={inputClass} />
+                    <span className="text-[15px]">hasn&apos;t happened by</span>
+                    <input aria-label="By when" value={na.by} onChange={(e) => setNa('by')(e.target.value)} className={inputClass} />
+                    <span className="text-[15px]">I will</span>
+                    <input aria-label="I will" value={na.iWill} onChange={(e) => setNa('iWill')(e.target.value)} className={inputClass} />
+                  </div>
+                </div>
+                <p className="text-[14px] text-[color:var(--app-muted)]">
+                  Mention it only if it&apos;s relevant, only if you mean it, and only once, as information. Keep written plans somewhere private.
+                </p>
+              </div>
+              <div className="mt-4">
+                <BookRef chapter={PLAN_REFS.noAgreement.chapter} title={PLAN_REFS.noAgreement.title} />
+              </div>
+            </Card>
+          )}
+
+          {fair && (
+            <Card>
+              <Label>Fairness check</Label>
+              <p className="mb-4 text-[15px] text-[color:var(--app-muted)]">
+                Run The Four Fair Influence Tests on your own plan before you say your opening line. Tick each one you can honestly answer yes to.
+              </p>
+              <ul className="space-y-3">
+                {FAIR_TESTS.map((q, i) => {
+                  const on = Boolean(fair.ticks?.[i]);
+                  return (
+                    <li key={q}>
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input type="checkbox" checked={on} onChange={() => toggleTick(i)} className="mt-1 h-5 w-5 shrink-0 accent-[color:var(--app-ink)]" />
+                        <span>
+                          <span className="block text-[16px] font-semibold">{q}</span>
+                          {fair[FAIR_KEYS[i]] && <span className="block text-[15px] leading-relaxed text-[color:var(--app-muted)]">{fair[FAIR_KEYS[i]]}</span>}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-4 text-[14px] text-[color:var(--app-muted)]">If any box stays empty, change the plan before you change the wording.</p>
+              <div className="mt-4">
+                <BookRef chapter={PLAN_REFS.fairness.chapter} title={PLAN_REFS.fairness.title} />
+              </div>
+            </Card>
+          )}
+
           <Card>
             <Label>How to close and make it stick</Label>
             <p className="text-[16px] leading-relaxed">
@@ -348,7 +610,7 @@ function PlanConversation() {
             </div>
           </Card>
 
-          <div className="flex flex-wrap gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2 print:hidden">
             <Button href={rehearseHref(planInputs)} variant="gold">
               <Mic className="h-4 w-4" /> Rehearse this
             </Button>
@@ -361,6 +623,7 @@ function PlanConversation() {
             >
               Plan another conversation
             </Button>
+          </div>
           </div>
         </div>
       </div>
@@ -473,6 +736,25 @@ function Field({
       ) : (
         <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputClass} />
       )}
+    </label>
+  );
+}
+
+function MapRow({ label, children }: { label: string; children: React.ReactNode }) {
+  if (!children) return null;
+  return (
+    <div>
+      <dt className="text-[14px] font-semibold text-[color:var(--app-muted)]">{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[15px] font-semibold">{label}</span>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2} className={inputClass} />
     </label>
   );
 }

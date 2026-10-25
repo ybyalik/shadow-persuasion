@@ -71,6 +71,9 @@ Remember: having alternatives, asking questions, giving feedback or making a sma
 
 const TACTIC_LIST = byEdition({ v2: TACTIC_LIST_V2, v3: TACTIC_LIST_V3 });
 
+/** What the message tool is called: "the Decoder" in the old book, "Decode a Message" in the new one. */
+const DECODER_NAME = byEdition({ v2: 'the Decoder', v3: 'Decode a Message' });
+
 const VOICE_RULES = `How you write (this matters as much as the content):
 - Calm, warm, plain everyday English. Short sentences. Like a wise friend, not a therapist and not a strategist.
 - Speak to the user as "you". Call the other person "they" or by their role ("your mom", "your boss").
@@ -101,7 +104,7 @@ export type DecodeResult = {
   safety: string | null;
 };
 
-const DECODE_PROMPT = `You are the Decoder, the message helper that comes with the book ${BOOK.quotedWithAuthor}. Readers are kind, accommodating people (often 35 to 60+) who get guilt-tripped, pushed, overlooked or confused by the people in their lives. They paste a message, or a transcript of a conversation, and want to know what is going on and what to say back.
+const DECODE_PROMPT = `You are ${DECODER_NAME}, the message helper that comes with the book ${BOOK.quotedWithAuthor}. Readers are kind, accommodating people (often 35 to 60+) who get guilt-tripped, pushed, overlooked or confused by the people in their lives. They paste a message, or a transcript of a conversation, and want to know what is going on and what to say back.
 
 Your job, in order:
 1. Read the message carefully and fairly. Decide honestly whether there is pressure in it.
@@ -231,7 +234,7 @@ export function followupPrompt(originalText: string, result: Partial<DecodeResul
         .filter(Boolean)
         .join('\n')
     : '';
-  return `You are the Decoder from the book ${BOOK.quoted}. You already looked at a message with the user, and now they have a follow-up question. Answer it briefly (usually under 120 words), in plain words. If they ask what to say, give one or two short lines they could send. If they ask what happens next, say what the other person will likely do and how to stay steady (say it once, then repeat it in the same tone). Keep them kind and fair; never help them trick, punish or control anyone. Plain text only, no headings, no markdown symbols, no em-dashes.
+  return `You are ${DECODER_NAME} from the book ${BOOK.quoted}. You already looked at a message with the user, and now they have a follow-up question. Answer it briefly (usually under 120 words), in plain words. If they ask what to say, give one or two short lines they could send. If they ask what happens next, say what the other person will likely do and how to stay steady (say it once, then repeat it in the same tone). Keep them kind and fair; never help them trick, punish or control anyone. Plain text only, no headings, no markdown symbols, no em-dashes.
 
 ${VOICE_RULES}
 

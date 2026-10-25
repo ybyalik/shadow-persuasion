@@ -1,0 +1,2634 @@
+{
+ "title": "100 Ready-to-Use Replies",
+ "subtitle": "Calm, clear wording for the moments when you need the right sentence fast. A companion to Shadow Persuasion: The Hidden Rules of Power.",
+ "intro": [
+  {
+   "heading": "How to use this",
+   "html": "<p>This is a phrasebook for hard moments. Each of the 100 replies covers one real situation, at work, with a partner, an ex, family, friends, money or a group, and gives you three ways to say it. Find your situation in one of the two indexes below, pick the wording that sounds most like you, and change any words that don’t fit. Most replies are short, because a short, calm sentence gives the other person less to argue with. But no wording works every time, and none of these is a magic line. They are a starting point, so that when your mind goes blank you still have something steady to say.</p>"
+  },
+  {
+   "heading": "How each reply is set up",
+   "html": "<ul>\n<li><strong>The situation</strong> in one line, as the heading.</li>\n<li><strong>The task:</strong> what the reply is for. Asking, declining, clarifying, trading, following up or repairing.</li>\n<li><strong>Three wording options.</strong> Usually warm, direct and final. “Final” never means a threat. It means closing the exchange or saying what you will do next. Requests, apologies and confirmations don’t need a harder version, so those get other options, such as a written or text version.</li>\n<li><strong>When it fits:</strong> when to use it, and when not to.</li>\n</ul>"
+  },
+  {
+   "heading": "A few things that help",
+   "html": "<p>Use a “Confirming” option only after both people have agreed to those terms. If a date, task or condition is new, present it as a proposal.</p>\n<ol type=\"1\">\n<li><strong>Say it once, then pause.</strong> Extra reasons and apologies give people more to push against. A short silence after a calm sentence is fine.</li>\n<li><strong>If they push, you can repeat yourself.</strong> You don’t need a new argument each time. Often the same sentence, in the same tone, is enough. If it isn’t, that’s the moment for <strong>The No-Agreement Plan</strong>: what you will do if the answer is still no (Chapter 28, When They Still Say No).</li>\n<li><strong>Make it yours.</strong> If a line sounds stiff in your mouth, change the words and keep the shape.</li>\n<li><strong>Check that it’s fair.</strong> Every reply here passes <strong>The Four Fair Influence Tests</strong>: Is it honest? Do they know what they are agreeing to? Can they make a real choice without unfair pressure or punishment? Am I using my power responsibly? Keep it that way when you adapt them.</li>\n<li><strong>Records stay private.</strong> Several replies suggest confirming things in writing or saving messages. Keep anything you save somewhere only you can reach, not on a shared phone, shared computer or shared account. Remember that work email and work devices can usually be read by your employer.</li>\n</ol>"
+  },
+  {
+   "heading": "When words are not the answer",
+   "html": "<p>There are no scripts in this book for threats, violence or fear, on purpose. If someone is threatening you, hurting you, following or tracking you, checking your phone, or controlling your money, a better sentence is not what will help. Confronting them, even with someone else in the room, is not a safety plan.</p>\n<p>Instead:</p>\n<ul>\n<li>Read Chapter 11, When Pressure Becomes Danger.</li>\n<li>In the US, contact the <strong>National Domestic Violence Hotline</strong>: call <strong>1-800-799-7233</strong>, or text <strong>START</strong> to <strong>88788</strong>. You don’t have to be sure it “counts.” Men contact them too.</li>\n<li>If you are in immediate danger, call <strong>911</strong>.</li>\n<li>If someone may be checking your phone, contact help from a device they can’t reach, such as a friend’s phone, a work phone or a library computer.</li>\n<li>If someone threatens you or your job at work, keep notes somewhere safe (not on work devices), and talk to HR or an employment lawyer.</li>\n<li>If you, or someone you are talking with, have thoughts of suicide or self-harm, that is a different kind of help. Call or text the <strong>988 Suicide and Crisis Lifeline</strong> (988 in the US). If someone threatens to hurt themselves to make you do something, take the threat seriously, contact 988 or 911, and see Chapter 11.</li>\n</ul>\n<p>Outside the US, local hotlines and support services exist in most countries.</p>"
+  }
+ ],
+ "groups": [
+  {
+   "name": "Work",
+   "note": null
+  },
+  {
+   "name": "Partner",
+   "note": null
+  },
+  {
+   "name": "An ex (practical matters)",
+   "note": "<p>These replies are for everyday, practical contact: belongings, handovers, schedules and arrangements you’ve already agreed. Anything involving custody, support or a formal agreement is a legal matter. Talk to a family lawyer. Keep messages with an ex short and factual, and save them somewhere your ex can’t reach, not on a shared phone, tablet or account.</p>"
+  },
+  {
+   "name": "Parents and family",
+   "note": null
+  },
+  {
+   "name": "Friends",
+   "note": null
+  },
+  {
+   "name": "Money and services",
+   "note": null
+  },
+  {
+   "name": "Groups",
+   "note": null
+  }
+ ],
+ "tasks": [
+  {
+   "key": "asking",
+   "label": "Asking",
+   "description": "making a request or raising a problem"
+  },
+  {
+   "key": "declining",
+   "label": "Declining",
+   "description": "saying no, or less"
+  },
+  {
+   "key": "clarifying",
+   "label": "Clarifying",
+   "description": "asking a question or getting the facts straight"
+  },
+  {
+   "key": "trading",
+   "label": "Trading",
+   "description": "offering one thing for another"
+  },
+  {
+   "key": "following up",
+   "label": "Following up",
+   "description": "checking on, or confirming, what was agreed"
+  },
+  {
+   "key": "repairing",
+   "label": "Repairing",
+   "description": "fixing a harsh moment or a rushed yes"
+  }
+ ],
+ "common": [
+  {
+   "label": "A parent who criticizes, compares or guilt-trips",
+   "text": "45 to 52, 64"
+  },
+  {
+   "label": "Overlooked at work, or someone took the credit",
+   "text": "2, 3, 4, 7, 14"
+  },
+  {
+   "label": "A family favor that turned into a debt",
+   "text": "49, 53, 54, 55"
+  },
+  {
+   "label": "An ex who keeps reopening practical agreements",
+   "text": "34 to 44"
+  }
+ ],
+ "replies": [
+  {
+   "number": 1,
+   "title": "Your manager adds a new project when you are already full",
+   "short": "New project when you're full",
+   "group": "Work",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like to do this well. To fit it in, which of my current projects should move back?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'm at capacity. If this comes first, the monthly report slips to next Friday. Is that the trade you want?"
+    },
+    {
+     "label": "Final",
+     "text": "I can't add it without dropping something. Tell me which one moves, and I'll let the people waiting on it know."
+    }
+   ],
+   "whenItFits": "<p>You really are full, and your manager sets priorities. Bring your current list so the choice is concrete (Chapter 23, Work, Pay, and Recognition).</p>",
+   "whenItFitsText": "You really are full, and your manager sets priorities. Bring your current list so the choice is concrete (Chapter 23, Work, Pay, and Recognition)."
+  },
+  {
+   "number": 2,
+   "title": "A coworker repeats your idea in a meeting and gets the credit",
+   "short": "Coworker repeats your idea",
+   "group": "Work",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Glad that's getting traction. It builds on what I raised earlier, so let me add the next step I had in mind."
+    },
+    {
+     "label": "Direct",
+     "text": "That's the point I made a few minutes ago. I'd like to walk everyone through how I'd run it."
+    },
+    {
+     "label": "Final (to your manager, after the meeting)",
+     "text": "The scheduling idea I raised today ended up credited to someone else. I'd like to lead it. Can we talk this week?"
+    }
+   ],
+   "whenItFits": "<p>Say it calmly in the moment and add something new, so you are linked to the work. The aim is credit, not shaming anyone. If it keeps happening, use the third line.</p>",
+   "whenItFitsText": "Say it calmly in the moment and add something new, so you are linked to the work. The aim is credit, not shaming anyone. If it keeps happening, use the third line."
+  },
+  {
+   "number": 3,
+   "title": "Your manager sends your work upward without your name on it",
+   "short": "Your work sent up without your name",
+   "group": "Work",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I was glad to see the analysis go to leadership. Next time, could I present the part I built?"
+    },
+    {
+     "label": "Direct",
+     "text": "The report went up without my name. I'd like to be credited on work I lead. Can we agree on that from now on?"
+    },
+    {
+     "label": "Final",
+     "text": "For the next phase, I'll put my name and the date on each draft I share, so it's clear who built what."
+    }
+   ],
+   "whenItFits": "<p>Ask for a specific change going forward rather than an apology for the past. Keep your own dated copies of your work, but remember that work email and work devices can usually be read by your employer.</p>",
+   "whenItFitsText": "Ask for a specific change going forward rather than an apology for the past. Keep your own dated copies of your work, but remember that work email and work devices can usually be read by your employer."
+  },
+  {
+   "number": 4,
+   "title": "A coworker writes up shared work as if it were theirs alone",
+   "short": "Shared work written up as theirs",
+   "group": "Work",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm (privately)",
+     "text": "In the update, the project read as yours alone. Next time, can we list who did which part?"
+    },
+    {
+     "label": "Direct (to the team)",
+     "text": "Quick note so the record is complete: I did the vendor research and the budget on this one."
+    },
+    {
+     "label": "Final",
+     "text": "From now on I'll send a short update on my own parts, so neither of us has to speak for the other."
+    }
+   ],
+   "whenItFits": "<p>Start privately if it might have been careless rather than deliberate. Go to the team version only if the private word didn’t change anything.</p>",
+   "whenItFitsText": "Start privately if it might have been careless rather than deliberate. Go to the team version only if the private word didn't change anything."
+  },
+  {
+   "number": 5,
+   "title": "Asking for a meeting about a raise",
+   "short": "Asking for a raise meeting",
+   "group": "Work",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like thirty minutes in the next two weeks to talk about my pay and my role."
+    },
+    {
+     "label": "Direct",
+     "text": "I'd like to discuss a raise. I'll bring what I've taken on this year and what similar roles pay."
+    },
+    {
+     "label": "By email",
+     "text": "Could we book a time before budgets are set to talk about my compensation? Any slot next week works for me."
+    }
+   ],
+   "whenItFits": "<p>Ask for the meeting first, then make your case in the meeting. Find out who actually approves raises, so you are talking to someone who can say yes.</p>",
+   "whenItFitsText": "Ask for the meeting first, then make your case in the meeting. Find out who actually approves raises, so you are talking to someone who can say yes."
+  },
+  {
+   "number": 6,
+   "title": "The answer on your raise is \"not right now\"",
+   "short": "Raise: \"not right now\"",
+   "group": "Work",
+   "tasks": [
+    "clarifying",
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks for being straight with me. What would need to be true for this to happen at my next review?"
+    },
+    {
+     "label": "Direct",
+     "text": "Can we agree on the specific goals and a date to revisit this, and put both in an email?"
+    },
+    {
+     "label": "Final",
+     "text": "I understand. I'll send a note with what we agreed, and I'll bring it up again on that date."
+    }
+   ],
+   "whenItFits": "<p>A “not now” with no date often turns into a quiet no. Have <strong>The No-Agreement Plan</strong> (what you will do if the answer is still no) ready before the meeting (Chapter 28, When They Still Say No).</p>",
+   "whenItFitsText": "A \"not now\" with no date often turns into a quiet no. Have The No-Agreement Plan (what you will do if the answer is still no) ready before the meeting (Chapter 28, When They Still Say No)."
+  },
+  {
+   "number": 7,
+   "title": "Your role has grown, but your title and pay haven't",
+   "short": "Role grew, pay didn't",
+   "group": "Work",
+   "tasks": [
+    "asking",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Over the past year I've picked up scheduling and training. I'd like my title and pay to reflect that."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm doing two roles' worth of work. Either we adjust my pay and title, or some of these duties move to someone else."
+    },
+    {
+     "label": "Final",
+     "text": "If a raise isn't possible this year, I'd like to hand training back by March. Can we plan how?"
+    }
+   ],
+   "whenItFits": "<p>Offering two fair options is not a threat, as long as you would genuinely accept either one. Don’t name an option you aren’t ready to follow through on.</p>",
+   "whenItFitsText": "Offering two fair options is not a threat, as long as you would genuinely accept either one. Don't name an option you aren't ready to follow through on."
+  },
+  {
+   "number": 8,
+   "title": "A request to work this weekend",
+   "short": "Weekend work request",
+   "group": "Work",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm not available this weekend. I can have it finished first thing Tuesday."
+    },
+    {
+     "label": "Direct",
+     "text": "I keep my weekends clear. If it's truly urgent, let's look at what can wait so this fits in on Monday."
+    },
+    {
+     "label": "Final",
+     "text": "I won't be working this weekend. I'll pick it up Monday morning."
+    }
+   ],
+   "whenItFits": "<p>Ordinary requests. In a real emergency, or if weekends are part of your role, a trade (time off later) may fit better.</p>",
+   "whenItFitsText": "Ordinary requests. In a real emergency, or if weekends are part of your role, a trade (time off later) may fit better."
+  },
+  {
+   "number": 9,
+   "title": "A coworker asks you to cover their shift again",
+   "short": "Covering a shift again",
+   "group": "Work",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I've covered a few times lately, so I need to pass on this one. I hope you find someone."
+    },
+    {
+     "label": "Direct",
+     "text": "I can't cover again. Have you checked with the shift lead?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm not doing swaps this month. Please ask someone else."
+    }
+   ],
+   "whenItFits": "<p>A pattern of asks, not a real emergency. Don’t make up a conflict. A made-up reason can be checked, and it invites “Then how about next week?”</p>",
+   "whenItFitsText": "A pattern of asks, not a real emergency. Don't make up a conflict. A made-up reason can be checked, and it invites \"Then how about next week?\""
+  },
+  {
+   "number": 10,
+   "title": "A big task lands on your desk at 4:40 on a Friday",
+   "short": "Task at 4:40 on Friday",
+   "group": "Work",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I can start it Monday morning and have it to you by noon. Does that work?"
+    },
+    {
+     "label": "Direct",
+     "text": "I can't do it properly before I leave today. If something is truly urgent, what's the smallest piece you need tonight?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm leaving at five. It'll be the first thing I open on Monday."
+    }
+   ],
+   "whenItFits": "<p>When the deadline is a habit, not a crisis. Asking for “the smallest piece” often shows how much of the urgency is real.</p>",
+   "whenItFitsText": "When the deadline is a habit, not a crisis. Asking for \"the smallest piece\" often shows how much of the urgency is real."
+  },
+  {
+   "number": 11,
+   "title": "A hint that your review could suffer if you say no",
+   "short": "Hint your review could suffer",
+   "group": "Work",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I want to make sure I understand. Is my review tied to taking this on?"
+    },
+    {
+     "label": "Direct",
+     "text": "Can you tell me exactly how this affects my review? I'd like to know where I stand."
+    },
+    {
+     "label": "Final",
+     "text": "I'll send a short email afterward so we both have the same understanding."
+    }
+   ],
+   "whenItFits": "<p>Use these questions only if you feel safe asking and the comment is unclear. If it becomes a threat or you fear retaliation, skip further scripts and see Chapter 11, When Pressure Becomes Danger. Keep any notes private and seek HR, union or employment advice suited to the situation.</p>",
+   "whenItFitsText": "Use these questions only if you feel safe asking and the comment is unclear. If it becomes a threat or you fear retaliation, skip further scripts and see Chapter 11, When Pressure Becomes Danger. Keep any notes private and seek HR, union or employment advice suited to the situation."
+  },
+  {
+   "number": 12,
+   "title": "You are criticized in front of the team",
+   "short": "Criticized in front of the team",
+   "group": "Work",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like to understand that properly. Can we talk one-on-one after this?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'm happy to go through the problem. I'd rather do it privately."
+    },
+    {
+     "label": "Later, in private",
+     "text": "About this morning: I want to fix the issue you raised. I'd also ask that feedback like that come to me privately first."
+    }
+   ],
+   "whenItFits": "<p>Don’t argue the details in front of everyone. If the criticism was fair, say so when you meet.</p>",
+   "whenItFitsText": "Don't argue the details in front of everyone. If the criticism was fair, say so when you meet."
+  },
+  {
+   "number": 13,
+   "title": "Confirming what was agreed after a meeting",
+   "short": "Confirming what was agreed",
+   "group": "Work",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks for today. To make sure I got it right: I'll draft the plan by the 12th, and you'll get budget sign-off by the 15th."
+    },
+    {
+     "label": "Direct",
+     "text": "Confirming what we agreed: the draft is mine, due the 12th. Sign-off is yours, due the 15th. Let me know by Friday if anything is off."
+    },
+    {
+     "label": "Short message",
+     "text": "Just so we're aligned: I'm doing the draft, you're getting sign-off. Right?"
+    }
+   ],
+   "whenItFits": "<p>After any agreement. This is <strong>The Smallest Agreed Step</strong> (a useful next action, with clear agreement on exactly what it covers) in writing (Chapter 22, Turn Agreement Into Action). Keep your copy private, and remember your employer may read work email.</p>",
+   "whenItFitsText": "After any agreement. This is The Smallest Agreed Step (a useful next action, with clear agreement on exactly what it covers) in writing (Chapter 22, Turn Agreement Into Action). Keep your copy private, and remember your employer may read work email."
+  },
+  {
+   "number": 14,
+   "title": "You've stopped being invited to meetings you used to attend",
+   "short": "Left out of meetings",
+   "group": "Work",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I noticed I'm not on the planning invites anymore. Was that on purpose? I'd like to stay involved."
+    },
+    {
+     "label": "Direct",
+     "text": "I need to be in the planning meetings to do my part well. Can you add me back?"
+    },
+    {
+     "label": "Final",
+     "text": "If there's a reason I'm being left out, I'd rather hear it directly so I can fix it."
+    }
+   ],
+   "whenItFits": "<p>Start warm; invite lists change for dull reasons. Use the final line only after vague answers.</p>",
+   "whenItFitsText": "Start warm; invite lists change for dull reasons. Use the final line only after vague answers."
+  },
+  {
+   "number": 15,
+   "title": "Your manager's expectations are vague",
+   "short": "Vague expectations",
+   "group": "Work",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "When you say 'more ownership', what would that look like day to day?"
+    },
+    {
+     "label": "Direct",
+     "text": "What would a great result on this project look like by the end of the quarter?"
+    },
+    {
+     "label": "By email",
+     "text": "To make sure I'm working on the right things, could you list your top three priorities for me this month?"
+    }
+   ],
+   "whenItFits": "<p>Before you are judged on something nobody defined. Open questions get you real information, not a yes or no (Chapter 14, Ask Questions That Open the Problem).</p>",
+   "whenItFitsText": "Before you are judged on something nobody defined. Open questions get you real information, not a yes or no (Chapter 14, Ask Questions That Open the Problem)."
+  },
+  {
+   "number": 16,
+   "title": "Taking back a yes you gave too fast at work",
+   "short": "Taking back a rushed yes at work",
+   "group": "Work",
+   "tasks": [
+    "repairing",
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I said yes to the event committee too quickly. Looking at my workload, I can't do it well. I'm sorry for the back-and-forth."
+    },
+    {
+     "label": "Direct",
+     "text": "I need to take back my yes on the committee. I can help find someone else this week."
+    },
+    {
+     "label": "Final",
+     "text": "I'm stepping off the committee. I'll hand over my notes by Friday."
+    }
+   ],
+   "whenItFits": "<p>As early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn’t.</p>",
+   "whenItFitsText": "As early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn't."
+  },
+  {
+   "number": 17,
+   "title": "Asking a busy colleague for help",
+   "short": "Asking a busy colleague for help",
+   "group": "Work",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Could you spare fifteen minutes this week to look over my numbers? You're better at this than I am."
+    },
+    {
+     "label": "Direct",
+     "text": "I need help with the model before Thursday. Is there a time that works, or someone else you'd suggest?"
+    },
+    {
+     "label": "Short message",
+     "text": "No pressure if this week is bad, but could you look at one spreadsheet for me?"
+    }
+   ],
+   "whenItFits": "<p>This is <strong>The Clean Ask</strong>: say what you want, give the relevant reason, leave room for a real answer. Mean the “no pressure” (Chapter 20, Build Allies Without Creating Debts).</p>",
+   "whenItFitsText": "This is The Clean Ask: say what you want, give the relevant reason, leave room for a real answer. Mean the \"no pressure\" (Chapter 20, Build Allies Without Creating Debts)."
+  },
+  {
+   "number": 18,
+   "title": "You snapped at a coworker",
+   "short": "After you snapped at a coworker",
+   "group": "Work",
+   "tasks": [
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I was short with you this morning. That wasn't fair to you. I'm sorry."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm sorry for how I spoke in the meeting. I still think the deadline is a problem, and I'd like to talk about it better."
+    },
+    {
+     "label": "Short message",
+     "text": "Sorry about earlier. That was on me."
+    }
+   ],
+   "whenItFits": "<p>Apologize for how you said it, without dropping a point you still believe. Skip “but you” in the apology. That turns it into round two.</p>",
+   "whenItFitsText": "Apologize for how you said it, without dropping a point you still believe. Skip \"but you\" in the apology. That turns it into round two."
+  },
+  {
+   "number": 19,
+   "title": "Someone who reports to you keeps missing deadlines",
+   "short": "Missed deadlines (you're the boss)",
+   "group": "Work",
+   "tasks": [
+    "clarifying",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "The last two reports came in late. What's getting in the way?"
+    },
+    {
+     "label": "Direct",
+     "text": "I need these by noon on Fridays. What would help you hit that?"
+    },
+    {
+     "label": "Final",
+     "text": "If Friday noon won't work, tell me now and we'll change the plan. If it will, I'm going to count on it."
+    }
+   ],
+   "whenItFits": "<p>When you hold the authority. Ask before you assume; the cause may be your process (Chapter 21, Lead Without Making People Dependent).</p>",
+   "whenItFitsText": "When you hold the authority. Ask before you assume; the cause may be your process (Chapter 21, Lead Without Making People Dependent)."
+  },
+  {
+   "number": 20,
+   "title": "A coworker keeps passing small tasks to you (\"You're so good at this\")",
+   "short": "Small tasks passed to you",
+   "group": "Work",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks, that's kind. Let me show you how to do it once, so you can handle it next time."
+    },
+    {
+     "label": "Direct",
+     "text": "I can't take this on. The step-by-step guide is in the shared folder."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to stop doing these for the team. I'll let our manager know so they get assigned properly."
+    }
+   ],
+   "whenItFits": "<p>Compliments are nice. They are not a job description. Teaching once is generous; doing it forever is a role you never agreed to.</p>",
+   "whenItFitsText": "Compliments are nice. They are not a job description. Teaching once is generous; doing it forever is a role you never agreed to."
+  },
+  {
+   "number": 21,
+   "title": "Asking your partner to take over a chore you always end up doing",
+   "short": "Sharing a chore you always do",
+   "group": "Partner",
+   "tasks": [
+    "asking",
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I've been doing the bills and the school forms for a long time. Could you take one of them?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'd like us to split the household paperwork. Can you take the bills starting next month?"
+    },
+    {
+     "label": "Follow-up",
+     "text": "Last week we said you'd take the bills. Have you had a chance to set up the payments?"
+    }
+   ],
+   "whenItFits": "<p>Ask for one named task, not “more help”. A specific ask is easier to say yes to and easier to check on later.</p>",
+   "whenItFitsText": "Ask for one named task, not \"more help\". A specific ask is easier to say yes to and easier to check on later."
+  },
+  {
+   "number": 22,
+   "title": "Your partner goes quiet after a disagreement",
+   "short": "Partner goes quiet",
+   "group": "Partner",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I can tell you're upset. I'm here when you're ready to talk."
+    },
+    {
+     "label": "Direct",
+     "text": "I'd like us to talk about yesterday, even if it's hard. Can we do it tonight after dinner?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm not going to keep guessing. When you want to talk, tell me and I'll make the time."
+    }
+   ],
+   "whenItFits": "<p>Space to cool down is fine. Silence used as pressure is different (Chapter 9, Silence, Distance, and Conditional Warmth). Don’t chase.</p>",
+   "whenItFitsText": "Space to cool down is fine. Silence used as pressure is different (Chapter 9, Silence, Distance, and Conditional Warmth). Don't chase."
+  },
+  {
+   "number": 23,
+   "title": "Warmth is withheld until you apologize",
+   "short": "Warmth withheld until you apologize",
+   "group": "Partner",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I miss feeling close to you. I want to fix this, but not by apologizing for something I don't think I did."
+    },
+    {
+     "label": "Direct",
+     "text": "I don't want closeness between us to depend on me always agreeing."
+    },
+    {
+     "label": "Final",
+     "text": "I'm sorry we're both hurting. I'm still not going to apologize just to end the silence."
+    }
+   ],
+   "whenItFits": "<p>When you honestly don’t think you were wrong. If you were partly wrong, apologize for that part (Reply 32). If coldness comes with threats or control, see Chapter 11.</p>",
+   "whenItFitsText": "When you honestly don't think you were wrong. If you were partly wrong, apologize for that part (Reply 32). If coldness comes with threats or control, see Chapter 11."
+  },
+  {
+   "number": 24,
+   "title": "\"You're too sensitive\"",
+   "short": "\"You're too sensitive\"",
+   "group": "Partner",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Maybe I am. It still hurt, and I want you to know that."
+    },
+    {
+     "label": "Direct",
+     "text": "Sensitive or not, I'm asking you not to say that to me again."
+    },
+    {
+     "label": "Final",
+     "text": "I've told you how it lands. I'm not going to argue about whether I'm allowed to feel it."
+    }
+   ],
+   "whenItFits": "<p>You don’t have to win a debate about your personality. The request (“don’t say that again”) is what matters.</p>",
+   "whenItFitsText": "You don't have to win a debate about your personality. The request (\"don't say that again\") is what matters."
+  },
+  {
+   "number": 25,
+   "title": "\"That never happened\"",
+   "short": "\"That never happened\"",
+   "group": "Partner",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "We remember it differently. Can we talk about what we each want next time instead?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not going to argue about last week. Going forward, I need plans to be talked about before they're made."
+    },
+    {
+     "label": "Final",
+     "text": "I know what I heard. I won't debate it, and I won't pretend it didn't happen either."
+    }
+   ],
+   "whenItFits": "<p>You don’t have to win the argument about the past (Chapter 8, When the Story Keeps Changing). If it happens often, keep short dated notes where only you can see them, not on a shared device.</p>",
+   "whenItFitsText": "You don't have to win the argument about the past (Chapter 8, When the Story Keeps Changing). If it happens often, keep short dated notes where only you can see them, not on a shared device."
+  },
+  {
+   "number": 26,
+   "title": "\"It was just a joke\"",
+   "short": "\"It was just a joke\"",
+   "group": "Partner",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "That one hurt. Please leave it out."
+    },
+    {
+     "label": "Direct",
+     "text": "It didn't land as a joke for me. Please don't say it again."
+    },
+    {
+     "label": "Final",
+     "text": "If it comes up again in front of people, I'm going to say so right then."
+    }
+   ],
+   "whenItFits": "<p>One clumsy joke deserves the warm line. The same joke after you’ve asked twice deserves the final one, said calmly.</p>",
+   "whenItFitsText": "One clumsy joke deserves the warm line. The same joke after you've asked twice deserves the final one, said calmly."
+  },
+  {
+   "number": 27,
+   "title": "Your partner makes a big money decision without you",
+   "short": "Big money decision without you",
+   "group": "Partner",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like to be part of decisions like this. Can we agree to talk first for anything over a set amount?"
+    },
+    {
+     "label": "Direct",
+     "text": "I wasn't asked about the new car. From now on, let's agree that anything over $500 is decided together."
+    },
+    {
+     "label": "Final",
+     "text": "Until we've agreed how we decide these things, I'm not signing off on anything new."
+    }
+   ],
+   "whenItFits": "<p>The $500 is only an example. If money is hidden from you, or you’re kept from your own accounts, see Chapter 11 instead.</p>",
+   "whenItFitsText": "The $500 is only an example. If money is hidden from you, or you're kept from your own accounts, see Chapter 11 instead."
+  },
+  {
+   "number": 28,
+   "title": "Proposing a fair trade on time",
+   "short": "A fair trade on time",
+   "group": "Partner",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Go to the lake on Saturday. Could I have Thursday evenings for my class?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'll cover the kids this weekend if you take bedtime on Tuesdays and Thursdays."
+    },
+    {
+     "label": "Confirming",
+     "text": "So: lake Saturday for you, Thursdays for me, starting this week. Right?"
+    }
+   ],
+   "whenItFits": "<p>Trades work best when both sides get something they actually want. Confirm it out loud, or it fades by the next week.</p>",
+   "whenItFitsText": "Trades work best when both sides get something they actually want. Confirm it out loud, or it fades by the next week."
+  },
+  {
+   "number": 29,
+   "title": "The same old fight is starting again",
+   "short": "The same old fight",
+   "group": "Partner",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "We're starting the same fight. Can we take a short break and come back to it?"
+    },
+    {
+     "label": "Direct",
+     "text": "We keep having this one. Let's pick a calm time this weekend and actually solve it."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to stop for tonight. I'll bring it up again Saturday morning."
+    }
+   ],
+   "whenItFits": "<p>Use it early, before voices rise. The final line only works if you really do bring it up on Saturday. Otherwise it becomes a dodge.</p>",
+   "whenItFitsText": "Use it early, before voices rise. The final line only works if you really do bring it up on Saturday. Otherwise it becomes a dodge."
+  },
+  {
+   "number": 30,
+   "title": "Your partner raises their voice",
+   "short": "Partner raises their voice",
+   "group": "Partner",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I want to hear you. I can't while we're shouting."
+    },
+    {
+     "label": "Direct",
+     "text": "Please lower your voice, or let's stop for now."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to step out for a while. We can pick this up tomorrow."
+    }
+   ],
+   "whenItFits": "<p>An ordinary heated argument. If there is fear, threats, breaking things or blocking you from leaving, skip the script and see “When words are not the answer” and Chapter 11.</p>",
+   "whenItFitsText": "An ordinary heated argument. If there is fear, threats, breaking things or blocking you from leaving, skip the script and see \"When words are not the answer\" and Chapter 11."
+  },
+  {
+   "number": 31,
+   "title": "A new partner is moving very fast",
+   "short": "New partner moving fast",
+   "group": "Partner",
+   "tasks": [
+    "declining",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I really like spending time with you. I'd like to take things a bit slower."
+    },
+    {
+     "label": "Direct",
+     "text": "Moving in after two months is too fast for me. Let's see where we are by the summer."
+    },
+    {
+     "label": "Final",
+     "text": "I've told you the pace I'm comfortable with. If that doesn't work for you, I understand."
+    }
+   ],
+   "whenItFits": "<p>Fast isn’t always a warning sign. How they take the slower pace tells you more than the words (Chapter 25, Dating, Intimacy, and Difficult Relationships).</p>",
+   "whenItFitsText": "Fast isn't always a warning sign. How they take the slower pace tells you more than the words (Chapter 25, Dating, Intimacy, and Difficult Relationships)."
+  },
+  {
+   "number": 32,
+   "title": "Repairing after you were harsh with your partner",
+   "short": "After you were harsh",
+   "group": "Partner",
+   "tasks": [
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I said something cruel last night, and I'm sorry. You didn't deserve that."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm sorry for how I spoke. I still want to talk about the money, but calmly this time."
+    },
+    {
+     "label": "Short message",
+     "text": "I was out of line earlier. I'm sorry. Can we talk tonight?"
+    }
+   ],
+   "whenItFits": "<p>Name what you did, without explaining it away. A repair is about what you said, not a new round of who started it.</p>",
+   "whenItFitsText": "Name what you did, without explaining it away. A repair is about what you said, not a new round of who started it."
+  },
+  {
+   "number": 33,
+   "title": "Asking for regular time together",
+   "short": "Asking for time together",
+   "group": "Partner",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I miss you. Could we keep Friday nights for just the two of us?"
+    },
+    {
+     "label": "Direct",
+     "text": "We've been passing like roommates. I'd like one evening a week that's ours, phones away."
+    },
+    {
+     "label": "Confirming",
+     "text": "So Fridays are ours. I'll book the sitter for this week."
+    }
+   ],
+   "whenItFits": "<p>Ask for what you want, not a list of what’s missing. “I miss you” opens a door. “You never make time for me” closes one.</p>",
+   "whenItFitsText": "Ask for what you want, not a list of what's missing. \"I miss you\" opens a door. \"You never make time for me\" closes one."
+  },
+  {
+   "number": 34,
+   "title": "Your ex wants to reopen something already agreed",
+   "short": "Reopening an agreed arrangement",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know you'd like a different split. We agreed on this in June, and I want to keep to it."
+    },
+    {
+     "label": "Direct",
+     "text": "That's settled. I'm not reopening it."
+    },
+    {
+     "label": "Final",
+     "text": "My answer on this hasn't changed. I'm ending this conversation for today."
+    }
+   ],
+   "whenItFits": "<p>Informal arrangements you both agreed to. If it’s a court order or a legal agreement, don’t negotiate it by text; talk to a family lawyer.</p>",
+   "whenItFitsText": "Informal arrangements you both agreed to. If it's a court order or a legal agreement, don't negotiate it by text; talk to a family lawyer."
+  },
+  {
+   "number": 35,
+   "title": "Your ex asks to change the pickup time at the last minute",
+   "short": "Last-minute pickup change",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "trading",
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I can do 6:30 this once. Next time I'll need a day's notice."
+    },
+    {
+     "label": "Direct",
+     "text": "I can't change tonight. The usual time stands."
+    },
+    {
+     "label": "Text",
+     "text": "Can't do 7 tonight. See you at 5:30 as planned."
+    }
+   ],
+   "whenItFits": "<p>Everyday logistics. Being flexible now and then is generous; being flexible every week becomes the new schedule. Changes to a custody order are a question for a family lawyer.</p>",
+   "whenItFitsText": "Everyday logistics. Being flexible now and then is generous; being flexible every week becomes the new schedule. Changes to a custody order are a question for a family lawyer."
+  },
+  {
+   "number": 36,
+   "title": "Your ex brings up old arguments during a practical conversation",
+   "short": "Old arguments in practical talk",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I hear that you're still upset. Right now I'm only able to talk about Saturday."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not discussing the past. Back to Saturday: are you picking up at 10?"
+    },
+    {
+     "label": "Text",
+     "text": "Happy to sort out the schedule. Not discussing anything else."
+    }
+   ],
+   "whenItFits": "<p>Redirect once. If it keeps going, end the call and finish the logistics later by message.</p>",
+   "whenItFitsText": "Redirect once. If it keeps going, end the call and finish the logistics later by message."
+  },
+  {
+   "number": 37,
+   "title": "Your ex still hasn't returned your belongings",
+   "short": "Belongings not returned",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "following up",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Could I pick up the boxes from the garage this Saturday? Morning or afternoon works."
+    },
+    {
+     "label": "Direct",
+     "text": "I still need the tools and the desk. Please have them ready by the 20th, and I'll bring someone to help carry."
+    },
+    {
+     "label": "In writing",
+     "text": "Following up on my belongings. Can you confirm a date this month for me to collect them?"
+    }
+   ],
+   "whenItFits": "<p>Name the items and a date. If you feel unsafe collecting them, skip the script and read Chapter 11, When Pressure Becomes Danger; the National Domestic Violence Hotline (1-800-799-7233, text START to 88788) can talk through safer options, from a device your ex can’t access. In immediate danger, call 911. For disputes over ownership, talk to a lawyer.</p>",
+   "whenItFitsText": "Name the items and a date. If you feel unsafe collecting them, skip the script and read Chapter 11, When Pressure Becomes Danger; the National Domestic Violence Hotline (1-800-799-7233, text START to 88788) can talk through safer options, from a device your ex can't access. In immediate danger, call 911. For disputes over ownership, talk to a lawyer."
+  },
+  {
+   "number": 38,
+   "title": "\"You agreed to this, don't you remember?\" (and you didn't)",
+   "short": "\"You agreed to this\" (you didn't)",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I don't remember agreeing to that. Can you show me the message where we discussed it?"
+    },
+    {
+     "label": "Direct",
+     "text": "That's not what I agreed to. What I agreed to was alternate holidays, starting with Thanksgiving."
+    },
+    {
+     "label": "Final",
+     "text": "Let's check the original agreement. I haven't agreed to the change you're asking for."
+    }
+   ],
+   "whenItFits": "<p>This is why short written confirmations help (Reply 41). Store them where your ex can’t access them.</p>",
+   "whenItFitsText": "This is why short written confirmations help (Reply 41). Store them where your ex can't access them."
+  },
+  {
+   "number": 39,
+   "title": "Your ex asks for money outside your arrangement",
+   "short": "Money outside the arrangement",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know things are tight. I'm keeping to what we agreed."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not able to pay for that. It's outside our arrangement."
+    },
+    {
+     "label": "Final",
+     "text": "If you want to change the arrangement, that needs to go through the proper process."
+    }
+   ],
+   "whenItFits": "<p>Small, informal asks. Anything about child support or formal payments is a legal question for a family lawyer, not a text conversation.</p>",
+   "whenItFitsText": "Small, informal asks. Anything about child support or formal payments is a legal question for a family lawyer, not a text conversation."
+  },
+  {
+   "number": 40,
+   "title": "Your ex sends a long, angry message",
+   "short": "Long, angry message",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I read your message. To answer the practical question: Tuesday works for the vet."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not going to discuss this over text. If there's a practical question, send it and I'll answer."
+    },
+    {
+     "label": "Final",
+     "text": "Noted. I'll reply to logistics only."
+    }
+   ],
+   "whenItFits": "<p>Answer the practical point and leave the rest. If the messages include threats, save them safely and see Chapter 11.</p>",
+   "whenItFitsText": "Answer the practical point and leave the rest. If the messages include threats, save them safely and see Chapter 11."
+  },
+  {
+   "number": 41,
+   "title": "Proposing a simple written routine for handovers",
+   "short": "A written handover routine",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "asking",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "We keep getting tangled up on handovers. Could we write down the usual times and how we change them?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'd like us to agree that changes go by text at least a day ahead, so neither of us is caught off guard."
+    },
+    {
+     "label": "Confirming",
+     "text": "Confirming what we agreed: Fridays at 5, Sundays at 6, changes by text a day ahead."
+    }
+   ],
+   "whenItFits": "<p>Repeated small disputes. A written routine gives you both a clear reference. Keep your copy somewhere your ex can’t reach. If you need it to be formal or enforceable, talk to a family lawyer.</p>",
+   "whenItFitsText": "Repeated small disputes. A written routine gives you both a clear reference. Keep your copy somewhere your ex can't reach. If you need it to be formal or enforceable, talk to a family lawyer."
+  },
+  {
+   "number": 42,
+   "title": "Your ex asks for a favor when it suits them",
+   "short": "Favors when it suits them",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I can't lend the car this weekend. I hope you find another way."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not able to help with the move. I'm keeping things simpler between us."
+    },
+    {
+     "label": "Final",
+     "text": "I'll help with things that affect the kids. Other favors, I'm going to pass on."
+    }
+   ],
+   "whenItFits": "<p>When favors keep flowing one way, or when a favor tends to reopen old arguments. Kind is fine. Endlessly available is a role.</p>",
+   "whenItFitsText": "When favors keep flowing one way, or when a favor tends to reopen old arguments. Kind is fine. Endlessly available is a role."
+  },
+  {
+   "number": 43,
+   "title": "Your ex tells friends or family a different story about you",
+   "short": "A different story told about you",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "clarifying",
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm (to a friend)",
+     "text": "I know you've heard their side. I'm not going to argue it. I'd just ask you not to pass messages between us."
+    },
+    {
+     "label": "Direct",
+     "text": "I'd rather not talk about the breakup. Can we talk about something else?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm keeping the details private. That's not going to change."
+    }
+   ],
+   "whenItFits": "<p>Chasing every version rarely works; steady behavior says more. If it turns into harassment, see Chapter 11.</p>",
+   "whenItFitsText": "Chasing every version rarely works; steady behavior says more. If it turns into harassment, see Chapter 11."
+  },
+  {
+   "number": 44,
+   "title": "Your ex starts talking about \"us\" during practical contact",
+   "short": "Talk of \"us\" during logistics",
+   "group": "An ex (practical matters)",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm glad we can be civil. I'm not open to talking about getting back together."
+    },
+    {
+     "label": "Direct",
+     "text": "I'll talk about the house sale. Not about us."
+    },
+    {
+     "label": "Final",
+     "text": "My answer on that is settled. Let's keep to the house sale."
+    }
+   ],
+   "whenItFits": "<p>When you’re sure. If you’re unsure whether you want to reconnect, don’t answer in the middle of a logistics call. Take time to think on your own first.</p>",
+   "whenItFitsText": "When you're sure. If you're unsure whether you want to reconnect, don't answer in the middle of a logistics call. Take time to think on your own first."
+  },
+  {
+   "number": 45,
+   "title": "A parent criticizes your choices again",
+   "short": "Criticism of your choices",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know you'd have chosen differently. I'm happy with this."
+    },
+    {
+     "label": "Direct",
+     "text": "I've made my decision, and I'm not going to debate it."
+    },
+    {
+     "label": "Final",
+     "text": "If this comes up again today, I'll head home and we'll catch up next week."
+    }
+   ],
+   "whenItFits": "<p>The final line states your own next step, said calmly and followed through, not as punishment (Chapter 26, Family, Friends, and the Roles That Stick).</p>",
+   "whenItFitsText": "The final line states your own next step, said calmly and followed through, not as punishment (Chapter 26, Family, Friends, and the Roles That Stick)."
+  },
+  {
+   "number": 46,
+   "title": "A parent compares you with a sibling",
+   "short": "Compared with a sibling",
+   "group": "Parents and family",
+   "tasks": [
+    "declining",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm glad things are going well for him. I'd like us to talk about me without the comparison."
+    },
+    {
+     "label": "Direct",
+     "text": "Please stop comparing us. It doesn't help either of us."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to change the subject now. How's the garden?"
+    }
+   ],
+   "whenItFits": "<p>Don’t defend your record point by point. That accepts the contest. Step out of it instead.</p>",
+   "whenItFitsText": "Don't defend your record point by point. That accepts the contest. Step out of it instead."
+  },
+  {
+   "number": 47,
+   "title": "\"You never call\" or \"You never visit\"",
+   "short": "\"You never call\"",
+   "group": "Parents and family",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I can't come every week, but I'd love to call on Sundays and visit once a month. Would that work for you?"
+    },
+    {
+     "label": "Direct",
+     "text": "Here's what I can do: a call every Sunday and a visit on the first Saturday of the month."
+    },
+    {
+     "label": "Final",
+     "text": "That's what I can manage right now. I'll call you Sunday."
+    }
+   ],
+   "whenItFits": "<p>Offer something specific you will reliably do, rather than vague promises followed by guilt.</p>",
+   "whenItFitsText": "Offer something specific you will reliably do, rather than vague promises followed by guilt."
+  },
+  {
+   "number": 48,
+   "title": "A parent makes you feel small in front of other people",
+   "short": "Made to feel small in public",
+   "group": "Parents and family",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm (later, in private)",
+     "text": "At dinner, the comment about my weight embarrassed me. Please don't do that in front of people."
+    },
+    {
+     "label": "Direct (in the moment)",
+     "text": "Please don't talk about me like that."
+    },
+    {
+     "label": "Final (in the moment)",
+     "text": "I'm not going to stay for this. I'll see everyone later."
+    }
+   ],
+   "whenItFits": "<p>Private is easier to hear. Use the in-the-moment lines when it continues after you’ve asked.</p>",
+   "whenItFitsText": "Private is easier to hear. Use the in-the-moment lines when it continues after you've asked."
+  },
+  {
+   "number": 49,
+   "title": "\"After everything I've done for you...\"",
+   "short": "\"After everything I've done\"",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "You've done so much for me, and I'm grateful. I still can't do this."
+    },
+    {
+     "label": "Direct",
+     "text": "I know you sacrificed a lot. That doesn't change my answer on this."
+    },
+    {
+     "label": "Final",
+     "text": "I love you. My answer is still no."
+    }
+   ],
+   "whenItFits": "<p>Gratitude and agreement are separate (Chapter 7, Guilt, Favors, and Hidden Debts).</p>",
+   "whenItFitsText": "Gratitude and agreement are separate (Chapter 7, Guilt, Favors, and Hidden Debts)."
+  },
+  {
+   "number": 50,
+   "title": "A parent asks very personal questions",
+   "short": "Very personal questions",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know you ask because you care. I'd like to keep that part private."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not going to talk about my finances."
+    },
+    {
+     "label": "Final",
+     "text": "That's my business. Let's talk about something else."
+    }
+   ],
+   "whenItFits": "<p>Questions about money, relationships, health or plans you haven’t decided yet. You can share later if you choose. Privacy isn’t a rejection.</p>",
+   "whenItFitsText": "Questions about money, relationships, health or plans you haven't decided yet. You can share later if you choose. Privacy isn't a rejection."
+  },
+  {
+   "number": 51,
+   "title": "A call with a parent turns into criticism, and you want to end it",
+   "short": "Ending a critical call",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I need to go now. I love you. Talk Sunday."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm going to end the call here. We can try again another day."
+    },
+    {
+     "label": "Final",
+     "text": "I said I'd hang up if this started again, so I'm going to. Talk soon."
+    }
+   ],
+   "whenItFits": "<p>Use the final line only if you warned them before. Say it without anger: you are simply doing what you said you’d do.</p>",
+   "whenItFitsText": "Use the final line only if you warned them before. Say it without anger: you are simply doing what you said you'd do."
+  },
+  {
+   "number": 52,
+   "title": "A parent drops by without warning",
+   "short": "Dropping by without warning",
+   "group": "Parents and family",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I love seeing you. Could you text before coming over, so I can make sure I'm free?"
+    },
+    {
+     "label": "Direct",
+     "text": "Please call first. If it's not a good time, I'll tell you and we'll pick another."
+    },
+    {
+     "label": "Final",
+     "text": "I'm not able to have visitors right now. Let's plan for Saturday."
+    }
+   ],
+   "whenItFits": "<p>Ask before you’re angry, so it doesn’t sound like an accusation. If they have a key and you’d like it back, that’s a separate conversation; take it gently.</p>",
+   "whenItFitsText": "Ask before you're angry, so it doesn't sound like an accusation. If they have a key and you'd like it back, that's a separate conversation; take it gently."
+  },
+  {
+   "number": 53,
+   "title": "A relative offers help, but you aren't sure what comes with it",
+   "short": "Help offered with unclear terms",
+   "group": "Parents and family",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "That's generous. Before I accept, is there anything you'd want from me in return?"
+    },
+    {
+     "label": "Direct",
+     "text": "Are you offering this as a gift, a loan, or an exchange?"
+    },
+    {
+     "label": "Before accepting",
+     "text": "Let's agree on what each of us is offering first. Then I can give you a clear answer."
+    }
+   ],
+   "whenItFits": "<p>Before accepting help with money, housing or a big task. Clear terms protect both of you. For legal or financial questions, get qualified advice before agreeing.</p>",
+   "whenItFitsText": "Before accepting help with money, housing or a big task. Clear terms protect both of you. For legal or financial questions, get qualified advice before agreeing."
+  },
+  {
+   "number": 54,
+   "title": "Money you thought was a gift is now being called a loan",
+   "short": "A gift now called a loan",
+   "group": "Parents and family",
+   "tasks": [
+    "clarifying",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I thought that money was a gift. Can we talk about what each of us understood back then?"
+    },
+    {
+     "label": "Direct",
+     "text": "I didn't know it was a loan. If you see it that way, let's agree on what's fair and write it down."
+    },
+    {
+     "label": "Final",
+     "text": "I'm willing to talk about this once, calmly, with the numbers in front of us. Not at family dinners."
+    }
+   ],
+   "whenItFits": "<p>Both of you may honestly remember it differently. Look for any messages from the time, kept somewhere private. For larger sums, talk to a qualified professional before you agree to repay anything.</p>",
+   "whenItFitsText": "Both of you may honestly remember it differently. Look for any messages from the time, kept somewhere private. For larger sums, talk to a qualified professional before you agree to repay anything."
+  },
+  {
+   "number": 55,
+   "title": "A relative who helped you now expects favors on demand",
+   "short": "Favors on demand after help",
+   "group": "Parents and family",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "You helped us so much when we moved. I'm happy to drive you to appointments twice a month."
+    },
+    {
+     "label": "Direct",
+     "text": "I can do Tuesdays. I can't be on call every day."
+    },
+    {
+     "label": "Final",
+     "text": "Twice a month is what I can give. Let's put the dates in the calendar now."
+    }
+   ],
+   "whenItFits": "<p>When you want to give back, but on a scale you can keep up. A limit you hold is kinder than a yes that turns into resentment.</p>",
+   "whenItFitsText": "When you want to give back, but on a scale you can keep up. A limit you hold is kinder than a yes that turns into resentment."
+  },
+  {
+   "number": 56,
+   "title": "A relative wants you to sign something you haven't read",
+   "short": "Asked to sign without reading",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I want to understand it before I sign. Could you give me a copy to read?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not signing today. I need time to read it and get independent advice."
+    },
+    {
+     "label": "Final",
+     "text": "If there's no time for me to understand it, I won't sign."
+    }
+   ],
+   "whenItFits": "<p>A family request involving a document you don’t understand. For legal or financial documents, talk to a lawyer or financial adviser who works for you, not for the other person.</p>",
+   "whenItFitsText": "A family request involving a document you don't understand. For legal or financial documents, talk to a lawyer or financial adviser who works for you, not for the other person."
+  },
+  {
+   "number": 57,
+   "title": "You are expected to care for an aging parent alone",
+   "short": "Caring for a parent alone",
+   "group": "Parents and family",
+   "tasks": [
+    "asking",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm glad to keep doing Dad's appointments. Could you take over the bills and pharmacy runs?"
+    },
+    {
+     "label": "Direct",
+     "text": "I can't keep doing all of it. Let's list every task this weekend and split them."
+    },
+    {
+     "label": "Confirming",
+     "text": "Confirming: I'll keep the appointments, and you'll handle the pharmacy and bills starting on the 1st."
+    }
+   ],
+   "whenItFits": "<p>Split the care tasks (driving, bills, groceries, calls). Medical decisions are a separate conversation, with your parent and their doctors. Chapter 26 covers sharing care with siblings.</p>",
+   "whenItFitsText": "Split the care tasks (driving, bills, groceries, calls). Medical decisions are a separate conversation, with your parent and their doctors. Chapter 26 covers sharing care with siblings."
+  },
+  {
+   "number": 58,
+   "title": "A sibling agreed to help with a parent's care and hasn't",
+   "short": "Sibling not doing their share",
+   "group": "Parents and family",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know it's been a busy month. Are you still able to do the pharmacy runs? If not, let's talk about what you can do."
+    },
+    {
+     "label": "Direct",
+     "text": "The pharmacy runs haven't happened for three weeks. Can you do them starting this Friday?"
+    },
+    {
+     "label": "Final",
+     "text": "If you can't do them, I'll arrange a delivery service, and I'd like you to cover half the cost."
+    }
+   ],
+   "whenItFits": "<p>Ask before you assume they don’t care. If medication or another essential need is affected, arrange safe cover now with your parent and the relevant service. Discuss costs separately; your sibling has not agreed to pay merely because you asked.</p>",
+   "whenItFitsText": "Ask before you assume they don't care. If medication or another essential need is affected, arrange safe cover now with your parent and the relevant service. Discuss costs separately; your sibling has not agreed to pay merely because you asked."
+  },
+  {
+   "number": 59,
+   "title": "Pressure about where you spend the holidays",
+   "short": "Holiday pressure",
+   "group": "Parents and family",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "We're spending Thanksgiving with my partner's family this year. We'd love to see you the weekend after."
+    },
+    {
+     "label": "Direct",
+     "text": "We've decided to alternate years. This year is the other side."
+    },
+    {
+     "label": "Final",
+     "text": "Our plans are set. We'll see you on the 30th."
+    }
+   ],
+   "whenItFits": "<p>Decide with your partner first, then tell family together. Offer a real alternative, not a vague “sometime”.</p>",
+   "whenItFitsText": "Decide with your partner first, then tell family together. Offer a real alternative, not a vague \"sometime\"."
+  },
+  {
+   "number": 60,
+   "title": "A private topic comes up at a family gathering",
+   "short": "Private topic at a gathering",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd rather not get into that here. Ask me another time."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not going to discuss that at the table."
+    },
+    {
+     "label": "Final",
+     "text": "Not today.\" (Then change the subject, or leave the room for a minute.)"
+    }
+   ],
+   "whenItFits": "<p>Your divorce, your weight, your job search, your fertility. You don’t owe the table an update.</p>",
+   "whenItFitsText": "Your divorce, your weight, your job search, your fertility. You don't owe the table an update."
+  },
+  {
+   "number": 61,
+   "title": "Unasked-for parenting advice from a parent or in-law",
+   "short": "Unasked-for parenting advice",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks. We've thought about it and decided to do it differently."
+    },
+    {
+     "label": "Direct",
+     "text": "We've got this one covered."
+    },
+    {
+     "label": "Final",
+     "text": "We've made our decision. I'm not going to go back over it."
+    }
+   ],
+   "whenItFits": "<p>Advice given once. Safety issues are different, and worth hearing out. If it’s about your parenting decisions, you and your co-parent decide.</p>",
+   "whenItFitsText": "Advice given once. Safety issues are different, and worth hearing out. If it's about your parenting decisions, you and your co-parent decide."
+  },
+  {
+   "number": 62,
+   "title": "You're pulled into someone else's family fight",
+   "short": "Pulled into a family fight",
+   "group": "Parents and family",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I love you both. I'm not going to get in the middle of this."
+    },
+    {
+     "label": "Direct",
+     "text": "That's between the two of you. I'd suggest talking to her directly."
+    },
+    {
+     "label": "Final",
+     "text": "I'm not passing messages. Please don't ask me to."
+    }
+   ],
+   "whenItFits": "<p>When you’re being asked to carry messages or take sides. Staying out isn’t disloyal. It keeps you from becoming the go-between.</p>",
+   "whenItFitsText": "When you're being asked to carry messages or take sides. Staying out isn't disloyal. It keeps you from becoming the go-between."
+  },
+  {
+   "number": 63,
+   "title": "An in-law oversteps in your home",
+   "short": "In-law oversteps",
+   "group": "Parents and family",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I know you're trying to help. Please check with me before moving things in the kitchen."
+    },
+    {
+     "label": "Direct",
+     "text": "I'd like the furniture left where it is. Thanks for understanding."
+    },
+    {
+     "label": "Final (to your partner first)",
+     "text": "I need us to agree on this together, and for you to raise it with your mom."
+    }
+   ],
+   "whenItFits": "<p>Often the best route goes through your partner, who can talk to their own parent more easily. Agree on a shared position first.</p>",
+   "whenItFitsText": "Often the best route goes through your partner, who can talk to their own parent more easily. Agree on a shared position first."
+  },
+  {
+   "number": 64,
+   "title": "Repairing after you lost your temper with a parent",
+   "short": "After you lost your temper",
+   "group": "Parents and family",
+   "tasks": [
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm sorry I yelled on Sunday. I was frustrated, and I didn't handle it well."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm sorry for how I spoke. I still need the comments about my job to stop, and I'd like to talk about that calmly."
+    },
+    {
+     "label": "Short message",
+     "text": "I was out of line on the phone. I'm sorry. Can I call you tomorrow?"
+    }
+   ],
+   "whenItFits": "<p>You can apologize for the yelling and keep the limit. A repair doesn’t mean taking back what you needed.</p>",
+   "whenItFitsText": "You can apologize for the yelling and keep the limit. A repair doesn't mean taking back what you needed."
+  },
+  {
+   "number": 65,
+   "title": "A friend asks for a favor you don't want to do",
+   "short": "A favor you don't want to do",
+   "group": "Friends",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks for thinking of me. I can't do that one, but I hope it goes well."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm not able to help with that."
+    },
+    {
+     "label": "Text",
+     "text": "Can't this time. Hope it works out."
+    }
+   ],
+   "whenItFits": "<p>Most ordinary favors. You don’t need a reason. If you’d like to help in a smaller way, see Reply 73.</p>",
+   "whenItFitsText": "Most ordinary favors. You don't need a reason. If you'd like to help in a smaller way, see Reply 73."
+  },
+  {
+   "number": 66,
+   "title": "An invitation you don't want to accept",
+   "short": "An invitation you don't want",
+   "group": "Friends",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm going to pass this time. I hope it's a great night."
+    },
+    {
+     "label": "Direct",
+     "text": "I won't make it, but thanks for asking."
+    },
+    {
+     "label": "Text",
+     "text": "Not this time, but have fun. Send pictures."
+    }
+   ],
+   "whenItFits": "<p>Parties, trips, group dinners, weddings that are a stretch. If you’d like to stay close, suggest something you would do: “Coffee next week instead?”</p>",
+   "whenItFitsText": "Parties, trips, group dinners, weddings that are a stretch. If you'd like to stay close, suggest something you would do: \"Coffee next week instead?\""
+  },
+  {
+   "number": 67,
+   "title": "A friend keeps asking why you said no",
+   "short": "\"But why?\"",
+   "group": "Friends",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "It just doesn't work for me right now. That's really all it is."
+    },
+    {
+     "label": "Direct",
+     "text": "I don't have a better reason than that. It doesn't work for me."
+    },
+    {
+     "label": "Final",
+     "text": "My answer is the same. Let's talk about something else."
+    }
+   ],
+   "whenItFits": "<p>When reasons would only invite “But what if…”. Repeating yourself calmly often settles it. If it doesn’t, ending the topic is your next step.</p>",
+   "whenItFitsText": "When reasons would only invite \"But what if...\". Repeating yourself calmly often settles it. If it doesn't, ending the topic is your next step."
+  },
+  {
+   "number": 68,
+   "title": "\"A real friend would help\"",
+   "short": "\"A real friend would help\"",
+   "group": "Friends",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I care about you a lot. I still can't help with this one."
+    },
+    {
+     "label": "Direct",
+     "text": "Being a good friend doesn't mean saying yes to everything."
+    },
+    {
+     "label": "Final",
+     "text": "I'm sorry you're disappointed. My answer hasn't changed."
+    }
+   ],
+   "whenItFits": "<p>When friendship is used as a test you can only pass by agreeing. Stay warm, and don’t take the bait to prove your loyalty.</p>",
+   "whenItFitsText": "When friendship is used as a test you can only pass by agreeing. Stay warm, and don't take the bait to prove your loyalty."
+  },
+  {
+   "number": 69,
+   "title": "A friend stops replying after you said no",
+   "short": "Silence after you said no",
+   "group": "Friends",
+   "tasks": [
+    "following up",
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I've missed hearing from you. If something's bothering you, I'm open to talking."
+    },
+    {
+     "label": "Direct",
+     "text": "It feels like things changed after I said no to the trip. I'd like to clear the air."
+    },
+    {
+     "label": "Final",
+     "text": "I'll leave it with you. I'm here when you want to get in touch."
+    }
+   ],
+   "whenItFits": "<p>One honest reach-out, then let them come back in their own time. Chasing over and over usually makes the silence louder.</p>",
+   "whenItFitsText": "One honest reach-out, then let them come back in their own time. Chasing over and over usually makes the silence louder."
+  },
+  {
+   "number": 70,
+   "title": "A friend keeps canceling at the last minute",
+   "short": "Last-minute canceling",
+   "group": "Friends",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I miss you, and the last few plans fell through. Is now a hard time? We can pick something easier."
+    },
+    {
+     "label": "Direct",
+     "text": "When plans get canceled on the day, I lose the evening. Can we only book things you're sure about?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to stop setting up plans for a while. Reach out when things settle, and I'll be glad to hear from you."
+    }
+   ],
+   "whenItFits": "<p>Ask before you decide they don’t care. Some people are struggling with things they haven’t mentioned.</p>",
+   "whenItFitsText": "Ask before you decide they don't care. Some people are struggling with things they haven't mentioned."
+  },
+  {
+   "number": 71,
+   "title": "A friend vents to you constantly, and you're worn out",
+   "short": "Constant venting",
+   "group": "Friends",
+   "tasks": [
+    "asking",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I want to be there for you. I'm wiped tonight. Can we talk Saturday when I can really listen?"
+    },
+    {
+     "label": "Direct",
+     "text": "Lately most of our calls are about the same problem. I'd love some that are just fun too."
+    },
+    {
+     "label": "Final",
+     "text": "I care about you, and I can't be your main support for this. Would you think about talking to a counselor?"
+    }
+   ],
+   "whenItFits": "<p>Ordinary venting. If a friend talks about ending their life or hurting themselves, skip these lines. Call or text the 988 Suicide and Crisis Lifeline for help supporting them, and call 911 in immediate danger.</p>",
+   "whenItFitsText": "Ordinary venting. If a friend talks about ending their life or hurting themselves, skip these lines. Call or text the 988 Suicide and Crisis Lifeline for help supporting them, and call 911 in immediate danger."
+  },
+  {
+   "number": 72,
+   "title": "Asking a friend for help when you're the one who never asks",
+   "short": "Asking for help for once",
+   "group": "Friends",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm not great at asking, but I could really use a hand moving on Saturday. Any chance you're free?"
+    },
+    {
+     "label": "Direct",
+     "text": "I need a ride to the airport on the 14th, early. Could you do it? Totally fine if not."
+    },
+    {
+     "label": "Text",
+     "text": "Big favor to ask, and no is a fine answer: could you water my plants next week?"
+    }
+   ],
+   "whenItFits": "<p>Asking balances friendships that run one way. Leave “no” open.</p>",
+   "whenItFitsText": "Asking balances friendships that run one way. Leave \"no\" open."
+  },
+  {
+   "number": 73,
+   "title": "A small favor keeps growing",
+   "short": "A favor that keeps growing",
+   "group": "Friends",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I said I'd help you pack the kitchen. I can't do the whole move, but I'll stay till noon."
+    },
+    {
+     "label": "Direct",
+     "text": "I agreed to a quick look at your resume, not a full rewrite. I'll send my notes tonight."
+    },
+    {
+     "label": "Final",
+     "text": "That's as far as I can go. Good luck with the rest."
+    }
+   ],
+   "whenItFits": "<p>Restate what you agreed to, and offer that part fully. The original yes was real. The extra wasn’t part of it.</p>",
+   "whenItFitsText": "Restate what you agreed to, and offer that part fully. The original yes was real. The extra wasn't part of it."
+  },
+  {
+   "number": 74,
+   "title": "A friend puts you down in front of others",
+   "short": "Put down in front of others",
+   "group": "Friends",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm (later, in private)",
+     "text": "The crack about my job at the party stung. I don't think you meant it to, but please drop it."
+    },
+    {
+     "label": "Direct (in the moment)",
+     "text": "That wasn't funny to me.\" (Calm, then move on.)"
+    },
+    {
+     "label": "Final",
+     "text": "That's the second time I've asked. Please don't do it again."
+    }
+   ],
+   "whenItFits": "<p>A short line in the moment beats a long talk in front of everyone.</p>",
+   "whenItFitsText": "A short line in the moment beats a long talk in front of everyone."
+  },
+  {
+   "number": 75,
+   "title": "Repairing after you let a friend down",
+   "short": "After you let a friend down",
+   "group": "Friends",
+   "tasks": [
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I completely forgot your birthday dinner. I'm really sorry. Can I take you out this week?"
+    },
+    {
+     "label": "Direct",
+     "text": "I let you down on Saturday, and there's no good excuse. I'm sorry."
+    },
+    {
+     "label": "Short message",
+     "text": "I messed up yesterday. I'm sorry. I'd like to make it up to you."
+    }
+   ],
+   "whenItFits": "<p>Own it, offer something concrete, and don’t ask them to make you feel better.</p>",
+   "whenItFitsText": "Own it, offer something concrete, and don't ask them to make you feel better."
+  },
+  {
+   "number": 76,
+   "title": "Taking back a yes you gave a friend too fast",
+   "short": "Taking back a rushed yes",
+   "group": "Friends",
+   "tasks": [
+    "repairing",
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I said yes to looking after the dog for two weeks before checking my schedule. I'm sorry, I can only do the first week."
+    },
+    {
+     "label": "Direct",
+     "text": "I need to take back my yes on hosting. I can't do it this year, and I wanted to tell you now so you have time to plan."
+    },
+    {
+     "label": "Final",
+     "text": "I can't do it after all. I'm sorry for the trouble this causes."
+    }
+   ],
+   "whenItFits": "<p>Tell them early, and offer the part you can still do (Chapter 7).</p>",
+   "whenItFitsText": "Tell them early, and offer the part you can still do (Chapter 7)."
+  },
+  {
+   "number": 77,
+   "title": "Someone asks to borrow money",
+   "short": "Asked to lend money",
+   "group": "Money and services",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm sorry things are tight. I'm not able to lend money right now."
+    },
+    {
+     "label": "Direct",
+     "text": "I don't lend money to friends or family. It's a rule that protects the relationship."
+    },
+    {
+     "label": "Final",
+     "text": "My answer is no. I hope you find a way through it."
+    }
+   ],
+   "whenItFits": "<p>Only use the direct line if it’s true. Offer other help if you like (Chapter 24, Clients, Customers, and Money Decisions).</p>",
+   "whenItFitsText": "Only use the direct line if it's true. Offer other help if you like (Chapter 24, Clients, Customers, and Money Decisions)."
+  },
+  {
+   "number": 78,
+   "title": "Following up on money someone owes you",
+   "short": "Money someone owes you",
+   "group": "Money and services",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Hi, I wanted to check on the money from January. When do you think you can pay it back?"
+    },
+    {
+     "label": "Direct",
+     "text": "I need the $300 back by the end of the month. Can you send it by then?"
+    },
+    {
+     "label": "Text",
+     "text": "Checking in on the $300. Could you send it by the 30th?"
+    }
+   ],
+   "whenItFits": "<p>Name the amount and a date. Save messages somewhere private. For larger sums, talk to a qualified professional.</p>",
+   "whenItFitsText": "Name the amount and a date. Save messages somewhere private. For larger sums, talk to a qualified professional."
+  },
+  {
+   "number": 79,
+   "title": "More requests while an old loan is still unpaid",
+   "short": "New asks, old loan unpaid",
+   "group": "Money and services",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like to help, but I'm not able to lend more until the first loan is sorted out."
+    },
+    {
+     "label": "Direct",
+     "text": "The $500 from spring hasn't come back yet, so I can't lend more."
+    },
+    {
+     "label": "Final",
+     "text": "No more loans. Once the first one is paid back, we can talk."
+    }
+   ],
+   "whenItFits": "<p>Linking the two is fair and easy to explain. You aren’t punishing anyone; you’re declining to add to a debt that hasn’t moved.</p>",
+   "whenItFitsText": "Linking the two is fair and easy to explain. You aren't punishing anyone; you're declining to add to a debt that hasn't moved."
+  },
+  {
+   "number": 80,
+   "title": "Setting clear terms if you do decide to lend",
+   "short": "Setting terms for a loan",
+   "group": "Money and services",
+   "tasks": [
+    "asking",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'm happy to help. Can we agree on when you'll pay it back, so neither of us has to feel awkward?"
+    },
+    {
+     "label": "Direct",
+     "text": "I can lend $400. Could you repay $100 a month, starting in March?"
+    },
+    {
+     "label": "Confirming",
+     "text": "Just confirming: $400 now, $100 a month from March 1st. Thanks for agreeing to that."
+    }
+   ],
+   "whenItFits": "<p>After you’ve decided to lend. Keep the written terms private. For financial or legal questions, get qualified advice before agreeing.</p>",
+   "whenItFitsText": "After you've decided to lend. Keep the written terms private. For financial or legal questions, get qualified advice before agreeing."
+  },
+  {
+   "number": 81,
+   "title": "A borrowed item is never returned",
+   "short": "Borrowed item not returned",
+   "group": "Money and services",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Could you bring the ladder back this weekend? I need it for the gutters."
+    },
+    {
+     "label": "Direct",
+     "text": "I need the drill back by Friday. Can you drop it off, or should I swing by?"
+    },
+    {
+     "label": "Text",
+     "text": "Hey, can I pick up my camping gear this week? Thursday or Friday?"
+    }
+   ],
+   "whenItFits": "<p>Make returning it easy: offer a time or to collect it yourself. Most people simply forgot.</p>",
+   "whenItFitsText": "Make returning it easy: offer a time or to collect it yourself. Most people simply forgot."
+  },
+  {
+   "number": 82,
+   "title": "A \"temporary\" stay that never ended",
+   "short": "A stay that never ended",
+   "group": "Money and services",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "When you moved in, we said a few weeks. It's been five months. I'd like us to plan for you to move out by the first of next month."
+    },
+    {
+     "label": "Direct",
+     "text": "I need my space back. Let's agree on a move-out date this week."
+    },
+    {
+     "label": "Confirming",
+     "text": "Confirming what we agreed: you'll be moved out by March 1st, and I'll help with boxes the weekend before."
+    }
+   ],
+   "whenItFits": "<p>Ask to agree a date. Before setting a deadline or taking steps to make someone leave, talk to a housing lawyer or legal aid service. If you feel afraid, skip the script and read Chapter 11; for abuse, the National Domestic Violence Hotline is 1-800-799-7233 (text START to 88788). In immediate danger, call 911.</p>",
+   "whenItFitsText": "Ask to agree a date. Before setting a deadline or taking steps to make someone leave, talk to a housing lawyer or legal aid service. If you feel afraid, skip the script and read Chapter 11; for abuse, the National Domestic Violence Hotline is 1-800-799-7233 (text START to 88788). In immediate danger, call 911."
+  },
+  {
+   "number": 83,
+   "title": "A client is late paying an invoice",
+   "short": "Late-paying client",
+   "group": "Money and services",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Just a reminder that invoice 104 was due last Friday. Could you let me know when it's scheduled to be paid?"
+    },
+    {
+     "label": "Direct",
+     "text": "Invoice 104 is now two weeks overdue. Please pay by the 15th, or let me know if there's a problem with it."
+    },
+    {
+     "label": "Final",
+     "text": "I'll pause new work on the project until the overdue invoice is paid."
+    }
+   ],
+   "whenItFits": "<p>Start friendly. Make sure the final line matches your written terms. For large amounts, talk to a qualified professional.</p>",
+   "whenItFitsText": "Start friendly. Make sure the final line matches your written terms. For large amounts, talk to a qualified professional."
+  },
+  {
+   "number": 84,
+   "title": "An adult son or daughter asks for money again",
+   "short": "Adult child asks for money",
+   "group": "Money and services",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I love you, and I want you on your feet. I'm not going to send more this month."
+    },
+    {
+     "label": "Direct",
+     "text": "I can't keep covering rent. I can pay for one session with a budget advisor, if you'd like that."
+    },
+    {
+     "label": "Final",
+     "text": "My answer is no on money. I'm glad to help in other ways."
+    }
+   ],
+   "whenItFits": "<p>When help has become a pattern that keeps you both stuck. Offering a different kind of help shows you’re still on their side.</p>",
+   "whenItFitsText": "When help has become a pattern that keeps you both stuck. Offering a different kind of help shows you're still on their side."
+  },
+  {
+   "number": 85,
+   "title": "A salesperson won't let you leave",
+   "short": "Pushy salesperson",
+   "group": "Money and services",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I appreciate your time. I'm not buying today."
+    },
+    {
+     "label": "Direct",
+     "text": "I've heard the offer. My answer is no."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to go now. Thanks.\" (Then leave.)"
+    }
+   ],
+   "whenItFits": "<p>A hard sell where you’re free to leave or end contact. You don’t owe a reason or a second listen. If someone blocks your way or threatens you, skip the script, see Chapter 11, and call 911 in immediate danger.</p>",
+   "whenItFitsText": "A hard sell where you're free to leave or end contact. You don't owe a reason or a second listen. If someone blocks your way or threatens you, skip the script, see Chapter 11, and call 911 in immediate danger."
+  },
+  {
+   "number": 86,
+   "title": "\"You have to decide today\"",
+   "short": "\"Decide today\"",
+   "group": "Money and services",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Thanks. I don't make decisions like this on the same day, so I'll pass for now."
+    },
+    {
+     "label": "Direct",
+     "text": "If it has to be decided right now, my answer is no."
+    },
+    {
+     "label": "Final",
+     "text": "If the offer is still there next week, I'll take a look then."
+    }
+   ],
+   "whenItFits": "<p>You need more time to understand the offer. A deadline can be real, and you can still decline rather than decide without enough information (Chapter 10, Charm, Urgency, and the Slow Squeeze).</p>",
+   "whenItFitsText": "You need more time to understand the offer. A deadline can be real, and you can still decline rather than decide without enough information (Chapter 10, Charm, Urgency, and the Slow Squeeze)."
+  },
+  {
+   "number": 87,
+   "title": "A contractor left the job unfinished or poorly done",
+   "short": "Unfinished contractor job",
+   "group": "Money and services",
+   "tasks": [
+    "asking",
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "The new window still lets rain in at the bottom corner. When can you inspect it and arrange a fix?"
+    },
+    {
+     "label": "Direct",
+     "text": "The fence isn't finished: the gate and the back section are still open. I'd like it completed by the 20th, as agreed."
+    },
+    {
+     "label": "In writing",
+     "text": "Following up on our call: you agreed to return Tuesday to finish the gate. Please confirm."
+    }
+   ],
+   "whenItFits": "<p>Be specific, with a date. Keep photos and messages somewhere safe. For serious disputes, contact consumer protection or a qualified professional.</p>",
+   "whenItFitsText": "Be specific, with a date. Keep photos and messages somewhere safe. For serious disputes, contact consumer protection or a qualified professional."
+  },
+  {
+   "number": 88,
+   "title": "A wrong charge or a faulty product",
+   "short": "Wrong charge or faulty product",
+   "group": "Money and services",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I was charged twice for this order. Could you refund the second charge, please?"
+    },
+    {
+     "label": "Direct",
+     "text": "The heater stopped working after a week. I'd like either a full refund or a replacement. Which can you do?"
+    },
+    {
+     "label": "By email",
+     "text": "On the 3rd I was charged $89 twice for order 5521. Please refund the duplicate and confirm by email."
+    }
+   ],
+   "whenItFits": "<p>Say what happened and the outcome you want, in one breath. Offering two acceptable options gives the other person an easy yes.</p>",
+   "whenItFitsText": "Say what happened and the outcome you want, in one breath. Offering two acceptable options gives the other person an easy yes."
+  },
+  {
+   "number": 89,
+   "title": "Customer service says \"There's nothing I can do\"",
+   "short": "\"Nothing I can do\"",
+   "group": "Money and services",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I understand it's not your call. Who can make that decision?"
+    },
+    {
+     "label": "Direct",
+     "text": "What options do you have? If there are none, please note my request and give me a reference number."
+    },
+    {
+     "label": "Final",
+     "text": "Thanks. I'll put this in writing to your complaints team today."
+    }
+   ],
+   "whenItFits": "<p>The person on the phone often can’t say yes but can pass you to someone who can. Being calm and specific helps them help you.</p>",
+   "whenItFitsText": "The person on the phone often can't say yes but can pass you to someone who can. Being calm and specific helps them help you."
+  },
+  {
+   "number": 90,
+   "title": "A client asks for a discount",
+   "short": "Client asks for a discount",
+   "group": "Money and services",
+   "tasks": [
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I want to make this work. At that budget, I can do the first two phases."
+    },
+    {
+     "label": "Direct",
+     "text": "My rate stays the same. I can reduce the scope, or we can spread the work over two months."
+    },
+    {
+     "label": "Final",
+     "text": "That price won't work for me. If anything changes, I'd be glad to hear from you."
+    }
+   ],
+   "whenItFits": "<p>Trade scope for price. Never bluff about other offers (Chapter 17, Ask for More and Negotiate Well).</p>",
+   "whenItFitsText": "Trade scope for price. Never bluff about other offers (Chapter 17, Ask for More and Negotiate Well)."
+  },
+  {
+   "number": 91,
+   "title": "You're put on the spot to volunteer in front of a group",
+   "short": "Put on the spot to volunteer",
+   "group": "Groups",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "Let me check my calendar, and I'll let you know tomorrow."
+    },
+    {
+     "label": "Direct",
+     "text": "I can't take that on this time."
+    },
+    {
+     "label": "Final",
+     "text": "I'm going to pass. I hope someone's able to step in."
+    }
+   ],
+   "whenItFits": "<p>Buying a day is fine if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure).</p>",
+   "whenItFitsText": "Buying a day is fine if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure)."
+  },
+  {
+   "number": 92,
+   "title": "A group chat piles on to get you to agree",
+   "short": "Group chat pile-on",
+   "group": "Groups",
+   "tasks": [
+    "declining"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I see everyone's keen. It's still a no from me, but have a great time."
+    },
+    {
+     "label": "Direct",
+     "text": "I've given my answer. I'm going to step out of this thread for now."
+    },
+    {
+     "label": "Final",
+     "text": "My answer is no. I'll mute the chat until the weekend."
+    }
+   ],
+   "whenItFits": "<p>Lots of messages can feel like a vote. They aren’t. One clear message, then stepping away from the phone, is usually enough.</p>",
+   "whenItFitsText": "Lots of messages can feel like a vote. They aren't. One clear message, then stepping away from the phone, is usually enough."
+  },
+  {
+   "number": 93,
+   "title": "A volunteer group keeps asking you to do more",
+   "short": "Volunteer role keeps growing",
+   "group": "Groups",
+   "tasks": [
+    "declining",
+    "trading"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I love being part of this. I can keep doing the newsletter, but not the fundraiser as well."
+    },
+    {
+     "label": "Direct",
+     "text": "I'll do one role, not three. Which matters most to you?"
+    },
+    {
+     "label": "Final",
+     "text": "I'm only taking on the newsletter this year."
+    }
+   ],
+   "whenItFits": "<p>Unpaid roles grow quietly, because the reliable person keeps saying yes. Pick the part you enjoy and hand back the rest.</p>",
+   "whenItFitsText": "Unpaid roles grow quietly, because the reliable person keeps saying yes. Pick the part you enjoy and hand back the rest."
+  },
+  {
+   "number": 94,
+   "title": "Stepping back from a role you've outgrown",
+   "short": "Stepping back from a role",
+   "group": "Groups",
+   "tasks": [
+    "declining",
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I've loved chairing the committee. After this year, I'd like to step back and let someone new take over."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm stepping down as chair at the end of June. I'll help train whoever comes next."
+    },
+    {
+     "label": "Confirming",
+     "text": "Confirming: my last meeting as chair is June 12th. I'll have the handover notes ready by then."
+    }
+   ],
+   "whenItFits": "<p>Give a date and a handover. Leaving well protects the group and your reputation.</p>",
+   "whenItFitsText": "Give a date and a handover. Leaving well protects the group and your reputation."
+  },
+  {
+   "number": 95,
+   "title": "The bill is split unfairly at a group dinner",
+   "short": "Unfair bill split",
+   "group": "Groups",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I just had the salad and a soda. Is it okay if I pay for mine separately?"
+    },
+    {
+     "label": "Direct",
+     "text": "I'd rather pay for what I ordered, if that's alright with everyone."
+    },
+    {
+     "label": "Before next time",
+     "text": "For the next dinner, could we each pay for our own? It's easier for me."
+    }
+   ],
+   "whenItFits": "<p>Say it early, before the card comes out. Most people don’t mind; it just doesn’t occur to them.</p>",
+   "whenItFitsText": "Say it early, before the card comes out. Most people don't mind; it just doesn't occur to them."
+  },
+  {
+   "number": 96,
+   "title": "A meeting is going in circles and nobody decides",
+   "short": "Meeting going in circles",
+   "group": "Groups",
+   "tasks": [
+    "clarifying",
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "We've covered a lot. What would it take to decide today?"
+    },
+    {
+     "label": "Direct",
+     "text": "We seem stuck between two options. Can we vote, or agree who makes the call?"
+    },
+    {
+     "label": "Final",
+     "text": "Could we stop here, send the two options by email, and agree who will decide by Friday?"
+    }
+   ],
+   "whenItFits": "<p>“Who decides?” is <strong>The Power Map</strong> (who decides, what each person needs, and where authority, resources and alternatives sit) in one question (Chapter 2, Read the Power Map).</p>",
+   "whenItFitsText": "\"Who decides?\" is The Power Map (who decides, what each person needs, and where authority, resources and alternatives sit) in one question (Chapter 2, Read the Power Map)."
+  },
+  {
+   "number": 97,
+   "title": "Someone keeps interrupting you in a group",
+   "short": "Being interrupted",
+   "group": "Groups",
+   "tasks": [
+    "asking"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd like to finish my point, and then I want to hear yours."
+    },
+    {
+     "label": "Direct",
+     "text": "Hang on, I'm not done."
+    },
+    {
+     "label": "Final",
+     "text": "I've been interrupted a few times. I'd like two minutes to finish."
+    }
+   ],
+   "whenItFits": "<p>Say it calmly and keep going. If it’s a pattern in meetings, ask the person running the meeting to help, before the next one.</p>",
+   "whenItFitsText": "Say it calmly and keep going. If it's a pattern in meetings, ask the person running the meeting to help, before the next one."
+  },
+  {
+   "number": 98,
+   "title": "\"Everyone thinks you're being unreasonable\"",
+   "short": "\"Everyone thinks you're unreasonable\"",
+   "group": "Groups",
+   "tasks": [
+    "clarifying"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I'd be glad to hear from anyone who disagrees. Right now I'm talking with you."
+    },
+    {
+     "label": "Direct",
+     "text": "Who specifically? I'd rather hear it from them directly."
+    },
+    {
+     "label": "Final",
+     "text": "I'm not going to respond to what unnamed people think."
+    }
+   ],
+   "whenItFits": "<p>“Everyone” is often one or two people, or none. Ask for specifics, without making it a trap. If someone does disagree, hear them out.</p>",
+   "whenItFitsText": "\"Everyone\" is often one or two people, or none. Ask for specifics, without making it a trap. If someone does disagree, hear them out."
+  },
+  {
+   "number": 99,
+   "title": "The group said yes, but nobody has done anything",
+   "short": "Group yes, no action",
+   "group": "Groups",
+   "tasks": [
+    "following up"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "At the last meeting we agreed to fix the sign-up sheet. Who's taking that on?"
+    },
+    {
+     "label": "Direct",
+     "text": "Nothing's happened on the sign-up sheet. Can we name one person and a date right now?"
+    },
+    {
+     "label": "By email",
+     "text": "Following up from Tuesday: we agreed the sign-up sheet would be updated by the 10th. Who has it?"
+    }
+   ],
+   "whenItFits": "<p>A group yes with no owner usually means nothing happens. Name one person and one date. That’s The Smallest Agreed Step again.</p>",
+   "whenItFitsText": "A group yes with no owner usually means nothing happens. Name one person and one date. That's The Smallest Agreed Step again."
+  },
+  {
+   "number": 100,
+   "title": "Repairing after you said something harsh in a group chat",
+   "short": "Harsh words in a group chat",
+   "group": "Groups",
+   "tasks": [
+    "repairing"
+   ],
+   "options": [
+    {
+     "label": "Warm",
+     "text": "I was harsh in the chat last night. I'm sorry, especially to the coach. You didn't deserve that."
+    },
+    {
+     "label": "Direct",
+     "text": "I'm sorry for the tone of my messages yesterday. I still think we need a new schedule, and I'd like to talk about it properly."
+    },
+    {
+     "label": "Private message",
+     "text": "I came across badly in the group yesterday. I'm sorry. Can we talk?"
+    }
+   ],
+   "whenItFits": "<p>Apologize where the harm happened. If it was in front of the group, the apology belongs there too. Add a private word to the person most affected.</p>",
+   "whenItFitsText": "Apologize where the harm happened. If it was in front of the group, the apology belongs there too. Add a private word to the person most affected."
+  }
+ ],
+ "outro": {
+  "heading": "Where to go from here",
+  "html": "<p>A good reply gets you through one moment. If the same moment keeps coming back, the book goes deeper.</p>\n<ul>\n<li>If you keep replaying the same guilt line, read Chapter 7, Guilt, Favors, and Hidden Debts, and Chapter 3, The Rules You Never Chose, which explains <strong>The Good Person Contract</strong> (the unspoken rules that turn kindness and duty into automatic self-sacrifice).</li>\n<li>If you freeze and say yes before you’ve thought, practice <strong>Notice, Pause, Hold</strong> (see the pattern, make room to choose, follow through) and <strong>The Choice Check</strong> (What happened? What am I assuming? What do I actually owe? What options do I have?) from Chapter 5, Stay Steady Without Going Cold.</li>\n<li>If you want to ask for more, start with Chapter 17, Ask for More and Negotiate Well, and Chapter 23, Work, Pay, and Recognition.</li>\n<li>If people say yes and then nothing happens, read Chapter 22, Turn Agreement Into Action.</li>\n<li>If the answer stays no, Chapter 28, When They Still Say No, helps you build your next step.</li>\n<li>For a parent, a sibling or an aging parent’s care, see Chapter 26, Family, Friends, and the Roles That Stick. For an ex or a partner, see Chapter 25, Dating, Intimacy, and Difficult Relationships.</li>\n<li>For daily practice, the 21-Day Power Reset in Part VII turns these replies into habits, one small exercise at a time.</li>\n</ul>\n<p>And if anything here touches on fear or danger, go straight to Chapter 11, When Pressure Becomes Danger.</p>"
+ }
+}

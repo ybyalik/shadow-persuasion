@@ -8,7 +8,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { aiChat, MODELS } from '@/lib/ai';
 import { getNextReview, newCard, type SRCard } from '@/lib/spaced-repetition';
-import { BOOK, editionChapter } from '@/lib/edition';
+import { BOOK, IS_V3, editionChapter } from '@/lib/edition';
+import SCENES_V3_DATA from '@/lib/practice-v3/scenes.json';
+import QUICK_REPS_V3_DATA from '@/lib/practice-v3/quick-reps.json';
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 export { db as practiceDb };
@@ -44,25 +46,65 @@ export type BookTactic = {
   harm: string | null;
   works_on: string | null;
   safety: boolean;
+  /** Which book the row comes from. v3 rows come from the new Tactic Spotter (slugs start with "v3-"). */
+  edition?: 'v2' | 'v3';
+  /** v3 only: other explanations to read first. */
+  other_explanations?: string | null;
+  /** v3 only: when not to confront. */
+  not_confront?: string | null;
+  /** v3 danger signs only: what helps instead of a script. */
+  help?: string | null;
+  /** v3 only: the chapters the guide points to, e.g. "Chapter 7; Chapter 3, The Rules You Never Chose." */
+  book_note?: string | null;
 };
 
 const TACTIC_COLS =
   'slug, number, name, family, chapter, chapter_title, looks_like, purpose, warning_sign, calm_reply, note, examples, harm, works_on, safety';
+/** Columns added by migration 033 for the new Tactic Spotter. */
+const TACTIC_COLS_V3 = `${TACTIC_COLS}, edition, other_explanations, not_confront, help, book_note`;
 
 let cache: { at: number; list: BookTactic[] } | null = null;
 
+/** The old book's 50 tactics. v3 rows (slug "v3-...") are left out, so this works before and after migration 033. */
+async function loadV2Tactics(): Promise<BookTactic[]> {
+  const { data, error } = await db.from('book_tactics').select(TACTIC_COLS).not('slug', 'like', 'v3-%').order('chapter').order('number');
+  if (error) throw error;
+  return ((data ?? []) as BookTactic[]).map((t) => ({ ...editionChapter(t), edition: 'v2' as const }));
+}
+
 /**
- * All 50 tactics, by chapter then guide order. Cached for 10 minutes (the content rarely changes).
- * The rows were written for the v2 book; under the v3 edition their chapter number and title are
- * shown as the v3 chapter that covers the same pressure (lib/edition.ts, editionChapter).
+ * The new Tactic Spotter (42 ordinary entries in 5 families, then 6 danger signs), in the
+ * guide's order. Null if migration 033 or the seed (funnel-v2/app-knowledge/seed_practice_v3.py)
+ * hasn't been run yet, so the caller can fall back to the old tactics.
+ */
+async function loadV3Tactics(): Promise<BookTactic[] | null> {
+  const { data, error } = await db.from('book_tactics').select(TACTIC_COLS_V3).eq('edition', 'v3').order('number');
+  if (error) {
+    console.warn('[practice] v3 tactics not available yet, using the old ones:', error.message);
+    return null;
+  }
+  const list = (data ?? []) as unknown as BookTactic[];
+  return list.length ? list : null;
+}
+
+/**
+ * The tactics for the current edition, cached for 10 minutes (the content rarely changes).
+ *   v2: the old 50, by chapter then guide order.
+ *   v3: the new Tactic Spotter in guide order. If it isn't loaded yet, the old 50 are used,
+ *       with their chapter shown as the v3 chapter that covers the same pressure
+ *       (lib/edition.ts, editionChapter).
  */
 export async function getTactics(): Promise<BookTactic[]> {
   if (cache && Date.now() - cache.at < 600_000) return cache.list;
-  const { data, error } = await db.from('book_tactics').select(TACTIC_COLS).order('chapter').order('number');
-  if (error) throw error;
-  const list = ((data ?? []) as BookTactic[]).map(editionChapter).sort((a, b) => a.chapter - b.chapter || a.number - b.number);
+  const v3 = IS_V3 ? await loadV3Tactics() : null;
+  const list = v3 ?? (await loadV2Tactics()).sort((a, b) => a.chapter - b.chapter || a.number - b.number);
   cache = { at: Date.now(), list };
   return cache.list;
+}
+
+/** True when a tactic is a danger sign from the new guide: no script, point to Chapter 11 and real help. */
+export function isDangerSign(t: Pick<BookTactic, 'safety' | 'calm_reply'>): boolean {
+  return t.safety && !t.calm_reply;
 }
 
 export async function getTactic(slug: string): Promise<BookTactic | null> {
@@ -109,7 +151,14 @@ Return JSON: {"context": "who says it and where, under 8 words, e.g. 'Your siste
       },
       {
         role: 'user',
-        content: `Tactic: ${t.name}\nWhat it looks like: ${t.looks_like}\nWarning sign: ${t.warning_sign}\nWhat it's for: ${t.purpose}`,
+        content: [
+          `Tactic: ${t.name}`,
+          `What it looks like: ${t.looks_like}`,
+          `${t.edition === 'v3' ? (isDangerSign(t) ? 'Why there is no script' : 'Concerning if') : 'Warning sign'}: ${t.warning_sign}`,
+          t.purpose ? `What it's for: ${t.purpose}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
       },
     ],
   });
@@ -144,6 +193,44 @@ export const SCENE_COLS =
 export function editionScene<T extends { chapter: number | null; chapter_title: string | null }>(scene: T): T {
   return editionChapter(scene);
 }
+
+/**
+ * The new edition's built-in scenes (lib/practice-v3/scenes.json, ids start with "book3-").
+ * Read from the file so they work on v3 even before seed_practice_v3.py copies them into
+ * the scenarios table.
+ */
+export const SCENES_V3: Scene[] = (SCENES_V3_DATA as Omit<Scene, 'is_book' | 'user_id'>[]).map((s) => ({ ...s, is_book: true, user_id: null }));
+
+const isV3SceneId = (id: string) => id.startsWith('book3-');
+
+/** The built-in scenes for the current edition, in order. */
+export async function listBookScenes(): Promise<Scene[]> {
+  if (IS_V3) return SCENES_V3;
+  // Old edition: the v2 book scenes. New-edition rows (if seeded) are left out.
+  const { data, error } = await db.from('scenarios').select(SCENE_COLS).eq('is_book', true).not('id', 'like', 'book3-%').order('sort_order');
+  if (error) throw error;
+  return ((data ?? []) as Scene[]).map(editionScene);
+}
+
+/**
+ * One scene this person may play: a built-in scene for the current edition, or one of
+ * their own. Returns null if it doesn't exist or isn't theirs.
+ */
+export async function getScene(id: string, uid: string): Promise<Scene | null> {
+  if (!id) return null;
+  if (isV3SceneId(id)) return IS_V3 ? SCENES_V3.find((s) => s.id === id) ?? null : null;
+  const { data } = await db.from('scenarios').select(SCENE_COLS).eq('id', id).maybeSingle();
+  const scene = data as Scene | null;
+  if (!scene || !(scene.is_book || scene.user_id === uid)) return null;
+  return editionScene(scene);
+}
+
+/* ── Quick Reps lines for the new edition ── */
+
+export type QuickRepLine = { line: string; context: string; tacticSlug: string | null; chapter: number; chapter_title: string };
+
+/** Pressure lines for Quick Reps on v3 (lib/practice-v3/quick-reps.json). Danger signs are never used for reps. */
+export const QUICK_REPS_V3: QuickRepLine[] = QUICK_REPS_V3_DATA as QuickRepLine[];
 
 export const DIFFICULTY_LABEL: Record<number, string> = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
 

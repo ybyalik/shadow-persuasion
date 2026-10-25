@@ -5,7 +5,7 @@ import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { searchKnowledge } from '@/lib/rag';
 import { getPersonContext } from '@/lib/person-context';
 import { HOTLINE, looksLikeDanger } from '@/lib/prompts/rehearse';
-import { BOOK, byEdition } from '@/lib/edition';
+import { BOOK, IS_V3, KEY_CHAPTERS, byEdition, chapterRef } from '@/lib/edition';
 
 /**
  * POST /api/warroom  ("Plan a Conversation")
@@ -28,7 +28,28 @@ export type Plan = {
   ifItGoesBadly: string;
   close: { goodEnding: string; lockIn: string; firstStep: string };
   breathe: string;
+  /** One line to remember, for the walk-in card. Older saved plans don't have it. */
+  walkInLine?: string;
+  /** v3 only (The Conversation Planner, sections 2, 7 and 10). */
+  powerMap?: PlanPowerMap;
+  noAgreement?: PlanNoAgreement;
+  fairness?: PlanFairness;
 };
+
+export type PlanPowerMap = {
+  whoDecides: string;
+  needs: { who: string; need: string; basis: 'said' | 'seen' | 'guess' }[];
+  resources: string;
+  whoKnows: string;
+  options: string;
+  factToCheck: string;
+};
+
+/** "If <ifNot> hasn't happened by <by>, I will <iWill>." The reader can edit these on the page. */
+export type PlanNoAgreement = { ifNo: string; meanwhile: string; ifNot: string; by: string; iWill: string };
+
+/** One short note per Four Fair Influence Test, about the reader's OWN plan. The ticks are the reader's. */
+export type PlanFairness = { honest: string; know: string; choice: string; power: string; ticks?: boolean[] };
 
 const IDEAS_V2 = `You help a kind, accommodating person plan a hard conversation, using the book ${BOOK.quotedWithAuthor}. This is the app version of the book's Hard Conversation Planner. The reader tends to over-explain, apologize, and give in when the other person sighs, pushes or goes quiet. Your plan gives them something calm to fall back on.
 
@@ -51,6 +72,38 @@ Use the book's ideas (and only these eight capitalised tool names: The Power Map
 - The No-Agreement Plan (Chapters 18 and 28): what the user will do if the answer is still no. It is their own next step, never a threat.
 - The Smallest Agreed Step (Chapter 22): when you get a yes, agree one useful next action with clear agreement on exactly what it covers, and confirm it in a short message.
 - Before the opening line, the Four Fair Influence Tests (Chapter 30): Is it honest? Do they know what they are agreeing to? Can they make a real choice without unfair pressure or punishment? Am I using my power responsibly?`;
+
+
+/** Extra JSON fields for the v3 edition: The Conversation Planner's Power Map, No-Agreement Plan and fairness check. */
+const V3_SHAPE = `,
+  "powerMap": {
+    "whoDecides": "<who can actually say yes, who else has to agree or carry it out, anyone above them. Only from what the user wrote; write '?' where you don't know>",
+    "needs": [
+      { "who": "<a person or role in this decision, and one entry for 'Me'>", "need": "<what they need here, in plain words>", "basis": "<said | seen | guess>" }
+    ],
+    "resources": "<money, time, a car, skills, access, work: who holds what and who depends on whom, including what the user provides>",
+    "whoKnows": "<a fact the decision-maker may not have, or one the user doesn't have>",
+    "options": "<what each side can realistically do if this doesn't work out, with costs where known>",
+    "factToCheck": "<one fact the user should check before they talk>"
+  },
+  "noAgreement": {
+    "ifNo": "<what the user will do if the answer is still no: their own modest, doable next step, never a threat or a bluff>",
+    "meanwhile": "<what they'll do while they wait for something better>",
+    "ifNot": "<X in 'If X hasn't happened by Y, I will Z'>",
+    "by": "<Y: a date or time; use [date] if they gave none>",
+    "iWill": "<Z: what the user will do>"
+  },
+  "fairness": {
+    "honest": "<one short line checking the USER'S plan against 'Is it honest?', e.g. a claim or deadline to leave out>",
+    "know": "<the same for 'Do they know what they are agreeing to?', e.g. say what a yes includes and what it doesn't>",
+    "choice": "<the same for 'Can they make a real choice without unfair pressure or punishment?'>",
+    "power": "<the same for 'Am I using my power responsibly?'; if the user holds more power here, how to make a no safe>"
+  }`;
+
+const V3_RULES = `
+- powerMap: map this one decision, not the whole relationship. Use only what the user wrote or what follows plainly from it. Mark each need "said" (they told the user), "seen" (the user watched it happen) or "guess". Anything about motives or feelings the user only suspects is a "guess". Include 2 to 4 needs, one of them for "Me". Never diagnose anyone or label their personality.
+- noAgreement: it is for the user's own steadiness, not something to threaten with. Keep it modest and doable. If children, custody or a court order are involved, the plan includes talking to a family lawyer first. If there is any sign of danger, the plan is about getting safe and getting help (Chapter 11, When Pressure Becomes Danger), not about the conversation.
+- fairness: each line is about the user's own plan, specific to this conversation, one sentence. If the plan already passes a test, say briefly why.`;
 
 const SYSTEM_PROMPT = `${byEdition({ v2: IDEAS_V2, v3: IDEAS_V3 })}
 
@@ -78,7 +131,8 @@ Respond with ONLY valid JSON in exactly this shape:
     "lockIn": "<the one-line text or email to send afterward to confirm what was agreed, word for word>",
     "firstStep": "<one small concrete step to agree before they leave>"
   },
-  "breathe": "<one short reminder to breathe out slowly and pause, tied to this conversation>"
+  "breathe": "<one short reminder to breathe out slowly and pause, tied to this conversation>",
+  "walkInLine": "<one plain line to remember as they walk in, under 12 words, e.g. 'Say it once, then let them answer.'>"${IS_V3 ? V3_SHAPE : ''}
 }
 
 Rules:
@@ -86,7 +140,7 @@ Rules:
 - threeMoves: exactly 3. pushback: 4 to 6 items, and always include Guilt, Rewriting the past, Silence and Anger, written the way THIS person would say them. If the user told you what they fear the other person will say, include that line first.
 - Every line the user would say must sound like a calm, kind adult. Short sentences. No jargon, no war or spy words, no "tactics", no em-dashes.
 - Fair influence only. Never suggest lying, guilt-tripping them back, threats, or exploiting their weak spots.
-- If the user is vague, make sensible guesses from what they wrote. Don't invent facts like amounts or dates they didn't give; use placeholders like [date] instead.`;
+- If the user is vague, make sensible guesses from what they wrote. Don't invent facts like amounts or dates they didn't give; use placeholders like [date] instead.${IS_V3 ? V3_RULES : ''}`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -133,7 +187,7 @@ What I'm afraid they'll say: ${fear || '(not given)'}${personBlock}`;
       feature: 'plan',
       model: MODELS.smart,
       temperature: 0.5,
-      maxTokens: 2500,
+      maxTokens: IS_V3 ? 3800 : 2700,
       json: true,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -148,13 +202,32 @@ What I'm afraid they'll say: ${fear || '(not given)'}${personBlock}`;
     // Belt and braces: if the words clearly point to danger, always show the hotline.
     const danger = looksLikeDanger(`${situation} ${goal} ${fear}`);
     if (danger || data.safety) {
-      data.safety = `${data.safety || 'Some of what you wrote sounds like it could be unsafe. Your safety comes first, and this planner is not the right tool for that.'} ${HOTLINE}`;
+      data.safety = `${data.safety || 'Some of what you wrote sounds like it could be unsafe. Your safety comes first, and this planner is not the right tool for that.'}${IS_V3 ? ` ${chapterRef(KEY_CHAPTERS.danger)} covers this.` : ''} ${HOTLINE}`;
     }
 
-    return NextResponse.json({ result: { ...data, counterpart: counterpart || null } });
+    // No dashes in anything the reader sees (house style).
+    const result = noDashes({ ...data, counterpart: counterpart || null });
+    if (!IS_V3) {
+      delete result.powerMap;
+      delete result.noAgreement;
+      delete result.fairness;
+    } else if (result.powerMap && !Array.isArray(result.powerMap.needs)) {
+      result.powerMap.needs = [];
+    }
+    return NextResponse.json({ result });
   } catch (err) {
     const f = passthroughAuthError(err);
     if (f) return f;
     return apiError("I couldn't put your plan together just now. Please try again.", 500, '[plan]', err);
   }
+}
+
+/** Replace em and en dashes in every string of the AI's answer. */
+function noDashes<T>(v: T): T {
+  if (typeof v === 'string') return v.replace(/\s*[\u2014\u2013]\s*/g, ', ') as T;
+  if (Array.isArray(v)) return v.map(noDashes) as T;
+  if (v && typeof v === 'object') {
+    return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, noDashes(x)])) as T;
+  }
+  return v;
 }

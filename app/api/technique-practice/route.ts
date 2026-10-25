@@ -42,7 +42,10 @@ export async function GET(req: NextRequest) {
       .select('tactic_slug, ease_factor, interval_days, repetitions, next_review_at, last_review_at, times_right, times_wrong')
       .eq('user_id', uid);
     const cards = (progress ?? []) as SRCard[];
-    const due = cards.filter((c) => cardStatus(c) === 'due').sort((a, b) => a.next_review_at.localeCompare(b.next_review_at));
+    // Skip saved progress for tactics that aren't in the current list (e.g. old-edition tactics after the v3 switch).
+    const due = cards
+      .filter((c) => cardStatus(c) === 'due' && all.some((t) => t.slug === c.tactic_slug))
+      .sort((a, b) => a.next_review_at.localeCompare(b.next_review_at));
 
     let tactic: BookTactic | null = asked ? await getTactic(asked) : null;
     if (!tactic) {

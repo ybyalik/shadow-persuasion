@@ -3,7 +3,7 @@ import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { aiChat, MODELS } from '@/lib/ai';
 import { searchKnowledge } from '@/lib/rag';
-import { DEBRIEF_SYSTEM, editionScene, getTactic, HOTLINE, practiceDb as db, SCENE_COLS, type Scene } from '@/lib/prompts/practice';
+import { DEBRIEF_SYSTEM, getScene, getTactic, HOTLINE, practiceDb as db } from '@/lib/prompts/practice';
 
 export const maxDuration = 60;
 
@@ -32,11 +32,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Say at least one thing in the scene first.' }, { status: 400 });
     }
 
-    const { data } = await db.from('scenarios').select(SCENE_COLS).eq('id', scenarioId).maybeSingle();
-    const scene = data ? editionScene(data as Scene) : null;
-    if (!scene || !(scene.is_book || scene.user_id === uid)) {
-      return NextResponse.json({ error: "We couldn't find that scene." }, { status: 404 });
-    }
+    const scene = await getScene(scenarioId, uid);
+    if (!scene) return NextResponse.json({ error: "We couldn't find that scene." }, { status: 404 });
     const tactic = scene.tactic_slug ? await getTactic(scene.tactic_slug) : null;
     const other = scene.other_person || 'The other person';
     const transcript = messages

@@ -11,15 +11,11 @@ import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { aiChat, MODELS } from '@/lib/ai';
 import { RESET_TOTAL } from '@/lib/progress';
 import { BOOK, RESET, byEdition } from '@/lib/edition';
+import { finishReflection } from './safety';
 
 export const maxDuration = 30;
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-const HOTLINE =
-  'If someone is hurting you, threatening you, or you feel unsafe, please reach out: the National Domestic Violence Hotline is 1-800-799-7233, or text START to 88788. You do not have to handle this alone.';
-
-const DANGER = /\b(hit|hits|hitting|punch|slap|chok|strangl|hurt me|hurts me|threaten|stalk|kill|weapon|gun|knife|afraid for my (life|safety)|scared for my (life|safety)|abus|violent|unsafe)/i;
 
 const SYSTEM = `You are a calm, warm companion inside the app for the book ${BOOK.quotedWithAuthor}. ${byEdition({
   v2: "The reader is doing the book's 21-Day Reset: small daily drills that help kind, accommodating people notice pressure, pause before answering, and hold their ground calmly.",
@@ -50,7 +46,7 @@ export async function POST(req: NextRequest) {
     if (!Number.isInteger(day) || day < 1 || day > RESET_TOTAL) return apiError('Please pick a day of the reset.', 400);
 
     const [{ data: step }, { data: entry }] = await Promise.all([
-      db.from(RESET.daysTable).select('label, title, drill, journal_prompts').eq('day_number', day).maybeSingle(),
+      db.from(RESET.daysTable).select('*').eq('day_number', day).maybeSingle(), // '*': includes the v3 practice line when present
       db.from(RESET.progressTable).select('note').eq('user_id', uid).eq('day_number', day).maybeSingle(),
     ]);
     if (!step) return apiError('We could not find that day of the reset.', 404);
@@ -68,14 +64,13 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: SYSTEM },
         {
           role: 'user',
-          content: `Today's step: ${step.label}, "${step.title}"\nThe drill: ${step.drill}\nJournal questions:\n${prompts}\n\nTheir note:\n"""${note.slice(0, 4000)}"""`,
+          content: `Today's step: ${step.label}, "${step.title}"\n${step.practice ? `Today's practice: ${step.practice}\n` : ''}The drill: ${step.drill}\nJournal questions:\n${prompts}\n\nTheir note:\n"""${note.slice(0, 4000)}"""`,
         },
       ],
     });
 
-    let reflection = text.replace(/—/g, ', ').replace(/\s+,/g, ',').trim();
+    const reflection = finishReflection(text, note);
     if (!reflection) return apiError('We could not write a reflection just now. Please try again.', 502);
-    if (DANGER.test(note) && !reflection.includes('799-7233')) reflection += `\n\n${HOTLINE}`;
 
     await db
       .from(RESET.progressTable)

@@ -7,6 +7,7 @@ import { apiError, passthroughAuthError } from '@/lib/api-error';
  * Saved conversation plans.
  * GET    /api/warroom/plans          -> { plans: [...] } (newest first, max 30)
  * POST   /api/warroom/plans          { counterpart, situation, goal, fear, personId, plan } -> { plan }
+ * PATCH  /api/warroom/plans          { id, plan } -> { ok: true }  (the reader's edits: No-Agreement Plan, fairness ticks)
  * DELETE /api/warroom/plans?id=<id>  -> { ok: true }
  */
 
@@ -62,6 +63,25 @@ export async function POST(req: NextRequest) {
     const f = passthroughAuthError(err);
     if (f) return f;
     return apiError("Couldn't save your plan. Please try again.", 500, '[plans:post]', err);
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const id = typeof body?.id === 'string' ? body.id : '';
+    const plan = body?.plan;
+    if (!UUID.test(id) || !plan || typeof plan !== 'object' || JSON.stringify(plan).length > 30000) {
+      return NextResponse.json({ error: 'There was nothing to save yet.' }, { status: 400 });
+    }
+    const { error } = await db.from('conversation_plans').update({ plan }).eq('id', id).eq('user_id', uid);
+    if (error) return apiError("Couldn't save your changes. Please try again.", 500, '[plans:patch]', error);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("Couldn't save your changes. Please try again.", 500, '[plans:patch]', err);
   }
 }
 

@@ -3,18 +3,25 @@
 /* The 21-Day Reset: Part Two of the book, one step at a time.
    (v3 edition: the 21-Day Power Reset, Part VII, Days 1 to 21; labels come from lib/edition.ts RESET.)
    3-Day Quick Start (Chapter 6), then Week 1 Notice, Week 2 Pause, Week 3 Hold.
-   People go at their own pace; one step a day is the suggestion, not a lock. */
+   People go at their own pace; one step a day is the suggestion, not a lock.
+   v3 only: each day shows the book's "Today's practice" line, plus the journal's
+   four check-ins, tool pages, weekly reviews and after-the-reset pages (./ResetPages.tsx). */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Circle, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Circle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { apiFetch } from '@/lib/api-client';
 import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
 import { PHASES, type ResetDay, type ResetEntry } from '@/lib/progress';
-import { RESET } from '@/lib/edition';
+import { IS_V3, RESET } from '@/lib/edition';
+import { AfterReset, DayExtras, PrivateLine, type PageRow } from './ResetPages';
+import type { Answers } from './reset-pages';
+
+/** v3 days also carry the book's "Today's practice" line (migration 032). */
+type Day = ResetDay & { practice?: string | null };
 
 type ResetData = {
-  days: ResetDay[];
+  days: Day[];
   entries: ResetEntry[];
   currentDay: number | null;
   doneCount: number;
@@ -41,6 +48,54 @@ export default function ResetPage() {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [reflecting, setReflecting] = useState(false);
   const [reflectError, setReflectError] = useState<string | null>(null);
+  // v3: check-ins, tool pages and reviews. pagesReady=false until migration 032 is applied.
+  const [pages, setPages] = useState<Map<string, PageRow>>(new Map());
+  const [pagesReady, setPagesReady] = useState(false);
+  const [pagesLoaded, setPagesLoaded] = useState(!IS_V3);
+  const [view, setView] = useState<'day' | 'after'>('day');
+
+  const loadPages = useCallback(async () => {
+    if (!IS_V3) return;
+    try {
+      const res = await apiFetch('/api/missions/pages');
+      if (!res.ok) return; // The days still work; the pages just show their questions.
+      const d: { ready: boolean; pages: PageRow[] } = await res.json();
+      setPagesReady(d.ready);
+      setPages(new Map(d.pages.map((p) => [p.page_key, p])));
+    } catch {
+      /* same: the Reset works without the pages */
+    } finally {
+      setPagesLoaded(true);
+    }
+  }, []);
+
+  function openAfterReset() {
+    setView('after');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function savePage(key: string, answers: Answers): Promise<string | null> {
+    try {
+      const res = await apiFetch('/api/missions/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, answers }),
+      });
+      if (!res.ok) return await friendlyError(res, 'We could not save that just now. Your writing is still here, so please try again.');
+      const d: { page: PageRow } = await res.json();
+      setPages((m) => new Map(m).set(key, d.page));
+      return null;
+    } catch {
+      return 'We could not save that just now. Your writing is still here, so please try again.';
+    }
+  }
+
+  function keepReflection(key: string, reflection: string) {
+    setPages((m) => {
+      const prev = m.get(key);
+      return new Map(m).set(key, { page_key: key, answers: prev?.answers ?? {}, reflection, updated_at: new Date().toISOString() });
+    });
+  }
 
   const load = useCallback(async () => {
     try {
@@ -59,8 +114,11 @@ export default function ResetPage() {
   }, []);
 
   useEffect(() => {
-    if (user) load();
-  }, [user, load]);
+    if (user) {
+      load();
+      loadPages();
+    }
+  }, [user, load, loadPages]);
 
   const entryByDay = useMemo(() => new Map((data?.entries ?? []).map((e) => [e.day_number, e])), [data]);
   const day = data?.days.find((d) => d.day_number === selected) ?? null;
@@ -145,6 +203,19 @@ export default function ResetPage() {
   }
 
   const allDone = data.currentDay === null;
+  const notedDays = data.entries.filter((e) => (e.note?.trim().length ?? 0) >= 10).map((e) => e.day_number);
+  const extras = (position: 'before' | 'after') =>
+    IS_V3 && day && pagesLoaded ? (
+      <DayExtras
+        day={day.day_number}
+        position={position}
+        pages={pages}
+        ready={pagesReady}
+        onSave={savePage}
+        onReflect={keepReflection}
+        notedDays={notedDays}
+      />
+    ) : null;
   const pct = Math.round((data.doneCount / data.total) * 100);
   const noteChanged = (entry?.note ?? '') !== note.trim();
 
@@ -176,18 +247,37 @@ export default function ResetPage() {
       <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] items-start">
         {/* The chosen step */}
         <div className="space-y-4 min-w-0">
-          {allDone && selected === data.total && isDone && (
+          {IS_V3 && view === 'after' && pagesLoaded && <AfterReset pages={pages} ready={pagesReady} onSave={savePage} />}
+
+          {view === 'day' && allDone && selected === data.total && isDone && (
             <Card tone="night">
               <Label className="!text-[color:var(--app-gold)]">You finished the reset</Label>
-              <p className="app-serif text-[24px] leading-snug mb-2">Three weeks isn&apos;t the end of this work. It&apos;s the end of the beginning.</p>
-              <p className="text-[15px] leading-relaxed opacity-90">
-                To keep it going, pick one courage drill each week and do it once. Keep writing a short note two or three
-                times a week. And when a hard conversation comes up, use the buffer, then come back to the book.
-              </p>
+              {IS_V3 ? (
+                <>
+                  <p className="app-serif text-[24px] leading-snug mb-2">Three weeks is a beginning.</p>
+                  <p className="text-[15px] leading-relaxed opacity-90 mb-4">
+                    The habits fade if you stop using them. To keep them, do one practice each week, rotating through the
+                    courage drills, and write a short evening note two or three times a week. Once a month, do a check-in.
+                  </p>
+                  <Button variant="gold" onClick={openAfterReset}>
+                    After the reset <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="app-serif text-[24px] leading-snug mb-2">Three weeks isn&apos;t the end of this work. It&apos;s the end of the beginning.</p>
+                  <p className="text-[15px] leading-relaxed opacity-90">
+                    To keep it going, pick one courage drill each week and do it once. Keep writing a short note two or three
+                    times a week. And when a hard conversation comes up, use the buffer, then come back to the book.
+                  </p>
+                </>
+              )}
             </Card>
           )}
 
-          {day && (
+          {view === 'day' && extras('before')}
+
+          {view === 'day' && day && (
             <Card tone={selected === data.currentDay ? 'gold' : 'plain'}>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                 <Label className="!mb-0">
@@ -198,6 +288,11 @@ export default function ResetPage() {
                 )}
               </div>
               <h2 className="app-serif text-[28px] sm:text-[30px] leading-tight font-semibold mb-3">{day.title}</h2>
+              {IS_V3 && day.practice && (
+                <p className="text-[17px] leading-relaxed mb-3">
+                  <strong>Today&apos;s practice:</strong> {day.practice}
+                </p>
+              )}
               <p className="text-[16px] leading-relaxed mb-4">{day.drill}</p>
               <p className="text-[15px] text-[color:var(--app-muted)] mb-4">
                 <span className="font-semibold text-[color:var(--app-ink)]">This morning: </span>
@@ -210,6 +305,11 @@ export default function ResetPage() {
                 <p className="text-[15px] text-[color:var(--app-muted)] mb-3">
                   Write in the evening, even two lines, even on a bad day. Especially on a bad day.
                 </p>
+                {IS_V3 && (
+                  <div className="-mt-1 mb-3">
+                    <PrivateLine />
+                  </div>
+                )}
                 <ol className="list-decimal pl-5 space-y-1 text-[15px] mb-4">
                   {day.journal_prompts.map((p) => (
                     <li key={p}>{p}</li>
@@ -279,6 +379,8 @@ export default function ResetPage() {
               )}
             </Card>
           )}
+
+          {view === 'day' && extras('after')}
         </div>
 
         {/* The map of all 24 steps */}
@@ -297,7 +399,7 @@ export default function ResetPage() {
                 <p className="text-[14px] text-[color:var(--app-muted)] mb-3">{ph.blurb}</p>
                 <ul className="space-y-1">
                   {days.map((d) => {
-                    const isSel = d.day_number === selected;
+                    const isSel = view === 'day' && d.day_number === selected;
                     const isCur = d.day_number === data.currentDay;
                     const isDoneDay = entryByDay.has(d.day_number);
                     const short = d.phase === 'quick_start' ? `Day ${d.day_number}` : `Day ${d.day_number - RESET.dayOffset}`;
@@ -305,7 +407,10 @@ export default function ResetPage() {
                       <li key={d.day_number}>
                         <button
                           type="button"
-                          onClick={() => setSelected(d.day_number)}
+                          onClick={() => {
+                            setSelected(d.day_number);
+                            setView('day');
+                          }}
                           aria-current={isSel ? 'true' : undefined}
                           className={cx(
                             'w-full min-h-[44px] flex items-center gap-3 rounded-lg px-3 py-2 text-left text-[15px] transition-colors',
@@ -335,6 +440,27 @@ export default function ResetPage() {
             );
           })}
 
+          {IS_V3 && (
+            <Card className="!p-4 sm:!p-5">
+              <h3 className="app-serif text-[20px] font-semibold mb-1">After the reset</h3>
+              <p className="text-[14px] text-[color:var(--app-muted)] mb-3">
+                The monthly check-in and the courage drills to rotate, for keeping the habits going.
+              </p>
+              <button
+                type="button"
+                onClick={openAfterReset}
+                aria-current={view === 'after' ? 'true' : undefined}
+                className={cx(
+                  'w-full min-h-[44px] flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-[15px] transition-colors',
+                  view === 'after' ? 'bg-[color:var(--app-paper-2)] ring-1 ring-[color:var(--app-line)]' : 'hover:bg-[color:var(--app-paper-2)]'
+                )}
+              >
+                <span>Monthly check-in and courage drills</span>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+              </button>
+            </Card>
+          )}
+
           {data.entries.some((e) => e.note) && (
             <Card className="!p-4 sm:!p-5">
               <h3 className="app-serif text-[20px] font-semibold mb-1">Your notes</h3>
@@ -351,7 +477,10 @@ export default function ResetPage() {
                       <li key={e.day_number}>
                         <button
                           type="button"
-                          onClick={() => setSelected(e.day_number)}
+                          onClick={() => {
+                            setSelected(e.day_number);
+                            setView('day');
+                          }}
                           className="w-full min-h-[44px] rounded-lg px-3 py-2 text-left hover:bg-[color:var(--app-paper-2)]"
                         >
                           <span className="block text-[15px] font-medium">{d?.title}</span>

@@ -109,10 +109,13 @@ export function Hero({
 
 /* ─────────────── I. The 3 a.m. replay, told as a sleepless night's log ─────────────── */
 
-const NIGHT_LOG = [
+/** One line of the night log. `mark` is the part of `line` to underline in red. */
+export type NightEntry = { t: string; h: number; m: number; line: string; mark?: string };
+
+const NIGHT_LOG: NightEntry[] = [
   { t: '3:07', h: 3, m: 7, line: 'A sentence surfaces. Something someone said yesterday, or last week, or eleven years ago at a wedding.' },
   { t: '3:12', h: 3, m: 12, line: 'You are back in the room. Same words. Same small pause before you answered.' },
-  { t: '3:20', h: 3, m: 20, line: 'And the answer you gave, which was polite and reasonable and wrong.', mark: true },
+  { t: '3:20', h: 3, m: 20, line: 'And the answer you gave, which was polite and reasonable and wrong.', mark: 'polite and reasonable and wrong.' },
   { t: '3:41', h: 3, m: 41, line: 'You rewrite it. In this version you stay calm and say the precise thing.' },
   { t: '4:02', h: 4, m: 2, line: 'You have a speech that would end the argument for good.' },
   { t: '4:03', h: 4, m: 3, line: 'And nobody to give it to.' },
@@ -139,22 +142,21 @@ function InkClock({ h, m, className = '' }: { h: number; m: number; className?: 
   );
 }
 
-function NightLine({ n, i, active, onActive }: { n: (typeof NIGHT_LOG)[number]; i: number; active: boolean; onActive: (i: number) => void }) {
+function NightLine({ n, i, last, active, onActive }: { n: NightEntry; i: number; last: boolean; active: boolean; onActive: (i: number) => void }) {
   const ref = useRef<HTMLLIElement>(null);
   const inView = useInView(ref, { margin: '-45% 0px -45% 0px' });
   useEffect(() => {
     if (inView) onActive(i);
   }, [inView, i, onActive]);
-  const last = i === NIGHT_LOG.length - 1;
   return (
     <li ref={ref} className={`py-8 lg:py-14 transition-opacity duration-500 ${active ? 'opacity-100' : 'opacity-30'}`}>
       <span className="sp2-type text-[20px] text-[color:var(--sp2-accent)]">{n.t}</span>
       <p className={last ? 'sp2-display italic text-[40px] sm:text-[56px] leading-[1.05] mt-2' : 'sp2-display text-[30px] sm:text-[40px] leading-[1.2] mt-2'}>
-        {n.mark ? (
+        {n.mark && n.line.includes(n.mark) ? (
           <>
-            And the answer you gave, which was{' '}
+            {n.line.slice(0, n.line.indexOf(n.mark)).trimEnd()}{' '}
             <span className="relative inline-block">
-              polite and reasonable and wrong.
+              {n.mark}
               <Mark name="underline" red className="left-0 -bottom-2 w-full h-3" />
             </span>
           </>
@@ -167,9 +169,10 @@ function NightLine({ n, i, active, onActive }: { n: (typeof NIGHT_LOG)[number]; 
 }
 
 /* A big ink clock stays in view while you scroll; its hands move to each line's time. */
-export function Replay() {
+/** `log` and `outro` are optional replacements (the angle pages use a third-person version). */
+export function Replay({ log = NIGHT_LOG, outro }: { log?: NightEntry[]; outro?: React.ReactNode } = {}) {
   const [active, setActive] = useState(0);
-  const now = NIGHT_LOG[active];
+  const now = log[active] ?? log[0];
   return (
     <section className="relative bg-[color:var(--sp2-paper)] sp2-grain pt-10 lg:pt-16 pb-24 lg:pb-32">
       <div className="max-w-[1320px] mx-auto px-5 sm:px-10">
@@ -187,11 +190,11 @@ export function Replay() {
             </div>
           </div>
           <ol className="lg:col-span-7">
-            {NIGHT_LOG.map((n, i) => (
-              <NightLine key={n.t} n={n} i={i} active={active === i} onActive={setActive} />
+            {log.map((n, i) => (
+              <NightLine key={n.t} n={n} i={i} last={i === log.length - 1} active={active === i} onActive={setActive} />
             ))}
             <li className="sp2-rule pt-10 mt-4">
-              <p className="sp2-lead">The yes you didn&apos;t mean. The raise you didn&apos;t ask for. The joke at your expense you laughed along with.</p>
+              <p className="sp2-lead">{outro ?? <>The yes you didn&apos;t mean. The raise you didn&apos;t ask for. The joke at your expense you laughed along with.</>}</p>
               <p className="sp2-note mt-4">The Voice That Keeps You Stuck, {pageRef(4, 'The replay is a signal')}. Day 4 of the Reset turns the replay into half a page you can actually use.</p>
             </li>
           </ol>
@@ -203,7 +206,10 @@ export function Replay() {
 
 /* ─────────────── III. The checklist, as a torn notebook page ─────────────── */
 
-const MOMENTS = [
+/** One notebook line and the receipt line it prints. */
+export type Moment = { m: string; cost: string };
+
+const MOMENTS: Moment[] = [
   { m: 'A \u201cquick favor\u201d took your whole Saturday.', cost: 'One Saturday' },
   { m: 'You hosted the holiday again.', cost: 'One holiday, cooked and cleaned up' },
   { m: 'You apologized for something they did.', cost: 'One apology you didn\u2019t owe' },
@@ -213,18 +219,36 @@ const MOMENTS = [
   { m: 'You lay awake replaying what you should have said.', cost: 'A night\u2019s sleep' },
 ];
 
-function verdict(n: number) {
-  if (n <= 2) return 'Nobody forced you. It just felt easier than making it awkward.';
-  if (n <= 4) return 'They got the easy evening. You paid for it.';
-  return 'This isn\u2019t bad luck. It\u2019s a pattern, and patterns can be changed.';
+const VERDICTS: [string, string, string] = [
+  'Nobody forced you. It just felt easier than making it awkward.',
+  'They got the easy evening. You paid for it.',
+  'This isn\u2019t bad luck. It\u2019s a pattern, and patterns can be changed.',
+];
+
+/** The receipt's closing line for 1-2, 3-4 and 5+ ticked lines. */
+function verdict(n: number, v: [string, string, string]) {
+  if (n <= 2) return v[0];
+  if (n <= 4) return v[1];
+  return v[2];
 }
+
+type NotebookProps = {
+  kicker?: string;
+  heading?: React.ReactNode;
+  moments?: Moment[];
+  receiptTitle?: string;
+  receiptSub?: string;
+  paidBy?: string;
+  verdicts?: [string, string, string];
+};
 
 // The receipt's zigzag bottom edge.
 const RECEIPT_CLIP =
   'polygon(0 0,100% 0,100% calc(100% - 10px),95% 100%,90% calc(100% - 10px),85% 100%,80% calc(100% - 10px),75% 100%,70% calc(100% - 10px),65% 100%,60% calc(100% - 10px),55% 100%,50% calc(100% - 10px),45% 100%,40% calc(100% - 10px),35% 100%,30% calc(100% - 10px),25% 100%,20% calc(100% - 10px),15% 100%,10% calc(100% - 10px),5% 100%,0 calc(100% - 10px))';
 
 /* The checklist on a torn notebook page; a receipt beside it prints what each one cost. */
-export function Notebook() {
+/** All props are optional replacements (the angle pages use a version that doesn't say what happened to the reader). */
+export function Notebook({ kicker = 'Be honest', heading, moments = MOMENTS, receiptTitle = 'WHAT IT COST YOU', receiptSub = 'This year', paidBy = 'YOU', verdicts = VERDICTS }: NotebookProps = {}) {
   const [on, setOn] = useState<Set<number>>(new Set());
   const toggle = (i: number) =>
     setOn((s) => {
@@ -233,17 +257,21 @@ export function Notebook() {
       else n.add(i);
       return n;
     });
-  const lines = MOMENTS.map((x, i) => ({ ...x, i })).filter((x) => on.has(x.i));
+  const lines = moments.map((x, i) => ({ ...x, i })).filter((x) => on.has(x.i));
   return (
     <section className="relative bg-[color:var(--sp2-paper)] sp2-grain pb-24 sm:pb-32">
       <div className="max-w-[1320px] mx-auto px-5 sm:px-10">
-        <p className="sp2-kicker">Be honest</p>
+        <p className="sp2-kicker">{kicker}</p>
         <h2 className="sp2-display text-[44px] sm:text-[64px] lg:text-[76px] leading-[1] tracking-[-0.01em] max-w-[14ch] mt-4">
-          Tap every one that happened to you{' '}
-          <span className="relative inline-block whitespace-nowrap">
-            this year.
-            <Mark name="underline" red className="left-0 -bottom-3 w-full" />
-          </span>
+          {heading ?? (
+            <>
+              Tap every one that happened to you{' '}
+              <span className="relative inline-block whitespace-nowrap">
+                this year.
+                <Mark name="underline" red className="left-0 -bottom-3 w-full" />
+              </span>
+            </>
+          )}
         </h2>
 
         <div className="grid lg:grid-cols-12 gap-x-8 gap-y-12 items-start mt-14">
@@ -259,7 +287,7 @@ export function Notebook() {
                 backgroundPosition: '0 26px',
               }}
             >
-              {MOMENTS.map((x, i) => {
+              {moments.map((x, i) => {
                 const checked = on.has(i);
                 return (
                   <button key={x.m} onClick={() => toggle(i)} aria-pressed={checked} className="relative block w-full text-left group text-[20px] sm:text-[22px] leading-[52px] focus:outline-none focus-visible:underline decoration-[color:var(--sp2-accent)]">
@@ -283,8 +311,8 @@ export function Notebook() {
               <div className="flex items-center gap-3 border-b-2 border-dashed border-[#bdb3a3] pb-4">
                 <img src="/v2/icons/receipt.png" alt="" aria-hidden className="w-10 h-10 object-contain" />
                 <div>
-                  <p className="text-[18px] font-bold tracking-[0.1em]">WHAT IT COST YOU</p>
-                  <p className="text-[16px] text-[color:var(--sp2-muted)]">This year</p>
+                  <p className="text-[18px] font-bold tracking-[0.1em]">{receiptTitle}</p>
+                  <p className="text-[16px] text-[color:var(--sp2-muted)]">{receiptSub}</p>
                 </div>
               </div>
               <div className="min-h-[150px] py-3" aria-live="polite">
@@ -299,9 +327,9 @@ export function Notebook() {
               </div>
               <div className="border-t-2 border-dashed border-[#bdb3a3] pt-4 flex justify-between text-[18px] font-bold">
                 <span>PAID BY</span>
-                <span>YOU</span>
+                <span>{paidBy}</span>
               </div>
-              {lines.length > 0 && <p className="text-[16px] mt-4 text-[color:var(--sp2-oxblood)]">{verdict(lines.length)}</p>}
+              {lines.length > 0 && <p className="text-[16px] mt-4 text-[color:var(--sp2-oxblood)]">{verdict(lines.length, verdicts)}</p>}
             </div>
           </div>
         </div>
@@ -312,13 +340,17 @@ export function Notebook() {
 
 /* ─────────────── IV. The scenes, as a collage ─────────────── */
 
-const SCENES = [
+/** One print in the collage. `aside` is underlined in red when present. */
+export type Scene = { img: string; alt: string; label: string; said: string; aside: string; you: string };
+
+const SCENES: Scene[] = [
   { img: `${LINO}/table.jpg`, alt: 'A family holiday dinner, one man sitting back with a strained smile', label: 'The holiday table', said: '\u201cWell, some of us actually make an effort to visit.\u201d', aside: '', you: 'You laugh it off, then spend the drive home rehearsing what you should have said.' },
   { img: `${LINO}/office.jpg`, alt: 'A man presenting in a meeting while a woman watches her idea taken', label: 'The Tuesday meeting', said: '\u201cSo I had this idea\u2026\u201d', aside: '(It was your idea.)', you: 'You say nothing, because making a fuss feels worse than losing the credit.' },
   { img: `${LINO}/phone.jpg`, alt: 'Two hands holding a phone over a kitchen table at night', label: 'The text you keep rereading', said: '\u201cFine. I guess I\u2019ll figure it out myself, like always.\u201d', aside: '', you: 'You type an apology for something you didn\u2019t do, and send it.' },
 ];
 
-export function Scenes() {
+/** `scenes` is an optional replacement (the angle pages describe the people in the prints, not the reader). */
+export function Scenes({ scenes = SCENES }: { scenes?: Scene[] } = {}) {
   return (
     <section className="relative bg-[color:var(--sp2-paper)] sp2-grain pt-8 pb-28 overflow-hidden">
       <div className="max-w-[1320px] mx-auto px-5 sm:px-10">
@@ -331,7 +363,7 @@ export function Scenes() {
 
         {/* Three prints, all the same size, gently staggered; each fades into the paper */}
         <div className="grid md:grid-cols-3 gap-x-10 gap-y-16 mt-14 lg:mt-20">
-          {SCENES.map((sc, i) => (
+          {scenes.map((sc, i) => (
             <figure key={sc.label} className={i === 1 ? 'md:mt-24' : i === 2 ? 'md:mt-10' : ''}>
               <div className="aspect-[4/3] overflow-hidden">
                 <img src={sc.img} alt={sc.alt} className="w-full h-full object-cover sp2-soft" loading="lazy" />

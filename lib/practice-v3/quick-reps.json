@@ -1,0 +1,317 @@
+[
+  {
+    "line": "Can you just take this one too? You're so much faster than everyone else.",
+    "context": "Your manager, on a Friday afternoon",
+    "tacticSlug": "v3-flattery-before-the-ask",
+    "chapter": 23,
+    "chapter_title": "Work, Pay, and Recognition"
+  },
+  {
+    "line": "We don't really do raises outside the review cycle. Let's see how the next six months go.",
+    "context": "Your manager, after you ask about pay",
+    "tacticSlug": "v3-moving-goalposts",
+    "chapter": 23,
+    "chapter_title": "Work, Pay, and Recognition"
+  },
+  {
+    "line": "You don't mind covering my calls again tomorrow, right? It's only for a couple more weeks.",
+    "context": "Your coworker, by chat",
+    "tacticSlug": "v3-the-slow-creep",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "A real team player wouldn't be asking about overtime pay right now.",
+    "context": "Your manager, in a meeting",
+    "tacticSlug": "v3-the-character-test",
+    "chapter": 23,
+    "chapter_title": "Work, Pay, and Recognition"
+  },
+  {
+    "line": "Wow. After I covered for you last month, this is how you repay me?",
+    "context": "Your coworker, after you raise a mistake",
+    "tacticSlug": "v3-the-ledger",
+    "chapter": 7,
+    "chapter_title": "Guilt, Favors, and Hidden Debts"
+  },
+  {
+    "line": "Once things settle down, we'll look at your title. You know I've got your back.",
+    "context": "Your manager, about your new duties",
+    "tacticSlug": "v3-promises-that-keep-replacing-action",
+    "chapter": 23,
+    "chapter_title": "Work, Pay, and Recognition"
+  },
+  {
+    "line": "I never said you'd get Fridays off. I said we'd talk about it.",
+    "context": "Your team lead",
+    "tacticSlug": "v3-word-games",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "That number is way above our budget. Most people in this role are happy with less.",
+    "context": "A hiring manager, about your salary ask",
+    "tacticSlug": null,
+    "chapter": 17,
+    "chapter_title": "Ask for More and Negotiate Well"
+  },
+  {
+    "line": "I need your answer on the weekend schedule right now, before you leave.",
+    "context": "Your manager, at 5:30 p.m.",
+    "tacticSlug": "v3-fake-urgency-and-bad-timing",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "Maybe if you'd actually read the brief, we wouldn't be in this mess.",
+    "context": "A colleague, in front of the team",
+    "tacticSlug": "v3-called-out-in-front-of-others",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "I guess I'll spend Thanksgiving alone, then. Don't worry about me.",
+    "context": "Your mother, on the phone",
+    "tacticSlug": "v3-the-martyr",
+    "chapter": 7,
+    "chapter_title": "Guilt, Favors, and Hidden Debts"
+  },
+  {
+    "line": "Your sister never complains about driving up. I don't know why it's always a problem for you.",
+    "context": "Your father, about the holidays",
+    "tacticSlug": "v3-the-comparison",
+    "chapter": 7,
+    "chapter_title": "Guilt, Favors, and Hidden Debts"
+  },
+  {
+    "line": "You're better at the paperwork. Can't you just keep doing it?",
+    "context": "Your brother, about Mom's care",
+    "tacticSlug": "v3-helpless-at-the-jobs-they-dont-want",
+    "chapter": 26,
+    "chapter_title": "Family, Friends, and the Roles That Stick"
+  },
+  {
+    "line": "That's not what happened at all. You always make things up to look good.",
+    "context": "Your aunt, at a family lunch",
+    "tacticSlug": "v3-that-never-happened",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "Your mom's really hurt by what you said. Everyone thinks you should apologize.",
+    "context": "Your cousin, by text",
+    "tacticSlug": "v3-messages-through-a-third-person",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "Either you make time for your family or you don't. It's that simple.",
+    "context": "Your father, after you decline a visit",
+    "tacticSlug": "v3-either-or",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "I'm only joking! You've gotten so sensitive since you had kids.",
+    "context": "Your mother, about your parenting",
+    "tacticSlug": "v3-it-was-just-a-joke",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "After everything we did for you when you moved, I didn't think I'd have to ask twice.",
+    "context": "Your sister-in-law, about a loan",
+    "tacticSlug": "v3-the-ledger",
+    "chapter": 7,
+    "chapter_title": "Guilt, Favors, and Hidden Debts"
+  },
+  {
+    "line": "Can you just call the landlord for me? You're so much better at this kind of thing.",
+    "context": "Your grown son",
+    "tacticSlug": "v3-helpless-at-the-jobs-they-dont-want",
+    "chapter": 26,
+    "chapter_title": "Family, Friends, and the Roles That Stick"
+  },
+  {
+    "line": "If you loved me, you wouldn't make such a big deal out of this.",
+    "context": "Your partner, after you say no",
+    "tacticSlug": "v3-if-you-loved-me",
+    "chapter": 7,
+    "chapter_title": "Guilt, Favors, and Hidden Debts"
+  },
+  {
+    "line": "Fine. Do whatever you want. I'm not talking about it.",
+    "context": "Your partner, after an argument",
+    "tacticSlug": "v3-the-silent-treatment-and-silence-as-pressure",
+    "chapter": 9,
+    "chapter_title": "Silence, Distance, and Conditional Warmth"
+  },
+  {
+    "line": "I can't believe you'd bring this up after the week I've had. You're the one hurting me.",
+    "context": "Your partner, when you raise a worry",
+    "tacticSlug": "v3-turning-the-tables",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "You're being dramatic. It's my money too.",
+    "context": "Your partner, about money",
+    "tacticSlug": "v3-labels-instead-of-answers",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "You agreed I'd have the kids for the whole break. Don't you remember?",
+    "context": "Your ex, by text",
+    "tacticSlug": "v3-you-agreed-to-this",
+    "chapter": 25,
+    "chapter_title": "Dating, Intimacy, and Difficult Relationships"
+  },
+  {
+    "line": "If you hadn't been so difficult, I wouldn't have had to yell.",
+    "context": "Your ex, during a handover",
+    "tacticSlug": "v3-you-made-me-do-it",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "I already booked us a trip for your birthday. You have to come, I've never felt like this before.",
+    "context": "Your new partner, after two weeks",
+    "tacticSlug": "v3-love-bombing",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "I don't know if this is going to work if you keep putting your friends first.",
+    "context": "Your partner, when you keep your plans",
+    "tacticSlug": "v3-the-relationship-on-the-line",
+    "chapter": 9,
+    "chapter_title": "Silence, Distance, and Conditional Warmth"
+  },
+  {
+    "line": "Oh, so now I'm a terrible parent? Is that what you're saying?",
+    "context": "Your ex, about the school forms",
+    "tacticSlug": "v3-twisting-your-words",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "We agreed no calls after nine, but this is important. Just five minutes.",
+    "context": "Your partner, after you set a limit",
+    "tacticSlug": "v3-testing-the-limit",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "I've been loyal for years. I assumed loyal clients got the old price.",
+    "context": "A client, about your new rate",
+    "tacticSlug": "v3-the-favor-with-a-hidden-price",
+    "chapter": 24,
+    "chapter_title": "Clients, Customers, and Money Decisions"
+  },
+  {
+    "line": "I know I still owe you from spring. I just need a little more till payday.",
+    "context": "Your friend, about money",
+    "tacticSlug": "v3-the-unreturned-loan",
+    "chapter": 24,
+    "chapter_title": "Clients, Customers, and Money Decisions"
+  },
+  {
+    "line": "This price is only good today. If you walk out, I can't promise it'll be here tomorrow.",
+    "context": "A salesperson",
+    "tacticSlug": "v3-fake-urgency-and-bad-timing",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "I didn't think you needed to know about the extra parts. It's all standard.",
+    "context": "A contractor, about the bill",
+    "tacticSlug": "v3-facts-that-arrive-late-records-that-vanish",
+    "chapter": 24,
+    "chapter_title": "Clients, Customers, and Money Decisions"
+  },
+  {
+    "line": "While you're fixing my gate, could you take a look at the fence too? It's basically the same job.",
+    "context": "A neighbor, about a favor",
+    "tacticSlug": "v3-a-small-yes-becomes-a-bigger-request",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "My lawyer says you have to refund the full amount, so let's not make this hard.",
+    "context": "A customer, about a refund",
+    "tacticSlug": "v3-borrowed-authority",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "Just say yes in principle. We'll sort out the details later.",
+    "context": "A business partner",
+    "tacticSlug": "v3-yes-now-details-later",
+    "chapter": 10,
+    "chapter_title": "Charm, Urgency, and the Slow Squeeze"
+  },
+  {
+    "line": "You'll get paid as soon as the next project starts. I promise you're first in line.",
+    "context": "A client, about late payment",
+    "tacticSlug": "v3-promises-that-keep-replacing-action",
+    "chapter": 24,
+    "chapter_title": "Clients, Customers, and Money Decisions"
+  },
+  {
+    "line": "No thanks, I don't like saving money.",
+    "context": "A website, at checkout",
+    "tacticSlug": "v3-store-and-app-tricks",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "Everyone on the street agrees your dog is the problem.",
+    "context": "A neighbor, in the street group chat",
+    "tacticSlug": "v3-everyone-agrees-with-me",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "We're like family here. Two spots left for the retreat, and they'll be gone tonight.",
+    "context": "A club organizer",
+    "tacticSlug": "v3-the-group-that-welcomes-too-fast",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "That's just fear talking. Real members don't ask so many questions.",
+    "context": "A volunteer coordinator",
+    "tacticSlug": "v3-doubts-get-a-label-leaving-gets-punished",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "I heard you've been really difficult about the reunion plans.",
+    "context": "A friend, about a rumor",
+    "tacticSlug": "v3-a-story-about-you-spreading",
+    "chapter": 8,
+    "chapter_title": "When the Story Keeps Changing"
+  },
+  {
+    "line": "Come on, everyone else is in. Don't be the one who ruins it.",
+    "context": "The group chat",
+    "tacticSlug": "v3-everyone-agrees-with-me",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  },
+  {
+    "line": "Somebody will figure it out. You're so good at organizing, why don't you just do it?",
+    "context": "A committee member",
+    "tacticSlug": null,
+    "chapter": 22,
+    "chapter_title": "Turn Agreement Into Action"
+  },
+  {
+    "line": "My therapist says people who cancel plans don't really value their friends.",
+    "context": "Your friend, about the book club",
+    "tacticSlug": "v3-borrowed-authority",
+    "chapter": 27,
+    "chapter_title": "Groups, Media, and Manufactured Pressure"
+  }
+]

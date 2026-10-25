@@ -31,8 +31,13 @@ ${footerHtml}
 </td></tr></table></td></tr></table></body></html>`;
 }
 
+/**
+ * Fills {{name}} placeholders. Also fills the URL-encoded form %7B%7Bname%7D%7D: the build
+ * step for the older email sequence (content.generated.ts) encoded the braces inside link
+ * targets, so without this the "Read Chapter 1" and "Get the full book" links went nowhere.
+ */
 function fillPlaceholders(s: string, vars: Record<string, string>): string {
-  return s.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');
+  return s.replace(/(?:\{\{|%7B%7B)(\w+)(?:\}\}|%7D%7D)/gi, (_, k: string) => vars[k] ?? '');
 }
 
 export function sp2Links() {

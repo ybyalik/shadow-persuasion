@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api-client';
 import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
 import { DIFFICULTY_NAMES, ScenarioCard, type SceneSummary } from '@/components/app/ScenarioCard';
+import { IS_V3 } from '@/lib/edition';
 
 const tabCls = (on: boolean) =>
   `min-h-[44px] rounded-lg px-4 text-[15px] font-semibold transition-colors ${
@@ -156,7 +157,7 @@ function SceneList() {
       )}
 
       <section>
-        <h2 className="app-serif mb-3 text-[26px] font-semibold">Scenes from the book</h2>
+        <h2 className="app-serif mb-3 text-[26px] font-semibold">{IS_V3 ? 'Ready-made scenes' : 'Scenes from the book'}</h2>
         <div className="mb-3 flex flex-wrap gap-2">
           {[0, 1, 2, 3].map((l) => (
             <button key={l} type="button" className={chipCls(level === l)} onClick={() => setLevel(l)}>
@@ -188,7 +189,7 @@ function SceneList() {
   );
 }
 
-type Rep = { line: string; tacticSlug: string };
+type Rep = { line: string; tacticSlug: string; context?: string };
 type RepResult = { score: 'steady' | 'close' | 'gave'; note: string; better: string; tactic: { slug: string; name: string; chapter: number; chapter_title: string } | null };
 
 const SECONDS = 30;
@@ -289,7 +290,7 @@ function QuickReps() {
       )}
       <Card>
         <div className="mb-2 flex items-center justify-between">
-          <Label className="mb-0">They say</Label>
+          <Label className="mb-0">{rep.context || 'They say'}</Label>
           {!result && (
             <span className={`app-type text-[14px] ${left <= 5 ? 'text-[color:var(--app-oxblood)]' : 'text-[color:var(--app-muted)]'}`}>
               {left > 0 ? `${left}s` : "Time's up"}
@@ -344,7 +345,7 @@ function QuickReps() {
           </div>
           {result.tactic && (
             <div className="flex flex-wrap items-center gap-3 text-[15px]">
-              <span>The tactic: {result.tactic.name}</span>
+              {result.tactic.name && <span>The tactic: {result.tactic.name}</span>}
               <BookRef chapter={result.tactic.chapter} title={result.tactic.chapter_title} />
             </div>
           )}

@@ -42,6 +42,10 @@ export type Angle = {
   /** P.S. text; `{ref}` is replaced with the page reference for psRef. */
   ps: string;
   psRef: { ch: number; section: string };
+  /** Which /v2 "Same moment. Different answer." tab opens first (0 work, 1 family, 2 partner, 3 friends). */
+  scenarioTab: number;
+  /** Which Situation Finder entry is preselected: [group, item] (groups: 0 work, 1 partner or ex, 2 family, 3 inside my head). */
+  situation: [number, number];
 };
 
 const DANGER_LIMIT =
@@ -129,6 +133,8 @@ export const ANGLES: Angle[] = [
     buyLine: 'Ready for a different Sunday call?',
     ps: 'Gabriela\'s mother didn\'t change. Gabriela\'s answer did, and the next call was ten minutes shorter. The words she used are in {ref}.',
     psRef: { ch: 26, section: 'The parent who still makes you feel small' },
+    scenarioTab: 1,
+    situation: [2, 1],
   },
 
   /* ───────────── 2. The overlooked contributor at work ───────────── */
@@ -200,6 +206,8 @@ export const ANGLES: Angle[] = [
     buyLine: 'Ready for your work to carry your name?',
     ps: 'Keisha didn\'t get the lead role. She did get her name in front of her manager\'s boss, and a written record. The book calls that a fair result for one conversation. The full exchange is in {ref}.',
     psRef: { ch: 23, section: 'When someone repeats your idea in a meeting' },
+    scenarioTab: 0,
+    situation: [0, 0],
   },
 
   /* ───────────── 3. The family favor that turns into a debt ───────────── */
@@ -282,6 +290,8 @@ export const ANGLES: Angle[] = [
     buyLine: 'Ready to tell a favor from a debt?',
     ps: 'Darnell didn\'t erase his sister\'s kindness, and he didn\'t sign up for a week of driving. He offered Tuesday. The whole exchange is six lines long, in {ref}.',
     psRef: { ch: 26, section: 'Caring for an aging parent without doing it all alone' },
+    scenarioTab: 1,
+    situation: [2, 0],
   },
 
   /* ───────────── 4. The ex who keeps reopening agreements ───────────── */
@@ -360,6 +370,8 @@ export const ANGLES: Angle[] = [
     buyLine: 'Ready to answer the schedule and leave the rest?',
     ps: 'Craig replied twice more. Angela answered the logistics, asked him not to put the kids in the middle, and left his last line unanswered. The full exchange is in {ref}.',
     psRef: { ch: 25, section: 'After a separation: when your ex still controls everything' },
+    scenarioTab: 2,
+    situation: [1, 2],
   },
 ];
 

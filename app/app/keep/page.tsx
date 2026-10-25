@@ -11,7 +11,7 @@ import { Button, Card, Notice, PageHeader } from '@/components/app/ui';
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) : null;
 
 const KEEPS = [
-  'The Decoder for messages and screenshots',
+  'Decode a Message, for texts and screenshots',
   'Rehearse hard conversations before you have them',
   'The 21-day reset, practice scenes and tactic training',
   'My People, Goals, and Talk It Through',

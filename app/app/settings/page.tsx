@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useSubscription } from '@/lib/subscription';
-import { Save, Loader2, Check, User, Mic, RotateCcw, Upload, Image, X, CreditCard, ExternalLink } from 'lucide-react';
+import { Save, Loader2, Check, RotateCcw, Image as ImageIcon, X, ExternalLink } from 'lucide-react';
+import { Button, Card, Label, Notice, PageHeader, inputClass } from '@/components/app/ui';
 
 const TONE_OPTIONS = ['Professional', 'Casual', 'Friendly', 'Direct', 'Diplomatic', 'Assertive', 'Warm'];
 
@@ -120,7 +121,7 @@ export default function SettingsPage() {
           sampleTexts: samples,
         }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) throw new Error('save');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
@@ -152,255 +153,208 @@ export default function SettingsPage() {
   };
 
   const handleResetOnboarding = () => {
-    if (!confirm('This will show the onboarding flow next time you visit the dashboard. Continue?')) return;
-    localStorage.setItem('shadow-force-onboarding', 'true');
-    window.location.href = '/app';
+    // Today reads ?welcome=1 and opens the welcome screen again.
+    window.location.href = '/app?welcome=1';
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#D4A017]" />
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-[color:var(--app-gold)]" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Settings</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Your account, your app access, and how replies should sound.</p>
-      </header>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <PageHeader kicker="Settings" title="Your account" subtitle="Your account, your app access, and how replies should sound." />
 
-      {/* Account Info */}
-      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <User className="h-5 w-5 text-[#D4A017]" />
-          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Account</h2>
-        </div>
-        <div className="flex items-center gap-4">
-          {user?.photoURL ? (
-            <img src={user.photoURL} alt="" className="w-12 h-12 rounded-full" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-[#D4A017] flex items-center justify-center text-[#0A0A0A] text-lg font-bold">
-              {(user?.displayName || user?.email || '?')[0].toUpperCase()}
-            </div>
-          )}
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white">{user?.displayName || 'You'}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Subscription & Billing */}
-      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <CreditCard className="h-5 w-5 text-[#D4A017]" />
-          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Your app access</h2>
-        </div>
-        {subLoading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading subscription...
-          </div>
-        ) : subscription?.active ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-[#333]">
-                <p className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-0.5">Plan</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">{subscription.plan === 'app_monthly' ? 'Monthly ($9.99)' : subscription.plan || 'Monthly'}</p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-[#333]">
-                <p className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-0.5">Status</p>
-                <p className="text-sm font-medium">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono ${
-                    subscription.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                    subscription.status === 'trialing' ? 'bg-blue-500/20 text-blue-400' :
-                    subscription.status === 'past_due' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-gray-500/20 text-gray-400'
-                  }`}>
-                    {subscription.status}
-                  </span>
-                </p>
-              </div>
-            </div>
-            {subscription.currentPeriodEnd && (
-              <div className="p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-[#333]">
-                <p className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-0.5">Next Billing Date</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
+      <div className="space-y-5">
+        {/* Account */}
+        <Card>
+          <Label>Account</Label>
+          <div className="flex items-center gap-4">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="" className="h-12 w-12 rounded-full" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--app-gold)] text-lg font-bold text-[#0b0a08]">
+                {(user?.displayName || user?.email || '?')[0].toUpperCase()}
               </div>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Billing email: {user?.email}
-            </p>
-            <button
-              onClick={handleManageSubscription}
-              disabled={portalLoading}
-              className="w-full py-2.5 border border-[#D4A017] text-[#D4A017] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#D4A017] hover:text-[#0A0A0A] disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
-            >
-              {portalLoading ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Opening Portal...</>
-              ) : (
-                <><ExternalLink className="h-4 w-4" /> Manage or cancel</>
-              )}
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400">No monthly subscription. If your book came with 60 days of the app, you can see how many are left, and keep the app afterwards, on the Keep the app page.</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Account: {user?.email}
-            </p>
-            <a
-              href="/app/keep"
-              className="block w-full py-2.5 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#E8B830] transition-all text-center text-sm"
-            >
-              Keep the app
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* Voice Profile */}
-      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-5">
-        <div className="flex items-center gap-3 mb-1">
-          <Mic className="h-5 w-5 text-[#D4A017]" />
-          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Your Voice Profile</h2>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
-          Every calm reply and suggestion will sound like you, not a robot.
-        </p>
-
-        <div className="space-y-5">
-          <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1.5">Personality</label>
-            <textarea
-              value={personality}
-              onChange={(e) => setPersonality(e.target.value)}
-              placeholder="e.g., Direct and confident, but empathetic. I don't like being pushy. I use humor to defuse tension."
-              className="w-full h-20 bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-[#444] rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1.5">Communication Style</label>
-            <textarea
-              value={writingStyle}
-              onChange={(e) => setWritingStyle(e.target.value)}
-              placeholder="e.g., Short sentences, casual tone. I say 'honestly' and 'look' a lot. I avoid corporate jargon."
-              className="w-full h-20 bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-[#444] rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1.5">Tone</label>
-            <div className="flex flex-wrap gap-2">
-              {TONE_OPTIONS.map((tone) => (
-                <button
-                  key={tone}
-                  onClick={() => toggleTone(tone)}
-                  className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
-                    tones.includes(tone)
-                      ? 'bg-[#D4A017] text-[#0A0A0A] border-[#D4A017] font-bold'
-                      : 'bg-gray-50 dark:bg-[#222] border-gray-300 dark:border-[#444] text-gray-600 dark:text-gray-300 hover:border-[#D4A017]'
-                  }`}
-                >
-                  {tone}
-                </button>
-              ))}
+            <div className="min-w-0">
+              <p className="text-[17px] font-semibold">{user?.displayName || 'You'}</p>
+              <p className="truncate text-[15px] text-[color:var(--app-muted)]">{user?.email}</p>
             </div>
           </div>
+        </Card>
 
-          <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1.5">
-              Sample Messages <span className="normal-case font-sans">(paste text or upload screenshots of messages you&apos;ve written)</span>
+        {/* App access and billing */}
+        <Card>
+          <Label>Your app access</Label>
+          {subLoading ? (
+            <p className="flex items-center gap-2 text-[15px] text-[color:var(--app-muted)]">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading your access...
+            </p>
+          ) : subscription?.active ? (
+            <div className="space-y-4">
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <Fact label="Plan">{subscription.plan === 'app_monthly' ? 'Monthly ($9.99)' : 'Monthly'}</Fact>
+                <Fact label="Status">{STATUS_LABEL[subscription.status || ''] || 'Active'}</Fact>
+                {subscription.currentPeriodEnd && (
+                  <Fact label="Next billing date">
+                    {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </Fact>
+                )}
+                <Fact label="Billing email">{user?.email}</Fact>
+              </dl>
+              <Button variant="ghost" onClick={handleManageSubscription} loading={portalLoading}>
+                {!portalLoading && <ExternalLink className="h-4 w-4" />}
+                {portalLoading ? 'Opening...' : 'Manage or cancel'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-[16px] leading-relaxed">
+                No monthly subscription. If your book came with 60 days of the app, you can see how many are left, and keep the app afterwards, on the Keep the app page.
+              </p>
+              <Button href="/app/keep" variant="gold">
+                Keep the app
+              </Button>
+            </div>
+          )}
+        </Card>
+
+        {/* How replies should sound */}
+        <Card>
+          <Label>How replies should sound</Label>
+          <p className="mb-5 text-[15px] leading-relaxed text-[color:var(--app-muted)]">
+            The calm replies and lines the app writes for you will sound more like you. Everything here is optional.
+          </p>
+
+          <div className="space-y-5">
+            <label className="block">
+              <span className="mb-1.5 block text-[15px] font-semibold">What you&apos;re like</span>
+              <textarea
+                value={personality}
+                onChange={(e) => setPersonality(e.target.value)}
+                placeholder="e.g. Kind but direct. I don't like being pushy. I use a little humor when things get tense."
+                rows={3}
+                className={inputClass}
+              />
             </label>
-            <textarea
-              value={sampleTexts}
-              onChange={(e) => setSampleTexts(e.target.value)}
-              placeholder={"Hey Sarah, just wanted to follow up on our conversation from Tuesday. I think we're aligned on the approach — let me know if you need anything from my end before the deadline.\n\n---\n\nHonestly, I think we should just go for it. The numbers make sense and waiting another quarter isn't going to change anything."}
-              className="w-full h-36 bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-[#444] rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] resize-none"
-            />
-            {/* Image upload for samples */}
-            <div className="mt-3 flex items-center gap-3">
-              <label className="flex items-center gap-2 px-3 py-2 text-xs font-mono border border-gray-300 dark:border-[#444] rounded-lg cursor-pointer text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-all bg-gray-50 dark:bg-[#222]">
-                <Image className="h-4 w-4" />
-                Upload Screenshots
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-              </label>
-              {extracting && (
-                <span className="flex items-center gap-2 text-xs text-[#D4A017] font-mono">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Extracting text from image...
-                </span>
-              )}
-            </div>
-            {uploadedImages.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {uploadedImages.map((img, i) => (
-                  <div key={i} className="relative group">
-                    <img src={img.preview} alt={img.name} className="h-16 w-16 object-cover rounded-lg border border-gray-300 dark:border-[#444]" />
-                    <button
-                      onClick={() => removeImage(i)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                    <div className="absolute inset-0 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <Check className="h-4 w-4 text-green-400" />
-                    </div>
-                  </div>
+
+            <label className="block">
+              <span className="mb-1.5 block text-[15px] font-semibold">How you usually write</span>
+              <textarea
+                value={writingStyle}
+                onChange={(e) => setWritingStyle(e.target.value)}
+                placeholder="e.g. Short sentences, casual. I say 'honestly' a lot. No office jargon."
+                rows={3}
+                className={inputClass}
+              />
+            </label>
+
+            <div>
+              <span className="mb-2 block text-[15px] font-semibold">Tone</span>
+              <div className="flex flex-wrap gap-2">
+                {TONE_OPTIONS.map((tone) => (
+                  <button key={tone} type="button" onClick={() => toggleTone(tone)} aria-pressed={tones.includes(tone)} className={chip(tones.includes(tone))}>
+                    {tone}
+                  </button>
                 ))}
               </div>
-            )}
-            <p className="text-xs text-gray-400 mt-2">Upload screenshots of emails, texts, or DMs you&apos;ve sent. AI will extract the text and learn your voice.</p>
-          </div>
-
-          {saveError && (
-            <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3">
-              <p className="text-sm text-red-700 dark:text-red-400">{saveError}</p>
             </div>
-          )}
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-3 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#E8B830] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
-            ) : saved ? (
-              <><Check className="h-4 w-4" /> Saved!</>
-            ) : (
-              <><Save className="h-4 w-4" /> Save Voice Profile</>
-            )}
-          </button>
-        </div>
-      </div>
+            <div>
+              <label className="block">
+                <span className="mb-1.5 block text-[15px] font-semibold">Messages you&apos;ve written</span>
+                <span className="mb-2 block text-[14px] text-[color:var(--app-muted)]">
+                  Paste a few, with a line of three dashes (---) between them. Or add screenshots and the app will copy the words out.
+                </span>
+                <textarea
+                  value={sampleTexts}
+                  onChange={(e) => setSampleTexts(e.target.value)}
+                  placeholder={
+                    "Hi Sarah, just following up on Tuesday. I think we're on the same page. Let me know if you need anything from me before Friday.\n\n---\n\nHonestly, let's just go for it. Waiting another month won't change much."
+                  }
+                  rows={6}
+                  className={inputClass}
+                />
+              </label>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-[color:var(--app-line)] px-4 text-[15px] hover:bg-[color:var(--app-paper-2)]">
+                  <ImageIcon className="h-4 w-4" />
+                  Add screenshots
+                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                </label>
+                {extracting && (
+                  <span className="flex items-center gap-2 text-[14px] text-[color:var(--app-muted)]">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Reading the screenshot...
+                  </span>
+                )}
+              </div>
+              {uploadedImages.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {uploadedImages.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={img.preview} alt={img.name} className="h-16 w-16 rounded-lg border border-[color:var(--app-line)] object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        aria-label="Remove screenshot"
+                        className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--app-ink)] text-[color:var(--app-paper)]"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-[14px] text-[color:var(--app-muted)]">Only add messages you&apos;re comfortable keeping in the app.</p>
+            </div>
 
-      {/* Re-run Onboarding */}
-      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-5">
-        <div className="flex items-center gap-3 mb-1">
-          <RotateCcw className="h-5 w-5 text-[#D4A017]" />
-          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Onboarding</h2>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          Re-run the initial setup flow to update your goals and voice profile.
-        </p>
-        <button
-          onClick={handleResetOnboarding}
-          className="px-4 py-2 text-sm font-mono border border-gray-300 dark:border-[#444] rounded-lg text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-all"
-        >
-          Re-run Onboarding
-        </button>
+            {saveError && <Notice tone="error">{saveError}</Notice>}
+
+            <Button onClick={handleSave} loading={saving}>
+              {!saving && (saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />)}
+              {saving ? 'Saving...' : saved ? 'Saved' : 'Save'}
+            </Button>
+          </div>
+        </Card>
+
+        {/* Welcome screen */}
+        <Card>
+          <Label>Welcome screen</Label>
+          <p className="mb-4 text-[15px] leading-relaxed text-[color:var(--app-muted)]">
+            See the short welcome again, to change what you want help with and how replies should sound.
+          </p>
+          <Button variant="ghost" onClick={handleResetOnboarding}>
+            <RotateCcw className="h-4 w-4" /> Show the welcome again
+          </Button>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  active: 'Active',
+  trialing: 'Free trial',
+  past_due: 'Payment overdue',
+  canceled: 'Cancelled',
+  unpaid: 'Payment overdue',
+};
+
+const chip = (on: boolean) =>
+  `min-h-[44px] rounded-full border px-4 text-[15px] transition-colors ${
+    on ? 'border-[color:var(--app-ink)] bg-[color:var(--app-ink)] text-[color:var(--app-paper)]' : 'border-[color:var(--app-line)] hover:bg-[color:var(--app-paper-2)]'
+  }`;
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg bg-[color:var(--app-paper-2)] px-4 py-3">
+      <dt className="app-type text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-muted)]">{label}</dt>
+      <dd className="mt-0.5 truncate text-[15px] font-medium">{children}</dd>
     </div>
   );
 }

@@ -22,7 +22,18 @@ type Tactic = {
   calm_reply: string;
   note: string | null;
   examples: string[];
+  family?: string | null;
+  safety?: boolean;
+  edition?: 'v2' | 'v3';
+  other_explanations?: string | null;
+  help?: string | null;
 };
+
+/** Which guide the server sent and how many entries of each kind (from /api/techniques). */
+type Meta = { edition: 'v2' | 'v3'; total: number; ordinary: number; danger: number };
+
+/** A danger sign from the new guide: no calm reply on purpose, it points to help. */
+const isDanger = (t: Pick<Tactic, 'safety' | 'calm_reply'>) => !!t.safety && !t.calm_reply;
 
 type Progress = { tactic_slug: string; status: SRStatus };
 
@@ -41,8 +52,8 @@ function SpotTheTactic() {
   const trainSlug = params.get('slug');
 
   const [tactics, setTactics] = useState<Tactic[]>([]);
+  const [meta, setMeta] = useState<Meta | null>(null);
   const [progress, setProgress] = useState<Record<string, SRStatus>>({});
-  const [due, setDue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
@@ -53,7 +64,6 @@ function SpotTheTactic() {
       if (!res.ok) return;
       const d = await res.json();
       setProgress(Object.fromEntries((d.cards as Progress[]).map((c) => [c.tactic_slug, c.status])));
-      setDue(d.due ?? 0);
     } catch {
       /* progress is a nice-to-have */
     }
@@ -69,6 +79,7 @@ function SpotTheTactic() {
         }
         const d = await res.json();
         setTactics(d.tactics ?? []);
+        setMeta(d.meta ?? null);
       } catch {
         setError("We couldn't reach the server. Please check your connection.");
       } finally {
@@ -83,16 +94,23 @@ function SpotTheTactic() {
   const groups = useMemo(() => {
     const term = q.trim().toLowerCase();
     const match = (t: Tactic) =>
-      !term || [t.name, t.looks_like, t.warning_sign, t.chapter_title, ...t.examples].some((s) => s.toLowerCase().includes(term));
+      !term ||
+      [t.name, t.looks_like, t.warning_sign, t.chapter_title, t.other_explanations ?? '', ...t.examples].some((s) => s.toLowerCase().includes(term));
+    // Grouped by chapter, in the order the server sends them: by chapter for the old guide,
+    // the new guide's own order for v3 (its danger signs come last, on purpose).
     const byChapter = new Map<number, { title: string; items: Tactic[] }>();
     for (const t of tactics.filter(match)) {
       if (!byChapter.has(t.chapter)) byChapter.set(t.chapter, { title: t.chapter_title, items: [] });
       byChapter.get(t.chapter)!.items.push(t);
     }
-    return [...byChapter.entries()].sort((a, b) => a[0] - b[0]);
+    return [...byChapter.entries()];
   }, [tactics, q]);
 
-  const knownCount = Object.values(progress).filter((s) => s === 'known').length;
+  // Only count progress on tactics in today's list (old-guide progress stays saved but isn't shown).
+  const slugs = useMemo(() => new Set(tactics.map((t) => t.slug)), [tactics]);
+  const knownCount = Object.entries(progress).filter(([slug, s]) => s === 'known' && slugs.has(slug)).length;
+  const due = Object.entries(progress).filter(([slug, s]) => s === 'due' && slugs.has(slug)).length;
+  const newGuide = meta?.edition === 'v3';
   const trainTactic = trainSlug ? tactics.find((t) => t.slug === trainSlug) : null;
 
   return (
@@ -100,7 +118,11 @@ function SpotTheTactic() {
       <PageHeader
         kicker="Get ready"
         title="Spot the Tactic"
-        subtitle="Fifty pressure tactics from the book, each with its warning signs and a calm reply. Browse them, or train your eye on messages that sound like real life."
+        subtitle={
+          newGuide && meta
+            ? `${meta.ordinary} common pressure moves from The Tactic Spotter, each with other explanations to read first and a calm reply, plus ${meta.danger} danger signs that point you to help. Browse them, or train your eye on messages that sound like real life.`
+            : `${meta ? `${meta.total} pressure tactics` : 'Pressure tactics'} from the book, each with its warning signs and a calm reply. Browse them, or train your eye on messages that sound like real life.`
+        }
       />
 
       <div className="mb-6 flex gap-2 rounded-xl border border-[color:var(--app-line)] bg-[color:var(--app-card)] p-1.5">
@@ -131,7 +153,9 @@ function SpotTheTactic() {
             />
           </div>
           <p className="mb-8 text-[14px] text-[color:var(--app-muted)]">
-            {tactics.length} tactics, grouped by the chapter {IS_V3 ? 'of the book' : 'in Part Three'} that covers them.
+            {newGuide && meta
+              ? `${meta.ordinary} pressure moves and ${meta.danger} danger signs, grouped by the chapter that covers them. A match is a reason to pay attention, not proof.`
+              : `${tactics.length} tactics, grouped by the chapter ${IS_V3 ? 'of the book' : 'in Part Three'} that covers them.`}
             {knownCount > 0 && ` You know ${knownCount} so far.`}
           </p>
 
@@ -141,9 +165,18 @@ function SpotTheTactic() {
             {groups.map(([chapter, g]) => (
               <section key={chapter}>
                 <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="app-serif text-[26px] font-semibold">{g.title}</h2>
+                  <h2 className="app-serif text-[26px] font-semibold">{g.items.every(isDanger) ? 'Danger signs' : g.title}</h2>
                   <BookRef chapter={chapter} title={g.title} />
                 </div>
+                {g.items.every(isDanger) && (
+                  <div className="mb-3">
+                    <Notice tone="warn">
+                      These work differently. When someone uses fear, the answer is not a better sentence, so there are no scripts here. One serious threat
+                      is enough. In immediate danger, call 911. US National Domestic Violence Hotline: 1-800-799-7233, or text START to 88788. For
+                      thoughts of suicide or self-harm, call or text 988.
+                    </Notice>
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   {g.items.map((t) => (
                     <TechniqueCard key={t.slug} tactic={t} status={progress[t.slug]} statusLabel={progress[t.slug] ? STATUS_LABEL[progress[t.slug]] : undefined} />
@@ -301,14 +334,27 @@ function TrainPanel({ slug, slugName, onAnswered }: { slug: string | null; slugN
             )}
           </div>
           <div>
-            <Label>Warning sign</Label>
+            <Label>{result.answer.edition === 'v3' ? (isDanger(result.answer) ? "Why there's no script" : 'Concerning if') : 'Warning sign'}</Label>
             <p className="text-[16px] leading-relaxed">{result.answer.warning_sign}</p>
           </div>
-          <div>
-            <Label>A calm reply</Label>
-            <p className="app-serif text-[21px] leading-snug">&ldquo;{result.answer.calm_reply}&rdquo;</p>
-            {result.answer.note && <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--app-muted)]">{result.answer.note}</p>}
-          </div>
+          {isDanger(result.answer) ? (
+            <div>
+              <Label>What helps</Label>
+              <p className="text-[16px] leading-relaxed">{result.answer.help}</p>
+              <div className="mt-3">
+                <Notice tone="warn">
+                  There is no script for this one, on purpose. In immediate danger, call 911. US National Domestic Violence Hotline: 1-800-799-7233,
+                  or text START to 88788. For thoughts of suicide or self-harm, call or text 988.
+                </Notice>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <Label>A calm reply</Label>
+              <p className="app-serif text-[21px] leading-snug">&ldquo;{result.answer.calm_reply}&rdquo;</p>
+              {result.answer.note && <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--app-muted)]">{result.answer.note}</p>}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <BookRef chapter={result.answer.chapter} title={result.answer.chapter_title} />
             <Link href={`/app/techniques/${result.answer.slug}`} className="text-[15px] underline underline-offset-2">

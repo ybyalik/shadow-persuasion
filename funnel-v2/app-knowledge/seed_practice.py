@@ -331,7 +331,7 @@ def main():
     print(f"tactics: {len(tactics)}")
     examples = [{"tactic_slug": t["slug"], "message": e, "context": None, "source": "seed"} for t in tactics for e in t["examples"]]
     # unique index is on (slug, md5(message)); clear old seed rows first, keep AI-cached ones
-    sb("DELETE", "tactic_examples?source=eq.seed", prefer="return=minimal")
+    sb("DELETE", "tactic_examples?source=eq.seed&tactic_slug=not.like.v3-*", prefer="return=minimal")  # leave the new edition's seed lines alone
     sb("POST", "tactic_examples", examples, "return=minimal")
     print(f"seed examples: {len(examples)}")
     scenes = scene_rows(tactics)

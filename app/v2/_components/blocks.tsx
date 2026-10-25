@@ -321,18 +321,22 @@ export function FaqSection() {
   );
 }
 
-/** The closing image and line, then the P.S. passed in by each version. */
-export function Close({ ps }: { ps: React.ReactNode }) {
+/** The closing image and line, then the P.S. passed in by each version. `headline` optionally replaces the big closing line. */
+export function Close({ ps, headline }: { ps: React.ReactNode; headline?: React.ReactNode }) {
   return (
     <>
       <div className="text-center">
         <img src="/v2/img/strings-cut.png" alt="Two hands cutting the strings of a puppet bar" className="w-[240px] sm:w-[300px] mx-auto" loading="lazy" />
         <h2 className="sp2-display text-[44px] sm:text-[72px] lg:text-[88px] leading-[1] mt-4 max-w-[16ch] mx-auto">
-          The strings only work while you{' '}
-          <span className="relative inline-block italic">
-            don&apos;t see them.
-            <Mark name="underline" red className="left-0 -bottom-4 w-full h-3" />
-          </span>
+          {headline ?? (
+            <>
+              The strings only work while you{' '}
+              <span className="relative inline-block italic">
+                don&apos;t see them.
+                <Mark name="underline" red className="left-0 -bottom-4 w-full h-3" />
+              </span>
+            </>
+          )}
         </h2>
         <p className="sp2-lead mt-8 text-[color:var(--sp2-muted)]">See them. Answer calmly. Keep being kind, on your own terms.</p>
         <div className="mt-9">

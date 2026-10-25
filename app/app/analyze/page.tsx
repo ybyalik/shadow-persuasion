@@ -260,7 +260,7 @@ export default function DecodePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        kicker="The Decoder"
+        kicker="Decode a Message"
         title="Decode a Message"
         subtitle="Paste a message, or add a screenshot of the conversation. See what's happening in plain words, and get a calm reply you can send."
         right={
@@ -467,7 +467,7 @@ export default function DecodePage() {
       </div>
 
       <p className="mt-10 text-[13px] leading-relaxed text-[color:var(--app-muted)]">
-        The Decoder helps you see pressure and answer calmly. It is not therapy or legal advice. If you ever feel unsafe, call 911 or the
+        Decode a Message helps you see pressure and answer calmly. It is not therapy or legal advice. If you ever feel unsafe, call 911 or the
         National Domestic Violence Hotline at 1-800-799-7233 (text START to 88788).
       </p>
     </div>

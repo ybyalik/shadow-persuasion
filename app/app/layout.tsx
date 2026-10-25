@@ -9,7 +9,7 @@ import { appSerif, appType } from './fonts';
 type AccessInfo = { ok: boolean; kind: string; until: string | null; daysLeft: number | null };
 
 // Pages a person can still open after their access ends.
-const OPEN_WHEN_LAPSED = ['/app/keep', '/app/settings'];
+const OPEN_WHEN_LAPSED = ['/app/keep', '/app/settings', '/app/library'];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

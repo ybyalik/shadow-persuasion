@@ -1,16 +1,19 @@
 'use client';
 
 /* Today: a calm start page. Today's reset step, the four things people reach
-   for most, what to do next, and what you did recently. */
+   for most, what to do next, and what you did recently. A brand-new reader first
+   sees a short welcome (components/app/Welcome.tsx); Settings reopens it with ?welcome=1. */
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, ClipboardList, LifeBuoy, MessageSquareText, Mic } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { apiFetch } from '@/lib/api-client';
 import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError } from '@/components/app/ui';
 import { RecommendationPanel } from '@/components/app/RecommendationPanel';
-import { RESET } from '@/lib/edition';
+import { IS_V3, RESET } from '@/lib/edition';
+import { Welcome, WELCOME_DONE_KEY } from '@/components/app/Welcome';
 
 type Progress = {
   reset: {
@@ -18,7 +21,7 @@ type Progress = {
     total: number;
     streak: { current: number; longest: number };
     level: { name: string };
-    currentDay: { day_number: number; label: string; title: string; drill: string; chapter: number; chapter_title: string } | null;
+    currentDay: { day_number: number; label: string; title: string; drill: string; practice?: string | null; chapter: number; chapter_title: string } | null;
     doneToday: boolean;
   };
   recent: { kind: string; label: string; detail: string; date: string; href: string }[];
@@ -49,6 +52,47 @@ export default function TodayPage() {
   const { user } = useAuth();
   const [data, setData] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState(false);
+  const router = useRouter();
+
+  // Asked for again from Settings (?welcome=1, or the older localStorage flag).
+  useEffect(() => {
+    let asked = false;
+    try {
+      asked = new URLSearchParams(window.location.search).get('welcome') === '1' || localStorage.getItem('shadow-force-onboarding') === 'true';
+    } catch {
+      asked = false;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (asked) setWelcome(true);
+  }, []);
+
+  // First run: nothing done yet and the welcome never finished on this device.
+  // Only decided when the progress request succeeded, so a slow network never
+  // drops an existing reader into the welcome.
+  useEffect(() => {
+    if (!data) return;
+    let done = true;
+    try {
+      done = localStorage.getItem(WELCOME_DONE_KEY) === '1';
+    } catch {
+      done = true;
+    }
+    if (done || data.reset.doneCount > 0 || data.recent.length > 0) return;
+    // A reader who answered on another device has goals saved already.
+    apiFetch('/api/user')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && !(Array.isArray(d.profile?.goals) && d.profile.goals.length > 0)) setWelcome(true);
+      })
+      .catch(() => {});
+  }, [data]);
+
+  const closeWelcome = () => {
+    setWelcome(false);
+    if (typeof window !== 'undefined' && window.location.search.includes('welcome')) router.replace('/app');
+    window.scrollTo({ top: 0 });
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +107,14 @@ export default function TodayPage() {
   const first = (user?.displayName || '').trim().split(/\s+/)[0];
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
   const r = data?.reset;
+
+  if (welcome) {
+    return (
+      <div className="max-w-4xl">
+        <Welcome firstName={first} onDone={closeWelcome} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl">
@@ -98,7 +150,14 @@ export default function TodayPage() {
                   You did a step today. The next one is ready whenever you are, tomorrow is a good time.
                 </p>
               ) : (
-                <p className="text-[16px] leading-relaxed opacity-90 mb-5">{r.currentDay.drill}</p>
+                <>
+                <p className="text-[16px] leading-relaxed opacity-90 mb-5">
+                  {r.currentDay.practice ? <>Today&apos;s practice: {r.currentDay.practice}</> : r.currentDay.drill}
+                </p>
+                {[1, 7, 14, 21].includes(r.currentDay.day_number) && IS_V3 && (
+                  <p className="text-[15px] opacity-85 -mt-3 mb-5">There&apos;s a short check-in on today&apos;s page.</p>
+                )}
+                </>
               )}
               <div className="flex flex-wrap items-center gap-4">
                 <Button href="/app/field-ops" variant="gold">
@@ -173,7 +232,7 @@ export default function TodayPage() {
 
       {data && data.recent.length === 0 && (
         <p className="text-[15px] text-[color:var(--app-muted)]">
-          Nothing here yet. Your decodes, practice and reset steps will show up here. <BookRef chapter={7} title="How the 21 Days Work" />
+          Nothing here yet. Your decodes, practice and reset steps will show up here. {IS_V3 ? <BookRef chapter={31} title="Your Three-Day Quick Start" /> : <BookRef chapter={7} title="How the 21 Days Work" />}
         </p>
       )}
     </div>

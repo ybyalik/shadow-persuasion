@@ -355,20 +355,23 @@ export function TacticRolodex() {
 
 /* ───────────── Old answer vs calm answer (from ScenarioSimulator) ───────────── */
 
-const SCENARIOS = [
+export type Scenario = { tab: string; icon: string; who: string; them: string; old: string; calm: string; note: string };
+
+export const SCENARIOS: Scenario[] = [
   { tab: 'At work', icon: 'briefcase', who: 'Your manager, Friday at 4:40', them: 'Need you on this over the weekend. It\u2019s due Monday.', old: 'Oh, sure, no problem. I\u2019ll make it work.', calm: 'Let me look at what\u2019s already on my plate and tell you in ten minutes.', note: 'The pause, Chapter 5' },
   { tab: 'Family', icon: 'house', who: 'The family group chat', them: 'So we\u2019re all at yours for Christmas again?', old: 'I guess so\u2026 if nobody else can.', calm: 'I haven\u2019t agreed to host this year. I can bring two dishes. Who else has room?', note: 'The Power Map, Chapter 2' },
   { tab: 'Partner', icon: 'rings', who: 'Your partner, after you raised something', them: '(Two days of silence.)', old: 'I\u2019m sorry, I shouldn\u2019t have brought it up. Can we just forget it?', calm: 'I can tell you\u2019re upset. When you want to talk, I\u2019m here.', note: 'Chapter 9, Silence, Distance, and Conditional Warmth' },
   { tab: 'Friends', icon: 'speech', who: 'A friend, with last spring\u2019s loan still open', them: 'Could you spot me again? Just till next month, promise.', old: 'How much do you need? I can move some things around.', calm: 'I\u2019m not able to lend more until the first loan is sorted out. When do you think you can start paying that back?', note: 'The slow squeeze, Chapter 10' },
 ];
 
-export function ScenarioTabs() {
-  const [i, setI] = useState(0);
-  const s = SCENARIOS[i];
+/** Optional: other scenario wording, which tab opens first, and the label on the crossed-out answer. */
+export function ScenarioTabs({ scenarios = SCENARIOS, initial = 0, oldLabel = 'the old you' }: { scenarios?: Scenario[]; initial?: number; oldLabel?: string } = {}) {
+  const [i, setI] = useState(initial < scenarios.length ? initial : 0);
+  const s = scenarios[i];
   return (
     <div>
       <div className="flex flex-wrap justify-center gap-3 mb-12" role="tablist">
-        {SCENARIOS.map((x, k) => (
+        {scenarios.map((x, k) => (
           <button
             key={x.tab}
             role="tab"
@@ -389,7 +392,7 @@ export function ScenarioTabs() {
           </div>
           <div className="flex justify-end mt-5 relative">
             <p className="max-w-[78%] bg-[#d9d2c4] text-[color:var(--sp2-muted)] rounded-[22px] rounded-br-[6px] px-5 py-3.5 text-[19px] leading-snug line-through decoration-[color:var(--sp2-oxblood)] decoration-2">{s.old}</p>
-            <span className="sp2-note absolute left-0 top-2 !text-[17px] rotate-[-4deg] hidden sm:block">the old you</span>
+            <span className="sp2-note absolute left-0 top-2 !text-[17px] rotate-[-4deg] hidden sm:block">{oldLabel}</span>
           </div>
           <div className="flex justify-end mt-3 relative">
             <p className="max-w-[78%] bg-[color:var(--sp2-ink)] text-[#faf6ee] rounded-[22px] rounded-br-[6px] px-5 py-3.5 text-[19px] leading-snug">{s.calm}</p>
@@ -831,9 +834,11 @@ const SITUATIONS: { group: string; items: { s: string; where: string; ch: number
 
 const GROUP_ICONS = ['briefcase', 'rings', 'house', 'head'];
 
-export function SituationPicker() {
-  const [g, setG] = useState(0);
-  const [sel, setSel] = useState(0);
+/** Optional: which group and which situation in it are selected when the page loads. */
+export function SituationPicker({ initialGroup = 0, initialItem = 0 }: { initialGroup?: number; initialItem?: number } = {}) {
+  const g0 = initialGroup < SITUATIONS.length ? initialGroup : 0;
+  const [g, setG] = useState(g0);
+  const [sel, setSel] = useState(initialItem < SITUATIONS[g0].items.length ? initialItem : 0);
   const group = SITUATIONS[g];
   const item = group.items[sel];
   return (
@@ -930,15 +935,24 @@ export function SevenParts() {
 
 /* ───────────── Is it for you? One line per sentence, each with its icon; then who it isn't for ───────────── */
 
-const NOT_FOR = [
+const NOT_FOR: [string, string][] = [
   ['push', 'You want tricks to control or deceive people'],
   ['head', 'You are looking for a replacement for therapy'],
   ['book', 'You want to read about it without practicing it'],
   ['shield', 'You are in danger right now (please use the hotline in the questions below)'],
 ];
 
-export function ForYou() {
-  const lines: [string, React.ReactNode][] = [
+type ForYouProps = {
+  kicker?: string;
+  /** [icon name, line] pairs. */
+  lines?: [string, React.ReactNode][];
+  notForHead?: React.ReactNode;
+  notFor?: [string, string][];
+};
+
+/** All props are optional replacements (the angle pages describe who the book is written for, not the reader). */
+export function ForYou({ kicker = 'This is for you if', lines: linesProp, notForHead, notFor = NOT_FOR }: ForYouProps = {}) {
+  const lines: [string, React.ReactNode][] = linesProp ?? [
     ['hand', <>You <mark className="sp2-hl">say yes, then resent it.</mark></>],
     ['speech', <>You <mark className="sp2-hl">apologize</mark> for things you didn&apos;t do.</>],
     ['moon', <>You <mark className="sp2-hl">replay conversations</mark> long after they end.</>],
@@ -959,7 +973,7 @@ export function ForYou() {
   return (
     <div>
       <div className="max-w-[1120px] mx-auto">
-        <p className="sp2-kicker text-center">This is for you if</p>
+        <p className="sp2-kicker text-center">{kicker}</p>
         <div className="mt-4">
           {lines.map(([icon, text]) => (
             <div key={icon} className="flex items-center gap-5 sm:gap-7 py-4 sm:py-5 border-b border-[color:var(--sp2-line)] last:border-b-0">
@@ -973,9 +987,9 @@ export function ForYou() {
         <path d="M20,4 C18,26 22,46 20,72 M9,58 L20,74 L31,57" stroke="#1c1b18" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
       <div className="max-w-[980px] mx-auto">
-        <p className="sp2-display text-[30px] text-center mb-8 text-[color:var(--sp2-muted)]">It isn&apos;t for you if&hellip;</p>
+        <p className="sp2-display text-[30px] text-center mb-8 text-[color:var(--sp2-muted)]">{notForHead ?? <>It isn&apos;t for you if&hellip;</>}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
-          {NOT_FOR.map(([icon, t]) => (
+          {notFor.map(([icon, t]) => (
             <div key={t} className="text-center">
               <Icon name={icon} className="w-12 h-12 mx-auto opacity-60" />
               <p className="text-[18px] leading-snug mt-3 text-[color:var(--sp2-muted)] line-through decoration-[color:var(--sp2-oxblood)] decoration-2">{t}</p>

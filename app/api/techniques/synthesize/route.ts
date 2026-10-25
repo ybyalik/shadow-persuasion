@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 import { aiChat, MODELS } from '@/lib/ai';
-import { getTactic, HOTLINE, VOICE } from '@/lib/prompts/practice';
+import { getTactic, HOTLINE, isDangerSign, VOICE } from '@/lib/prompts/practice';
 
 export const maxDuration = 30;
 
@@ -23,6 +23,27 @@ export async function POST(req: NextRequest) {
     if (!tactic) return NextResponse.json({ error: 'Please pick a tactic.' }, { status: 400 });
     if (situation.length < 10) return NextResponse.json({ error: 'Tell us a little about what happened first.' }, { status: 400 });
 
+    // Danger signs (new edition) have no script on purpose: point to help, never shape a reply.
+    if (isDangerSign(tactic)) {
+      return NextResponse.json({
+        read: 'This is one of the danger signs. A better sentence is not what helps here, and confronting the person can raise the risk. Chapter 11, When Pressure Becomes Danger, and the people below can help you think through what is safest.',
+        reply: '',
+        tip: tactic.help ?? '',
+        safety: true,
+        hotline: `${HOTLINE} For thoughts of suicide or self-harm, call or text 988.`,
+      });
+    }
+
+    const v3 = tactic.edition === 'v3';
+    const about = v3
+      ? `What it sounds like: ${tactic.looks_like}
+Other explanations (read these first): ${tactic.other_explanations ?? ''}
+Concerning if: ${tactic.warning_sign}
+The book's calm reply: "${tactic.calm_reply}"${tactic.note ? `\nThe book adds: ${tactic.note}` : ''}${tactic.not_confront ? `\nWhen not to confront: ${tactic.not_confront}` : ''}`
+      : `What it looks like: ${tactic.looks_like}
+What it's for: ${tactic.purpose}
+The book's calm reply: "${tactic.calm_reply}"${tactic.note ? `\nThe book adds: ${tactic.note}` : ''}`;
+
     const { data } = await aiChat<Fit>({
       userId: uid,
       feature: 'spot:fit',
@@ -36,9 +57,7 @@ export async function POST(req: NextRequest) {
           content: `You help a reader of the book ${BOOK.quoted} answer a pressure tactic calmly in their own situation.
 ${VOICE}
 The tactic: ${tactic.name} (Chapter ${tactic.chapter}, ${tactic.chapter_title}).
-What it looks like: ${tactic.looks_like}
-What it's for: ${tactic.purpose}
-The book's calm reply: "${tactic.calm_reply}"${tactic.note ? `\nThe book adds: ${tactic.note}` : ''}
+${about}
 
 Read the user's situation. Say in one or two sentences whether this tactic seems to be happening (if it looks like a different pattern, or just a bad moment, say so gently). Then give ONE calm reply in the same shape as the book's, fitted to their situation, under 30 words. Then one short tip.
 If the situation suggests danger (violence, threats, stalking, fear for their safety), set "safety" to true and say so kindly in "read".

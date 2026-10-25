@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     await requireAppUser(req);
     const { data, error } = await db
       .from(RESET.daysTable)
-      .select('day_number, phase, label, title, drill, morning_prompt, journal_prompts, chapter, chapter_title')
+      .select('*') // includes the v3 practice line once migration 032 is applied
       .order('day_number');
     if (error) throw error;
     return NextResponse.json({ days: data ?? [] });

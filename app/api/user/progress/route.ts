@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
         streak: reset.streak,
         level: reset.level,
         currentDay: current
-          ? { day_number: current.day_number, label: current.label, title: current.title, drill: current.drill, phase: current.phase, chapter: current.chapter, chapter_title: current.chapter_title }
+          ? { day_number: current.day_number, label: current.label, title: current.title, drill: current.drill, practice: (current as { practice?: string | null }).practice ?? null, phase: current.phase, chapter: current.chapter, chapter_title: current.chapter_title }
           : null,
         doneToday: reset.entries.some((e) => new Date(new Date(e.completed_at).getTime() - tz * 60_000).toISOString().slice(0, 10) === new Date(Date.now() - tz * 60_000).toISOString().slice(0, 10)),
       },

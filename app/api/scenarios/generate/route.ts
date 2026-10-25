@@ -1,4 +1,4 @@
-import { BOOK } from '@/lib/edition';
+import { BOOK, IS_V3 } from '@/lib/edition';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Tell us a bit more: who is it, and what do they usually say?' }, { status: 400 });
     }
 
-    const tactics = await getTactics();
+    // On the new edition, danger signs are never turned into practice scenes (they point to Chapter 11 and help instead).
+    const tactics = (await getTactics()).filter((t) => !IS_V3 || !t.safety);
     const list = tactics.map((t) => `${t.slug}: ${t.name} (Ch ${t.chapter})`).join('\n');
 
     const { data } = await aiChat<Gen>({
@@ -74,7 +75,8 @@ Return JSON:
       return apiError("We couldn't build that scene. Please try again.", 502, '[scenarios/generate] bad json');
     }
 
-    const tactic = await getTactic(String(data.tactic_slug ?? ''));
+    const picked = await getTactic(String(data.tactic_slug ?? ''));
+    const tactic = picked && tactics.some((t) => t.slug === picked.slug) ? picked : null;
     const clean = (s?: string) => String(s ?? '').replace(/—/g, ', ').trim();
     const slug = clean(data.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'scene';
     const row = {
