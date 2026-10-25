@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const { uid: userId } = await requireAppUser(request);
 
     const { searchParams } = new URL(request.url);
     const personId = searchParams.get('person_id');
+
+    // One saved decode in full (used to reopen it on Decode a Message).
+    const oneId = searchParams.get('id');
+    if (oneId) {
+      const { data: row, error: oneErr } = await supabase
+        .from('analysis_history')
+        .select('id, input_text, input_type, person_id, created_at, full_result')
+        .eq('user_id', userId)
+        .eq('id', oneId)
+        .maybeSingle();
+      if (oneErr) return apiError('Failed to fetch history.', 500, '[ANALYZE_HISTORY]', oneErr);
+      if (!row) return apiError('That saved decode was not found.', 404);
+      return NextResponse.json({ analysis: row });
+    }
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
 
     let query = supabase
@@ -29,9 +43,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Truncate input_text for preview, count tactics
-    const items = (data || []).map((row: any) => ({
+    const items = (data || []).map((row) => ({
       id: row.id,
       input_text: row.input_text ? row.input_text.slice(0, 100) : '',
+      overall_assessment: row.overall_assessment,
+      techniques_identified: row.techniques_identified || [],
       input_type: row.input_type,
       threat_score: row.threat_score,
       power_yours: row.power_yours,
@@ -52,7 +68,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const { uid: userId } = await requireAppUser(request);
 
     const body = await request.json();
 
@@ -97,7 +113,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const { uid: userId } = await requireAppUser(request);
 
     const body = await request.json();
     const { id, person_id } = body;
@@ -128,7 +144,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const { uid: userId } = await requireAppUser(request);
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

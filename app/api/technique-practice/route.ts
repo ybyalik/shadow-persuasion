@@ -1,152 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchKnowledge } from '@/lib/rag';
-import { RAG_ENFORCEMENT } from '@/lib/prompts';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { generateExample, getTactic, getTactics, practiceDb as db, recordReview, type BookTactic } from '@/lib/prompts/practice';
+import { cardStatus, type SRCard } from '@/lib/spaced-repetition';
 
-const PRACTICE_SYSTEM_PROMPT = `You are a psychology instructor creating interactive practice scenarios for influence techniques. Generate realistic practice scenarios that test understanding of specific psychological principles.
+export const maxDuration = 30;
 
-For each technique, create 3-4 multiple choice scenarios where:
-- Each scenario presents a realistic situation
-- User must choose the best application of the technique
-- Options include common mistakes and optimal approaches
-- Feedback explains WHY each choice works or fails
-- Include specific psychology principle explanations
+/** Below this many cached messages for a tactic, we write a fresh one (and keep it). */
+const CACHE_TARGET = 6;
 
-Respond in this exact JSON format:
-{
-  "scenarios": [
-    {
-      "id": "1",
-      "situation": "Detailed scenario description setting up the context",
-      "yourMessage": "Question asking how to apply the technique",
-      "options": [
-        {
-          "text": "Option 1 text - what the user might say/do",
-          "isCorrect": false,
-          "explanation": "Why this doesn't work well",
-          "techniqueApplication": "How this relates to the technique (poor/good/excellent application)"
-        },
-        {
-          "text": "Option 2 text - optimal choice",
-          "isCorrect": true,
-          "explanation": "Why this works and what makes it effective",
-          "techniqueApplication": "Specific technique principles being used correctly"
-        },
-        ... (3-4 options total per scenario)
-      ]
-    }
-    ... (3-4 scenarios total)
-  ]
+function shuffle<T>(a: T[]): T[] {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
 }
 
-Make scenarios:
-- Realistic and relatable
-- Cover different contexts (work, personal, sales, negotiation)
-- Include subtle applications, not obvious manipulation
-- Test both positive and defensive applications
-- Reference specific psychology principles from your knowledge base`;
+function pickChoices(answer: BookTactic, all: BookTactic[]) {
+  const others = all.filter((t) => t.slug !== answer.slug);
+  const sameChapter = shuffle(others.filter((t) => t.chapter === answer.chapter)).slice(0, 1);
+  const rest = shuffle(others.filter((t) => !sameChapter.includes(t))).slice(0, 3 - sameChapter.length);
+  return shuffle([answer, ...sameChapter, ...rest]).map((t) => ({ slug: t.slug, name: t.name }));
+}
 
-export const maxDuration = 60;
+/**
+ * Train mode, one round: a realistic message and four tactic names to choose from.
+ * GET ?slug=<tactic> to practice one tactic; otherwise tactics that are due come first,
+ * then ones not tried yet. ?exclude=<exampleId> avoids repeating the last message.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { uid } = await requireAppUser(req);
+    const all = await getTactics();
+    const asked = req.nextUrl.searchParams.get('slug');
+    const exclude = req.nextUrl.searchParams.get('exclude');
 
+    const { data: progress } = await db
+      .from('tactic_progress')
+      .select('tactic_slug, ease_factor, interval_days, repetitions, next_review_at, last_review_at, times_right, times_wrong')
+      .eq('user_id', uid);
+    const cards = (progress ?? []) as SRCard[];
+    const due = cards.filter((c) => cardStatus(c) === 'due').sort((a, b) => a.next_review_at.localeCompare(b.next_review_at));
+
+    let tactic: BookTactic | null = asked ? await getTactic(asked) : null;
+    if (!tactic) {
+      const seen = new Set(cards.map((c) => c.tactic_slug));
+      const unseen = all.filter((t) => !seen.has(t.slug));
+      const pool = due.length ? due.slice(0, 3).map((c) => all.find((t) => t.slug === c.tactic_slug)!).filter(Boolean) : unseen.length ? unseen : all;
+      tactic = shuffle(pool)[0];
+    }
+
+    const { data: cached } = await db.from('tactic_examples').select('id, message, context').eq('tactic_slug', tactic.slug);
+    let pool = (cached ?? []).filter((e) => e.id !== exclude);
+    let example: { id: string; message: string; context: string | null } | null = null;
+
+    if ((cached ?? []).length < CACHE_TARGET) {
+      try {
+        const fresh = await generateExample(uid, tactic);
+        if (fresh) {
+          const { data: row } = await db
+            .from('tactic_examples')
+            .insert({ tactic_slug: tactic.slug, message: fresh.message, context: fresh.context, source: 'ai' })
+            .select('id, message, context')
+            .single();
+          if (row) example = row;
+        }
+      } catch (e) {
+        // Over the AI limit or a hiccup: fall back to a stored message if we have one.
+        if (!pool.length) throw e;
+        console.error('[technique-practice] example generation skipped', e instanceof Response ? e.status : e);
+      }
+    }
+    if (!example) {
+      if (!pool.length) pool = cached ?? [];
+      example = shuffle(pool)[0] ?? null;
+    }
+    if (!example) return apiError("We couldn't set up a round. Please try again.", 500, '[technique-practice] no example');
+
+    return NextResponse.json({
+      exampleId: example.id,
+      message: example.message,
+      context: example.context,
+      choices: pickChoices(tactic, all),
+      dueCount: due.length,
+    });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("We couldn't set up a round. Please try again.", 500, '[technique-practice]', err);
+  }
+}
+
+/** POST { exampleId, choice }: checks the answer, updates spaced repetition, returns the tactic and its calm reply. */
 export async function POST(req: NextRequest) {
   try {
-    // Require a logged-in user: this endpoint makes a paid GPT-4o call.
-    await requireAuth(req);
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const exampleId = String(body.exampleId ?? '');
+    const choice = String(body.choice ?? '');
+    if (!exampleId || !choice) return NextResponse.json({ error: 'Please pick an answer first.' }, { status: 400 });
 
-    const { techniqueId, techniqueName, description } = await req.json();
+    const { data: ex } = await db.from('tactic_examples').select('tactic_slug').eq('id', exampleId).maybeSingle();
+    const answer = ex ? await getTactic(ex.tactic_slug) : null;
+    if (!answer) return NextResponse.json({ error: 'That round has expired. Try the next one.' }, { status: 404 });
 
-    if (!techniqueName) {
-      return NextResponse.json({ error: 'Technique name is required' }, { status: 400 });
-    }
+    const correct = choice === answer.slug;
+    const card = await recordReview(uid, answer.slug, correct ? 5 : 1);
+    const chosen = correct ? answer : await getTactic(choice);
 
-    // Search knowledge base for relevant content
-    const ragContext = await searchKnowledge(
-      `${techniqueName} technique examples application psychology practice scenarios`,
-      { count: 3 }
-    );
-    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTENT:\n${ragContext}` : '';
-    const enhancedPrompt = PRACTICE_SYSTEM_PROMPT + knowledgeContext;
-
-    console.log('[TECHNIQUE_PRACTICE]', 'Generating scenarios for:', techniqueName);
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: enhancedPrompt },
-          {
-            role: 'user',
-            content: `Create interactive practice scenarios for the technique: "${techniqueName}"\n\nDescription: ${description}\n\nGenerate 3-4 realistic scenarios that test proper application of this technique in different contexts. Include common mistakes and optimal approaches with detailed explanations.`
-          },
-        ],
-        stream: false,
-      }),
+    await db.from('practice_results').insert({
+      user_id: uid,
+      type: 'spot_tactic',
+      reference_id: answer.slug,
+      score: correct ? 1 : 0,
+      techniques_used: [answer.name],
+      feedback: { chosen: choice },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[TECHNIQUE_PRACTICE]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
-    }
-
-    const data = await response.json();
-    const rawContent = data.choices[0].message.content;
-
-    // Strip markdown code block wrappers if present
-    const content = rawContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-
-    // Parse the JSON response
-    try {
-      const result = JSON.parse(content);
-      console.log('[TECHNIQUE_PRACTICE]', 'Generated', result.scenarios?.length || 0, 'scenarios');
-      return NextResponse.json(result);
-    } catch (parseError) {
-      console.error('[TECHNIQUE_PRACTICE]', 'Failed to parse AI response as JSON:', content);
-      
-      // Return fallback scenarios if parsing fails
-      return NextResponse.json({
-        scenarios: [
-          {
-            id: '1',
-            situation: `You're in a situation where you need to apply ${techniqueName}. Consider the best approach based on the technique principles.`,
-            yourMessage: `How would you best apply ${techniqueName} in this context?`,
-            options: [
-              {
-                text: "Apply the technique directly and obviously",
-                isCorrect: false,
-                explanation: "Direct application might feel manipulative and create resistance.",
-                techniqueApplication: "Poor application - too obvious and heavy-handed"
-              },
-              {
-                text: "Use subtle, ethical application focused on mutual benefit",
-                isCorrect: true,
-                explanation: "Subtle application respects the other person while achieving your objective.",
-                techniqueApplication: "Good application - ethical and effective"
-              },
-              {
-                text: "Don't use the technique at all",
-                isCorrect: false,
-                explanation: "Missing an opportunity to apply legitimate influence principles.",
-                techniqueApplication: "Missed opportunity - not utilizing available tools"
-              }
-            ]
-          }
-        ]
-      });
-    }
-
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Failed to generate practice scenarios.', 500, '[TECHNIQUE_PRACTICE]', error);
+    return NextResponse.json({
+      correct,
+      answer,
+      chosen: chosen ? { slug: chosen.slug, name: chosen.name, warning_sign: chosen.warning_sign } : null,
+      nextReviewAt: card.next_review_at,
+    });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("We couldn't check that answer. Please try again.", 500, '[technique-practice]', err);
   }
 }

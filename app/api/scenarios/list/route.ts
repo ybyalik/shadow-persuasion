@@ -1,52 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { editionScene, practiceDb as db, SCENE_COLS, type Scene } from '@/lib/prompts/practice';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Practice Scenes: the book's scenes plus the ones this person made from
+ * their own situation.
+ *   GET           -> { scenes, mine }
+ *   GET ?id=<id>  -> { scene }
+ */
 export async function GET(req: NextRequest) {
   try {
-    // Logged-in only: keeps the shared scenario library (and its ids) from
-    // being enumerated by anonymous callers.
-    await requireAuth(req);
+    const { uid } = await requireAppUser(req);
+    const id = req.nextUrl.searchParams.get('id');
 
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category');
-
-    let query = supabase
-      .from('scenarios')
-      .select('*')
-      .order('category')
-      .order('difficulty');
-
-    if (category && category !== 'All') {
-      query = query.eq('category', category);
+    if (id) {
+      const { data } = await db.from('scenarios').select(SCENE_COLS).eq('id', id).maybeSingle();
+      const scene = data as Scene | null;
+      if (!scene || !(scene.is_book || scene.user_id === uid)) {
+        return NextResponse.json({ error: "We couldn't find that scene." }, { status: 404 });
+      }
+      return NextResponse.json({ scene: editionScene(scene) });
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('[SCENARIOS/LIST]', 'Supabase error:', error);
-      return NextResponse.json({ error: 'Failed to fetch scenarios.' }, { status: 500 });
-    }
-
-    const scenarios = (data || []).map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      category: row.category,
-      difficulty: row.difficulty,
-      description: row.description,
-      objective: row.objective,
-      techniques: row.techniques || [],
-      is_generated: row.is_generated || false,
-      source_books: row.source_books || [],
-    }));
-
-    return NextResponse.json({ scenarios });
+    const [book, mine] = await Promise.all([
+      db.from('scenarios').select(SCENE_COLS).eq('is_book', true).order('sort_order'),
+      db.from('scenarios').select(SCENE_COLS).eq('user_id', uid).order('created_at', { ascending: false }).limit(20),
+    ]);
+    if (book.error) throw book.error;
+    return NextResponse.json({ scenes: ((book.data ?? []) as Scene[]).map(editionScene), mine: ((mine.data ?? []) as Scene[]).map(editionScene) });
   } catch (err) {
-    const authFail = passthroughAuthError(err);
-    if (authFail) return authFail;
-    return apiError('Failed to fetch scenarios.', 500, '[SCENARIOS/LIST]', err);
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("We couldn't load the scenes. Please try again.", 500, '[scenarios/list]', err);
   }
 }

@@ -1,179 +1,92 @@
+/**
+ * The 21-Day Reset journal: a short, calm reflection on the note someone wrote
+ * for a reset step (MODELS.fast). Saved with the note so it shows again later.
+ *
+ * POST { day } -> { reflection }   (the note must be saved first via /api/missions)
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { searchKnowledge } from '@/lib/rag';
-import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
-import { requireAuth } from '@/lib/auth-api';
+import { createClient } from '@supabase/supabase-js';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { aiChat, MODELS } from '@/lib/ai';
+import { RESET_TOTAL } from '@/lib/progress';
+import { BOOK, RESET, byEdition } from '@/lib/edition';
 
-export const maxDuration = 60;
+export const maxDuration = 30;
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+const HOTLINE =
+  'If someone is hurting you, threatening you, or you feel unsafe, please reach out: the National Domestic Violence Hotline is 1-800-799-7233, or text START to 88788. You do not have to handle this alone.';
+
+const DANGER = /\b(hit|hits|hitting|punch|slap|chok|strangl|hurt me|hurts me|threaten|stalk|kill|weapon|gun|knife|afraid for my (life|safety)|scared for my (life|safety)|abus|violent|unsafe)/i;
+
+const SYSTEM = `You are a calm, warm companion inside the app for the book ${BOOK.quotedWithAuthor}. ${byEdition({
+  v2: "The reader is doing the book's 21-Day Reset: small daily drills that help kind, accommodating people notice pressure, pause before answering, and hold their ground calmly.",
+  v3: "The reader is doing the book's 21-Day Power Reset (Part VII): small daily practices that follow Notice, Pause, Hold (see the pattern, make room to choose, follow through), so kind, reliable people get more say in their own lives.",
+})}
+
+They just wrote their evening journal note for today's step. Write a short reflection back to them.
+
+Rules:
+- 2 to 3 sentences, plain everyday English, short sentences. Speak to them as "you".
+- Never gushing. No "amazing", "incredible", "proud of you", no exclamation marks.
+- Point out one pattern they might notice in what they wrote (for example: the fear was bigger than what happened, the same person keeps showing up, they caught it sooner than before, an apology slipped in, the guilt faded faster). Use their own details.
+- ${byEdition({
+  v2: 'If the drill went badly or they skipped it, be kind and matter-of-fact. The book says a bad day written down honestly teaches more than a perfect week.',
+  v3: "If the practice went badly or they skipped it, be kind and matter-of-fact. The book asks for two lines every evening, even on a bad day, because the record shows progress you can't feel day to day. Missed days are fine: they pick up where they left off.",
+})}
+- Defense first. Never suggest manipulating, tricking or getting back at anyone.
+- No em-dashes. Use commas or periods.
+- Not therapy, and never claim to be.
+- If the note suggests they are in danger (violence, threats, stalking), say so kindly and mention the US National Domestic Violence Hotline, 1-800-799-7233 (text START to 88788).
+Output only the reflection text.`;
 
 export async function POST(req: NextRequest) {
   try {
-    // Paid AI endpoint — require a logged-in user (cost abuse).
-    await requireAuth(req);
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const day = Number(body?.day);
+    if (!Number.isInteger(day) || day < 1 || day > RESET_TOTAL) return apiError('Please pick a day of the reset.', 400);
 
-    const body = await req.json();
-    const { action } = body;
+    const [{ data: step }, { data: entry }] = await Promise.all([
+      db.from(RESET.daysTable).select('label, title, drill, journal_prompts').eq('day_number', day).maybeSingle(),
+      db.from(RESET.progressTable).select('note').eq('user_id', uid).eq('day_number', day).maybeSingle(),
+    ]);
+    if (!step) return apiError('We could not find that day of the reset.', 404);
+    const note = (entry?.note || '').trim();
+    if (!entry || note.length < 10) return apiError('Write a few lines about how it went first, then ask for a reflection.', 400);
 
-    if (action === 'debrief') {
-      return handleDebrief(body);
-    } else if (action === 'weekly-review') {
-      return handleWeeklyReview(body);
-    }
-
-    return apiError('Unknown action.', 400);
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Something went wrong. Please try again.', 500, '[JOURNAL]', error);
-  }
-}
-
-async function handleDebrief(body: any) {
-  const { report } = body;
-
-  if (!report || !report.situation) {
-    return apiError('A field report is required.', 400);
-  }
-
-  const searchQuery = `${report.techniques?.join(' ')} ${report.situation} ${report.goal}`;
-  const ragContext = await searchKnowledge(searchQuery, { count: 4 });
-
-  const systemPrompt = `${HANDLER_VOICE}
-You are an elite influence and persuasion coach analyzing a field report from a student practicing social influence techniques. You provide direct, tactical feedback.
-
-${ragContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}\n\n---\n` : ''}
-
-Respond with a JSON object containing exactly these keys:
-- "verdict": A one-line tactical assessment (e.g., "Strong frame control but you lost initiative in the close")
-- "whatWorked": Array of 2-4 specific things that worked well, referencing the techniques used
-- "whatToImprove": Array of 2-4 specific, actionable improvements with concrete suggestions
-- "techniqueGrade": Object mapping each technique name to a letter grade (A/B/C/D/F) with a one-line reason, e.g. {"Anchoring": {"grade": "B+", "reason": "Good opening number but you adjusted too quickly"}}
-- "patternInsight": A deeper insight about the student's approach, tendencies, or a pattern you notice
-
-Be specific, reference their actual words/actions, and be direct without being harsh. Grade honestly.`;
-
-  const userContent = `FIELD REPORT:
-Who: ${report.who || 'Not specified'}
-Situation: ${report.situation}
-Goal: ${report.goal}
-Techniques Used: ${report.techniques?.join(', ') || 'None specified'}
-What I Said/Did: ${report.whatIDid}
-Their Response: ${report.theirResponse}
-Outcome: ${report.outcome}/5 stars
-Notes: ${report.notes || 'None'}`;
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENROUTER_KEY}`,
-      'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-      'X-Title': 'Shadow Persuasion',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o',
+    const prompts = ((step.journal_prompts as string[]) || []).map((p) => `- ${p}`).join('\n');
+    const { text } = await aiChat({
+      userId: uid,
+      feature: 'reset:reflect',
+      model: MODELS.fast,
+      temperature: 0.5,
+      maxTokens: 220,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
+        { role: 'system', content: SYSTEM },
+        {
+          role: 'user',
+          content: `Today's step: ${step.label}, "${step.title}"\nThe drill: ${step.drill}\nJournal questions:\n${prompts}\n\nTheir note:\n"""${note.slice(0, 4000)}"""`,
+        },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    return apiError('AI service is unavailable right now. Please try again.', 502, '[JOURNAL]', `OpenRouter ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  try {
-    const analysis = JSON.parse(content);
-    return NextResponse.json(analysis);
-  } catch {
-    return apiError('AI returned an invalid response. Please try again.', 502, '[JOURNAL]', content?.slice?.(0, 200));
-  }
-}
-
-async function handleWeeklyReview(body: any) {
-  const { reports } = body;
-
-  if (!reports || reports.length === 0) {
-    return NextResponse.json({
-      summary: 'No reports this week. Start logging your interactions to get weekly insights.',
-      techniqueBreakdown: {},
-      strengths: [],
-      weaknesses: [],
-      recommendation: 'Submit your first field report to begin tracking your progress.',
     });
-  }
 
-  const techniquesList = reports.flatMap((r: any) => r.techniques || []);
-  const weeklySearchQuery = `improving ${[...new Set(techniquesList)].join(' ')} persuasion techniques weekly review`;
-  const weeklyRagContext = await searchKnowledge(weeklySearchQuery, { count: 4 });
+    let reflection = text.replace(/—/g, ', ').replace(/\s+,/g, ',').trim();
+    if (!reflection) return apiError('We could not write a reflection just now. Please try again.', 502);
+    if (DANGER.test(note) && !reflection.includes('799-7233')) reflection += `\n\n${HOTLINE}`;
 
-  const systemPrompt = `${HANDLER_VOICE}
-You are an elite influence and persuasion coach conducting a weekly performance review. Analyze the student's field reports from this week and provide strategic guidance.
+    await db
+      .from(RESET.progressTable)
+      .update({ reflection, updated_at: new Date().toISOString() })
+      .eq('user_id', uid)
+      .eq('day_number', day);
 
-${weeklyRagContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${weeklyRagContext}\n\n---\n` : ''}
-
-Respond with a JSON object containing exactly these keys:
-- "summary": A 2-3 sentence overview of the week's performance
-- "techniqueBreakdown": Object mapping each technique used to {"attempts": number, "avgOutcome": number, "assessment": "one line"}
-- "strengths": Array of 2-3 specific strengths observed across all reports
-- "weaknesses": Array of 2-3 areas needing improvement with actionable advice
-- "recommendation": A specific, actionable recommendation for next week (1-2 sentences)
-- "trend": "improving" | "steady" | "declining" based on outcome patterns`;
-
-  const reportsText = reports
-    .map(
-      (r: any, i: number) =>
-        `Report ${i + 1} (${r.date}):
-  Situation: ${r.situation}
-  Goal: ${r.goal}
-  Techniques: ${r.techniques?.join(', ')}
-  What they did: ${r.whatIDid}
-  Response: ${r.theirResponse}
-  Outcome: ${r.outcome}/5
-  AI Verdict: ${r.aiAnalysis?.verdict || 'N/A'}`
-    )
-    .join('\n\n');
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENROUTER_KEY}`,
-      'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-      'X-Title': 'Shadow Persuasion',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `WEEKLY FIELD REPORTS (${reports.length} total):\n\n${reportsText}` },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    return apiError('AI service is unavailable right now. Please try again.', 502, '[JOURNAL]', `OpenRouter ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  try {
-    const analysis = JSON.parse(content);
-    return NextResponse.json(analysis);
-  } catch {
-    return apiError('AI returned an invalid response. Please try again.', 502, '[JOURNAL]', content?.slice?.(0, 200));
+    return NextResponse.json({ reflection });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('We could not write a reflection just now. Your note is saved.', 500, '[reset:reflect]', err);
   }
 }

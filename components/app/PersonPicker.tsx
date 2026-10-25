@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
+import { inputClass } from '@/components/app/ui';
 
 export type Person = { id: string; name: string; relationshipType?: string };
 
-/** Loads the signed-in user's saved people (from the People / Profiler feature). */
+/** Loads the signed-in user's saved people (from My People). */
 export function usePeople(): Person[] {
   const [people, setPeople] = useState<Person[]>([]);
   useEffect(() => {
@@ -43,12 +44,10 @@ export function PersonPicker({
   if (people.length === 0) return null;
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Who is this about?</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#1A1A1A] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]"
-      >
+      <label htmlFor="person-picker" className="mb-1.5 block text-[14px] font-medium">
+        Who is this about?
+      </label>
+      <select id="person-picker" value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
         <option value="">Someone new (I&apos;ll describe them)</option>
         {people.map((p) => (
           <option key={p.id} value={p.id}>
@@ -57,8 +56,8 @@ export function PersonPicker({
           </option>
         ))}
       </select>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Pick a saved person and I&apos;ll use what you already know about them.
+      <p className="mt-1.5 text-[13px] text-[color:var(--app-muted)]">
+        Pick someone from My People and I&apos;ll use what you already know about them.
       </p>
     </div>
   );

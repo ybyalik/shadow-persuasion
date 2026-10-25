@@ -1,77 +1,60 @@
+/**
+ * "Steady your nerves" before a hard conversation (used by Plan a Conversation).
+ * POST { situation, goal?, counterpart? } -> { result: { reframe, grounding, powerAnchor, mantra } }
+ * The field names are kept for the page that calls this; the content is the
+ * book's calm, defense-first voice (Chapters 7 and 21).
+ */
+import { BOOK } from '@/lib/edition';
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { aiChat, MODELS } from '@/lib/ai';
 
 export const maxDuration = 30;
 
-const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+type Primer = { reframe: string; grounding: string; powerAnchor: string; mantra: string };
 
-const SYSTEM_PROMPT = `You are a calm, grounded performance coach. The user has a nerve-wracking conversation coming up in a few minutes. Help them settle their nerves and walk in composed and confident. This is about STATE, not tactics.
+const SYSTEM = `You help a reader of the book ${BOOK.quoted} settle their nerves a few minutes before a hard conversation. The reader is a kind, accommodating person who tends to fold under pressure. This is about feeling steady, not about tactics or winning.
 
-Respond with ONLY valid JSON in exactly this shape:
+Reply with ONLY valid JSON in exactly this shape:
 {
-  "reframe": "<2-3 sentences that reframe the situation so it feels smaller and more winnable, and reminds them of their footing>",
-  "grounding": "<one short, concrete grounding action to do in the next 60 seconds, e.g. a specific breath pattern>",
-  "powerAnchor": "<one sentence reminding them of a real source of their leverage or worth in this specific situation>",
-  "mantra": "<a short, punchy line to repeat to themselves as they walk in>"
+  "reframe": "2 or 3 short sentences that make the conversation feel smaller and more manageable. Remind them they only need to say what they mean, calmly, and that the other person's reaction belongs to the other person.",
+  "grounding": "One concrete thing to do in the next minute. Prefer the book's calm-down breath: breathe in normally, then breathe out slowly and fully, making the exhale longer, two or three times.",
+  "powerAnchor": "One sentence naming a real, fair reason they are allowed to ask for this (what they are owed, what is reasonable, a limit that is theirs to set).",
+  "mantra": "A short, plain line to repeat as they walk in, under 12 words."
 }
 
-Warm, steady, human. No jargon, no hype, no toxic positivity. Speak like a coach who has your back.`;
+Rules: plain everyday English, short sentences, warm and steady. No hype, no exclamation marks, no em-dashes. Never suggest tricking, pressuring or manipulating the other person. If the situation suggests they are in danger (violence, threats, stalking), use "reframe" to say kindly that their safety comes first and that they can call the US National Domestic Violence Hotline at 1-800-799-7233 (text START to 88788).`;
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth(req);
-
+    const { uid } = await requireAppUser(req);
     const body = await req.json().catch(() => ({}));
-    const situation = String(body?.situation || '').trim();
-    const goal = String(body?.goal || '').trim();
-    const counterpart = String(body?.counterpart || '').trim();
+    const situation = String(body?.situation || '').trim().slice(0, 2000);
+    const goal = String(body?.goal || '').trim().slice(0, 600);
+    const counterpart = String(body?.counterpart || '').trim().slice(0, 120);
+    if (!situation) return apiError('Tell me a little about the conversation first.', 400);
 
-    if (!situation) {
-      return NextResponse.json({ error: 'Tell me the situation first.' }, { status: 400 });
-    }
-
-    const userMsg = `Coming up: a conversation with ${counterpart || 'someone'}.\nSituation: ${situation}\nWhat they want: ${goal || 'a good outcome'}\nThey are nervous. Help them get in a calm, confident state.`;
-
-    const res = await fetch(OR_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-3.5-sonnet',
-        response_format: { type: 'json_object' },
-        temperature: 0.6,
-        max_tokens: 700,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userMsg },
-        ],
-      }),
+    const { data } = await aiChat<Primer>({
+      userId: uid,
+      feature: 'primer',
+      model: MODELS.fast,
+      temperature: 0.5,
+      maxTokens: 450,
+      json: true,
+      messages: [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: `Coming up: a conversation with ${counterpart || 'someone'}.\nWhat it's about: ${situation}\nWhat I want: ${goal || 'to say what I mean and stay calm'}\nI'm nervous.` },
+      ],
     });
 
-    if (!res.ok) {
-      console.error('[primer] LLM error', res.status);
-      return apiError('Could not build your primer. Try again.', 502);
-    }
-
-    const data = await res.json();
-    const raw = data.choices?.[0]?.message?.content || '';
-    let result;
-    try {
-      result = JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
-    } catch {
-      return apiError('Could not build your primer. Try again.', 502);
-    }
-
+    if (!data?.reframe || !data?.mantra) return apiError('We could not put that together just now. Please try again.', 502, '[primer] bad json');
+    const clean = (s: unknown) => String(s || '').replace(/—/g, ', ').trim();
+    const result: Primer = { reframe: clean(data.reframe), grounding: clean(data.grounding), powerAnchor: clean(data.powerAnchor), mantra: clean(data.mantra) };
     return NextResponse.json({ result });
   } catch (err) {
-    const authFail = passthroughAuthError(err);
-    if (authFail) return authFail;
-    console.error('[primer]', err);
-    return apiError('Something went wrong. Please try again.', 500);
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('We could not put that together just now. Please try again.', 500, '[primer]', err);
   }
 }

@@ -1,227 +1,180 @@
-import { NextRequest } from 'next/server';
-import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
-import { searchKnowledge, getEmbedding, supabase } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
-import { getVoiceProfile } from '@/lib/voice-profile';
+import { aiStream, MODELS } from '@/lib/ai';
+import { passageLabel, searchBook, supabase } from '@/lib/rag';
+import { TOOLS_V3_RULE, byEdition } from '@/lib/edition';
+import { getPersonContext } from '@/lib/person-context';
+import { HOTLINE, VOICE_RULES, mapInteraction, normalizeRelationship, playbookFor, soundsUnsafe } from '@/lib/prompts/your-life';
+
+/**
+ * Talk It Through: a calm coach that answers from the book.
+ * Streams plain text; when it finishes, appends <!--SOURCES:[...]--> with the
+ * chapters it drew on. Saves both sides to chat_sessions / chat_messages.
+ * With personId, it becomes the "talk about [name]" chat on a person's page.
+ */
 
 export const maxDuration = 60;
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
+type CoachSource = { chapter: string; book: string };
 
-// Search knowledge base for relevant chunks with source metadata
-type SearchResult = {
-  context: string;
-  sources: { book: string; author: string; technique: string; similarity: number }[];
-};
+const COACH_SYSTEM = `${VOICE_RULES}
 
-async function searchKnowledgeWithSources(query: string, limit: number = 5): Promise<SearchResult> {
-  try {
-    const embedding = await getEmbedding(query);
-    if (embedding.length === 0) return { context: '', sources: [] };
+YOUR ROLE
+You are "Talk It Through", the reader's calm coach. People come to you with the conversation they keep replaying at 3 a.m., or any situation where someone is pressuring, guilt-tripping, ignoring or using them.
 
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.3,
-      match_count: limit,
-    });
+HOW TO HELP
+- Listen first. Reflect back in one sentence what you heard, so they feel understood.
+- When it helps, ask ONE gentle question at a time (never a list of questions). If you ask a question, make it the last line of your reply and keep the rest brief, so they can answer it. Good questions come from ${byEdition({ v2: "Chapter 1's 3 a.m. exercise", v3: "the replay exercise (Chapter 4, and Day 4 of the Reset)" })}: Who was it, and where were you? What did they actually say? What did you say or do? What do you wish you had said? What were you afraid would happen if you had said it? What did they get (your time, your agreement, your silence, the last word)?
+- Once you understand, name what was happening in plain words (the book's tactic name if one clearly fits), and offer one short, calm reply they could use next time. Short and calm beats sharp: the 3 a.m. line is almost never the one that works.
+- Answer from the book. Use the passages given below; mention the chapter naturally when useful, like "${byEdition({ v2: 'Chapter 11 calls this the ledger.', v3: 'Chapter 7 calls this the ledger.' })}"
+- Keep replies short: usually 60 to 160 words. Use short paragraphs, and a list only when giving a few options.
+- Be kind about the reader's own part (saying yes on the spot, over-explaining) without blame.
+- Never encourage revenge, tricks or manipulation. If they ask for that, gently offer the fair version (${byEdition({ v2: 'Chapter 26', v3: 'Chapter 30, Power Without Becoming What You Resent' })}).${byEdition({ v2: '', v3: '\n- ' + TOOLS_V3_RULE.replace(/\n/g, '\n  ') })}
+- Do not use headings like "Situation analysis" or "Tactical response". Talk like a wise, warm friend who has read the book closely.`;
 
-    if (error || !data || data.length === 0) return { context: '', sources: [] };
-
-    const context = data.map((chunk: any) =>
-      `[Source: "${chunk.book_title}" by ${chunk.author} | Technique: ${chunk.technique_name}]\n${chunk.content}`
-    ).join('\n\n---\n\n');
-
-    const sources = data.map((chunk: any) => ({
-      book: chunk.book_title,
-      author: chunk.author,
-      technique: chunk.technique_name,
-      similarity: Math.round(chunk.similarity * 100),
-    }));
-
-    return { context, sources };
-  } catch (e) {
-    console.error('RAG search error:', e);
-    return { context: '', sources: [] };
-  }
-}
+type Msg = { role: 'user' | 'assistant'; content: string };
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
-    const voiceContext = await getVoiceProfile(userId);
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const session_id: string | null = typeof body?.session_id === 'string' && body.session_id ? body.session_id : null;
+    const personId: string | null = typeof body?.personId === 'string' && body.personId ? body.personId : null;
+    const messages: Msg[] = (Array.isArray(body?.messages) ? body.messages : [])
+      .filter((m: Msg) => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+      .map((m: Msg) => ({ role: m.role, content: m.content.replace(/<!--SOURCES:[\s\S]*?-->/g, '').slice(0, 6000) }));
 
-    const { messages, session_id } = await req.json();
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    if (!lastUser) return NextResponse.json({ error: 'Type a message to start.' }, { status: 400 });
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return apiError('Messages are required.', 400);
+    // Only write into a conversation that belongs to this reader.
+    let activeSessionId = session_id;
+    if (activeSessionId) {
+      const { data: owned } = await supabase.from('chat_sessions').select('id').eq('id', activeSessionId).eq('user_id', uid).maybeSingle();
+      if (!owned) return NextResponse.json({ error: 'We could not find that conversation.' }, { status: 404 });
     }
 
-    // If a session id was supplied, confirm it belongs to the caller BEFORE
-    // spending an LLM call or writing any messages into it (prevents IDOR write).
-    if (session_id) {
-      const { data: ownedSession, error: ownErr } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('id', session_id)
-        .eq('user_id', userId)
-        .maybeSingle();
-      if (ownErr) {
-        return apiError('Failed to load conversation.', 500, '[CHAT]', ownErr);
+    // Who this is about (optional).
+    let personBlock = '';
+    let personName: string | null = null;
+    if (personId) {
+      const person = await getPersonContext(uid, personId);
+      if (person) {
+        personName = person.name;
+        const { data: row } = await supabase
+          .from('user_profiles_people')
+          .select('relationship_type, interactions')
+          .eq('id', personId)
+          .eq('user_id', uid)
+          .maybeSingle();
+        const recent = (Array.isArray(row?.interactions) ? row.interactions : [])
+          .map(mapInteraction)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 6)
+          .map((i) => `- ${i.date.slice(0, 10)}: ${i.whatHappened.slice(0, 240)}${i.tactics.length ? ` (${i.tactics.join(', ')})` : ''}`)
+          .join('\n');
+        const playbook = playbookFor(normalizeRelationship(row?.relationship_type));
+        personBlock = `\n\nTHIS CONVERSATION IS ABOUT ${person.name.toUpperCase()}\n${person.summary}${recent ? `\nRecent moments the reader logged:\n${recent}` : ''}${playbook ? `\n\n${playbook}` : ''}`;
       }
-      if (!ownedSession) {
-        return apiError('Conversation not found.', 404, '[CHAT]');
-      }
     }
 
-    const recentMessages = messages.slice(-10);
-    
-    // Get the latest user message for RAG search
-    const lastUserMessage = [...recentMessages].reverse().find((m: any) => m.role === 'user');
-    
-    // Search knowledge base
-    let ragResult: SearchResult = { context: '', sources: [] };
-    if (lastUserMessage) {
-      ragResult = await searchKnowledgeWithSources(lastUserMessage.content);
+    // Search the book with the last two things the reader said (short replies like "yes" need context).
+    const userTurns = messages.filter((m) => m.role === 'user');
+    const query = userTurns
+      .slice(-2)
+      .map((m) => m.content)
+      .join('\n')
+      .slice(0, 1500);
+    const passages = await searchBook(query, { count: 5, threshold: 0.28 });
+    const sources: CoachSource[] = [];
+    for (const p of passages) {
+      const chapter = passageLabel(p);
+      if (!sources.some((s) => s.chapter === chapter)) sources.push({ chapter, book: p.book });
     }
+    const context = passages
+      .map((p) => `[${passageLabel(p)}]\n${p.content}`)
+      .join('\n\n---\n\n');
 
-    // Build system prompt with RAG context
-    let systemContent = HANDLER_VOICE + HANDLER_SYSTEM_PROMPT + voiceContext;
-    if (ragResult.context) {
-      const ragContext = ragResult.context;
-      systemContent += `\n\n${RAG_ENFORCEMENT}\n\n---\n\nRELEVANT KNOWLEDGE BASE EXCERPTS:\n${ragContext}`;
-    }
+    const unsafe = soundsUnsafe(...userTurns.slice(-3).map((m) => m.content));
+    const system = `${COACH_SYSTEM}${personBlock}${
+      unsafe ? `\n\nIMPORTANT: The reader's words suggest they may be unsafe. Start your reply by saying so kindly and give: ${HOTLINE}` : ''
+    }\n\nPASSAGES FROM THE BOOK (answer from these; do not quote at length):\n${context || '(No close passage found. Answer from the book\'s general approach: notice, pause, answer calmly, hold your line.)'}`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4',
-        messages: [{ role: 'system', content: systemContent }, ...recentMessages],
-        stream: true,
-      }),
+    // Start the AI first so a spend-limit response can be returned as JSON.
+    const stream = await aiStream({
+      userId: uid,
+      feature: personId ? 'coach:person' : 'coach',
+      model: MODELS.fast,
+      temperature: 0.6,
+      maxTokens: 700,
+      messages: [{ role: 'system', content: system }, ...messages.slice(-12)],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return apiError('AI service is unavailable right now. Please try again.', 502, '[CHAT]', `OpenRouter ${response.status}: ${errorText}`);
+    if (!activeSessionId) {
+      const firstUser = userTurns[0]?.content || 'New conversation';
+      const { data: created, error } = await supabase
+        .from('chat_sessions')
+        .insert({
+          user_id: uid,
+          title: personName ? `About ${personName}: ${firstUser.slice(0, 60)}` : firstUser.slice(0, 80),
+          session_type: personId ? 'person' : 'coach',
+          person_id: personId,
+        })
+        .select('id')
+        .single();
+      if (error) console.error('[coach] could not create session', error.message);
+      activeSessionId = created?.id ?? null;
     }
 
-    if (!response.body) {
-      return apiError('AI service is unavailable right now. Please try again.', 502, '[CHAT]');
+    if (activeSessionId) {
+      const { error } = await supabase.from('chat_messages').insert({ session_id: activeSessionId, role: 'user', content: lastUser.content, user_id: uid });
+      if (error) console.error('[coach] save user message failed', error.message);
     }
 
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    
-    // Resolve or create session for persistence
-    let activeSessionId = session_id;
-    if (!activeSessionId) {
-      try {
-        const firstUserMsg = recentMessages.find((m: any) => m.role === 'user');
-        const title = firstUserMsg?.content?.slice(0, 80) || 'New Chat';
-        const { data: newSession } = await supabase
-          .from('chat_sessions')
-          .insert({ title, session_type: 'general', user_id: userId })
-          .select('id')
-          .single();
-        activeSessionId = newSession?.id;
-      } catch (e) {
-        console.error('[CHAT]', 'Failed to create session:', e);
-      }
-    }
-
-    // Save user message
-    if (activeSessionId && lastUserMessage) {
-      Promise.resolve(
-        supabase
-          .from('chat_messages')
-          .insert({ session_id: activeSessionId, role: 'user', content: lastUserMessage.content, user_id: userId })
-          .then(({ error }) => { if (error) console.error('[CHAT]', 'Save user msg error:', error); })
-      ).catch((e: unknown) => console.error('[CHAT]', 'Save user msg exception:', e));
-    }
-
-    let fullAssistantContent = '';
-
-    const stream = new ReadableStream({
+    const sessionForSave = activeSessionId;
+    const out = new ReadableStream({
       async start(controller) {
-        const reader = response.body!.getReader();
-        let buffer = '';
+        let full = '';
         try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-              const data = trimmed.slice(6);
-              if (data === '[DONE]') continue;
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullAssistantContent += content;
-                  controller.enqueue(encoder.encode(content));
-                }
-              } catch {}
-            }
+          for await (const piece of stream) {
+            full += piece;
+            controller.enqueue(encoder.encode(piece));
           }
         } catch (e) {
-          console.error('[CHAT]', 'Stream error:', e);
-        } finally {
-          // Append sources as a special delimiter + JSON at the end
-          if (ragResult.sources.length > 0) {
-            controller.enqueue(encoder.encode(`\n\n<!--SOURCES:${JSON.stringify(ragResult.sources)}-->`));
+          console.error('[coach] stream error', e);
+          if (!full) {
+            full = 'Sorry, I lost my train of thought. Please send that again.';
+            controller.enqueue(encoder.encode(full));
           }
-          controller.close();
-
-          // Save assistant message to DB
-          if (activeSessionId && fullAssistantContent) {
-            const cleanContent = fullAssistantContent.replace(/\n\n<!--SOURCES:.*?-->/, '');
-            Promise.resolve(
-              supabase
-                .from('chat_messages')
-                .insert({
-                  session_id: activeSessionId,
-                  role: 'assistant',
-                  content: cleanContent,
-                  metadata: ragResult.sources.length > 0 ? { sources: ragResult.sources } : {},
-                  user_id: userId,
-                })
-                .then(({ error }) => { if (error) console.error('[CHAT]', 'Save assistant msg error:', error); })
-            ).catch((e: unknown) => console.error('[CHAT]', 'Save assistant msg exception:', e));
-
-            Promise.resolve(
-              supabase
-                .from('chat_sessions')
-                .update({ updated_at: new Date().toISOString() })
-                .eq('id', activeSessionId)
-                .then(({ error }) => { if (error) console.error('[CHAT]', 'Update session error:', error); })
-            ).catch((e: unknown) => console.error('[CHAT]', 'Update session exception:', e));
-          }
+        }
+        if (sources.length) controller.enqueue(encoder.encode(`\n\n<!--SOURCES:${JSON.stringify(sources)}-->`));
+        controller.close();
+        if (sessionForSave && full) {
+          const { error } = await supabase.from('chat_messages').insert({
+            session_id: sessionForSave,
+            role: 'assistant',
+            content: full,
+            metadata: sources.length ? { sources } : {},
+            user_id: uid,
+          });
+          if (error) console.error('[coach] save reply failed', error.message);
+          await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionForSave).eq('user_id', uid);
         }
       },
     });
 
-    return new Response(stream, {
+    return new Response(out, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache',
         ...(activeSessionId ? { 'X-Session-Id': activeSessionId } : {}),
       },
     });
-
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Failed to get chat response.', 500, '[CHAT]', error);
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('The coach is not available right now. Please try again.', 500, '[coach]', err);
   }
 }

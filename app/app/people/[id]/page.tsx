@@ -1,1729 +1,429 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  Brain,
-  MessageSquare,
-  Target,
-  Plus,
-  Star,
-  RefreshCw,
-  Loader2,
-  ChevronRight,
-  Trash2,
-  X,
-  AlertTriangle,
-  Tag,
-} from 'lucide-react';
+import { ArrowLeft, MessageCircle, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
-import { formatDate } from '@/lib/format-date';
-import { renderMarkdown } from '@/lib/markdown';
+import { CHAPTERS, RELATIONSHIPS, matchTactic } from '@/lib/prompts/your-life';
+import { AddConversationModal, type NewMoment } from '@/components/app/AddConversationModal';
+import { ConversationCard, type TimelineEntry } from '@/components/app/ConversationCard';
+import { CoachChat } from '@/components/app/StrategicChat';
+import { BookRef, Button, Card, Label, Notice, friendlyError, inputClass } from '@/components/app/ui';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+type Summary = {
+  approach: string;
+  dos: string[];
+  donts: string[];
+  sayThis: string[];
+  pressureNote: string | null;
+  chapters: { chapter: number; title: string }[];
+  generatedAt: string;
+};
 
-const RELATIONSHIP_TYPES = ['Boss', 'Client', 'Partner', 'Ex', 'Friend', 'Rival', 'Family', 'Other'] as const;
-
-const TECHNIQUE_LIBRARY = [
-  'Mirroring',
-  'Active Listening',
-  'Reframing',
-  'Strategic Silence',
-  'Anchoring',
-  'Reciprocity',
-  'Social Proof',
-  'Scarcity',
-  'Authority',
-  'Liking/Rapport',
-  'Commitment/Consistency',
-  'Emotional Labeling',
-  'Pacing & Leading',
-  'Door in the Face',
-  'Foot in the Door',
-  'Framing',
-  'Storytelling',
-  'Contrast Principle',
-  'Future Pacing',
-  'Pattern Interrupt',
-];
-
-interface Interaction {
-  id: string;
-  date: string;
-  summary: string;
-  techniques: string[];
-  outcome: number;
-  notes: string;
-  aiAnalysis?: string;
-}
-
-interface Profile {
+type Person = {
   id: string;
   name: string;
   relationshipType: string;
-  traits: {
-    communication?: {
-      directness?: number;
-      logicVsEmotion?: number;
-      assertiveness?: number;
-      openness?: number;
-      summary?: string;
-      sensoryPreference?: 'Visual' | 'Auditory' | 'Kinesthetic' | 'Mixed';
-      emotionalPattern?: string;
-      receptivity?: number;
-    };
-    personality?: {
-      openness?: number;
-      conscientiousness?: number;
-      extraversion?: number;
-      agreeableness?: number;
-      neuroticism?: number;
-    };
-    triggers?: {
-      defensive?: string[];
-      openUp?: string[];
-    };
-    motivations?: string[];
-    fears?: string[];
-    attachmentStyle?: {
-      style?: string;
-      confidence?: number;
-    };
-  };
-  interactions: Interaction[];
-  playbook?: {
-    bestApproach?: string;
-    timingPatterns?: string;
-    effectiveTactics?: { tactic: string; description: string; effectiveness: number }[];
-    leveragePoints?: string[];
-    nextMove?: string;
-    generatedAt?: string;
-  };
-  confidenceScore?: number;
-  keyTraitTags?: string[];
-  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
-  autoRiskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
-  manualRiskOverride?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
-  nextRecommendedAction?: string;
-  tags?: string[];
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+  notes: string;
+  tactics: { name: string; chapter: number | null; count: number; lastSeen: string | null }[];
+  whatWorked: { id: string; date: string; text: string; note?: string | null }[];
+  summary: Summary | null;
+  nextStep: string | null;
+  interactions: Extract<TimelineEntry, { kind: 'moment' }>[];
+  decodes: Extract<TimelineEntry, { kind: 'decode' }>[];
+  unsafe: boolean;
+};
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
+const HOTLINE = 'US National Domestic Violence Hotline: 1-800-799-7233, or text START to 88788. If you are in immediate danger, call 911.';
 
-function getRelationshipColor(type: string): string {
-  const colors: Record<string, string> = {
-    Boss: 'bg-red-500/20 text-red-400 border-red-500/30',
-    Client: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    Partner: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-    Ex: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    Friend: 'bg-green-500/20 text-green-400 border-green-500/30',
-    Rival: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    Family: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    Other: 'bg-gray-500/20 text-gray-500 dark:text-gray-400 border-gray-500/30',
-  };
-  return colors[type] || colors.Other;
-}
-
-function getRiskColor(risk: string) {
-  switch (risk) {
-    case 'LOW': return 'text-green-400 bg-green-400/10 border-green-400/20';
-    case 'MEDIUM': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-    case 'HIGH': return 'text-red-400 bg-red-400/10 border-red-400/20';
-    default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10 border-gray-400/20';
-  }
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export default function ProfileDetailPage() {
+export default function PersonPage() {
   const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const { user } = useAuth();
-  const profileId = params.id as string;
+  const [person, setPerson] = useState<Person | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ name: '', relationshipType: 'Other', notes: '' });
+  const [showChat, setShowChat] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'activity' | 'playbook'>('profile');
-  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGeneratingPlaybook, setIsGeneratingPlaybook] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorBanner, setErrorBanner] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [analyses, setAnalyses] = useState<AnalysisHistoryItem[]>([]);
-  const [analysesLoading, setAnalysesLoading] = useState(true);
-
-  // Keep a ref to the latest profile so saveProfile can roll back on failure
-  const profileRef = useRef<Profile | null>(null);
-  useEffect(() => {
-    profileRef.current = profile;
-  }, [profile]);
-
-  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
-    const token = await user?.getIdToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, [user]);
-
-  // Load profile
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const headers = await getHeaders();
-        const res = await fetch(`/api/profiler/people?id=${profileId}`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.profile) {
-            setProfile(data.profile);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load profile:', e);
-      }
-      setIsLoading(false);
-    };
-    loadProfile();
-  }, [profileId, getHeaders]);
-
-  // Load analyses for this person
-  useEffect(() => {
-    const loadAnalyses = async () => {
-      try {
-        const headers = await getHeaders();
-        const res = await fetch(`/api/analyze/history?person_id=${profileId}&limit=50`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          setAnalyses(data.analyses || []);
-        }
-      } catch (e) {
-        console.error('Failed to load analyses:', e);
-      } finally {
-        setAnalysesLoading(false);
-      }
-    };
-    loadAnalyses();
-  }, [profileId, getHeaders]);
-
-  // Auto-calculate risk level from analyses
-  const autoRiskLevel = useMemo<'LOW' | 'MEDIUM' | 'HIGH' | null>(() => {
-    if (analyses.length === 0) return null;
-    const maxThreat = Math.max(...analyses.map((a) => a.threat_score));
-    if (maxThreat >= 7) return 'HIGH';
-    if (maxThreat >= 4) return 'MEDIUM';
-    return 'LOW';
-  }, [analyses]);
-
-  // Effective risk level: manual override takes precedence
-  const effectiveRiskLevel = profile?.manualRiskOverride || autoRiskLevel || profile?.riskLevel || null;
-
-  // Save profile changes (optimistic — rolls back and warns if the save fails)
-  const saveProfile = useCallback(
-    async (updated: Profile) => {
-      const previous = profileRef.current;
-      setProfile(updated);
-      try {
-        const headers = await getHeaders();
-        const res = await fetch('/api/profiler/people', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body: JSON.stringify(updated),
-        });
-        if (!res.ok) throw new Error('Save failed');
-        setErrorBanner(null);
-      } catch (e) {
-        console.error('Failed to save profile:', e);
-        // Roll back the optimistic change so the UI matches what was actually saved
-        if (previous) setProfile(previous);
-        setErrorBanner("We couldn't save your change. Please check your connection and try again.");
-      }
-    },
-    [getHeaders]
-  );
-
-  const handleDeleteProfile = async () => {
+  const load = useCallback(async () => {
     try {
-      const headers = await getHeaders();
-      await fetch(`/api/profiler/people?id=${profileId}`, {
-        method: 'DELETE',
-        headers,
-      });
-    } catch (e) {
-      console.error('Failed to delete profile:', e);
-    }
-    router.push('/app/people');
-  };
-
-  // Log interaction + AI analysis
-  const handleLogInteraction = async (interaction: Omit<Interaction, 'id' | 'aiAnalysis'>) => {
-    if (!profile) return;
-
-    const newInteraction: Interaction = {
-      ...interaction,
-      id: Date.now().toString(),
-    };
-
-    // Save interaction immediately (without AI analysis yet)
-    const updatedWithInteraction: Profile = {
-      ...profile,
-      interactions: [...profile.interactions, newInteraction],
-      updatedAt: new Date().toISOString(),
-    };
-    saveProfile(updatedWithInteraction);
-    setIsLogModalOpen(false);
-
-    // Then run AI analysis
-    setIsAnalyzing(true);
-    try {
-      const authHeaders = await getHeaders();
-      const res = await fetch('/api/profiler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          action: 'analyze-interaction',
-          interaction: newInteraction,
-          profile: updatedWithInteraction,
-        }),
-      });
-
-      if (res.ok) {
-        const analysis = await res.json();
-        const updatedInteraction: Interaction = {
-          ...newInteraction,
-          aiAnalysis: analysis.interactionAnalysis,
-        };
-
-        const fullyUpdated: Profile = {
-          ...updatedWithInteraction,
-          interactions: updatedWithInteraction.interactions.map((i) =>
-            i.id === newInteraction.id ? updatedInteraction : i
-          ),
-          traits: analysis.updatedTraits || updatedWithInteraction.traits,
-          confidenceScore: analysis.confidenceScore ?? updatedWithInteraction.confidenceScore,
-          keyTraitTags: analysis.keyTraitTags || updatedWithInteraction.keyTraitTags,
-          updatedAt: new Date().toISOString(),
-        };
-        saveProfile(fullyUpdated);
+      const res = await apiFetch(`/api/profiler/people?id=${encodeURIComponent(id)}`);
+      if (!res.ok) {
+        setError(await friendlyError(res, 'We could not load this person.'));
+        return;
       }
-    } catch (e) {
-      console.error('AI analysis failed:', e);
+      const d = await res.json();
+      setPerson(d.profile);
+    } catch {
+      setError('We could not load this person. Please check your connection.');
     } finally {
-      setIsAnalyzing(false);
+      setLoading(false);
     }
-  };
+  }, [id]);
 
-  // Generate playbook
-  const handleGeneratePlaybook = async () => {
-    if (!profile) return;
-    setIsGeneratingPlaybook(true);
+  useEffect(() => {
+    if (user) load();
+  }, [user, load]);
+
+  const writeSummary = useCallback(async () => {
+    setWriting(true);
+    setSummaryError(null);
     try {
-      const authHeaders = await getHeaders();
-
-      // Build analyses summary for the AI
-      const analysisSummaries = analyses.map((a) => ({
-        date: a.created_at,
-        threat_score: a.threat_score,
-        tactics_count: a.tactics_count,
-        techniques: a.techniques_identified || [],
-        assessment: a.overall_assessment?.slice(0, 300) || '',
-        power_yours: a.power_yours,
-        power_theirs: a.power_theirs,
-      }));
-
-      const res = await fetch('/api/profiler', {
+      const res = await apiFetch('/api/profiler', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          action: 'generate-playbook',
-          profile,
-          analysisData: { analyses: analysisSummaries },
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update-summary', personId: id }),
       });
-
-      if (res.ok) {
-        const playbook = await res.json();
-        const updated: Profile = {
-          ...profile,
-          playbook: {
-            ...playbook,
-            generatedAt: new Date().toISOString(),
-          },
-          updatedAt: new Date().toISOString(),
-        };
-        saveProfile(updated);
+      if (!res.ok) {
+        setSummaryError(await friendlyError(res, 'We could not write the guide just now.'));
+        return;
       }
-    } catch (e) {
-      console.error('Playbook generation failed:', e);
+      const d = await res.json();
+      setPerson((p) => (p ? { ...p, summary: d.summary, nextStep: d.nextStep } : p));
+    } catch {
+      setSummaryError('We could not write the guide. Please check your connection.');
     } finally {
-      setIsGeneratingPlaybook(false);
+      setWriting(false);
+    }
+  }, [id]);
+
+  const addMoment = async (m: NewMoment): Promise<string | null> => {
+    try {
+      const res = await apiFetch('/api/profiler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add-interaction', personId: id, interaction: m }),
+      });
+      if (!res.ok) return friendlyError(res, 'We could not save this moment.');
+      const d = await res.json();
+      setFlash(d.interaction?.tactics?.length ? `Saved. It looks like: ${d.interaction.tactics.join(', ')}.` : 'Saved.');
+      await load();
+      writeSummary();
+      return null;
+    } catch {
+      return 'We could not save this moment. Please check your connection.';
     }
   };
 
-  // Update risk level (manual override)
-  const handleRiskLevelChange = (riskLevel: 'LOW' | 'MEDIUM' | 'HIGH') => {
-    if (!profile) return;
-    saveProfile({ ...profile, riskLevel, manualRiskOverride: riskLevel, updatedAt: new Date().toISOString() });
+  const deleteMoment = async (entry: TimelineEntry) => {
+    if (!window.confirm('Remove this entry?')) return;
+    const res = await apiFetch('/api/profiler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete-interaction', personId: id, interactionId: entry.id }),
+    });
+    if (res.ok) load();
+    else setError(await friendlyError(res));
   };
 
-  // Clear manual override
-  const handleClearRiskOverride = () => {
-    if (!profile) return;
-    saveProfile({ ...profile, manualRiskOverride: null, riskLevel: autoRiskLevel || undefined, updatedAt: new Date().toISOString() });
-  };
-
-  // Update next recommended action
-  const handleNextActionChange = (nextRecommendedAction: string) => {
-    if (!profile) return;
-    saveProfile({ ...profile, nextRecommendedAction, updatedAt: new Date().toISOString() });
-  };
-
-  // Add/remove tags
-  const handleAddTag = (tag: string) => {
-    if (!profile) return;
-    const tags = [...(profile.tags || [])];
-    if (!tags.includes(tag)) {
-      tags.push(tag);
-      saveProfile({ ...profile, tags, updatedAt: new Date().toISOString() });
+  const saveEdit = async () => {
+    const res = await apiFetch('/api/profiler/people', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...draft }),
+    });
+    if (!res.ok) {
+      setError(await friendlyError(res));
+      return;
     }
+    const d = await res.json();
+    setPerson(d.profile);
+    setEditing(false);
   };
 
-  const handleRemoveTag = (tag: string) => {
-    if (!profile) return;
-    const tags = (profile.tags || []).filter((t) => t !== tag);
-    saveProfile({ ...profile, tags, updatedAt: new Date().toISOString() });
+  const removePerson = async () => {
+    if (!person || !window.confirm(`Remove ${person.name} and everything logged about them? This cannot be undone.`)) return;
+    const res = await apiFetch(`/api/profiler/people?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.ok) router.push('/app/people');
+    else setError(await friendlyError(res));
   };
 
-  // Update notes
-  const handleNotesChange = (notes: string) => {
-    if (!profile) return;
-    saveProfile({ ...profile, notes, updatedAt: new Date().toISOString() });
-  };
+  const timeline = useMemo<TimelineEntry[]>(() => {
+    if (!person) return [];
+    return [
+      ...person.interactions.map((i) => ({ ...i, kind: 'moment' as const })),
+      ...person.decodes.map((d) => ({ ...d, kind: 'decode' as const })),
+    ].sort((a, b) => b.date.localeCompare(a.date));
+  }, [person]);
 
-  if (isLoading) {
+  if (loading) return <p className="text-[15px] text-[color:var(--app-muted)]">Loading...</p>;
+  if (!person)
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4A017]"></div>
+      <div className="max-w-xl space-y-4">
+        <Notice tone="error">{error || 'We could not find that person.'}</Notice>
+        <Button variant="ghost" href="/app/people">
+          Back to My People
+        </Button>
       </div>
     );
-  }
 
-  if (!profile) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Profile not found</p>
-        <button
-          onClick={() => router.push('/app/people')}
-          className="mt-4 text-[#D4A017] hover:underline"
-        >
-          Back to profiles
-        </button>
-      </div>
-    );
-  }
-
-  const tabs = [
-    { id: 'profile' as const, label: 'Psychological Profile', icon: Brain },
-    { id: 'activity' as const, label: 'Activity', icon: MessageSquare },
-    { id: 'playbook' as const, label: 'Strategy Playbook', icon: Target },
-  ];
+  const q = (extra: Record<string, string>) => new URLSearchParams({ who: person.name, person: person.id, ...extra }).toString();
+  const s = person.summary;
 
   return (
-    <div className="space-y-6">
-      {/* Back + Header */}
-      <button
-        onClick={() => router.push('/app/people')}
-        className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span className="text-sm font-mono uppercase">Back to People</span>
-      </button>
+    <div className="max-w-4xl">
+      <Link href="/app/people" className="mb-4 inline-flex min-h-[44px] items-center gap-1.5 text-[14px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]">
+        <ArrowLeft className="h-4 w-4" /> My People
+      </Link>
 
-      {/* Save error banner */}
-      {errorBanner && (
-        <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-4 flex items-center justify-between">
-          <p className="text-sm text-red-700 dark:text-red-400">{errorBanner}</p>
-          <button onClick={() => setErrorBanner(null)} className="text-red-500 hover:text-red-700 ml-4">
-            <X className="h-4 w-4" />
-          </button>
+      {editing ? (
+        <Card className="mb-6">
+          <Label>Edit</Label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="e-name" className="mb-1.5 block text-[14px] font-medium">
+                Name
+              </label>
+              <input id="e-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className={inputClass} maxLength={80} />
+            </div>
+            <div>
+              <label htmlFor="e-rel" className="mb-1.5 block text-[14px] font-medium">
+                Who they are to you
+              </label>
+              <select id="e-rel" value={draft.relationshipType} onChange={(e) => setDraft({ ...draft, relationshipType: e.target.value })} className={inputClass}>
+                {RELATIONSHIPS.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="e-notes" className="mb-1.5 block text-[14px] font-medium">
+                Notes
+              </label>
+              <textarea id="e-notes" rows={3} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} className={inputClass} />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+            <Button variant="ghost" onClick={removePerson} className="sm:mr-auto text-[color:var(--app-oxblood)]">
+              <Trash2 className="h-4 w-4" /> Remove {person.name}
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveEdit}>Save</Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="app-type mb-2 text-[12px] uppercase tracking-[0.2em] text-[color:var(--app-accent)]">{person.relationshipType}</p>
+            <h1 className="app-serif break-words text-[34px] font-semibold leading-[1.08] sm:text-[40px]">{person.name}</h1>
+            {person.notes && <p className="mt-2 max-w-2xl text-[15px] text-[color:var(--app-muted)]">{person.notes}</p>}
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setDraft({ name: person.name, relationshipType: person.relationshipType, notes: person.notes });
+              setEditing(true);
+            }}
+          >
+            <Pencil className="h-4 w-4" /> Edit
+          </Button>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#D4A017]/20 border-2 border-[#D4A017]/40 flex items-center justify-center">
-            <span className="text-[#D4A017] font-bold font-mono text-xl">
-              {getInitials(profile.name)}
-            </span>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
-            <div className="flex items-center gap-3 mt-1">
-              <span
-                className={`px-2 py-0.5 text-xs font-mono border rounded ${getRelationshipColor(
-                  profile.relationshipType
-                )}`}
-              >
-                {profile.relationshipType}
-              </span>
-              {effectiveRiskLevel && (
-                <span className={`px-2 py-0.5 text-xs font-mono border rounded ${getRiskColor(effectiveRiskLevel)}`}>
-                  {effectiveRiskLevel} RISK
-                </span>
-              )}
-              {(profile.confidenceScore ?? 0) > 0 && (
-                <span className="text-xs text-gray-500 font-mono">
-                  {profile.confidenceScore}% confidence
-                </span>
-              )}
-            </div>
-          </div>
+      {person.unsafe && (
+        <div className="mb-6">
+          <Notice tone="warn">
+            Some of what you logged sounds frightening. Your safety comes first, and you do not have to handle this alone. {HOTLINE}
+          </Notice>
         </div>
+      )}
+      {error && (
+        <div className="mb-6">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+      {flash && (
+        <div className="mb-6">
+          <Notice>{flash}</Notice>
+        </div>
+      )}
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsLogModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Log Interaction
-          </button>
-          {confirmingDelete ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-red-400">Are you sure?</span>
-              <button
-                onClick={handleDeleteProfile}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-500 transition-colors text-xs font-semibold"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirmingDelete(false)}
-                className="px-3 py-1 bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-[#444] transition-colors text-xs"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
+      <div className="mb-8 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Button onClick={() => setLogOpen(true)}>
+          <Plus className="h-4 w-4" /> Log a moment
+        </Button>
+        <Button variant="ghost" href={`/app/warroom?${q({})}`}>
+          Plan a conversation
+        </Button>
+        <Button variant="ghost" href={`/app/spar?${q({})}`}>
+          Rehearse it
+        </Button>
+        <Button variant="ghost" onClick={() => setShowChat((v) => !v)}>
+          <MessageCircle className="h-4 w-4" /> Talk about {person.name}
+        </Button>
+      </div>
+
+      {showChat && (
+        <Card className="mb-8">
+          <Label>Talk about {person.name}</Label>
+          <p className="mb-4 text-[15px] text-[color:var(--app-muted)]">The coach knows what you have logged about {person.name} and answers from the book.</p>
+          <CoachChat personId={person.id} personName={person.name} compact />
+        </Card>
+      )}
+
+      <Card tone="gold" className="mb-8">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <Label>How to handle {person.name}</Label>
+          {s && (
             <button
-              onClick={() => setConfirmingDelete(true)}
-              className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-              title="Delete profile"
+              onClick={writeSummary}
+              disabled={writing}
+              className="-mt-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-[13px] text-[color:var(--app-muted)] hover:bg-[color:var(--app-paper-2)] disabled:opacity-50"
             >
-              <Trash2 className="h-5 w-5" />
+              <RefreshCw className={`h-3.5 w-3.5 ${writing ? 'animate-spin' : ''}`} /> {writing ? 'Updating...' : 'Update'}
             </button>
           )}
         </div>
+        {s ? (
+          <div className="space-y-5">
+            {s.pressureNote && <p className="rounded-lg bg-[color:var(--app-paper-2)] px-3 py-2 text-[15px]">{s.pressureNote}</p>}
+            <p className="app-serif text-[20px] leading-snug">{s.approach}</p>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {s.dos.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[14px] font-semibold">Do</p>
+                  <ul className="space-y-1.5 text-[15px]">
+                    {s.dos.map((d) => (
+                      <li key={d} className="flex gap-2">
+                        <span className="text-[color:var(--app-sage)]">&#10003;</span>
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {s.donts.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[14px] font-semibold">Avoid</p>
+                  <ul className="space-y-1.5 text-[15px]">
+                    {s.donts.map((d) => (
+                      <li key={d} className="flex gap-2">
+                        <span className="text-[color:var(--app-oxblood)]">&#215;</span>
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {s.sayThis.length > 0 && (
+              <div>
+                <p className="mb-2 text-[14px] font-semibold">Things you could say</p>
+                {s.sayThis.map((line) => (
+                  <blockquote key={line} className="mb-2 border-l-2 border-[color:var(--app-gold)] pl-3 text-[15px] italic">
+                    {line}
+                  </blockquote>
+                ))}
+              </div>
+            )}
+            {person.nextStep && (
+              <div className="rounded-lg border border-[color:var(--app-line)] px-4 py-3">
+                <p className="app-type mb-1 text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-accent)]">Your next step</p>
+                <p className="text-[15px]">{person.nextStep}</p>
+              </div>
+            )}
+            {s.chapters.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {s.chapters.map((c) => (
+                  <BookRef key={c.chapter} chapter={c.chapter} title={c.title} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <p className="text-[15px] text-[color:var(--app-muted)]">
+              A short, plain guide for {person.name}, based on the book&apos;s playbook for this kind of relationship and on what you log. It gets better as you add moments.
+            </p>
+            <div className="mt-4">
+              <Button variant="gold" onClick={writeSummary} loading={writing}>
+                {writing ? 'Writing your guide...' : 'Write my guide'}
+              </Button>
+            </div>
+          </div>
+        )}
+        {summaryError && (
+          <div className="mt-4">
+            <Notice tone="error">{summaryError}</Notice>
+          </div>
+        )}
+      </Card>
+
+      <div className="mb-8 grid gap-6 md:grid-cols-2">
+        <Card>
+          <Label>Tactics {person.name} tends to use</Label>
+          {person.tactics.length === 0 ? (
+            <p className="text-[15px] text-[color:var(--app-muted)]">None spotted yet. They show up here as you log moments or decode messages from {person.name}.</p>
+          ) : (
+            <ul className="space-y-3">
+              {person.tactics.slice(0, 6).map((t) => {
+                const book = matchTactic(t.name);
+                return (
+                  <li key={t.name}>
+                    <p className="text-[15px] font-semibold">
+                      {t.name} <span className="font-normal text-[color:var(--app-muted)]">· {t.count === 1 ? 'once' : `${t.count} times`}</span>
+                    </p>
+                    {book && <p className="mt-0.5 text-[14px] text-[color:var(--app-muted)]">Calm reply: {book.reply}</p>}
+                    {(book?.chapter ?? t.chapter) && (
+                      <div className="mt-1.5">
+                        <BookRef chapter={book?.chapter ?? t.chapter ?? undefined} title={chapterTitle(book?.chapter ?? t.chapter)} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+        <Card>
+          <Label>What has worked</Label>
+          {person.whatWorked.length === 0 ? (
+            <p className="text-[15px] text-[color:var(--app-muted)]">When a calm reply lands, log it as &ldquo;It went well&rdquo; and it is saved here so you can use it again.</p>
+          ) : (
+            <ul className="space-y-3">
+              {person.whatWorked.slice(0, 6).map((w) => (
+                <li key={w.id}>
+                  <blockquote className="border-l-2 border-[color:var(--app-sage)] pl-3 text-[15px] italic">&ldquo;{w.text}&rdquo;</blockquote>
+                  {w.note && <p className="mt-1 pl-3 text-[13px] text-[color:var(--app-muted)]">{w.note}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
-      {/* Tags (merged from Relationship Memory) */}
-      {((profile.tags || []).length > 0 || true) && (
-        <TagsSection tags={profile.tags || []} onAdd={handleAddTag} onRemove={handleRemoveTag} />
-      )}
-
-      {/* Analyzing indicator */}
-      {isAnalyzing && (
-        <div className="bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg p-3 flex items-center gap-3">
-          <Loader2 className="h-4 w-4 text-[#D4A017] animate-spin" />
-          <span className="text-sm text-[#D4A017]">AI is analyzing the interaction and updating the profile...</span>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-[#333333] overflow-x-auto">
-        <div className="flex gap-0 min-w-max">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
-                activeTab === tab.id
-                  ? 'border-[#D4A017] text-[#D4A017]'
-                  : 'border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="app-serif text-[26px] font-semibold">Timeline</h2>
+        <Button variant="ghost" onClick={() => setLogOpen(true)}>
+          <Plus className="h-4 w-4" /> Log a moment
+        </Button>
+      </div>
+      {timeline.length === 0 ? (
+        <Notice>Nothing logged yet. Start with the last time {person.name} left you replaying a conversation.</Notice>
+      ) : (
+        <div className="space-y-3">
+          {timeline.map((e) => (
+            <ConversationCard key={`${e.kind}-${e.id}`} entry={e} onDelete={deleteMoment} />
           ))}
         </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'profile' && (
-        <PsychologicalProfileTab
-          profile={profile}
-          autoRiskLevel={autoRiskLevel}
-          effectiveRiskLevel={effectiveRiskLevel}
-          onRiskLevelChange={handleRiskLevelChange}
-          onClearRiskOverride={handleClearRiskOverride}
-          onNextActionChange={handleNextActionChange}
-          onNotesChange={handleNotesChange}
-        />
-      )}
-      {activeTab === 'activity' && (
-        <ActivityTab
-          profile={profile}
-          analyses={analyses}
-          analysesLoading={analysesLoading}
-          onLogInteraction={() => setIsLogModalOpen(true)}
-          onDeleteInteraction={(interactionId) => {
-            const updated = {
-              ...profile,
-              interactions: profile.interactions.filter((i) => i.id !== interactionId),
-              updatedAt: new Date().toISOString(),
-            };
-            saveProfile(updated);
-          }}
-          onDeleteAnalysis={async (id: string) => {
-            try {
-              const headers = await getHeaders();
-              await fetch(`/api/analyze/history?id=${id}`, { method: 'DELETE', headers });
-              setAnalyses((prev) => prev.filter((a) => a.id !== id));
-            } catch (e) {
-              console.error('Failed to delete analysis:', e);
-            }
-          }}
-        />
-      )}
-      {activeTab === 'playbook' && (
-        <PlaybookTab
-          profile={profile}
-          analyses={analyses}
-          onGenerate={handleGeneratePlaybook}
-          isGenerating={isGeneratingPlaybook}
-        />
       )}
 
-      {/* Log Interaction Modal */}
-      {isLogModalOpen && (
-        <LogInteractionModal
-          onClose={() => setIsLogModalOpen(false)}
-          onLog={handleLogInteraction}
-        />
-      )}
+      <AddConversationModal isOpen={logOpen} onClose={() => setLogOpen(false)} personName={person.name} onAdd={addMoment} />
     </div>
   );
 }
 
-// ─── Tags Section (merged from Relationship Memory) ──────────────────────────
-
-function TagsSection({
-  tags,
-  onAdd,
-  onRemove,
-}: {
-  tags: string[];
-  onAdd: (tag: string) => void;
-  onRemove: (tag: string) => void;
-}) {
-  const [newTag, setNewTag] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
-  const handleAdd = () => {
-    if (newTag.trim()) {
-      onAdd(newTag.trim());
-      setNewTag('');
-      setIsAdding(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Tag className="h-4 w-4 text-gray-500" />
-      {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-2 py-1 rounded border border-[#D4A017]/20 flex items-center gap-1"
-        >
-          {tag}
-          <button onClick={() => onRemove(tag)} className="hover:text-red-400 transition-colors">
-            <X className="h-3 w-3" />
-          </button>
-        </span>
-      ))}
-      {isAdding ? (
-        <div className="flex items-center gap-1">
-          <input
-            type="text"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            placeholder="Tag..."
-            className="text-xs bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded px-2 py-1 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017] w-24"
-            autoFocus
-          />
-          <button onClick={handleAdd} className="text-[#D4A017] hover:text-[#F4D03F]">
-            <Plus className="h-3 w-3" />
-          </button>
-          <button onClick={() => setIsAdding(false)} className="text-gray-500 hover:text-gray-300">
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors"
-        >
-          + Add tag
-        </button>
-      )}
-    </div>
-  );
+function chapterTitle(n: number | null | undefined) {
+  return (n && CHAPTERS[n]) || 'The Tactic Quick Reference';
 }
-
-// ─── Tab 1: Psychological Profile ─────────────────────────────────────────────
-
-function PsychologicalProfileTab({
-  profile,
-  autoRiskLevel,
-  effectiveRiskLevel,
-  onRiskLevelChange,
-  onClearRiskOverride,
-  onNextActionChange,
-  onNotesChange,
-}: {
-  profile: Profile;
-  autoRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | null;
-  effectiveRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | null;
-  onRiskLevelChange: (risk: 'LOW' | 'MEDIUM' | 'HIGH') => void;
-  onClearRiskOverride: () => void;
-  onNextActionChange: (action: string) => void;
-  onNotesChange: (notes: string) => void;
-}) {
-  const { traits } = profile;
-  const hasData = traits.communication || traits.personality;
-  const [editingNextAction, setEditingNextAction] = useState(false);
-  const [nextAction, setNextAction] = useState(profile.nextRecommendedAction || '');
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState(profile.notes || '');
-  const [showRiskOverride, setShowRiskOverride] = useState(false);
-
-  return (
-    <div className="space-y-8">
-      {/* Risk Level + Next Action (merged from Relationship Memory) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-          <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Risk Level</h3>
-
-          {/* Auto-calculated badge */}
-          <div className="flex items-center gap-3 mb-3">
-            {effectiveRiskLevel ? (
-              <span className={`px-3 py-1.5 text-sm font-mono uppercase font-semibold rounded border ${getRiskColor(effectiveRiskLevel)}`}>
-                {effectiveRiskLevel}
-              </span>
-            ) : (
-              <span className="px-3 py-1.5 text-sm font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded">
-                Not assessed yet
-              </span>
-            )}
-            {profile.manualRiskOverride && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 italic">(manually set)</span>
-            )}
-          </div>
-
-          {/* Explanation */}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-            Risk level is automatically calculated from your conversation analyses with this person. Higher threat scores in analyzed conversations = higher risk.
-          </p>
-
-          {/* Override link */}
-          {!showRiskOverride ? (
-            <button
-              onClick={() => setShowRiskOverride(true)}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#D4A017] transition-colors underline"
-            >
-              Override
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                {(['LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => {
-                      onRiskLevelChange(level);
-                      setShowRiskOverride(false);
-                    }}
-                    className={`flex-1 py-2 text-sm font-mono uppercase rounded border transition-all ${
-                      profile.manualRiskOverride === level
-                        ? level === 'LOW'
-                          ? 'bg-green-500/20 text-green-400 border-green-500'
-                          : level === 'MEDIUM'
-                          ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500'
-                          : 'bg-red-500/20 text-red-400 border-red-500'
-                        : 'bg-gray-50 dark:bg-[#222222] border-gray-200 dark:border-[#333333] text-gray-500 hover:border-gray-400'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                {profile.manualRiskOverride && (
-                  <button
-                    onClick={() => {
-                      onClearRiskOverride();
-                      setShowRiskOverride(false);
-                    }}
-                    className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors underline"
-                  >
-                    Clear override (use auto)
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowRiskOverride(false)}
-                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {effectiveRiskLevel === 'HIGH' && (
-            <div className="mt-3 flex items-start gap-2 text-xs text-red-400">
-              <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-              <span>High risk relationship - proceed with extreme caution</span>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-mono uppercase text-[#D4A017]">Next Recommended Action</h3>
-            <button
-              onClick={() => {
-                if (editingNextAction) {
-                  onNextActionChange(nextAction);
-                }
-                setEditingNextAction(!editingNextAction);
-              }}
-              className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors"
-            >
-              {editingNextAction ? 'Save' : 'Edit'}
-            </button>
-          </div>
-          {editingNextAction ? (
-            <textarea
-              value={nextAction}
-              onChange={(e) => setNextAction(e.target.value)}
-              className="w-full h-20 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
-              placeholder="What should you do next with this person?"
-            />
-          ) : (
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {profile.nextRecommendedAction || 'Not set yet - click Edit to add'}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Communication Style */}
-      {traits.communication && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-          <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Communication Style</h3>
-          {traits.communication.summary && (
-            <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">{traits.communication.summary}</p>
-          )}
-
-          {/* Sensory preference and receptivity from Relationship Memory */}
-          {(traits.communication.sensoryPreference || traits.communication.receptivity) && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-              {traits.communication.sensoryPreference && (
-                <div className="text-center bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded-lg">
-                  <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                    {traits.communication.sensoryPreference}
-                  </div>
-                  <div className="text-xs font-mono uppercase text-[#D4A017]">Sensory Preference</div>
-                </div>
-              )}
-              {traits.communication.receptivity !== undefined && (
-                <div className="text-center bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded-lg">
-                  <div className="text-lg font-bold text-green-400 mb-1">
-                    {traits.communication.receptivity}%
-                  </div>
-                  <div className="text-xs font-mono uppercase text-[#D4A017]">Receptivity</div>
-                </div>
-              )}
-              {traits.communication.emotionalPattern && (
-                <div className="text-center bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded-lg">
-                  <div className="text-sm font-bold text-blue-400 mb-1">
-                    {traits.communication.emotionalPattern}
-                  </div>
-                  <div className="text-xs font-mono uppercase text-[#D4A017]">Emotional Pattern</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <ScaleBar label="Indirect" labelRight="Direct" value={traits.communication.directness ?? 50} />
-            <ScaleBar
-              label="Emotional"
-              labelRight="Logical"
-              value={traits.communication.logicVsEmotion ?? 50}
-            />
-            <ScaleBar label="Passive" labelRight="Assertive" value={traits.communication.assertiveness ?? 50} />
-            <ScaleBar label="Guarded" labelRight="Open" value={traits.communication.openness ?? 50} />
-          </div>
-        </div>
-      )}
-
-      {/* Big Five Personality */}
-      {traits.personality && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-          <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Big Five Personality Traits</h3>
-          <div className="flex flex-col lg:flex-row gap-8 items-center">
-            <RadarChart personality={traits.personality} />
-            <div className="flex-1 space-y-3 w-full">
-              <TraitBar label="Openness" value={traits.personality.openness ?? 50} color="text-blue-400" />
-              <TraitBar
-                label="Conscientiousness"
-                value={traits.personality.conscientiousness ?? 50}
-                color="text-green-400"
-              />
-              <TraitBar
-                label="Extraversion"
-                value={traits.personality.extraversion ?? 50}
-                color="text-yellow-400"
-              />
-              <TraitBar
-                label="Agreeableness"
-                value={traits.personality.agreeableness ?? 50}
-                color="text-pink-400"
-              />
-              <TraitBar
-                label="Neuroticism"
-                value={traits.personality.neuroticism ?? 50}
-                color="text-red-400"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* No data state */}
-      {!hasData && (
-        <div className="text-center py-16 space-y-3">
-          <Brain className="h-12 w-12 text-gray-600 mx-auto" />
-          <p className="text-gray-500 dark:text-gray-400">No psychological data yet</p>
-          <p className="text-gray-500 text-sm max-w-md mx-auto">
-            Log interactions to build a psychological profile. The AI will analyze patterns and generate
-            assessments.
-          </p>
-        </div>
-      )}
-
-      {/* Triggers */}
-      {traits.triggers && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-            <h3 className="text-sm font-mono uppercase text-red-400 mb-4">Defensive Triggers</h3>
-            {(traits.triggers.defensive || []).length > 0 ? (
-              <ul className="space-y-2">
-                {traits.triggers.defensive!.map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <span className="text-red-400 mt-0.5">*</span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 text-sm">Not yet identified</p>
-            )}
-          </div>
-          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-            <h3 className="text-sm font-mono uppercase text-green-400 mb-4">Opens Them Up</h3>
-            {(traits.triggers.openUp || []).length > 0 ? (
-              <ul className="space-y-2">
-                {traits.triggers.openUp!.map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <span className="text-green-400 mt-0.5">*</span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 text-sm">Not yet identified</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Motivations & Fears */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {(traits.motivations || []).length > 0 && (
-          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-            <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Motivations</h3>
-            <ul className="space-y-2">
-              {traits.motivations!.map((m, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                  <ChevronRight className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
-                  {m}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {(traits.fears || []).length > 0 && (
-          <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-            <h3 className="text-sm font-mono uppercase text-orange-400 mb-4">Fears</h3>
-            <ul className="space-y-2">
-              {traits.fears!.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                  <ChevronRight className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Attachment Style */}
-      {traits.attachmentStyle?.style && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-          <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Attachment Style</h3>
-          <div className="flex items-center gap-4">
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">{traits.attachmentStyle.style}</span>
-            {(traits.attachmentStyle.confidence ?? 0) > 0 && (
-              <span className="text-sm text-gray-500 font-mono">
-                {traits.attachmentStyle.confidence}% confidence
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Notes (merged from Relationship Memory) */}
-      <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-mono uppercase text-[#D4A017]">Notes</h3>
-          <button
-            onClick={() => {
-              if (editingNotes) {
-                onNotesChange(notesValue);
-              }
-              setEditingNotes(!editingNotes);
-            }}
-            className="text-xs text-gray-500 hover:text-[#D4A017] transition-colors"
-          >
-            {editingNotes ? 'Save' : 'Edit'}
-          </button>
-        </div>
-        {editingNotes ? (
-          <textarea
-            value={notesValue}
-            onChange={(e) => setNotesValue(e.target.value)}
-            className="w-full h-32 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
-            placeholder="Additional notes about this person..."
-          />
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
-            {profile.notes || 'No notes yet - click Edit to add'}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Tab 2: Activity (unified timeline) ─────────────────────────────────────
-
-type ActivityItem =
-  | { type: 'note'; date: string; data: Interaction }
-  | { type: 'analysis'; date: string; data: AnalysisHistoryItem };
-
-function ActivityTab({
-  profile,
-  analyses,
-  analysesLoading,
-  onLogInteraction,
-  onDeleteInteraction,
-  onDeleteAnalysis,
-}: {
-  profile: Profile;
-  analyses: AnalysisHistoryItem[];
-  analysesLoading: boolean;
-  onLogInteraction: () => void;
-  onDeleteInteraction: (id: string) => void;
-  onDeleteAnalysis: (id: string) => void;
-}) {
-  const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null);
-
-  const getThreatColor = (score: number) => {
-    if (score <= 3) return 'bg-green-500';
-    if (score <= 6) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getThreatLabel = (score: number) => {
-    if (score <= 3) return 'Low';
-    if (score <= 6) return 'Medium';
-    return 'High';
-  };
-
-  // Merge interactions and analyses into a single timeline
-  const items: ActivityItem[] = useMemo(() => {
-    const noteItems: ActivityItem[] = profile.interactions.map((i) => ({
-      type: 'note' as const,
-      date: i.date,
-      data: i,
-    }));
-    const analysisItems: ActivityItem[] = analyses.map((a) => ({
-      type: 'analysis' as const,
-      date: a.created_at,
-      data: a,
-    }));
-    return [...noteItems, ...analysisItems].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [profile.interactions, analyses]);
-
-  return (
-    <div className="space-y-4">
-      {/* Add Note button */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">
-          {items.length} item{items.length !== 1 ? 's' : ''} total
-        </p>
-        <button
-          onClick={onLogInteraction}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Note
-        </button>
-      </div>
-
-      {analysesLoading && (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-[#D4A017]" />
-        </div>
-      )}
-
-      {!analysesLoading && items.length === 0 && (
-        <div className="text-center py-16 space-y-3">
-          <MessageSquare className="h-12 w-12 text-gray-600 mx-auto" />
-          <p className="text-gray-500 dark:text-gray-400">No activity yet</p>
-          <p className="text-gray-500 text-sm max-w-md mx-auto">
-            Log an interaction note or run an analysis on the{' '}
-            <a href="/app/analyze" className="text-[#D4A017] hover:underline">Analyze page</a>{' '}
-            to start building this timeline.
-          </p>
-          <button
-            onClick={onLogInteraction}
-            className="mt-2 bg-[#D4A017] text-[#0A0A0A] px-5 py-2 rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
-          >
-            Log First Note
-          </button>
-        </div>
-      )}
-
-      {items.map((item) => {
-        if (item.type === 'note') {
-          const interaction = item.data as Interaction;
-          return (
-            <div
-              key={`note-${interaction.id}`}
-              className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-5 space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <span className="text-lg mt-0.5" title="Manual note">📝</span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-gray-500 font-mono">
-                        {new Date(interaction.date).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                        Note
-                      </span>
-                    </div>
-                    <p className="text-gray-900 dark:text-white mt-1">{interaction.summary}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={`h-4 w-4 ${
-                          s <= interaction.outcome ? 'text-[#D4A017] fill-[#D4A017]' : 'text-[#333333]'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => onDeleteInteraction(interaction.id)}
-                    className="p-1 text-gray-600 hover:text-red-400 transition-colors"
-                    title="Delete note"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {interaction.techniques.length > 0 && (
-                <div className="flex flex-wrap gap-1 ml-9">
-                  {interaction.techniques.map((t, i) => (
-                    <span key={i} className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-2 py-0.5 rounded border border-[#D4A017]/20">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {interaction.notes && <p className="text-sm text-gray-500 dark:text-gray-400 ml-9">{interaction.notes}</p>}
-
-              {interaction.aiAnalysis && (
-                <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-[#D4A017] ml-9">
-                  <p className="text-xs font-mono uppercase text-[#D4A017] mb-1">AI Analysis</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{interaction.aiAnalysis}</p>
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        // Analysis item
-        const analysis = item.data as AnalysisHistoryItem;
-        const isExpanded = expandedAnalysis === analysis.id;
-
-        return (
-          <div
-            key={`analysis-${analysis.id}`}
-            className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden"
-          >
-            <button
-              onClick={() => setExpandedAnalysis(isExpanded ? null : analysis.id)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
-            >
-              <span className="text-lg" title="Analysis">🔍</span>
-              <span className={`w-2 h-2 rounded-full shrink-0 ${getThreatColor(analysis.threat_score)}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
-                    Analysis
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Threat: {analysis.threat_score}/10 ({getThreatLabel(analysis.threat_score)})
-                  </span>
-                </div>
-                <p className="text-sm text-gray-800 dark:text-gray-200 truncate">
-                  {analysis.input_text ? stripMarkdown(analysis.input_text).slice(0, 120) : 'Image analysis'}
-                </p>
-              </div>
-              <span className="text-xs text-gray-400 shrink-0">{formatDate(analysis.created_at)}</span>
-              <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-            </button>
-
-            {isExpanded && (
-              <div className="px-4 pb-4 border-t border-gray-200 dark:border-[#333] pt-3 space-y-3 ml-9">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Power: You {analysis.power_yours} vs Them {analysis.power_theirs} · {analysis.tactics_count} tactic{analysis.tactics_count !== 1 ? 's' : ''}
-                </p>
-                {analysis.overall_assessment && (
-                  <div>
-                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Assessment</p>
-                    <div className="text-sm text-gray-600 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(analysis.overall_assessment) }} />
-                  </div>
-                )}
-                {analysis.techniques_identified?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Techniques Identified</p>
-                    <div className="flex flex-wrap gap-1">
-                      {analysis.techniques_identified.map((t, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 rounded bg-[#D4A017]/10 text-[#D4A017] border border-[#D4A017]/20">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {analysis.full_result?.tactics?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Detected Tactics</p>
-                    <div className="space-y-2">
-                      {analysis.full_result.tactics.map((tactic: any, i: number) => (
-                        <div key={i} className="text-sm bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]">
-                          <span className="font-medium text-gray-800 dark:text-gray-200">{tactic.tactic}</span>
-                          <span className="text-gray-500 dark:text-gray-400 text-xs ml-2">({tactic.category})</span>
-                          {tactic.quote && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&ldquo;{tactic.quote}&rdquo;</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {analysis.full_result?.counterScript && (
-                  <div>
-                    <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Counter-Script</p>
-                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#111] rounded p-2 border border-gray-200 dark:border-[#333]" dangerouslySetInnerHTML={{ __html: renderMarkdown(analysis.full_result.counterScript) }} />
-                  </div>
-                )}
-                <div className="flex justify-between items-center pt-2">
-                  <a href="/app/analyze" className="text-xs text-[#D4A017] hover:underline">Run new analysis →</a>
-                  <button onClick={() => onDeleteAnalysis(analysis.id)} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
-                    <Trash2 className="h-3 w-3" /> Delete
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Tab 3: Strategy Playbook ─────────────────────────────────────────────────
-
-function PlaybookTab({
-  profile,
-  analyses,
-  onGenerate,
-  isGenerating,
-}: {
-  profile: Profile;
-  analyses: AnalysisHistoryItem[];
-  onGenerate: () => void;
-  isGenerating: boolean;
-}) {
-  const { playbook } = profile;
-  const totalDataPoints = analyses.length + profile.interactions.length;
-  const hasData = totalDataPoints > 0;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          {playbook?.generatedAt && (
-            <p className="text-xs text-gray-500 font-mono">
-              Generated {new Date(playbook.generatedAt).toLocaleString()}
-            </p>
-          )}
-          {hasData && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
-              {analyses.length} analysis{analyses.length !== 1 ? 'es' : ''} + {profile.interactions.length} note{profile.interactions.length !== 1 ? 's' : ''} available
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onGenerate}
-          disabled={isGenerating || !hasData}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] shrink-0"
-        >
-          {isGenerating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          {playbook ? 'Refresh Strategy' : 'Generate Strategy'}
-        </button>
-      </div>
-
-      {!hasData && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-          <p className="text-sm text-yellow-600 dark:text-yellow-400">
-            Add at least one analysis or note about this person before generating a strategy. The AI needs real data to create an accurate playbook.
-          </p>
-        </div>
-      )}
-
-      {isGenerating && (
-        <div className="text-center py-16 space-y-3">
-          <Loader2 className="h-10 w-10 text-[#D4A017] animate-spin mx-auto" />
-          <p className="text-gray-500 dark:text-gray-400">Generating personalized strategy...</p>
-        </div>
-      )}
-
-      {!isGenerating && !playbook && hasData && (
-        <div className="text-center py-16 space-y-3">
-          <Target className="h-12 w-12 text-gray-600 mx-auto" />
-          <p className="text-gray-500 dark:text-gray-400">No strategy generated yet</p>
-          <p className="text-gray-500 text-sm max-w-md mx-auto">
-            Click Generate Strategy to create a personalized playbook based on your {totalDataPoints} data point{totalDataPoints !== 1 ? 's' : ''}.
-          </p>
-        </div>
-      )}
-
-      {!isGenerating && playbook && (
-        <div className="space-y-6">
-          {playbook.bestApproach && (
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-              <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Best Approach</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{playbook.bestApproach}</p>
-            </div>
-          )}
-
-          {playbook.timingPatterns && (
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-              <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Timing Patterns</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{playbook.timingPatterns}</p>
-            </div>
-          )}
-
-          {(playbook.effectiveTactics || []).length > 0 && (
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-              <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Effective Tactics</h3>
-              <div className="space-y-3">
-                {playbook.effectiveTactics!.map((t, i) => (
-                  <div key={i} className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-4 rounded space-y-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <span className="font-semibold text-gray-900 dark:text-white">{t.tactic}</span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="w-20 bg-gray-200 dark:bg-[#333333] rounded-full h-2">
-                          <div
-                            className="bg-[#D4A017] h-2 rounded-full transition-all"
-                            style={{ width: `${t.effectiveness}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono w-8">{t.effectiveness}%</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(playbook.leveragePoints || []).length > 0 && (
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-6">
-              <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-4">Leverage Points</h3>
-              <ul className="space-y-2">
-                {playbook.leveragePoints!.map((lp, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <ChevronRight className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
-                    {lp}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {playbook.nextMove && (
-            <div className="bg-[#D4A017]/10 border border-[#D4A017]/30 rounded-lg p-6">
-              <h3 className="text-sm font-mono uppercase text-[#D4A017] mb-3">Recommended Next Move</h3>
-              <p className="text-gray-900 dark:text-white text-sm">{playbook.nextMove}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Log Interaction Modal ────────────────────────────────────────────────────
-
-function LogInteractionModal({
-  onClose,
-  onLog,
-}: {
-  onClose: () => void;
-  onLog: (interaction: Omit<Interaction, 'id' | 'aiAnalysis'>) => void;
-}) {
-  const [summary, setSummary] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [techniques, setTechniques] = useState<string[]>([]);
-  const [outcome, setOutcome] = useState(3);
-  const [notes, setNotes] = useState('');
-  const [showTechniqueList, setShowTechniqueList] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!summary.trim()) return;
-    onLog({ date, summary: summary.trim(), techniques, outcome, notes: notes.trim() });
-  };
-
-  const toggleTechnique = (t: string) => {
-    setTechniques((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
-          <h2 className="text-xl font-mono uppercase text-[#D4A017]">Log Interaction</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-[#333333] rounded transition-colors">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
-              What happened? *
-            </label>
-            <textarea
-              required
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              rows={4}
-              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
-              placeholder="Describe the interaction in detail..."
-            />
-          </div>
-
-          {/* Techniques Multi-Select */}
-          <div>
-            <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
-              Techniques Used
-            </label>
-            {techniques.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {techniques.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleTechnique(t)}
-                    className="text-xs bg-[#D4A017]/20 text-[#D4A017] px-2 py-1 rounded border border-[#D4A017]/30 flex items-center gap-1 hover:bg-[#D4A017]/30 transition-colors"
-                  >
-                    {t}
-                    <X className="h-3 w-3" />
-                  </button>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowTechniqueList(!showTechniqueList)}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              {showTechniqueList ? 'Hide techniques' : '+ Select techniques'}
-            </button>
-            {showTechniqueList && (
-              <div className="mt-2 grid grid-cols-2 gap-1 max-h-48 overflow-y-auto bg-[#FAFAF8] dark:bg-[#0A0A0A] rounded-lg p-3">
-                {TECHNIQUE_LIBRARY.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleTechnique(t)}
-                    className={`text-left text-xs px-2 py-1.5 rounded transition-colors ${
-                      techniques.includes(t)
-                        ? 'bg-[#D4A017]/20 text-[#D4A017]'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#222222] hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {techniques.includes(t) ? '* ' : ''}
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Outcome */}
-          <div>
-            <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
-              Outcome ({outcome}/5)
-            </label>
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setOutcome(s)}
-                  className="p-1 transition-colors"
-                >
-                  <Star
-                    className={`h-7 w-7 ${
-                      s <= outcome ? 'text-[#D4A017] fill-[#D4A017]' : 'text-[#333333]'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
-              placeholder="Additional observations..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#333333]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-[#444444] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-[#D4A017] text-[#0A0A0A] rounded-lg font-semibold hover:bg-[#F4D03F] transition-colors"
-            >
-              Log & Analyze
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ─── Shared UI Components ─────────────────────────────────────────────────────
-
-function ScaleBar({ label, labelRight, value }: { label: string; labelRight: string; value: number }) {
-  return (
-    <div>
-      <div className="flex justify-between text-xs text-gray-500 mb-1">
-        <span>{label}</span>
-        <span>{labelRight}</span>
-      </div>
-      <div className="relative h-2 bg-gray-200 dark:bg-[#333333] rounded-full">
-        <div
-          className="absolute top-0 left-0 h-2 bg-gradient-to-r from-blue-500 to-[#D4A017] rounded-full transition-all"
-          style={{ width: `${value}%` }}
-        />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow border-2 border-[#D4A017] transition-all"
-          style={{ left: `calc(${value}% - 6px)` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function TraitBar({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-gray-500 dark:text-gray-400 w-32 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-gray-200 dark:bg-[#333333] rounded-full">
-        <div
-          className={`h-2 rounded-full transition-all ${color.replace('text-', 'bg-')}`}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-      <span className="text-xs text-gray-500 w-8 text-right font-mono">{value}</span>
-    </div>
-  );
-}
-
-function RadarChart({
-  personality,
-}: {
-  personality: {
-    openness?: number;
-    conscientiousness?: number;
-    extraversion?: number;
-    agreeableness?: number;
-    neuroticism?: number;
-  };
-}) {
-  const traits = [
-    { key: 'openness', label: 'O', value: personality.openness ?? 50 },
-    { key: 'conscientiousness', label: 'C', value: personality.conscientiousness ?? 50 },
-    { key: 'extraversion', label: 'E', value: personality.extraversion ?? 50 },
-    { key: 'agreeableness', label: 'A', value: personality.agreeableness ?? 50 },
-    { key: 'neuroticism', label: 'N', value: personality.neuroticism ?? 50 },
-  ];
-
-  const cx = 100;
-  const cy = 100;
-  const maxR = 80;
-  const angleStep = (2 * Math.PI) / traits.length;
-  const startAngle = -Math.PI / 2;
-
-  const getPoint = (index: number, radius: number) => {
-    const angle = startAngle + index * angleStep;
-    return {
-      x: cx + radius * Math.cos(angle),
-      y: cy + radius * Math.sin(angle),
-    };
-  };
-
-  const rings = [0.25, 0.5, 0.75, 1];
-  const dataPoints = traits.map((t, i) => getPoint(i, (t.value / 100) * maxR));
-  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + 'Z';
-
-  return (
-    <svg width="200" height="200" viewBox="0 0 200 200" className="flex-shrink-0">
-      {rings.map((r) => (
-        <polygon
-          key={r}
-          points={traits.map((_, i) => {
-            const p = getPoint(i, r * maxR);
-            return `${p.x},${p.y}`;
-          }).join(' ')}
-          fill="none"
-          stroke="#333333"
-          strokeWidth="1"
-        />
-      ))}
-      {traits.map((_, i) => {
-        const p = getPoint(i, maxR);
-        return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#333333" strokeWidth="1" />;
-      })}
-      <polygon points={dataPoints.map((p) => `${p.x},${p.y}`).join(' ')} fill="rgba(212,160,23,0.2)" stroke="#D4A017" strokeWidth="2" />
-      {dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#D4A017" />
-      ))}
-      {traits.map((t, i) => {
-        const p = getPoint(i, maxR + 16);
-        return (
-          <text
-            key={i}
-            x={p.x}
-            y={p.y}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="fill-gray-400 text-xs font-mono"
-            fontSize="11"
-          >
-            {t.label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
-// ─── Tab 4: Analyses ─────────────────────────────────────────────────────────
-
-interface AnalysisHistoryItem {
-  id: string;
-  input_text: string;
-  input_type: string;
-  threat_score: number;
-  power_yours: number;
-  power_theirs: number;
-  tactics_count: number;
-  overall_assessment: string;
-  techniques_identified: string[];
-  created_at: string;
-  full_result: any;
-}
-
-function stripMarkdown(text: string): string {
-  return text.replace(/\*\*/g, '').replace(/^---.*---\s*/gm, '').trim();
-}
-
-// AnalysesTab removed — functionality merged into ActivityTab above

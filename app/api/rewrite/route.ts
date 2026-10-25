@@ -1,126 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchKnowledge } from '@/lib/rag';
-import { RAG_ENFORCEMENT } from '@/lib/prompts';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
+import { aiChat, MODELS } from '@/lib/ai';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { searchKnowledge } from '@/lib/rag';
 import { getVoiceProfile } from '@/lib/voice-profile';
-
-const REWRITE_SYSTEM_PROMPT = `You are a message optimization expert specializing in psychological influence and persuasion. Your task is to transform weak, boring, or ineffective messages into psychologically optimized communications.
-
-For each message rewrite, provide 4 different versions using these categories:
-
-1. **AUTHORITY BUILDING** - Establish credibility, expertise, and social proof
-2. **INTRIGUE CREATION** - Generate curiosity, mystery, and emotional engagement  
-3. **RECIPROCITY GENERATION** - Create obligation, value offering, and social debt
-4. **FRAME REORIENTATION** - Control conversation direction and underlying assumptions
-
-Each rewrite should:
-- Be concise and natural (not obviously "salesy")
-- Use specific psychological principles
-- Include embedded presuppositions where appropriate
-- Match the original message length approximately
-- Feel authentic to the sender's voice
-
-Respond in this exact JSON format:
-{
-  "versions": [
-    {
-      "type": "Authority Building",
-      "description": "Brief explanation of the approach",
-      "message": "The actual rewritten message",
-      "explanation": "Why this works psychologically",
-      "powerIncrease": [percentage increase in influence power],
-      "riskLevel": "LOW|MEDIUM|HIGH"
-    },
-    ... (4 total versions)
-  ],
-  "originalPowerScore": [score 1-10 of original message],
-  "confidence": [confidence percentage in analysis]
-}
-
-Focus on legitimate influence techniques - authority, social proof, scarcity, reciprocity, consistency, and liking. Avoid obvious manipulation that would trigger resistance.`;
+import { normalizeRewrite, REWRITE_PROMPT } from '@/lib/prompts/in-the-moment';
 
 export const maxDuration = 60;
 
+/**
+ * Calm My Reply. Body: { draft, replyingTo? } (older callers may send { message }).
+ * Returns { versions: [{ style, text, changed }], flags: [{ kind, note }] }.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
-    const voiceContext = await getVoiceProfile(userId);
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const draft = String(body?.draft ?? body?.message ?? '').trim().slice(0, 3000);
+    const replyingTo = String(body?.replyingTo ?? '').trim().slice(0, 3000);
+    if (!draft) return apiError('Type the reply you want to send first.', 400);
 
-    const { message, goal } = await req.json();
+    const [voice, knowledge] = await Promise.all([
+      getVoiceProfile(uid),
+      searchKnowledge(`${draft} apologizing over-explaining sounding small boundary`, { count: 3 }),
+    ]);
 
-    if (!message) {
-      return NextResponse.json({ error: 'No message provided.' }, { status: 400 });
-    }
+    const system =
+      REWRITE_PROMPT +
+      voice +
+      (knowledge ? `\n\nPassages from the book that may help (use the ideas, don't quote them):\n${knowledge}` : '');
+    const user = `${replyingTo ? `The message they are answering:\n"""\n${replyingTo}\n"""\n\n` : ''}The reply they want to send (their draft):\n"""\n${draft}\n"""`;
 
-    const contextualPrompt = goal 
-      ? `The user's specific goal is: "${goal}". Optimize the rewrite suggestions to support this objective.`
-      : '';
-
-    // Search knowledge base for relevant techniques
-    const ragContext = await searchKnowledge(
-      `${message}${goal ? ` ${goal}` : ''} message rewrite communication influence`,
-      { threshold: 0.35, count: 3 }
-    );
-    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
-    const goalInstruction = goal
-      ? `\n\nIMPORTANT: The user's primary goal is "${goal}". Prioritize and emphasize this goal across ALL rewrite versions. Each version should be optimized to support "${goal}" while still applying its respective category strategy. The best version for achieving "${goal}" should be listed first.`
-      : '';
-    const enhancedPrompt = REWRITE_SYSTEM_PROMPT + voiceContext + goalInstruction + knowledgeContext;
-
-    console.log('[REWRITE]', 'Calling OpenRouter');
-    
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: enhancedPrompt },
-          {
-            role: 'user',
-            content: `Rewrite this message for maximum psychological impact: "${message}"\n\n${contextualPrompt}`
-          },
-        ],
-        stream: false, // Explicitly disable streaming
-      }),
+    const { data } = await aiChat({
+      userId: uid,
+      feature: 'rewrite',
+      model: MODELS.fast,
+      temperature: 0.5,
+      maxTokens: 2000,
+      json: true,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
     });
-
-    console.log('[REWRITE]', 'OpenRouter response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[REWRITE]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    // Parse the JSON response
-    try {
-      const result = JSON.parse(content);
-      return NextResponse.json(result);
-    } catch (parseError) {
-      // Log the real detail server-side only; never return raw model text
-      // or parser internals to the customer.
-      console.error('[REWRITE]', 'Failed to parse AI response as JSON:', content?.slice(0, 500));
-      console.error('[REWRITE]', 'Parse error:', parseError);
-      return NextResponse.json(
-        { error: 'Failed to rewrite message. Please try again.' },
-        { status: 502 }
-      );
-    }
-
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Failed to rewrite message. Please try again.', 500, '[REWRITE]', error);
+    const result = normalizeRewrite(data);
+    if (!result) return apiError("We couldn't rewrite that one. Please try again.", 502, '[rewrite] invalid AI answer');
+    return NextResponse.json(result);
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('Something went wrong. Please try again.', 500, '[rewrite]', err);
   }
 }

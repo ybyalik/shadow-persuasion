@@ -22,7 +22,7 @@
 
 const KEY = 'sp_utm';
 
-type Utms = {
+export type Utms = {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;

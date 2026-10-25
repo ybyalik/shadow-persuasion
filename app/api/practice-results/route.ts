@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
@@ -11,7 +11,7 @@ const supabase = createClient(
 // GET: List the signed-in user's practice results, filterable by type and date range
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const from = searchParams.get('from');
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 // POST: Save a practice result for the signed-in user
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const { type, reference_id, score, xp_earned, techniques_used, feedback } = await req.json();
 
     if (!type) {

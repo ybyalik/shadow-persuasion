@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
@@ -11,10 +11,11 @@ const supabase = createClient(
 // GET: List all chat sessions with last message preview
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const search = searchParams.get('search');
+    const personId = searchParams.get('person_id');
 
     let query = supabase
       .from('chat_sessions')
@@ -24,6 +25,10 @@ export async function GET(req: NextRequest) {
 
     if (type) {
       query = query.eq('session_type', type);
+    }
+
+    if (personId) {
+      query = query.eq('person_id', personId);
     }
 
     if (search) {
@@ -38,12 +43,12 @@ export async function GET(req: NextRequest) {
     const { data: sessions, error } = await query;
 
     if (error) {
-      return apiError('Failed to fetch sessions.', 500, '[CONVERSATIONS]', error);
+      return apiError('Could not load your conversations. Please try again.', 500, '[CONVERSATIONS]', error);
     }
 
     // Fetch last message for all sessions in a single query
     const sessionIds = (sessions || []).map((s) => s.id);
-    let lastMessages: Record<string, { content: string; role: string; created_at: string }> = {};
+    const lastMessages: Record<string, { content: string; role: string; created_at: string }> = {};
 
     if (sessionIds.length > 0) {
       const { data: allMessages } = await supabase
@@ -81,25 +86,26 @@ export async function GET(req: NextRequest) {
 // POST: Create a new chat session
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const body = await req.json();
-    const { title, goal, goal_title, session_type, scenario_id } = body;
+    const { title, goal, goal_title, session_type, scenario_id, person_id } = body;
 
     const { data, error } = await supabase
       .from('chat_sessions')
       .insert({
-        title: title || 'New Chat',
+        title: title || 'New conversation',
         goal: goal || null,
         goal_title: goal_title || null,
         session_type: session_type || 'general',
         scenario_id: scenario_id || null,
+        person_id: typeof person_id === 'string' && person_id ? person_id : null,
         user_id: userId,
       })
       .select()
       .single();
 
     if (error) {
-      return apiError('Failed to create session.', 500, '[CONVERSATIONS]', error);
+      return apiError('Could not start a conversation. Please try again.', 500, '[CONVERSATIONS]', error);
     }
 
     return NextResponse.json({ session: data });
@@ -113,12 +119,12 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete a chat session by id
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return apiError('Session id is required.', 400);
+      return apiError('Which conversation is this?', 400);
     }
 
     // Scope the delete to the caller so nobody can erase another user's session.
@@ -129,7 +135,7 @@ export async function DELETE(req: NextRequest) {
       .eq('user_id', userId);
 
     if (error) {
-      return apiError('Failed to delete session.', 500, '[CONVERSATIONS]', error);
+      return apiError('Could not delete that conversation. Please try again.', 500, '[CONVERSATIONS]', error);
     }
 
     return NextResponse.json({ success: true });

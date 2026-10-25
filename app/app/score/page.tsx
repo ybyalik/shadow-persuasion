@@ -1,389 +1,185 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Trophy, TrendingUp, Flame, BookOpen, FileText, Swords, Target, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+/* My Progress: plain numbers about what you've done. No scores, no ranks.
+   Levels follow the reset itself: Noticing, Pausing, Holding, Quiet Power. */
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { formatDate } from '@/lib/format-date';
+import { apiFetch } from '@/lib/api-client';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError } from '@/components/app/ui';
+import { PHASES, type ResetDay, type ResetEntry } from '@/lib/progress';
+import { RESET } from '@/lib/edition';
 
-/* ────────────────────────────────────────────
-   Types
-   ──────────────────────────────────────────── */
-
-type ActivityEntry = {
-  label: string;
-  xp: number;
-  ts: number; // epoch ms
+type Reset = {
+  days: ResetDay[];
+  entries: ResetEntry[];
+  doneCount: number;
+  total: number;
+  streak: { current: number; longest: number };
+  level: { name: string; next: string | null; blurb: string };
 };
+type Stats = { decoded: number; rehearsals: number; scenes: number; heldGround: number; spotRounds: number; spotRight: number; plans: number };
 
-type SubScoreKey = 'rapport' | 'negotiation' | 'persuasion' | 'conflict' | 'defense' | 'reading';
+const LEVELS = ['Noticing', 'Pausing', 'Holding', 'Quiet Power'];
+const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 
-/* ────────────────────────────────────────────
-   Technique → Category mapping
-   ──────────────────────────────────────────── */
-
-const SUB_SCORE_META: { key: SubScoreKey; label: string; icon: typeof Trophy }[] = [
-  { key: 'rapport', label: 'Rapport', icon: Trophy },
-  { key: 'negotiation', label: 'Negotiation', icon: TrendingUp },
-  { key: 'persuasion', label: 'Persuasion', icon: Zap },
-  { key: 'conflict', label: 'Conflict', icon: Flame },
-  { key: 'defense', label: 'Defense', icon: Target },
-  { key: 'reading', label: 'Reading People', icon: BookOpen },
-];
-
-const RANKS: { max: number; title: string }[] = [
-  { max: 10, title: 'Civilian' },
-  { max: 25, title: 'Observer' },
-  { max: 40, title: 'Initiate' },
-  { max: 55, title: 'Operative' },
-  { max: 70, title: 'Specialist' },
-  { max: 85, title: 'Handler' },
-  { max: 100, title: 'Shadow Master' },
-];
-
-/* ────────────────────────────────────────────
-   Helpers
-   ──────────────────────────────────────────── */
-
-function getRank(score: number): string {
-  for (const r of RANKS) {
-    if (score <= r.max) return r.title;
-  }
-  return 'Shadow Master';
-}
-
-function getScoreColor(score: number): string {
-  if (score <= 30) return '#EF4444'; // red
-  if (score <= 60) return '#EAB308'; // yellow
-  return '#D4A017'; // gold
-}
-
-function clamp(v: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, v));
-}
-
-// Data is now fetched from /api/user/progress
-
-
-/* ────────────────────────────────────────────
-   Circular Progress Ring
-   ──────────────────────────────────────────── */
-
-function ScoreRing({ score, size = 220, stroke = 12 }: { score: number; size?: number; stroke?: number }) {
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = clamp(score, 0, 100) / 100;
-  const offset = circumference * (1 - progress);
-  const color = getScoreColor(score);
-
+function Bar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="-rotate-90">
-        {/* Background ring */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={stroke}
-          className="text-gray-200 dark:text-[#1A1A1A]"
-        />
-        {/* Progress ring */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-          style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}
-        />
-      </svg>
-      {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="text-5xl font-black font-mono tabular-nums transition-colors duration-700"
-          style={{ color }}
-        >
-          {score}
-        </span>
-        <span className="text-xs uppercase tracking-widest text-gray-500 mt-1">/ 100</span>
-      </div>
+    <div className="h-2 rounded-full bg-[color:var(--app-paper-2)] overflow-hidden" aria-hidden>
+      <div className="h-full rounded-full bg-[color:var(--app-gold)]" style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
-/* ────────────────────────────────────────────
-   Sub-Score Bar
-   ──────────────────────────────────────────── */
-
-function SubScoreBar({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Trophy }) {
-  const pct = clamp(value, 0, 100);
-  const color = getScoreColor(pct);
-
+function Stat({ label, value, note, href, cta }: { label: string; value: number | string; note: string; href: string; cta: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 shrink-0 text-gray-500" />
-      <span className="w-28 text-sm font-medium text-gray-600 dark:text-gray-300 truncate">{label}</span>
-      <div className="flex-1 h-2 rounded-full bg-white dark:bg-[#1A1A1A] overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-1000 ease-out"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
-      </div>
-      <span className="w-8 text-right text-xs font-mono tabular-nums text-gray-500 dark:text-gray-400">{pct}</span>
-    </div>
+    <Card className="flex flex-col">
+      <Label>{label}</Label>
+      <p className="app-serif text-[40px] leading-none font-semibold mb-2">{value}</p>
+      <p className="text-[14px] leading-snug text-[color:var(--app-muted)] mb-3">{note}</p>
+      <Link href={href} className="mt-auto inline-flex min-h-[44px] items-center text-[15px] font-semibold text-[color:var(--app-accent)] hover:underline">
+        {cta}
+      </Link>
+    </Card>
   );
 }
 
-/* ────────────────────────────────────────────
-   Page Component
-   ──────────────────────────────────────────── */
-
-export default function ScorePage() {
+export default function ProgressPage() {
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-  const [totalXP, setTotalXP] = useState(0);
-  const [score, setScore] = useState(0);
-  const [subScores, setSubScores] = useState<Record<SubScoreKey, number>>({
-    rapport: 0,
-    negotiation: 0,
-    persuasion: 0,
-    conflict: 0,
-    defense: 0,
-    reading: 0,
-  });
-  const [activityFeed, setActivityFeed] = useState<ActivityEntry[]>([]);
-  const [stats, setStats] = useState({
-    totalXP: 0,
-    streak: 0,
-    techniquesMastered: 0,
-    fieldReports: 0,
-    sparringSessions: 0,
-    missionsCompleted: 0,
-  });
-  const [monthlyOpen, setMonthlyOpen] = useState(false);
-  const [monthlyReport, setMonthlyReport] = useState({
-    thisMonthXP: 0,
-    lastMonthXP: 0,
-    strongestTechnique: 'None yet',
-    weakestArea: 'None yet',
-    recommendation: 'Complete your first activity to get personalized recommendations.',
-  });
-
-  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
-    const token = await user?.getIdToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, [user]);
-
-  const loadProgress = useCallback(async () => {
-    try {
-      const headers = await getHeaders();
-      const res = await fetch('/api/user/progress', { headers });
-      if (!res.ok) return;
-      const data = await res.json();
-
-      setTotalXP(data.totalXP ?? 0);
-      setScore(data.score ?? 0);
-      setSubScores(data.subScores ?? { rapport: 0, negotiation: 0, persuasion: 0, conflict: 0, defense: 0, reading: 0 });
-
-      // API returns recentActivity with { type, label, date } — map to ActivityEntry shape
-      const rawActivity = data.recentActivity ?? [];
-      const XP_BY_TYPE: Record<string, number> = { mission: 10, practice: 5, journal: 10, analysis: 5, feedback: 3 };
-      const mappedActivity: ActivityEntry[] = rawActivity.map((item: any) => ({
-        label: item.label,
-        xp: XP_BY_TYPE[item.type] ?? 5,
-        ts: new Date(item.date).getTime(),
-      }));
-      setActivityFeed(mappedActivity);
-
-      setStats(data.stats ?? { totalXP: 0, streak: 0, techniquesMastered: 0, fieldReports: 0, sparringSessions: 0, missionsCompleted: 0 });
-
-      // Compute monthly report client-side from activity data
-      const now = new Date();
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-      let thisMonthXP = 0;
-      let lastMonthXP = 0;
-      for (const a of mappedActivity) {
-        if (a.ts >= thisMonthStart) thisMonthXP += a.xp;
-        else if (a.ts >= lastMonthStart) lastMonthXP += a.xp;
-      }
-
-      // Find strongest/weakest from subScores
-      const subs = data.subScores ?? {};
-      const subEntries = Object.entries(subs).filter(([, v]) => typeof v === 'number') as [string, number][];
-      const strongest = subEntries.length > 0 ? subEntries.reduce((a, b) => b[1] > a[1] ? b : a) : null;
-      const weakest = subEntries.length > 0 ? subEntries.reduce((a, b) => b[1] < a[1] ? b : a) : null;
-
-      setMonthlyReport({
-        thisMonthXP,
-        lastMonthXP,
-        strongestTechnique: strongest && strongest[1] > 0 ? strongest[0].charAt(0).toUpperCase() + strongest[0].slice(1) : 'None yet',
-        weakestArea: weakest && weakest[1] > 0 ? weakest[0].charAt(0).toUpperCase() + weakest[0].slice(1) : 'None yet',
-        recommendation: mappedActivity.length > 0
-          ? `Focus on improving your ${weakest ? weakest[0] : 'skills'} through targeted practice sessions.`
-          : 'Complete your first activity to get personalized recommendations.',
-      });
-    } catch (e) {
-      console.error('Failed to load progress:', e);
-    }
-  }, [getHeaders]);
+  const [reset, setReset] = useState<Reset | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    loadProgress();
-  }, [loadProgress]);
+    if (!user) return;
+    const tz = new Date().getTimezoneOffset();
+    Promise.all([apiFetch(`/api/missions?tz=${tz}`), apiFetch(`/api/user/progress?tz=${tz}`)])
+      .then(async ([a, b]) => {
+        if (!a.ok) return setError(await friendlyError(a, 'We could not load your progress just now. Please refresh the page.'));
+        if (!b.ok) return setError(await friendlyError(b, 'We could not load your progress just now. Please refresh the page.'));
+        setReset(await a.json());
+        setStats((await b.json()).stats);
+      })
+      .catch(() => setError('We could not load your progress just now. Please check your connection and refresh.'));
+  }, [user]);
 
-  if (!mounted) {
+  if (error) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-pulse text-gray-500 font-mono text-sm">LOADING SCORE DATA...</div>
+      <div className="max-w-4xl">
+        <PageHeader kicker="My Progress" title="Your progress" />
+        <Notice tone="error">{error}</Notice>
       </div>
     );
   }
 
-  const rank = getRank(score);
-  const scoreColor = getScoreColor(score);
+  if (!reset || !stats) {
+    return (
+      <div className="max-w-4xl">
+        <PageHeader kicker="My Progress" title="Your progress" />
+        <p className="text-[color:var(--app-muted)]">Loading…</p>
+      </div>
+    );
+  }
+
+  const done = new Set(reset.entries.map((e) => e.day_number));
+  const levelIdx = LEVELS.indexOf(reset.level.name);
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto pb-12">
-      {/* ── Header ── */}
-      <header>
-        <h1 className="text-2xl font-bold uppercase font-mono tracking-wider flex items-center gap-3">
-          <Trophy className="h-6 w-6 text-[#D4A017]" />
-          Persuasion Score
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">Your aggregated influence rating across all operations.</p>
-      </header>
+    <div className="max-w-4xl">
+      <PageHeader
+        kicker="My Progress"
+        title="Your progress"
+        subtitle="Progress is often invisible from inside a single day. Here is what you have actually done."
+      />
 
-      {/* ── Central Score Display ── */}
-      <section className="flex flex-col items-center py-8">
-        <div className="hidden sm:block"><ScoreRing score={score} /></div>
-        <div className="sm:hidden"><ScoreRing score={score} size={180} /></div>
-        <div className="mt-4 text-center">
-          <p
-            className="text-lg font-bold font-mono uppercase tracking-widest transition-colors duration-700"
-            style={{ color: scoreColor }}
-          >
-            {rank}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">{totalXP.toLocaleString()} XP earned</p>
-        </div>
-      </section>
-
-      {/* ── Sub-Scores ── */}
-      <section className="p-6 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333]">
-        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-5 text-gray-500 dark:text-gray-400">Skill Breakdown</h2>
-        <div className="space-y-4">
-          {SUB_SCORE_META.map((s) => (
-            <SubScoreBar key={s.key} label={s.label} value={subScores[s.key]} icon={s.icon} />
+      {/* Where you are */}
+      <Card tone="night" className="mb-6">
+        <p className="app-type text-[11px] uppercase tracking-[0.18em] text-[color:var(--app-gold)] mb-2">Where you are</p>
+        <h2 className="app-serif text-[32px] leading-tight font-semibold mb-1">{reset.level.name}</h2>
+        <p className="text-[16px] opacity-90 mb-5">{reset.level.blurb}</p>
+        <ol className="grid grid-cols-4 gap-2" aria-label="Reset levels">
+          {LEVELS.map((l, i) => (
+            <li key={l} className="min-w-0">
+              <div className={cx('h-1.5 rounded-full mb-2', i <= levelIdx ? 'bg-[color:var(--app-gold)]' : 'bg-white/15')} />
+              <span className={cx('block text-[12px] sm:text-[13px] leading-tight', i === levelIdx ? 'font-semibold' : 'opacity-70')}>{l}</span>
+            </li>
           ))}
-        </div>
-      </section>
+        </ol>
+      </Card>
 
-      {/* ── Activity Feed ── */}
-      <section className="p-6 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333]">
-        <h2 className="text-sm font-bold font-mono uppercase tracking-wider mb-4 text-gray-500 dark:text-gray-400">Recent Activity</h2>
-        {activityFeed.length === 0 ? (
-          <div className="py-8 text-center">
-            <Zap className="h-8 w-8 mx-auto mb-3 text-gray-600" />
-            <p className="text-gray-500 text-sm">No activity yet. Complete missions, log field reports, or spar to earn XP.</p>
+      {/* The reset */}
+      <div className="grid gap-4 sm:grid-cols-[1.6fr_1fr] mb-6">
+        <Card>
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <Label className="!mb-0">{RESET.title}</Label>
+            <span className="text-[15px]">
+              <strong>{reset.doneCount}</strong> of {reset.total}
+            </span>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {activityFeed.map((entry, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#E5E2DB]/50 dark:hover:bg-[#252525] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-mono font-bold text-[#D4A017]">+{entry.xp} XP</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{entry.label}</span>
-                </div>
-                <span className="text-xs text-gray-600">{formatDate(entry.ts)}</span>
-              </div>
-            ))}
+          <div className="mt-3 mb-5">
+            <Bar value={reset.doneCount} max={reset.total} />
           </div>
-        )}
-      </section>
-
-      {/* ── Stats Grid ── */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {[
-          { label: 'Total XP', value: stats.totalXP.toLocaleString(), icon: Zap },
-          { label: 'Current Streak', value: `${stats.streak} days`, icon: Flame },
-          { label: 'Techniques Mastered', value: stats.techniquesMastered, icon: BookOpen },
-          { label: 'Field Reports', value: stats.fieldReports, icon: FileText },
-          { label: 'Sparring Sessions', value: stats.sparringSessions, icon: Swords },
-          { label: 'Missions Completed', value: stats.missionsCompleted, icon: Target },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="p-4 bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333] text-center"
-          >
-            <s.icon className="h-5 w-5 mx-auto mb-2 text-gray-500" />
-            <p className="text-xl font-bold font-mono">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+          <ul className="space-y-3">
+            {PHASES.map((ph) => {
+              const days = reset.days.filter((d) => d.phase === ph.key);
+              const n = days.filter((d) => done.has(d.day_number)).length;
+              return (
+                <li key={ph.key}>
+                  <div className="flex items-baseline justify-between gap-2 text-[15px] mb-1">
+                    <span>{ph.name}</span>
+                    <span className="text-[color:var(--app-muted)]">
+                      {n}/{days.length}
+                    </span>
+                  </div>
+                  <Bar value={n} max={days.length} />
+                </li>
+              );
+            })}
+          </ul>
+          <div className="mt-5">
+            <Button href="/app/field-ops" variant="ghost">
+              {reset.doneCount === 0 ? 'Start the reset' : reset.doneCount >= reset.total ? 'Read your notes' : 'Continue the reset'}
+            </Button>
           </div>
-        ))}
-      </section>
+        </Card>
 
-      {/* ── Monthly Report Card ── */}
-      <section className="bg-[#F5F2EB] dark:bg-[#1A1A1A] rounded-xl border border-[#E5E2DB] dark:border-[#333333] overflow-hidden">
-        <button
-          onClick={() => setMonthlyOpen((o) => !o)}
-          className="w-full flex items-center justify-between p-6 text-left hover:bg-[#E5E2DB]/50 dark:hover:bg-[#252525] transition-colors"
-        >
-          <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400">Monthly Report Card</h2>
-          {monthlyOpen ? (
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-500" />
-          )}
-        </button>
-        <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            monthlyOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
-          <div className="px-6 pb-6 space-y-4">
-            {/* This vs Last Month */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A]">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">This Month</p>
-                <p className="text-2xl font-bold font-mono mt-1">{monthlyReport.thisMonthXP} <span className="text-sm text-gray-500">XP</span></p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A]">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Last Month</p>
-                <p className="text-2xl font-bold font-mono mt-1">{monthlyReport.lastMonthXP} <span className="text-sm text-gray-500">XP</span></p>
-              </div>
-            </div>
+        <Card>
+          <Label>Days in a row</Label>
+          <p className="app-serif text-[48px] leading-none font-semibold mb-2">{reset.streak.current}</p>
+          <p className="text-[14px] text-[color:var(--app-muted)] mb-4">
+            {reset.streak.current === 0 ? 'Do a reset step today to start a streak.' : 'Days in a row with a finished reset step.'}
+          </p>
+          <p className="text-[15px]">
+            Longest: <strong>{reset.streak.longest}</strong>
+          </p>
+          <p className="mt-4 text-[14px] text-[color:var(--app-muted)]">
+            Missed days are fine. A reset that takes 25 days works perfectly well.
+          </p>
+        </Card>
+      </div>
 
-            {/* Strongest / Weakest */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Strongest</p>
-                <p className="text-sm font-medium text-[#D4A017]">{monthlyReport.strongestTechnique}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Weakest</p>
-                <p className="text-sm font-medium text-[#EF4444]">{monthlyReport.weakestArea}</p>
-              </div>
-            </div>
+      {/* Everything else */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <Stat label="Messages decoded" value={stats.decoded} note="Times you looked closely at what was really going on." href="/app/analyze" cta="Decode a message" />
+        <Stat label="Times you held your ground" value={stats.heldGround} note="From your practice debriefs, when you kept your answer under pressure." href="/app/spar" cta="Rehearse it" />
+        <Stat label="Rehearsals" value={stats.rehearsals} note="Hard conversations you practiced before having them." href="/app/spar" cta="Rehearse it" />
+        <Stat label="Practice scenes" value={stats.scenes} note="Scenes from the book you played through." href="/app/training" cta="Practice a scene" />
+        <Stat
+          label="Spot the Tactic"
+          value={stats.spotRounds ? `${stats.spotRight}/${stats.spotRounds}` : 0}
+          note="Tactics you named correctly, out of rounds played."
+          href="/app/techniques"
+          cta="Play a round"
+        />
+        <Stat label="Conversations planned" value={stats.plans} note="Hard talks you walked into with a plan." href="/app/warroom" cta="Plan a conversation" />
+      </div>
 
-            {/* AI Recommendation */}
-            <div className="p-4 rounded-lg bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-dashed border-[#E5E2DB] dark:border-[#333333]">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">AI Recommendation</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">{monthlyReport.recommendation}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <p className="text-[15px] text-[color:var(--app-muted)]">
+        The book has a five-question check-in to rate at the start of each week. Compare them at the end and see what moved.{' '}
+        <BookRef chapter={7} title="How the 21 Days Work" />
+      </p>
     </div>
   );
 }

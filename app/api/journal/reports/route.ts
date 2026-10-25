@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
@@ -13,7 +13,7 @@ const TABLE = 'field_reports';
 // GET: List all field reports for the user, support ?period=week|month|all
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { searchParams } = new URL(req.url);
     const period = searchParams.get('period') || 'all';
 
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 // POST: Create a new field report
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const body = await req.json();
 
     // user_id is set from the verified token (after the spread) so a caller
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete a report (by ?id=xxx)
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api-client';
 
+/**
+ * The book's 50 tactics (Spot the Tactic), in a short shape:
+ * id = tactic slug, category = the Part Three chapter title.
+ */
 export interface APITechnique {
   id: string;
   name: string;
@@ -14,7 +19,7 @@ let cachedTechniques: APITechnique[] | null = null;
 let fetchPromise: Promise<APITechnique[]> | null = null;
 
 async function fetchTechniques(): Promise<APITechnique[]> {
-  const res = await fetch('/api/techniques');
+  const res = await apiFetch('/api/techniques');
   if (!res.ok) return [];
   const data = await res.json();
   return data.techniques || [];
@@ -26,27 +31,15 @@ export function useTechniques() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (cachedTechniques) {
-      setTechniques(cachedTechniques);
-      setLoading(false);
-      return;
-    }
-
-    if (!fetchPromise) {
-      fetchPromise = fetchTechniques();
-    }
-
+    if (cachedTechniques) return;
+    if (!fetchPromise) fetchPromise = fetchTechniques();
     fetchPromise
       .then((data) => {
-        cachedTechniques = data;
+        if (data.length) cachedTechniques = data;
         setTechniques(data);
         setError(null);
       })
-      .catch((err) => {
-        console.error('Failed to fetch techniques:', err);
-        setError('Failed to load techniques');
-        cachedTechniques = null;
-      })
+      .catch(() => setError("We couldn't load the tactics."))
       .finally(() => {
         setLoading(false);
         fetchPromise = null;

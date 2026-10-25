@@ -1,0 +1,18 @@
+import type { Metadata } from 'next';
+import { Source_Serif_4 } from 'next/font/google';
+import './v2.css';
+
+const serif = Source_Serif_4({ subsets: ['latin'], variable: '--font-sp2-serif', display: 'swap' });
+
+// Hidden from search engines and not linked from the live site while the
+// v2 offer is being tested.
+export const metadata: Metadata = {
+  title: 'Shadow Persuasion: How to Stop Being Used and Take Your Power Back',
+  description:
+    'A book and 21-day reset for people who are done being the nice one: see the tactics people use on you, answer them calmly, and use quiet power well.',
+  robots: { index: false, follow: false },
+};
+
+export default function V2Layout({ children }: { children: React.ReactNode }) {
+  return <div className={`sp2 ${serif.variable}`}>{children}</div>;
+}

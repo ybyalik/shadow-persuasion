@@ -23,30 +23,13 @@ import { createClient } from '@supabase/supabase-js';
 import { requireUser } from '@/lib/auth-api';
 import { passthroughAuthError } from '@/lib/api-error';
 import { escapeLike } from '@/lib/db-utils';
+import { getAccess } from '@/lib/access';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const FALLBACK_ADMIN_EMAILS = ['ybyalik@gmail.com'];
-
-async function isAdminEmail(email: string): Promise<boolean> {
-  const lower = email.toLowerCase();
-  try {
-    const { data } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'admin_emails')
-      .single();
-    const admins = ((data?.value as string[]) ?? FALLBACK_ADMIN_EMAILS).map((e) =>
-      e.toLowerCase()
-    );
-    return admins.includes(lower);
-  } catch {
-    return FALLBACK_ADMIN_EMAILS.includes(lower);
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,15 +59,11 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
-    const isAdmin = await isAdminEmail(emailLower);
-    if (!isAdmin) {
-      const entitled = await checkEntitlement(emailLower);
-      if (!entitled) {
-        return NextResponse.json(
-          { error: 'not_entitled', reason: 'no_subscription' },
-          { status: 403 }
-        );
-      }
+    // Expired users may still sign in: the app shows them the Keep access page
+    // instead of the tools (every tool route checks access on the server).
+    const access = await getAccess(emailLower);
+    if (!access.ok && access.kind !== 'expired') {
+      return NextResponse.json({ error: 'not_entitled', reason: 'no_subscription' }, { status: 403 });
     }
 
     // Upsert the users row.
@@ -125,7 +104,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    await supabase.from('app_access').update({ user_id: userId }).ilike('email', escapeLike(emailLower)).is('user_id', null);
+
+    return NextResponse.json({ success: true, access });
   } catch (error: unknown) {
     const authFail = passthroughAuthError(error);
     if (authFail) return authFail;
@@ -135,43 +116,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Same entitlement rule as /api/auth/check-entitlement. Kept duplicated
- * here so the gate can't be bypassed by a caller skipping the public
- * check endpoint.
- */
-async function checkEntitlement(email: string): Promise<boolean> {
-  const emailPattern = escapeLike(email);
-  const { data: subs } = await supabase
-    .from('subscriptions')
-    .select('status, current_period_end')
-    .ilike('email', emailPattern);
-
-  const now = new Date();
-  const hasValidSub = (subs ?? []).some((s) => {
-    const status = (s.status || '').toLowerCase();
-    if (status === 'active' || status === 'trialing' || status === 'past_due') {
-      return true;
-    }
-    if ((status === 'cancelled' || status === 'canceled') && s.current_period_end) {
-      return new Date(s.current_period_end) > now;
-    }
-    return false;
-  });
-  if (hasValidSub) return true;
-
-  const { data: recentOrders } = await supabase
-    .from('orders')
-    .select('items, status')
-    .ilike('email', emailPattern)
-    .eq('status', 'paid')
-    .order('created_at', { ascending: false })
-    .limit(5);
-  const hasAppOrder = (recentOrders ?? []).some((o) => {
-    const items = (o.items as string[]) || [];
-    return items.includes('app') || items.includes('lifetime');
-  });
-  return hasAppOrder;
 }

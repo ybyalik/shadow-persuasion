@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { appSerif, appType } from '@/app/app/fonts';
 
 // Signup is gated — only buyers (active SaaS subscribers) can register.
 // This helper returns true when the email has a valid entitlement in
@@ -187,7 +188,7 @@ function LoginPage() {
     if (message.includes('auth/invalid-email')) return 'Invalid email address';
     if (message.includes('auth/too-many-requests')) return 'Too many attempts. Please try again later';
     if (message.includes('auth/popup-closed-by-user')) return 'Sign-in popup was closed';
-    return message;
+    return 'Something went wrong. Please try again.';
   }
 
   if (loading) {
@@ -201,14 +202,17 @@ function LoginPage() {
   if (user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0A0A0A] flex items-center justify-center px-4">
+    <div className={`sp-app ${appSerif.variable} ${appType.variable} min-h-screen flex items-center justify-center px-4 py-10`}>
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <img src="/logo.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3 dark:hidden" />
-          <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-56 mx-auto mb-3 hidden dark:block" />
-          <p className="text-sm text-gray-500 dark:text-[#888888] tracking-wide">
-            Psychology &amp; Influence Training
+        <div className="text-center mb-8">
+          <p className="app-type text-[13px] tracking-[0.25em] text-[color:var(--app-accent)] mb-3">SHADOW PERSUASION</p>
+          <h1 className="app-serif text-[34px] leading-tight font-semibold">
+            {tab === 'signup' ? 'Create your login' : 'Welcome back'}
+          </h1>
+          <p className="mt-2 text-[15px] text-[color:var(--app-muted)]">
+            {tab === 'signup'
+              ? 'Use the same email you bought the book with. Your 60 days of the app are waiting.'
+              : 'The companion app to the book.'}
           </p>
         </div>
 
@@ -224,7 +228,7 @@ function LoginPage() {
                   : 'text-gray-500 dark:text-[#888888] hover:text-gray-800 dark:hover:text-[#E8E8E0]'
               }`}
             >
-              SIGN IN
+              Sign in
             </button>
             <button
               onClick={() => { setTab('signup'); setError(''); }}
@@ -234,7 +238,7 @@ function LoginPage() {
                   : 'text-gray-500 dark:text-[#888888] hover:text-gray-800 dark:hover:text-[#E8E8E0]'
               }`}
             >
-              SIGN UP
+              Create login
             </button>
           </div>
 
@@ -242,22 +246,21 @@ function LoginPage() {
           {error === 'NOT_ENTITLED' ? (
             <div className="mb-6 p-4 bg-[#D4A017]/10 border border-[#D4A017]/40 rounded-lg">
               <p className="text-sm font-bold text-gray-900 dark:text-[#E8E8E0] mb-1">
-                No subscription found for this email.
+                We couldn&apos;t find a book order for this email.
               </p>
               <p className="text-sm text-gray-600 dark:text-[#888888] mb-3">
-                Shadow Persuasion is available to members only. Purchase access
-                to start training, then come back to create your account with
-                the same email.
+                The app comes with the Shadow Persuasion paperback. Please use the
+                email address you bought the book with.
               </p>
               <Link
-                href="/checkout?plan=monthly"
+                href="/v2"
                 className="inline-block w-full text-center py-2.5 bg-[#D4A017] hover:bg-[#B8860B] text-[#0A0A0A] font-bold rounded-lg transition-colors text-sm tracking-wider"
               >
-                GET ACCESS
+                See the book
               </Link>
               <p className="text-xs text-gray-500 dark:text-[#888888] mt-3 text-center">
-                Already paid? Make sure you&apos;re using the same email as your
-                Stripe receipt. If you just paid, wait 30 seconds and try again.
+                Just ordered? Wait a minute and try again. Still stuck? Reply to
+                your order email and we&apos;ll sort it out.
               </p>
             </div>
           ) : error ? (
@@ -300,7 +303,7 @@ function LoginPage() {
                 disabled={submitting}
                 className="w-full py-3 bg-[#D4A017] hover:bg-[#B8860B] text-[#0A0A0A] font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm"
               >
-                {submitting ? 'SIGNING IN...' : 'SIGN IN'}
+                {submitting ? 'Signing in...' : 'Sign in'}
               </button>
 
               {!showForgotPassword ? (
@@ -309,7 +312,7 @@ function LoginPage() {
                   onClick={() => { setShowForgotPassword(true); setResetEmail(email); setResetMessage(''); setError(''); }}
                   className="w-full text-center text-sm text-gray-500 dark:text-[#888888] hover:text-[#D4A017] transition-colors mt-2"
                 >
-                  Forgot Password?
+                  Forgot your password?
                 </button>
               ) : (
                 <div className="mt-4 p-4 bg-[#FAFAF8] dark:bg-[#0A0A0A] border border-gray-200 dark:border-[#333333] rounded-lg space-y-3">
@@ -395,7 +398,7 @@ function LoginPage() {
                 disabled={submitting}
                 className="w-full py-3 bg-[#D4A017] hover:bg-[#B8860B] text-[#0A0A0A] font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm"
               >
-                {submitting ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
+                {submitting ? 'Creating your login...' : 'Create my login'}
               </button>
             </form>
           )}

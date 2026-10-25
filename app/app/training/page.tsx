@@ -1,484 +1,366 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { ScenarioCard } from '@/components/app/ScenarioCard';
-import { Star, Loader2, Plus, X, Check, CheckSquare, Square, Trash2 } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
-import { useTaxonomy, TaxonomyCategory } from '@/lib/hooks/useTaxonomy';
-import { getCategoryIcon } from '@/lib/category-icons';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { apiFetch } from '@/lib/api-client';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
+import { DIFFICULTY_NAMES, ScenarioCard, type SceneSummary } from '@/components/app/ScenarioCard';
 
-// Map old scenario category names to taxonomy category IDs
-const CATEGORY_TO_TAXONOMY: Record<string, string> = {
-  Career: 'career',
-  Sales: 'business',
-  Relationships: 'relationships',
-  Social: 'relationships',
-  Defense: 'defense',
-};
+const tabCls = (on: boolean) =>
+  `min-h-[44px] rounded-lg px-4 text-[15px] font-semibold transition-colors ${
+    on ? 'bg-[color:var(--app-ink)] text-[color:var(--app-paper)]' : 'text-[color:var(--app-muted)] hover:bg-[color:var(--app-paper-2)]'
+  }`;
 
-import { useAdmin } from '@/lib/hooks/useAdmin';
+const chipCls = (on: boolean) =>
+  `min-h-[44px] rounded-full border px-4 text-[14px] transition-colors ${
+    on
+      ? 'border-[color:var(--app-ink)] bg-[color:var(--app-ink)] text-[color:var(--app-paper)]'
+      : 'border-[color:var(--app-line)] bg-[color:var(--app-card)] text-[color:var(--app-muted)] hover:border-[color:var(--app-accent)]'
+  }`;
 
-type Scenario = {
-  id: string;
-  title: string;
-  category: string;
-  difficulty: number;
-  description: string;
-  objective: string;
-  techniques: string[];
-  is_generated?: boolean;
-};
+function PracticeScenes() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const tab = params.get('tab') === 'reps' ? 'reps' : 'scenes';
 
-const difficultyLevels = [
-  { value: 0, label: 'All' },
-  { value: 1, label: 'Beginner' },
-  { value: 2, label: 'Intermediate' },
-  { value: 3, label: 'Advanced' },
-];
+  return (
+    <div className="mx-auto max-w-4xl">
+      <PageHeader
+        kicker="Get ready"
+        title="Practice Scenes"
+        subtitle="Real moments like the ones in the book. You type what you'd say, the other person answers, and you get a short, kind debrief."
+      />
+      <div className="mb-6 flex gap-2 rounded-xl border border-[color:var(--app-line)] bg-[color:var(--app-card)] p-1.5">
+        <button type="button" className={`flex-1 ${tabCls(tab === 'scenes')}`} onClick={() => router.replace('/app/training', { scroll: false })}>
+          Scenes
+        </button>
+        <button type="button" className={`flex-1 ${tabCls(tab === 'reps')}`} onClick={() => router.replace('/app/training?tab=reps', { scroll: false })}>
+          Quick Reps
+        </button>
+      </div>
+      {tab === 'reps' ? <QuickReps /> : <SceneList />}
+    </div>
+  );
+}
 
-export default function TrainingArenaPage() {
-  const { user } = useAuth();
-  const { isAdmin } = useAdmin();
-  const { categories: taxonomyCategories, loading: taxonomyLoading } = useTaxonomy();
-
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+function SceneList() {
+  const router = useRouter();
+  const [scenes, setScenes] = useState<SceneSummary[]>([]);
+  const [mine, setMine] = useState<SceneSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All');
-  const [difficulty, setDifficulty] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [level, setLevel] = useState(0);
+  const [area, setArea] = useState('All');
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalStep, setModalStep] = useState<'config' | 'loading' | 'preview'>('config');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [generateCount, setGenerateCount] = useState(5);
-  const [generatedScenarios, setGeneratedScenarios] = useState<Scenario[]>([]);
-  const [checkedScenarios, setCheckedScenarios] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [situation, setSituation] = useState('');
+  const [genLevel, setGenLevel] = useState(2);
+  const [making, setMaking] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [safety, setSafety] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/scenarios/list')
-      .then(res => res.json())
-      .then(data => setScenarios(data.scenarios || []))
-      .catch(err => console.error('Failed to fetch scenarios:', err))
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const res = await apiFetch('/api/scenarios/list');
+        if (!res.ok) {
+          setError(await friendlyError(res, "We couldn't load the scenes. Please try again."));
+          return;
+        }
+        const d = await res.json();
+        setScenes(d.scenes ?? []);
+        setMine(d.mine ?? []);
+      } catch {
+        setError("We couldn't reach the server. Please check your connection.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  // Pre-filter from onboarding context
-  useEffect(() => {
-    const onboardingFilter = sessionStorage.getItem('onboarding-training-filter');
-    if (onboardingFilter) {
-      sessionStorage.removeItem('onboarding-training-filter');
-      setFilter(onboardingFilter);
-    }
-  }, []);
+  const areas = useMemo(() => ['All', ...Array.from(new Set(scenes.map((s) => s.category)))], [scenes]);
+  const shown = scenes.filter((s) => (level === 0 || s.difficulty === level) && (area === 'All' || s.category === area));
 
-  // Use taxonomy categories for filter tabs
-  const categories = useMemo(() => {
-    return ['All', ...taxonomyCategories.map(c => c.id)];
-  }, [taxonomyCategories]);
-
-  // Build display label map: category id -> name (icons rendered inline)
-  const categoryLabels = useMemo(() => {
-    const map: Record<string, string> = { All: 'All' };
-    for (const c of taxonomyCategories) {
-      map[c.id] = c.name;
-    }
-    return map;
-  }, [taxonomyCategories]);
-
-  const filteredScenarios = scenarios.filter(s => {
-    if (filter === 'All') {
-      return difficulty === 0 || s.difficulty === difficulty;
-    }
-    // Map old scenario category to taxonomy ID, then compare
-    const scenarioTaxId = CATEGORY_TO_TAXONOMY[s.category] || s.category.toLowerCase();
-    const categoryMatch = scenarioTaxId === filter;
-    const difficultyMatch = difficulty === 0 || s.difficulty === difficulty;
-    return categoryMatch && difficultyMatch;
-  });
-
-  const openModal = () => {
-    // Pre-check the current filter category, or all if on "All"
-    if (filter === 'All') {
-      setSelectedCategories(taxonomyCategories.map(c => c.id));
-    } else {
-      setSelectedCategories([filter]);
-    }
-    setGenerateCount(5);
-    setGeneratedScenarios([]);
-    setCheckedScenarios(new Set());
-    setModalStep('config');
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-  };
-
-  const toggleCategory = (id: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-  };
-
-  const toggleAllCategories = () => {
-    if (selectedCategories.length === taxonomyCategories.length) {
-      setSelectedCategories([]);
-    } else {
-      setSelectedCategories(taxonomyCategories.map(c => c.id));
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (modalStep !== 'config') return;
-    setModalStep('loading');
+  const makeScene = async () => {
+    if (making || situation.trim().length < 15) return;
+    setMaking(true);
+    setGenError(null);
+    setSafety(null);
     try {
-      const res = await fetch('/api/scenarios/generate', {
+      const res = await apiFetch('/api/scenarios/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categories: selectedCategories,
-          count: generateCount,
-        }),
+        body: JSON.stringify({ situation: situation.trim(), difficulty: genLevel }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        const newScenarios: Scenario[] = data.scenarios || [];
-        setGeneratedScenarios(newScenarios);
-        setCheckedScenarios(new Set(newScenarios.map(s => s.id)));
-        setModalStep('preview');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        console.error('Failed to generate scenarios:', data.error);
-        setModalStep('config');
+      if (!res.ok) {
+        setGenError(await friendlyError(res, "We couldn't build that scene. Please try again."));
+        return;
       }
-    } catch (err) {
-      console.error('Error generating scenarios:', err);
-      setModalStep('config');
-    }
-  };
-
-  const toggleScenarioCheck = (id: string) => {
-    setCheckedScenarios(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const handleSaveSelected = async () => {
-    const toSave = generatedScenarios.filter(s => checkedScenarios.has(s.id));
-    if (toSave.length === 0) return;
-    setSaving(true);
-    try {
-      const res = await fetch('/api/scenarios/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save', scenarios: toSave }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const savedScenarios: Scenario[] = data.scenarios || toSave;
-        setScenarios(prev => {
-          const existingIds = new Set(prev.map(s => s.id));
-          const unique = savedScenarios.filter(s => !existingIds.has(s.id));
-          return [...prev, ...unique];
-        });
-        setSuccessMessage(`${savedScenarios.length} scenario${savedScenarios.length > 1 ? 's' : ''} saved successfully!`);
-        setTimeout(() => setSuccessMessage(null), 4000);
-        closeModal();
-      } else {
-        console.error('Failed to save scenarios');
+      const d = await res.json();
+      if (d.safety) {
+        setSafety(d.message);
+        return;
       }
-    } catch (err) {
-      console.error('Error saving scenarios:', err);
+      router.push(`/app/training/${d.scene.id}`);
+    } catch {
+      setGenError("We couldn't reach the server. Please check your connection.");
     } finally {
-      setSaving(false);
+      setMaking(false);
     }
   };
 
-  const difficultyLabel = (d: number) =>
-    d === 1 ? 'Beginner' : d === 2 ? 'Intermediate' : d === 3 ? 'Advanced' : 'Unknown';
+  return (
+    <div className="space-y-8">
+      <Card>
+        <Label>Make a scene from my situation</Label>
+        <p className="mb-3 text-[15px] text-[color:var(--app-muted)]">
+          Who is it, and what do they usually say or do? We&apos;ll set up a scene so you can practice your answer.
+        </p>
+        <textarea
+          value={situation}
+          onChange={(e) => setSituation(e.target.value)}
+          rows={3}
+          maxLength={1500}
+          placeholder="e.g. My sister asks me to babysit every Saturday and says I have no life anyway."
+          className={inputClass}
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-[15px] text-[color:var(--app-muted)]">
+            How much pressure
+            <select
+              value={genLevel}
+              onChange={(e) => setGenLevel(Number(e.target.value))}
+              className="min-h-[44px] rounded-lg border border-[color:var(--app-line)] bg-[color:var(--app-card)] px-3 text-[15px] text-[color:var(--app-ink)]"
+            >
+              <option value={1}>Easy</option>
+              <option value={2}>Medium</option>
+              <option value={3}>Hard</option>
+            </select>
+          </label>
+          <Button onClick={makeScene} loading={making} disabled={situation.trim().length < 15}>
+            {making ? 'Setting it up...' : 'Make my scene'}
+          </Button>
+        </div>
+        {genError && <div className="mt-3"><Notice tone="error">{genError}</Notice></div>}
+        {safety && <div className="mt-3"><Notice tone="warn">{safety}</Notice></div>}
+      </Card>
 
-  if (loading || taxonomyLoading) {
-    return (
-      <div className="space-y-8">
-        <header>
-          <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
-            Training Arena
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Loading scenarios...</p>
-        </header>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-40 bg-gray-100 dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] animate-pulse" />
+      {mine.length > 0 && (
+        <section>
+          <h2 className="app-serif mb-3 text-[26px] font-semibold">Your scenes</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {mine.map((s) => (
+              <ScenarioCard key={s.id} scenario={s} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="app-serif mb-3 text-[26px] font-semibold">Scenes from the book</h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {[0, 1, 2, 3].map((l) => (
+            <button key={l} type="button" className={chipCls(level === l)} onClick={() => setLevel(l)}>
+              {l === 0 ? 'Any level' : DIFFICULTY_NAMES[l]}
+            </button>
           ))}
         </div>
-      </div>
+        <div className="mb-5 flex flex-wrap gap-2">
+          {areas.map((a) => (
+            <button key={a} type="button" className={chipCls(area === a)} onClick={() => setArea(a)}>
+              {a === 'All' ? 'All areas' : a}
+            </button>
+          ))}
+        </div>
+        {error && <Notice tone="error">{error}</Notice>}
+        {loading ? (
+          <p className="text-[color:var(--app-muted)]">Loading scenes...</p>
+        ) : shown.length === 0 && !error ? (
+          <Notice>No scenes match those filters.</Notice>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {shown.map((s) => (
+              <ScenarioCard key={s.id} scenario={s} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+type Rep = { line: string; tacticSlug: string };
+type RepResult = { score: 'steady' | 'close' | 'gave'; note: string; better: string; tactic: { slug: string; name: string; chapter: number; chapter_title: string } | null };
+
+const SECONDS = 30;
+const SCORE_LABEL: Record<RepResult['score'], string> = { steady: 'Steady', close: 'Close', gave: 'Gave ground' };
+const SCORE_COLOR: Record<RepResult['score'], string> = {
+  steady: 'text-[color:var(--app-sage)]',
+  close: 'text-[color:var(--app-accent)]',
+  gave: 'text-[color:var(--app-oxblood)]',
+};
+
+function QuickReps() {
+  const [rep, setRep] = useState<Rep | null>(null);
+  const [answer, setAnswer] = useState('');
+  const [left, setLeft] = useState(SECONDS);
+  const [result, setResult] = useState<RepResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [scoring, setScoring] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tally, setTally] = useState({ steady: 0, total: 0 });
+  const startedAt = useRef(0);
+  const box = useRef<HTMLTextAreaElement>(null);
+
+  const running = !!rep && !result && left > 0;
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [running]);
+
+  const start = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setAnswer('');
+    try {
+      const res = await apiFetch(`/api/quickfire/reps${rep ? `?exclude=${encodeURIComponent(rep.line)}` : ''}`);
+      if (!res.ok) {
+        setError(await friendlyError(res, "We couldn't find a line. Please try again."));
+        return;
+      }
+      setRep(await res.json());
+      setLeft(SECONDS);
+      startedAt.current = Date.now();
+      setTimeout(() => box.current?.focus(), 50);
+    } catch {
+      setError("We couldn't reach the server. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const send = async () => {
+    if (!rep || scoring || !answer.trim()) return;
+    setScoring(true);
+    setError(null);
+    try {
+      const res = await apiFetch('/api/quickfire/reps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...rep, answer: answer.trim(), seconds: Math.round((Date.now() - startedAt.current) / 1000) }),
+      });
+      if (!res.ok) {
+        setError(await friendlyError(res, "We couldn't score that rep. Please try again."));
+        return;
+      }
+      const r: RepResult = await res.json();
+      setResult(r);
+      setTally((t) => ({ steady: t.steady + (r.score === 'steady' ? 1 : 0), total: t.total + 1 }));
+    } catch {
+      setError("We couldn't reach the server. Please check your connection.");
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  if (!rep) {
+    return (
+      <Card>
+        <Label>Quick Reps</Label>
+        <p className="mb-4 text-[16px] leading-relaxed">
+          You&apos;ll see one pressure line. You have about {SECONDS} seconds to type a calm answer. Short is good. Then you get a one-line score and a
+          better version to try.
+        </p>
+        {error && <div className="mb-3"><Notice tone="error">{error}</Notice></div>}
+        <Button onClick={start} loading={loading}>
+          Start a rep
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
-            Training Arena
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Select a scenario to begin your simulation.</p>
-        </div>
-        {isAdmin && (
-          <button
-            onClick={openModal}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-mono uppercase bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B030] transition-colors min-h-[44px]"
-          >
-            <Plus className="h-4 w-4" />
-            Generate New Scenarios
-          </button>
-        )}
-      </header>
-
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-[#333333] pb-2">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setFilter(category)}
-            className={`px-3 py-1 text-sm rounded-full font-semibold transition-colors
-              ${filter === category
-                ? 'bg-[#D4A017] text-[#0A0A0A]'
-                : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222]'}
-            `}
-          >
-            {category !== 'All' && (() => { const Icon = getCategoryIcon(category); return <Icon className="h-4 w-4 inline-block mr-1" />; })()}
-            {categoryLabels[category] || category}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-sm text-gray-500 dark:text-gray-400 font-mono uppercase">Difficulty:</span>
-        {difficultyLevels.map(level => (
-          <button
-            key={level.value}
-            onClick={() => setDifficulty(level.value)}
-            className={`flex items-center gap-1.5 px-3 py-1 text-sm rounded-full font-semibold transition-colors
-              ${difficulty === level.value
-                ? 'bg-[#D4A017] text-[#0A0A0A]'
-                : 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#222222]'}
-            `}
-          >
-            {level.value > 0 && (
-              <span className="flex">
-                {[...Array(3)].map((_, i) => (
-                  <Star key={i} className={`h-3.5 w-3.5 ${i < level.value ? 'text-[#D4A017] fill-current' : 'text-gray-400'} ${difficulty === level.value && i < level.value ? 'text-[#0A0A0A] fill-current' : ''}`} />
-                ))}
-              </span>
-            )}
-            {level.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredScenarios.map(scenario => (
-          <ScenarioCard key={scenario.id} scenario={scenario} basePath="/app/training" />
-        ))}
-      </div>
-
-      {filteredScenarios.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">No scenarios found for this filter.</p>
-        </div>
+    <div className="space-y-4">
+      {tally.total > 0 && (
+        <p className="app-type text-right text-[12px] text-[color:var(--app-muted)]">
+          {tally.steady} steady of {tally.total} this session
+        </p>
       )}
-
-      {/* Success toast */}
-      {successMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg font-semibold text-sm animate-in slide-in-from-bottom-4">
-          <Check className="h-4 w-4" />
-          {successMessage}
+      <Card>
+        <div className="mb-2 flex items-center justify-between">
+          <Label className="mb-0">They say</Label>
+          {!result && (
+            <span className={`app-type text-[14px] ${left <= 5 ? 'text-[color:var(--app-oxblood)]' : 'text-[color:var(--app-muted)]'}`}>
+              {left > 0 ? `${left}s` : "Time's up"}
+            </span>
+          )}
         </div>
-      )}
-
-      {/* Generate Scenarios Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-
-          {/* Modal */}
-          <div className="relative bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#333333] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            {/* Close button */}
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-200 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* Config step */}
-            {modalStep === 'config' && (
-              <div className="p-6 space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold font-mono uppercase tracking-wider">
-                    Generate New Training Scenarios
-                  </h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                    AI will create practice scenarios based on your knowledge base
-                  </p>
-                </div>
-
-                {/* Category checkboxes */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">Categories</span>
-                    <button
-                      onClick={toggleAllCategories}
-                      className="text-xs font-semibold text-[#D4A017] hover:text-[#E8B030] transition-colors"
-                    >
-                      {selectedCategories.length === taxonomyCategories.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {taxonomyCategories.map(cat => {
-                      const Icon = getCategoryIcon(cat.id);
-                      const checked = selectedCategories.includes(cat.id);
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => toggleCategory(cat.id)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border
-                            ${checked
-                              ? 'border-[#D4A017] bg-[#D4A017]/10 text-[#D4A017]'
-                              : 'border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-[#555555]'}
-                          `}
-                        >
-                          {checked ? <CheckSquare className="h-4 w-4 shrink-0" /> : <Square className="h-4 w-4 shrink-0" />}
-                          <Icon className="h-4 w-4 shrink-0" />
-                          {cat.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Count selector */}
-                <div className="space-y-3">
-                  <span className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">How many scenarios?</span>
-                  <div className="flex gap-2">
-                    {[3, 5, 10].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => setGenerateCount(n)}
-                        className={`px-5 py-2 rounded-full text-sm font-bold transition-colors
-                          ${generateCount === n
-                            ? 'bg-[#D4A017] text-[#0A0A0A]'
-                            : 'border border-gray-200 dark:border-[#333333] text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-[#555555]'}
-                        `}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Generate button */}
-                <button
-                  onClick={handleGenerate}
-                  disabled={selectedCategories.length === 0}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-mono uppercase font-bold bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B030] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Plus className="h-4 w-4" />
-                  Generate {generateCount} Scenarios
-                </button>
-              </div>
-            )}
-
-            {/* Loading step */}
-            {modalStep === 'loading' && (
-              <div className="p-6 flex flex-col items-center justify-center py-16 space-y-4">
-                <Loader2 className="h-10 w-10 animate-spin text-[#D4A017]" />
-                <p className="text-gray-400 text-sm font-mono">
-                  Generating scenarios from your knowledge base...
-                </p>
-              </div>
-            )}
-
-            {/* Preview step */}
-            {modalStep === 'preview' && (
-              <div className="p-6 space-y-4">
-                <div>
-                  <h2 className="text-xl font-bold font-mono uppercase tracking-wider">
-                    Preview Generated Scenarios
-                  </h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                    {generatedScenarios.length} scenario{generatedScenarios.length !== 1 ? 's' : ''} generated.
-                    Select which to save.
-                  </p>
-                </div>
-
-                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                  {generatedScenarios.map(s => {
-                    const checked = checkedScenarios.has(s.id);
-                    return (
-                      <div
-                        key={s.id}
-                        onClick={() => toggleScenarioCheck(s.id)}
-                        className={`cursor-pointer rounded-xl border p-4 transition-colors
-                          ${checked
-                            ? 'border-[#D4A017] bg-[#D4A017]/5'
-                            : 'border-gray-200 dark:border-[#333333] opacity-60'}
-                        `}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5">
-                            {checked
-                              ? <CheckSquare className="h-5 w-5 text-[#D4A017]" />
-                              : <Square className="h-5 w-5 text-gray-400" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-sm">{s.title}</span>
-                              <span className="px-2 py-0.5 text-xs rounded-full bg-[#D4A017]/20 text-[#D4A017] font-semibold">
-                                {s.category}
-                              </span>
-                              <span className="flex items-center gap-0.5">
-                                {[...Array(3)].map((_, i) => (
-                                  <Star key={i} className={`h-3 w-3 ${i < s.difficulty ? 'text-[#D4A017] fill-current' : 'text-gray-600'}`} />
-                                ))}
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-xs mt-1 line-clamp-2">{s.description}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleSaveSelected}
-                    disabled={checkedScenarios.size === 0 || saving}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-mono uppercase font-bold bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B030] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    {saving ? 'Saving...' : `Save Selected (${checkedScenarios.size})`}
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-mono uppercase font-bold border border-gray-200 dark:border-[#333333] text-gray-400 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Discard All
-                  </button>
-                </div>
-              </div>
-            )}
+        {!result && (
+          <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-[color:var(--app-paper-2)]">
+            <div className="h-full bg-[color:var(--app-gold)] transition-all duration-1000 ease-linear" style={{ width: `${(left / SECONDS) * 100}%` }} />
           </div>
-        </div>
+        )}
+        <blockquote className="app-serif text-[24px] leading-snug sm:text-[27px]">&ldquo;{rep.line}&rdquo;</blockquote>
+      </Card>
+
+      {!result && (
+        <>
+          <textarea
+            ref={box}
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            rows={3}
+            maxLength={600}
+            placeholder={left > 0 ? 'Type what you would say...' : 'Send what you have, even a few words.'}
+            className={inputClass}
+          />
+          {error && <Notice tone="error">{error}</Notice>}
+          <Button onClick={send} loading={scoring} disabled={!answer.trim()}>
+            Send my answer
+          </Button>
+        </>
+      )}
+
+      {result && (
+        <Card tone="gold" className="space-y-4">
+          <div>
+            <p className={`app-type text-[13px] uppercase tracking-[0.18em] ${SCORE_COLOR[result.score]}`}>{SCORE_LABEL[result.score]}</p>
+            <p className="mt-1 text-[17px] leading-relaxed">{result.note}</p>
+          </div>
+          <div>
+            <Label>You said</Label>
+            <p className="text-[16px] text-[color:var(--app-muted)]">&ldquo;{answer}&rdquo;</p>
+          </div>
+          <div>
+            <Label>Try this</Label>
+            <p className="app-serif text-[21px] leading-snug">&ldquo;{result.better}&rdquo;</p>
+          </div>
+          {result.tactic && (
+            <div className="flex flex-wrap items-center gap-3 text-[15px]">
+              <span>The tactic: {result.tactic.name}</span>
+              <BookRef chapter={result.tactic.chapter} title={result.tactic.chapter_title} />
+            </div>
+          )}
+          <Button onClick={start} loading={loading}>
+            Next rep
+          </Button>
+        </Card>
       )}
     </div>
+  );
+}
+
+export default function TrainingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PracticeScenes />
+    </Suspense>
   );
 }

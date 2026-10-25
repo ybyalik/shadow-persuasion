@@ -1,260 +1,81 @@
-'use client';
+/**
+ * Shared pieces for the 21-Day Reset and My Progress.
+ * Pure helpers only (no database, no browser storage), so both API routes and
+ * pages can import them.
+ */
 
-// Techniques are no longer imported from the deprecated static list.
-// Name/category lookups now use data from localStorage entries which already
-// contain this information, or fall back to the id as the display name.
+import { RESET, type ResetPhaseKey } from '@/lib/edition';
 
-/* ────────────────────────────────────────────
-   Types
-   ──────────────────────────────────────────── */
+/** Steps in the reset: 24 in the v2 book (3 quick start + 21 days), 21 in v3 (Days 1 to 21). See lib/edition.ts. */
+export const RESET_TOTAL = RESET.total;
 
-export type TechniqueStat = {
-  techniqueId: string;
-  techniqueName: string;
-  category: string;
-  timesUsed: number;
-  avgSuccess: number; // 0-100
-  lastUsed: string | null;
-};
+export type ResetPhase = ResetPhaseKey;
 
-export type ActivityItem = {
-  type: 'mission' | 'journal' | 'sparring' | 'profiler' | 'stack' | 'feedback';
+export type ResetDay = {
+  day_number: number;
+  phase: ResetPhase;
   label: string;
-  date: string;
-  techniqueId?: string;
+  title: string;
+  drill: string;
+  morning_prompt: string;
+  journal_prompts: string[];
+  chapter: number;
+  chapter_title: string;
 };
 
-export type ProgressData = {
-  techniquesUsed: Map<string, TechniqueStat>;
-  techniquesMastered: string[];
-  scenariosCompleted: { count: number; list: string[] };
-  totalPracticeTime: number; // estimated minutes
-  streakData: { current: number; longest: number };
-  weakAreas: string[];
-  strongAreas: string[];
-  recentActivity: ActivityItem[];
+export type ResetEntry = {
+  day_number: number;
+  note: string | null;
+  reflection: string | null;
+  completed_at: string;
 };
 
-/* ────────────────────────────────────────────
-   Helpers
-   ──────────────────────────────────────────── */
+export const PHASES: { key: ResetPhase; name: string; short: string; chapter: number; chapterTitle: string; blurb: string }[] = RESET.phases;
 
-function safeParse<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
+/**
+ * Plain progress levels named after the reset.
+ * Based only on reset steps finished, so the name always matches where you are.
+ */
+export function resetLevel(doneCount: number): { name: string; next: string | null; blurb: string } {
+  if (doneCount >= RESET_TOTAL) return { name: 'Quiet Power', next: null, blurb: 'You finished the reset. Keep one drill a week going.' };
+  if (doneCount >= RESET.levels.holding) return { name: 'Holding', next: 'Quiet Power', blurb: 'Staying calm and steady when people push.' };
+  if (doneCount >= RESET.levels.pausing) return { name: 'Pausing', next: 'Holding', blurb: 'Making space before you answer.' };
+  return { name: 'Noticing', next: 'Pausing', blurb: 'Learning to see pressure while it happens.' };
 }
 
-// Technique name/category lookups: since we no longer have a static list,
-// we derive names from the technique ID (kebab-case to title case).
-function getTechniqueName(id: string): string {
-  return id
-    .split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+/** The step to work on now: the first one not finished yet (1 to RESET_TOTAL), or null when all are done. */
+export function currentResetDay(doneDays: number[]): number | null {
+  const done = new Set(doneDays);
+  for (let d = 1; d <= RESET_TOTAL; d++) if (!done.has(d)) return d;
+  return null;
 }
 
-function getTechniqueCategory(id: string): string {
-  // Without a static list, category is unknown. Callers that need accurate
-  // categories should pass technique data from the API.
-  void id;
-  return 'Unknown';
+function localDate(iso: string, tzOffsetMin: number) {
+  return new Date(new Date(iso).getTime() - tzOffsetMin * 60_000).toISOString().slice(0, 10);
 }
 
-/* ────────────────────────────────────────────
-   Core Functions
-   ──────────────────────────────────────────── */
+/**
+ * Days in a row with at least one finished step, counting back from today
+ * (or from yesterday, so the streak doesn't vanish before you've had a chance today).
+ * tzOffsetMin is the browser's getTimezoneOffset().
+ */
+export function dayStreak(timestamps: string[], tzOffsetMin = 0): { current: number; longest: number } {
+  const days = Array.from(new Set(timestamps.map((t) => localDate(t, tzOffsetMin)))).sort().reverse();
+  if (!days.length) return { current: 0, longest: 0 };
+  const dayMs = 86_400_000;
+  const gap = (a: string, b: string) => Math.round((Date.parse(a) - Date.parse(b)) / dayMs);
 
-export function getProgress(): ProgressData {
-  const missions = safeParse<any>('shadow-missions-data', { completed: [], streak: 0 });
-  const journal = safeParse<any[]>('shadow-journal-data', []);
-  const sparring = safeParse<any[]>('shadow-sparring-data', []);
-  const profiler = safeParse<any[]>('shadow-profiler-data', []);
-  const stacks = safeParse<any[]>('shadow-stacks-data', []);
-  const feedback = safeParse<any[]>('shadow-feedback-data', []);
-
-  const completedMissions = missions.completed ?? [];
-  const streak = missions.streak ?? 0;
-
-  // Build technique usage map
-  const techMap = new Map<string, { uses: number; successSum: number; lastUsed: string | null }>();
-
-  const addTechUse = (id: string, success: number, date: string) => {
-    const existing = techMap.get(id) || { uses: 0, successSum: 0, lastUsed: null };
-    existing.uses += 1;
-    existing.successSum += success;
-    if (!existing.lastUsed || date > existing.lastUsed) existing.lastUsed = date;
-    techMap.set(id, existing);
-  };
-
-  // Missions
-  for (const m of completedMissions) {
-    if (m.techniqueId) {
-      addTechUse(m.techniqueId, 70, m.completedAt || new Date().toISOString());
-    }
+  const today = localDate(new Date().toISOString(), tzOffsetMin);
+  let current = 0;
+  if (gap(today, days[0]) <= 1) {
+    current = 1;
+    for (let i = 1; i < days.length && gap(days[i - 1], days[i]) === 1; i++) current++;
   }
-
-  // Journal
-  for (const entry of journal) {
-    if (entry.techniques) {
-      for (const t of entry.techniques) {
-        addTechUse(t, 60, entry.createdAt || new Date().toISOString());
-      }
-    }
+  let longest = 1;
+  let run = 1;
+  for (let i = 1; i < days.length; i++) {
+    run = gap(days[i - 1], days[i]) === 1 ? run + 1 : 1;
+    longest = Math.max(longest, run);
   }
-
-  // Sparring
-  for (const s of sparring) {
-    if (s.techniqueId) {
-      addTechUse(s.techniqueId, s.score ?? 50, s.completedAt || new Date().toISOString());
-    }
-  }
-
-  // Feedback - track success/failure
-  for (const f of feedback) {
-    if (f.techniqueId) {
-      const success = f.outcome === 'worked' ? 100 : f.outcome === 'partially' ? 50 : 10;
-      addTechUse(f.techniqueId, success, f.createdAt || new Date().toISOString());
-    }
-  }
-
-  // Build TechniqueStat map
-  const techniquesUsed = new Map<string, TechniqueStat>();
-  for (const [id, data] of techMap) {
-    techniquesUsed.set(id, {
-      techniqueId: id,
-      techniqueName: getTechniqueName(id),
-      category: getTechniqueCategory(id),
-      timesUsed: data.uses,
-      avgSuccess: data.uses > 0 ? Math.round(data.successSum / data.uses) : 0,
-      lastUsed: data.lastUsed,
-    });
-  }
-
-  // Mastered: 3+ successful uses
-  const techniquesMastered = Array.from(techMap.entries())
-    .filter(([, data]) => data.uses >= 3 && data.successSum / data.uses >= 60)
-    .map(([id]) => id);
-
-  // Scenarios completed
-  const scenarioList = sparring.map((s: any) => s.scenarioId || s.id || 'unknown');
-  const scenariosCompleted = { count: sparring.length, list: scenarioList };
-
-  // Estimated practice time: ~5 min per mission, ~15 per journal, ~10 per sparring, ~5 per profile
-  const totalPracticeTime =
-    completedMissions.length * 5 +
-    journal.length * 15 +
-    sparring.length * 10 +
-    profiler.length * 5 +
-    stacks.length * 8;
-
-  // Streak data
-  const streakData = { current: streak, longest: Math.max(streak, safeParse<number>('shadow-longest-streak', 0)) };
-
-  // Category success rates
-  const categoryStats = new Map<string, { total: number; successSum: number }>();
-  for (const [, stat] of techniquesUsed) {
-    const existing = categoryStats.get(stat.category) || { total: 0, successSum: 0 };
-    existing.total += stat.timesUsed;
-    existing.successSum += stat.avgSuccess * stat.timesUsed;
-    categoryStats.set(stat.category, existing);
-  }
-
-  const categoryRates = Array.from(categoryStats.entries())
-    .map(([cat, data]) => ({ category: cat, rate: data.total > 0 ? data.successSum / data.total : 0 }))
-    .sort((a, b) => a.rate - b.rate);
-
-  const weakAreas = categoryRates.slice(0, 2).map((c) => c.category);
-  const strongAreas = categoryRates
-    .slice(-2)
-    .reverse()
-    .map((c) => c.category);
-
-  // Recent activity
-  const recentActivity: ActivityItem[] = [];
-
-  for (const m of completedMissions) {
-    recentActivity.push({
-      type: 'mission',
-      label: `Completed mission${m.techniqueId ? ': ' + getTechniqueName(m.techniqueId) : ''}`,
-      date: m.completedAt || new Date().toISOString(),
-      techniqueId: m.techniqueId,
-    });
-  }
-
-  for (const entry of journal) {
-    recentActivity.push({
-      type: 'journal',
-      label: 'Field report logged',
-      date: entry.createdAt || new Date().toISOString(),
-    });
-  }
-
-  for (const s of sparring) {
-    recentActivity.push({
-      type: 'sparring',
-      label: `Sparring session (${s.score ?? 0}/100)`,
-      date: s.completedAt || new Date().toISOString(),
-      techniqueId: s.techniqueId,
-    });
-  }
-
-  for (const p of profiler) {
-    recentActivity.push({
-      type: 'profiler',
-      label: 'Profile created',
-      date: p.createdAt || new Date().toISOString(),
-    });
-  }
-
-  for (const st of stacks) {
-    recentActivity.push({
-      type: 'stack',
-      label: 'Technique stack created',
-      date: st.createdAt || new Date().toISOString(),
-    });
-  }
-
-  for (const f of feedback) {
-    recentActivity.push({
-      type: 'feedback',
-      label: `Feedback: ${f.outcome} - ${f.type}`,
-      date: f.createdAt || new Date().toISOString(),
-    });
-  }
-
-  recentActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  return {
-    techniquesUsed,
-    techniquesMastered,
-    scenariosCompleted,
-    totalPracticeTime,
-    streakData,
-    weakAreas,
-    strongAreas,
-    recentActivity: recentActivity.slice(0, 20),
-  };
-}
-
-export function getTechniqueStats(): TechniqueStat[] {
-  const progress = getProgress();
-  return Array.from(progress.techniquesUsed.values());
-}
-
-export function getWeakAreas(): string[] {
-  return getProgress().weakAreas;
-}
-
-export function getStrongAreas(): string[] {
-  return getProgress().strongAreas;
-}
-
-export function getRecentActivity(): ActivityItem[] {
-  return getProgress().recentActivity;
+  return { current, longest: Math.max(longest, current) };
 }

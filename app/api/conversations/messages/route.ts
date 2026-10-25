@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
@@ -22,16 +22,16 @@ async function callerOwnsSession(sessionId: string, userId: string): Promise<boo
 // GET: Get all messages for a session (only if the caller owns the session)
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
-      return apiError('session_id is required.', 400);
+      return apiError('Which conversation is this?', 400);
     }
 
     if (!(await callerOwnsSession(sessionId, userId))) {
-      return apiError('Conversation not found.', 404, '[MESSAGES]');
+      return apiError('We could not find that conversation.', 404, '[MESSAGES]');
     }
 
     const { data: messages, error } = await supabase
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: true });
 
     if (error) {
-      return apiError('Failed to fetch messages.', 500, '[MESSAGES]', error);
+      return apiError('Could not load this conversation. Please try again.', 500, '[MESSAGES]', error);
     }
 
     return NextResponse.json({ messages: messages || [] });
@@ -55,15 +55,15 @@ export async function GET(req: NextRequest) {
 // POST: Save a message to a session (only if the caller owns the session)
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const { uid: userId } = await requireAppUser(req);
     const { session_id, role, content, metadata } = await req.json();
 
-    if (!session_id || !role || !content) {
-      return apiError('session_id, role, and content are required.', 400);
+    if (!session_id || (role !== 'user' && role !== 'assistant') || typeof content !== 'string' || !content.trim()) {
+      return apiError('Nothing to save.', 400);
     }
 
     if (!(await callerOwnsSession(session_id, userId))) {
-      return apiError('Conversation not found.', 404, '[MESSAGES]');
+      return apiError('We could not find that conversation.', 404, '[MESSAGES]');
     }
 
     const { data, error } = await supabase
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      return apiError('Failed to save message.', 500, '[MESSAGES]', error);
+      return apiError('Could not save that message. Please try again.', 500, '[MESSAGES]', error);
     }
 
     // Update session's updated_at timestamp

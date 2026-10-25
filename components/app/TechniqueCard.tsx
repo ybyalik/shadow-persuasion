@@ -1,59 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { Star } from 'lucide-react';
 
-export interface Technique {
-  id: string;
+/** One tactic in the Spot the Tactic library. */
+export type TacticSummary = {
+  slug: string;
   name: string;
-  category: string;
-  difficulty: number;
-  description?: string;
-}
-
-type SRStatus = 'not-started' | 'learning' | 'due' | 'mastered';
-
-interface TechniqueCardProps {
-  technique: Technique;
-  href?: string;
-  srStatus?: SRStatus;
-}
-
-const STATUS_COLORS: Record<SRStatus, string> = {
-  mastered: 'bg-green-400',
-  learning: 'bg-yellow-400',
-  due: 'bg-red-400',
-  'not-started': 'bg-gray-600',
+  looks_like: string;
+  chapter: number;
+  chapter_title: string;
 };
 
-const STATUS_LABELS: Record<SRStatus, string> = {
-  mastered: 'Mastered',
-  learning: 'Learning',
-  due: 'Due for review',
-  'not-started': 'Not started',
+const STATUS_STYLE: Record<string, string> = {
+  due: 'bg-[color:var(--app-gold)]/25 text-[color:var(--app-ink)]',
+  learning: 'bg-[color:var(--app-paper-2)] text-[color:var(--app-muted)]',
+  known: 'bg-[color:var(--app-sage)]/15 text-[color:var(--app-sage)]',
 };
 
-export function TechniqueCard({ technique, href, srStatus }: TechniqueCardProps) {
+export function TechniqueCard({ tactic, href, status, statusLabel }: { tactic: TacticSummary; href?: string; status?: string; statusLabel?: string }) {
   return (
-    <Link href={href || `/app/techniques/${technique.id}`} className="block p-5 bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#333333] transition-all hover:border-[#D4A017] hover:-translate-y-1">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono uppercase bg-[#D4A017]/20 text-[#D4A017] px-2 py-1 rounded-full">{technique.category}</span>
-          {srStatus && (
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${STATUS_COLORS[srStatus]} shrink-0`}
-              title={STATUS_LABELS[srStatus]}
-            />
-          )}
-        </div>
-         <div className="flex">
-            {[...Array(3)].map((_, i) => (
-                <Star key={i} className={`h-4 w-4 ${i < technique.difficulty ? 'text-[#D4A017] fill-current' : 'text-gray-600'}`} />
-            ))}
-        </div>
+    <Link
+      href={href || `/app/techniques/${tactic.slug}`}
+      className="block min-h-[44px] rounded-xl border border-[color:var(--app-line)] bg-[color:var(--app-card)] p-4 transition-colors hover:border-[color:var(--app-accent)]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="app-serif text-[20px] font-semibold leading-snug">{tactic.name}</h3>
+        {status && status !== 'new' && statusLabel && (
+          <span className={`app-type shrink-0 rounded-md px-2 py-1 text-[10px] uppercase tracking-wide ${STATUS_STYLE[status] ?? ''}`}>{statusLabel}</span>
+        )}
       </div>
-      <h3 className="text-lg font-bold mt-3">{technique.name}</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{technique.description}</p>
+      <p className="mt-1.5 line-clamp-2 text-[15px] leading-relaxed text-[color:var(--app-muted)]">{tactic.looks_like}</p>
     </Link>
   );
 }

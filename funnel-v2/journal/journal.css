@@ -1,0 +1,41 @@
+@font-face{font-family:'EB Garamond';src:url('../fonts/static/EBGaramond-Regular.ttf');font-weight:400;font-style:normal;}
+@font-face{font-family:'EB Garamond';src:url('../fonts/static/EBGaramond-Italic.ttf');font-weight:400;font-style:italic;}
+@font-face{font-family:'EB Garamond';src:url('../fonts/static/EBGaramond-SemiBold.ttf');font-weight:600;font-style:normal;}
+@font-face{font-family:'EB Garamond';src:url('../fonts/static/EBGaramond-Bold.ttf');font-weight:700;font-style:normal;}
+@font-face{font-family:'Inter';src:url('../fonts/static/Inter-Regular.ttf');font-weight:400;font-style:normal;}
+@font-face{font-family:'Inter';src:url('../fonts/static/Inter-SemiBold.ttf');font-weight:600;font-style:normal;}
+@page { size: Letter; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'EB Garamond', Georgia, serif; color: #1c1c1c; }
+.page { width: 8.5in; height: 11in; padding: 0.8in 0.85in; page-break-after: always; overflow: hidden; position: relative; }
+.cover, .week { background: #111; color: #f2efe8; display: flex; align-items: center; }
+.cover-in { width: 100%; }
+.cover h1 { font-size: 44px; line-height: 1.1; margin: 12px 0 18px; font-weight: normal; }
+.week h1 { font-size: 38px; font-weight: normal; margin: 0 0 14px; }
+.sub { font-size: 17px; line-height: 1.5; color: #cfc9bd; max-width: 5.5in; }
+.author { margin-top: 48px; letter-spacing: 3px; text-transform: uppercase; font-size: 13px; color: #a8a296; }
+.kicker { font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #8a6d3b; }
+.cover .kicker { color: #c9a96e; }
+h2 { font-size: 26px; font-weight: normal; margin: 6px 0 14px; }
+h3 { font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a6d3b; margin: 18px 0 4px; }
+h4 { font-size: 15px; font-weight: normal; font-style: italic; margin: 10px 0 2px; }
+p { font-size: 15px; line-height: 1.55; }
+.small { font-size: 13px; color: #555; }
+.drill { background: #f4f0e8; border-left: 3px solid #8a6d3b; padding: 10px 12px; font-size: 13.5px; line-height: 1.5; }
+.box { display: block; margin-top: 6px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; color: #555; }
+.line { border-bottom: 1px solid #c8c3b8; height: 24px; }
+.check { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #e3ded4; font-size: 14px; }
+.check .q { max-width: 4.2in; }
+.scale { font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; letter-spacing: 3px; color: #555; }
+.clause { font-size: 15px; margin-top: 14px; }
+.bleed { padding: 0; }
+.bleed img { width: 8.5in; height: 11in; object-fit: cover; display: block; }
+.titlepage { display: flex; align-items: center; text-align: center; }
+.titlepage h1 { font-size: 40px; font-weight: normal; margin: 14px 0 16px; }
+.titlepage .sub { margin: 0 auto; color: #555; }
+.titlepage .author { color: #8a6d3b; }
+.legal { display: flex; align-items: flex-end; }
+.legal p { font-size: 11px; line-height: 1.55; color: #444; }
+.cb { display: inline-block; width: 10px; height: 10px; border: 1px solid #8a8378; vertical-align: -1px; margin-right: 4px; }
+
+.folio { position: absolute; bottom: 0.42in; left: 0; right: 0; text-align: center; font: 10px 'Inter', Helvetica, Arial, sans-serif; letter-spacing: 0.1em; color: #8a8378; }

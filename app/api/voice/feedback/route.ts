@@ -1,106 +1,126 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth-api';
+import { createClient } from '@supabase/supabase-js';
+import { requireAppUser } from '@/lib/access';
+import { aiChat, MODELS } from '@/lib/ai';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { DEBRIEF_CHAPTERS, DEBRIEF_DEFAULT_CHAPTER, DEBRIEF_PROMPT } from '@/lib/prompts/rehearse';
+
+/**
+ * POST /api/voice/feedback  ("Rehearse It" debrief, for typed and voice practice)
+ * Body: { transcript: [{ role: 'user'|'assistant', text }], counterpart?, situation, goal, difficulty?, delivery? }
+ * -> { result: Debrief }
+ */
 
 export const maxDuration = 60;
 
-const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-const FEEDBACK_SYSTEM_PROMPT = `You are a sharp, supportive conversation coach. The user just finished a spoken role-play rehearsal for a real high-stakes conversation. You are given the transcript (their words and the other person's). Give them a short, useful debrief.
-
-Judge only from what was actually SAID. Look for: hedging and apologizing ("sorry", "just", "I was wondering if maybe"), filler words, caving too early, whether they held their goal/number, whether they asked for what they wanted clearly, and moments that landed well.
-
-Respond with ONLY valid JSON in exactly this shape:
-{
-  "score": <integer 0-100, overall how well they did>,
-  "headline": "<one plain-English sentence summarizing how it went>",
-  "wins": ["<specific thing they did well>", "..."],
-  "improvements": ["<specific, actionable thing to change next time>", "..."],
-  "languageFlags": [
-    { "quote": "<short phrase they actually said>", "issue": "<e.g. 'hedging', 'apologizing', 'undercut your ask'>", "betterVersion": "<a stronger way to say it>" }
-  ],
-  "nextTime": "<one crisp sentence: the single most important thing to do differently>"
-}
-
-Keep everything short and jargon-free. wins/improvements: 2-4 items each. languageFlags: 0-4 of the most useful. If the transcript is too short to judge, say so in headline and keep arrays small.`;
+type Debrief = {
+  headline: string;
+  didWell: string[];
+  gaveGround: { quote: string; what: string; tryInstead: string }[];
+  nextTime: string;
+  holdRating: number;
+  bookChapter?: number;
+  bookRef?: { chapter: number; title: string };
+};
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth(req);
+    const { uid } = await requireAppUser(req);
 
     const body = await req.json().catch(() => ({}));
-    const transcript: Array<{ role: string; text: string }> = Array.isArray(body?.transcript)
-      ? body.transcript
-      : [];
-    const situation = String(body?.situation || '').trim();
-    const goal = String(body?.goal || '').trim();
+    const transcript: Array<{ role: string; text: string }> = Array.isArray(body?.transcript) ? body.transcript : [];
+    const clip = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n);
+    const counterpart = clip(body?.counterpart, 200);
+    const situation = clip(body?.situation, 1500);
+    const goal = clip(body?.goal, 800);
+    const difficulty = clip(body?.difficulty, 20);
     const delivery = body?.delivery && typeof body.delivery === 'object' ? body.delivery : null;
 
-    const userTurns = transcript.filter((t) => t.role === 'user' && t.text?.trim()).length;
+    const userTurns = transcript.filter((t) => t?.role === 'user' && typeof t.text === 'string' && t.text.trim()).length;
     if (userTurns === 0) {
-      return NextResponse.json(
-        { error: 'There was nothing to review, it looks like you did not speak. Try again.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "There's nothing to review yet. Say at least one thing, then end the practice." }, { status: 400 });
     }
 
+    const them = counterpart || 'THEM';
     const convo = transcript
-      .map((t) => `${t.role === 'user' ? 'YOU' : 'THEM'}: ${t.text}`)
+      .filter((t) => typeof t?.text === 'string' && t.text.trim())
+      .map((t) => `${t.role === 'user' ? 'YOU' : them.toUpperCase()}: ${t.text.trim()}`)
       .join('\n')
-      .slice(0, 8000);
+      .slice(-9000);
 
     let deliveryLine = '';
     if (delivery) {
       const bits: string[] = [];
-      if (delivery.wpm) bits.push(`spoke at about ${delivery.wpm} words per minute`);
+      if (typeof delivery.wpm === 'number') bits.push(`spoke at about ${delivery.wpm} words per minute`);
       if (typeof delivery.talkRatioPct === 'number') bits.push(`talked ${delivery.talkRatioPct}% of the time`);
       if (typeof delivery.pauses === 'number') bits.push(`used ${delivery.pauses} clear pauses`);
-      if (typeof delivery.steadiness === 'string') bits.push(`voice sounded ${delivery.steadiness} (a shaky voice usually means nerves)`);
-      if (bits.length) deliveryLine = `\n\nDELIVERY (from the audio, factor this into your feedback: a fast pace often signals nerves; talking well over ~60% means not listening enough; too few pauses reads as rushed): the user ${bits.join(', ')}.`;
+      if (typeof delivery.steadiness === 'string') bits.push(`voice sounded ${delivery.steadiness}`);
+      if (bits.length)
+        deliveryLine = `\n\nFrom the audio (they practiced out loud): the user ${bits.join(', ')}. A fast pace or few pauses often means nerves; talking far more than the other person often means over-explaining.`;
     }
 
-    const context = `Situation: ${situation || 'not specified'}\nYour goal: ${goal || 'not specified'}${deliveryLine}\n\nTranscript:\n${convo}`;
+    const context = `Who they practiced with: ${counterpart || 'the other person'}
+What it was about: ${situation || 'not given'}
+What they wanted: ${goal || 'not given'}
+How hard the other person pushed: ${difficulty || 'realistic'}${deliveryLine}
 
-    const res = await fetch(OR_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-3.5-sonnet',
-        response_format: { type: 'json_object' },
-        temperature: 0.4,
-        max_tokens: 1200,
-        messages: [
-          { role: 'system', content: FEEDBACK_SYSTEM_PROMPT },
-          { role: 'user', content: context },
-        ],
-      }),
+Transcript:
+${convo}`;
+
+    const { data } = await aiChat<Debrief>({
+      userId: uid,
+      feature: 'spar:debrief',
+      model: MODELS.smart,
+      temperature: 0.4,
+      maxTokens: 1500,
+      json: true,
+      messages: [
+        { role: 'system', content: DEBRIEF_PROMPT },
+        { role: 'user', content: context },
+      ],
     });
 
-    if (!res.ok) {
-      console.error('[voice/feedback] LLM error', res.status);
-      return apiError('Could not build your debrief. Please try again.', 502);
+    if (!data || !data.headline) {
+      return apiError("I couldn't put your debrief together just now. Please try again.", 502, '[spar:debrief] bad AI output');
     }
 
-    const data = await res.json();
-    const raw = data.choices?.[0]?.message?.content || '';
-    let result;
-    try {
-      result = JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
-    } catch {
-      console.error('[voice/feedback] JSON parse failed');
-      return apiError('Could not build your debrief. Please try again.', 502);
-    }
+    const rating = Math.min(5, Math.max(1, Math.round(Number(data.holdRating) || 3)));
+    const chapter = DEBRIEF_CHAPTERS[Number(data.bookChapter)] ? Number(data.bookChapter) : DEBRIEF_DEFAULT_CHAPTER;
+    const result: Debrief = {
+      headline: data.headline,
+      didWell: Array.isArray(data.didWell) ? data.didWell.slice(0, 3) : [],
+      gaveGround: Array.isArray(data.gaveGround) ? data.gaveGround.slice(0, 3) : [],
+      nextTime: data.nextTime || '',
+      holdRating: rating,
+      bookRef: { chapter, title: DEBRIEF_CHAPTERS[chapter] },
+    };
+
+    // Count it on My Progress. A failed save must not cost the person their debrief.
+    const { error: saveError } = await db.from('practice_results').insert({
+      user_id: uid,
+      type: 'rehearsal',
+      reference_id: null,
+      score: rating,
+      xp_earned: 0,
+      techniques_used: [],
+      feedback: {
+        heldGround: rating >= 4,
+        rating,
+        difficulty: difficulty || 'realistic',
+        mode: delivery ? 'voice' : 'text',
+        counterpart: counterpart || null,
+        headline: result.headline,
+        bookChapter: chapter,
+      },
+    });
+    if (saveError) console.error('[spar:debrief] practice_results insert failed', saveError);
 
     return NextResponse.json({ result });
   } catch (err) {
-    const authFail = passthroughAuthError(err);
-    if (authFail) return authFail;
-    console.error('[voice/feedback]', err);
-    return apiError('Something went wrong. Please try again.', 500);
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("I couldn't put your debrief together just now. Please try again.", 500, '[spar:debrief]', err);
   }
 }

@@ -1,201 +1,478 @@
 'use client';
 
-import { useState } from 'react';
-import { Swords, Loader2, ArrowLeft, Target } from 'lucide-react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, Bookmark, Check, Mic, Trash2, Wind } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { usePeople, PersonPicker } from '@/components/app/PersonPicker';
+import { PageHeader, Card, Label, Button, inputClass, Notice, BookRef, friendlyError } from '@/components/app/ui';
+import { BONUSES, CHAPTERS_V3, byEdition } from '@/lib/edition';
 
-type Prep = {
-  readTheRoom: string;
-  theirLikelyMoves: { move: string; counter: string }[];
-  yourThreeTactics: { name: string; how: string }[];
+type Plan = {
+  safety: string | null;
+  fairerGoal: string | null;
+  theirSide: { wants: string[]; need: string; meetItBy: string };
   openingLine: string;
-  walkInCard: { opener: string; tactics: string[]; oneLine: string };
+  threeMoves: { move: string; how: string }[];
+  pushback: { kind: string; theySay: string; youSay: string }[];
+  bottomLine: string;
+  wontDo: string;
+  ifItGoesBadly: string;
+  close: { goodEnding: string; lockIn: string; firstStep: string };
+  breathe: string;
 };
 
-export default function WarRoomPage() {
+type Inputs = { personId: string; counterpart: string; situation: string; goal: string; fear: string };
+
+type Saved = {
+  id: string;
+  person_id: string | null;
+  counterpart: string | null;
+  situation: string;
+  goal: string;
+  fear: string | null;
+  plan: Plan;
+  created_at: string;
+};
+
+/** Which chapter covers each kind of pushback (v2: Part Three; v3: Part II). See lib/edition.ts. */
+const PUSHBACK_CHAPTER: Record<string, { chapter: number; title: string }> = byEdition({
+  v2: {
+    guilt: { chapter: 11, title: 'Guilt and Obligation' },
+    'rewriting the past': { chapter: 12, title: 'Rewriting the Past' },
+    silence: { chapter: 13, title: 'Withdrawal' },
+    charm: { chapter: 14, title: 'Charm and Pressure' },
+    urgency: { chapter: 14, title: 'Charm and Pressure' },
+    anger: { chapter: 16, title: 'Intimidation' },
+  },
+  v3: {
+    guilt: { chapter: 7, title: CHAPTERS_V3[7] },
+    'rewriting the past': { chapter: 8, title: CHAPTERS_V3[8] },
+    silence: { chapter: 9, title: CHAPTERS_V3[9] },
+    charm: { chapter: 10, title: CHAPTERS_V3[10] },
+    urgency: { chapter: 10, title: CHAPTERS_V3[10] },
+    anger: { chapter: 11, title: CHAPTERS_V3[11] },
+  },
+});
+
+/** The book pointers on each part of the plan. */
+const PLAN_REFS = byEdition({
+  v2: {
+    theirSide: { chapter: 19, title: 'What People Really Want' },
+    opening: { chapter: 21, title: 'Being Heard Without a Fight' },
+    hold: { chapter: 10, title: 'Week 3, Hold' },
+    close: { chapter: 25, title: 'Making It Stick' },
+    planner: 'The Hard Conversation Planner (free bonus)',
+  },
+  v3: {
+    theirSide: { chapter: 12, title: CHAPTERS_V3[12] },
+    opening: { chapter: 17, title: CHAPTERS_V3[17] },
+    hold: { chapter: 34, title: CHAPTERS_V3[34] },
+    close: { chapter: 22, title: CHAPTERS_V3[22] },
+    planner: `${BONUSES.planner} (comes with the book)`,
+  },
+});
+
+const EMPTY: Inputs = { personId: '', counterpart: '', situation: '', goal: '', fear: '' };
+
+export default function PlanConversationPage() {
+  return (
+    <Suspense fallback={null}>
+      <PlanConversation />
+    </Suspense>
+  );
+}
+
+function PlanConversation() {
   const people = usePeople();
-  const [personId, setPersonId] = useState('');
-  const [counterpart, setCounterpart] = useState('');
-  const [situation, setSituation] = useState('');
-  const [goal, setGoal] = useState('');
+  const params = useSearchParams();
+  // Goals and My People link here with ?who=&situation=&goal=&person= to prefill the form.
+  const [form, setForm] = useState<Inputs>(() => ({
+    ...EMPTY,
+    personId: params.get('person') || '',
+    counterpart: params.get('who') || '',
+    situation: params.get('situation') || '',
+    goal: params.get('goal') || '',
+  }));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [prep, setPrep] = useState<Prep | null>(null);
-  const [primer, setPrimer] = useState<{ reframe: string; grounding: string; powerAnchor: string; mantra: string } | null>(null);
-  const [primerLoading, setPrimerLoading] = useState(false);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [planInputs, setPlanInputs] = useState<Inputs | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<Saved[]>([]);
 
-  const getPrimer = async () => {
-    if (primerLoading) return;
-    setPrimerLoading(true);
+  const set = (k: keyof Inputs) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const loadSaved = useCallback(async () => {
     try {
-      const res = await apiFetch('/api/primer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ situation, goal, counterpart }),
-      });
+      const res = await apiFetch('/api/warroom/plans');
+      if (!res.ok) return;
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.result) setPrimer(data.result);
+      if (Array.isArray(data.plans)) setSaved(data.plans);
     } catch {
-      // non-critical
-    } finally {
-      setPrimerLoading(false);
+      // the saved list is optional
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Load the saved list once on open. It only fills in extra information.
+    loadSaved();
+  }, [loadSaved]);
 
   const generate = async () => {
-    if (!situation.trim() || !goal.trim() || loading) return;
+    if (!form.situation.trim() || !form.goal.trim() || loading) return;
     setLoading(true);
     setError(null);
-    setPrep(null);
-    setPrimer(null);
     try {
       const res = await apiFetch('/api/warroom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ counterpart, situation, goal, personId }),
+        body: JSON.stringify(form),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data?.error || 'Something went wrong. Please try again.'); return; }
-      setPrep(data.result);
+      if (!res.ok) {
+        setError(await friendlyError(res, "I couldn't put your plan together just now. Please try again."));
+        return;
+      }
+      const data = await res.json();
+      const inputs = { ...form, counterpart: form.counterpart || data.result?.counterpart || '' };
+      setPlan(data.result);
+      setPlanInputs(inputs);
+      setSavedId(null);
+      window.scrollTo({ top: 0 });
     } catch {
-      setError('Could not reach the server. Please try again.');
+      setError('Could not reach the app. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (prep) {
+  const save = async () => {
+    if (!plan || !planInputs || saving || savedId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await apiFetch('/api/warroom/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...planInputs, plan }),
+      });
+      if (!res.ok) {
+        setError(await friendlyError(res, "Couldn't save your plan. Please try again."));
+        return;
+      }
+      const data = await res.json();
+      setSavedId(data.plan?.id ?? 'saved');
+      loadSaved();
+    } catch {
+      setError('Could not reach the app. Check your connection and try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!window.confirm('Remove this saved plan?')) return;
+    const res = await apiFetch(`/api/warroom/plans?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => null);
+    if (res?.ok) setSaved((s) => s.filter((p) => p.id !== id));
+    else setError("Couldn't remove that plan. Please try again.");
+  };
+
+  const openSaved = (s: Saved) => {
+    setPlan(s.plan);
+    setPlanInputs({
+      personId: s.person_id || '',
+      counterpart: s.counterpart || '',
+      situation: s.situation,
+      goal: s.goal,
+      fear: s.fear || '',
+    });
+    setSavedId(s.id);
+    setError(null);
+    window.scrollTo({ top: 0 });
+  };
+
+  const rehearseHref = (i: Inputs) => {
+    const q = new URLSearchParams();
+    if (i.counterpart) q.set('who', i.counterpart);
+    if (i.situation) q.set('situation', i.situation);
+    if (i.goal) q.set('goal', i.goal);
+    if (i.personId) q.set('person', i.personId);
+    return `/app/spar?${q.toString()}`;
+  };
+
+  // ---------- THE PLAN ----------
+  if (plan && planInputs) {
+    const who = planInputs.counterpart || 'them';
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <button onClick={() => setPrep(null)} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#D4A017] mb-4">
-          <ArrowLeft className="h-4 w-4" /> New prep
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <button
+          onClick={() => setPlan(null)}
+          className="mb-4 inline-flex min-h-[44px] items-center gap-1 text-[15px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
         </button>
 
-        {/* Walk-in card */}
-        <div className="rounded-2xl border-2 border-[#D4A017] bg-[#D4A017]/5 p-5 mb-6">
-          <div className="flex items-center gap-2 text-[#D4A017] mb-3">
-            <Target className="h-4 w-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Walk-in card — glance before you go in</span>
+        <PageHeader
+          kicker="Your plan"
+          title={planInputs.counterpart ? `Talking with ${planInputs.counterpart}` : 'Your conversation plan'}
+          subtitle={planInputs.situation}
+        />
+
+        <div className="space-y-4">
+          {plan.safety && <Notice tone="warn">{plan.safety}</Notice>}
+          {plan.fairerGoal && <Notice>{plan.fairerGoal}</Notice>}
+          {error && <Notice tone="error">{error}</Notice>}
+
+          <Card tone="night">
+            <p className="app-type mb-2 text-[11px] uppercase tracking-[0.18em] text-[color:var(--app-gold)]">Read this just before you start</p>
+            <p className="app-serif text-[22px] leading-snug">&ldquo;{plan.openingLine}&rdquo;</p>
+            <p className="mt-4 text-[15px] leading-relaxed opacity-90">
+              <span className="font-semibold">Your bottom line:</span> {plan.bottomLine}
+            </p>
+            <p className="mt-1 text-[15px] leading-relaxed opacity-90">
+              <span className="font-semibold">You won&apos;t:</span> {plan.wontDo}
+            </p>
+            <p className="mt-4 flex items-start gap-2 text-[15px] leading-relaxed opacity-90">
+              <Wind className="mt-0.5 h-4 w-4 shrink-0" /> {plan.breathe}
+            </p>
+          </Card>
+
+          <div className="flex flex-wrap gap-3">
+            <Button href={rehearseHref(planInputs)} variant="gold">
+              <Mic className="h-4 w-4" /> Rehearse this
+            </Button>
+            <Button variant="ghost" onClick={save} loading={saving} disabled={Boolean(savedId)}>
+              {savedId ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+              {savedId ? 'Saved' : 'Save this plan'}
+            </Button>
           </div>
-          <p className="text-lg font-semibold text-gray-900 dark:text-[#F4ECD8] mb-3">&ldquo;{prep.walkInCard.opener}&rdquo;</p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {prep.walkInCard.tactics.map((t, i) => (
-              <span key={i} className="rounded-full bg-[#D4A017] px-3 py-1 text-xs font-semibold text-[#0A0A0A]">{t}</span>
-            ))}
+
+          <Card>
+            <Label>What&apos;s going on for them</Label>
+            <ul className="space-y-1.5 text-[16px] leading-relaxed">
+              {plan.theirSide?.wants?.map((w, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-[color:var(--app-muted)]">&bull;</span>
+                  {w}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[16px] leading-relaxed">
+              <span className="font-semibold">Underneath:</span> {plan.theirSide?.need}
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed text-[color:var(--app-muted)]">
+              <span className="font-semibold text-[color:var(--app-ink)]">Meet it without giving in:</span> {plan.theirSide?.meetItBy}
+            </p>
+            <div className="mt-4">
+              <BookRef chapter={PLAN_REFS.theirSide.chapter} title={PLAN_REFS.theirSide.title} />
+            </div>
+          </Card>
+
+          <Card>
+            <Label>Your opening line</Label>
+            <p className="app-serif text-[20px] leading-snug">&ldquo;{plan.openingLine}&rdquo;</p>
+            <p className="mt-2 text-[15px] text-[color:var(--app-muted)]">Say it, then stop. No &ldquo;sorry to bring this up.&rdquo;</p>
+          </Card>
+
+          <Card>
+            <Label>Three moves</Label>
+            <ol className="space-y-3">
+              {plan.threeMoves?.map((m, i) => (
+                <li key={i} className="text-[16px] leading-relaxed">
+                  <span className="font-semibold">
+                    {i + 1}. {m.move}.
+                  </span>{' '}
+                  {m.how}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-4">
+              <BookRef chapter={PLAN_REFS.opening.chapter} title={PLAN_REFS.opening.title} />
+            </div>
+          </Card>
+
+          <Card>
+            <Label>If they push back</Label>
+            <p className="mb-4 text-[15px] text-[color:var(--app-muted)]">Acknowledge, then hold. If they keep pushing, say the same calm line again.</p>
+            <div className="space-y-4">
+              {plan.pushback?.map((p, i) => {
+                const ref = PUSHBACK_CHAPTER[p.kind?.toLowerCase()];
+                return (
+                  <div key={i} className="border-t border-[color:var(--app-line)] pt-4 first:border-t-0 first:pt-0">
+                    <p className="app-type text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-accent)]">
+                      {p.kind}
+                      {ref ? <span className="text-[color:var(--app-muted)]"> &middot; Chapter {ref.chapter}</span> : null}
+                    </p>
+                    <p className="mt-1 text-[15px] italic text-[color:var(--app-muted)]">
+                      {who.charAt(0).toUpperCase() + who.slice(1)}: &ldquo;{p.theySay}&rdquo;
+                    </p>
+                    <p className="mt-1 text-[16px] leading-relaxed">
+                      <span className="font-semibold">You:</span> &ldquo;{p.youSay}&rdquo;
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4">
+              <BookRef chapter={PLAN_REFS.hold.chapter} title={PLAN_REFS.hold.title} />
+            </div>
+          </Card>
+
+          <Card>
+            <Label>Your line you won&apos;t cross</Label>
+            <p className="text-[16px] leading-relaxed">
+              <span className="font-semibold">Bottom line:</span> {plan.bottomLine}
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed">
+              <span className="font-semibold">The one thing you won&apos;t do:</span> {plan.wontDo}
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed">
+              <span className="font-semibold">If it goes badly, say:</span> &ldquo;{plan.ifItGoesBadly}&rdquo;
+            </p>
+            <p className="mt-2 text-[15px] text-[color:var(--app-muted)]">Leaving a conversation isn&apos;t losing it.</p>
+          </Card>
+
+          <Card>
+            <Label>How to close and make it stick</Label>
+            <p className="text-[16px] leading-relaxed">
+              <span className="font-semibold">If it goes well:</span> &ldquo;{plan.close?.goodEnding}&rdquo;
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed">
+              <span className="font-semibold">Before you leave:</span> {plan.close?.firstStep}
+            </p>
+            <p className="mt-3 text-[15px] font-semibold">Send this the same day:</p>
+            <p className="mt-1 rounded-lg bg-[color:var(--app-paper-2)] px-4 py-3 text-[15px] leading-relaxed">{plan.close?.lockIn}</p>
+            <div className="mt-4">
+              <BookRef chapter={PLAN_REFS.close.chapter} title={PLAN_REFS.close.title} />
+            </div>
+          </Card>
+
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Button href={rehearseHref(planInputs)} variant="gold">
+              <Mic className="h-4 w-4" /> Rehearse this
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setPlan(null);
+                setForm(EMPTY);
+              }}
+            >
+              Plan another conversation
+            </Button>
           </div>
-          <p className="text-sm italic text-gray-700 dark:text-gray-300">{prep.walkInCard.oneLine}</p>
         </div>
-
-        {/* Nerves primer */}
-        {!primer ? (
-          <button
-            onClick={getPrimer}
-            disabled={primerLoading}
-            className="mb-6 inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-[#333] px-4 py-2 text-sm text-gray-700 dark:text-gray-300 disabled:opacity-50"
-          >
-            {primerLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {primerLoading ? 'One sec…' : 'Nervous? Steady your nerves before you go in'}
-          </button>
-        ) : (
-          <div className="mb-6 rounded-xl border border-blue-400/40 bg-blue-500/5 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 mb-2">Steady your nerves</p>
-            <p className="text-gray-800 dark:text-[#E8E8E0] mb-2">{primer.reframe}</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300"><span className="font-medium">Right now:</span> {primer.grounding}</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1"><span className="font-medium">Your footing:</span> {primer.powerAnchor}</p>
-            <p className="mt-3 font-semibold text-gray-900 dark:text-[#F4ECD8]">&ldquo;{primer.mantra}&rdquo;</p>
-          </div>
-        )}
-
-        <Block title="Read the room"><p className="text-gray-800 dark:text-[#E8E8E0]">{prep.readTheRoom}</p></Block>
-
-        <Block title="Your opening line">
-          <p className="text-gray-900 dark:text-[#F4ECD8] font-medium">&ldquo;{prep.openingLine}&rdquo;</p>
-        </Block>
-
-        <Block title="Your 3 tactics">
-          <div className="space-y-3">
-            {prep.yourThreeTactics.map((t, i) => (
-              <div key={i}>
-                <p className="font-semibold text-gray-900 dark:text-[#F4ECD8]">{i + 1}. {t.name}</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{t.how}</p>
-              </div>
-            ))}
-          </div>
-        </Block>
-
-        <Block title="When they push back">
-          <div className="space-y-3">
-            {prep.theirLikelyMoves.map((m, i) => (
-              <div key={i} className="text-sm">
-                <p className="text-gray-500 dark:text-gray-400">They: {m.move}</p>
-                <p className="text-gray-900 dark:text-[#F4ECD8]">You: {m.counter}</p>
-              </div>
-            ))}
-          </div>
-        </Block>
       </div>
     );
   }
 
+  // ---------- THE FORM ----------
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-2">
-        <Swords className="h-7 w-7 text-[#D4A017]" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-[#F4ECD8]">War Room</h1>
-      </div>
-      <p className="text-gray-600 dark:text-gray-400 mb-6">
-        Got a big conversation coming up? Tell me about it and I&apos;ll build your game plan plus a walk-in card you
-        can glance at 60 seconds before you go in.
-      </p>
-
-      {error && (
-        <div className="mb-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-400">{error}</div>
-      )}
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <PageHeader
+        kicker="Get ready"
+        title="Plan a Conversation"
+        subtitle="A hard talk coming up? Answer four quick questions. You'll get an opening line, calm answers for the pushback you're dreading, and a way to make it stick."
+      />
 
       <div className="space-y-4">
-        <PersonPicker people={people} value={personId} onChange={setPersonId} />
-        {!personId && (
-          <F label="Who are you talking to?" placeholder="e.g. My landlord" value={counterpart} onChange={setCounterpart} />
-        )}
-        <F label="What's the conversation?" placeholder="e.g. Pushing back on a 12% rent increase" value={situation} onChange={setSituation} textarea />
-        <F label="What do you want to walk away with?" placeholder="e.g. No more than 4%, or a longer lease" value={goal} onChange={setGoal} />
-      </div>
+        {error && <Notice tone="error">{error}</Notice>}
 
-      <button
-        onClick={generate}
-        disabled={loading || !situation.trim() || !goal.trim()}
-        className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#D4A017] px-6 py-3 font-semibold text-[#0A0A0A] disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-        {loading ? 'Building your prep…' : 'Build my game plan'}
-      </button>
+        <Card>
+          <div className="space-y-5">
+            <PersonPicker people={people} value={form.personId} onChange={set('personId')} />
+            {!form.personId && (
+              <Field label="Who is it with?" placeholder="e.g. My sister, my manager, my landlord" value={form.counterpart} onChange={set('counterpart')} />
+            )}
+            <Field
+              label="What is it about?"
+              placeholder="e.g. She expects me to host Thanksgiving again. I've done it five years running."
+              value={form.situation}
+              onChange={set('situation')}
+              textarea
+            />
+            <Field
+              label="What do you want to walk away with?"
+              placeholder="e.g. She hosts this year, or we split it"
+              value={form.goal}
+              onChange={set('goal')}
+            />
+            <Field
+              label="What are you afraid they'll say? (optional)"
+              placeholder="e.g. &quot;Mom would be so disappointed.&quot;"
+              value={form.fear}
+              onChange={set('fear')}
+            />
+          </div>
+          <div className="mt-6">
+            <Button onClick={generate} loading={loading} disabled={!form.situation.trim() || !form.goal.trim()}>
+              {loading ? 'Building your plan...' : 'Build my plan'}
+            </Button>
+            {loading && <p className="mt-2 text-[14px] text-[color:var(--app-muted)]">This takes about 20 seconds.</p>}
+          </div>
+        </Card>
+
+        <p className="text-[14px] text-[color:var(--app-muted)]">
+          If you feel unsafe with this person, a plan isn&apos;t the right tool. Reach out to people you trust, or call the National Domestic
+          Violence Hotline at 1-800-799-7233 (text START to 88788).
+        </p>
+
+        {saved.length > 0 && (
+          <div className="pt-4">
+            <Label>Your saved plans</Label>
+            <div className="space-y-2">
+              {saved.map((s) => (
+                <div key={s.id} className="flex items-stretch gap-2">
+                  <button
+                    onClick={() => openSaved(s)}
+                    className="min-h-[44px] flex-1 rounded-lg border border-[color:var(--app-line)] bg-[color:var(--app-card)] px-4 py-3 text-left hover:bg-[color:var(--app-paper-2)]"
+                  >
+                    <p className="text-[15px] font-semibold">{s.counterpart || 'Conversation'}</p>
+                    <p className="line-clamp-1 text-[14px] text-[color:var(--app-muted)]">{s.situation}</p>
+                  </button>
+                  <button
+                    onClick={() => remove(s.id)}
+                    aria-label="Remove saved plan"
+                    className="flex min-w-[44px] items-center justify-center rounded-lg border border-[color:var(--app-line)] text-[color:var(--app-muted)] hover:text-[color:var(--app-oxblood)]"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-2">
+          <BookRef title={PLAN_REFS.planner} />
+        </div>
+      </div>
     </div>
   );
 }
 
-function F({ label, placeholder, value, onChange, textarea }: {
-  label: string; placeholder: string; value: string; onChange: (v: string) => void; textarea?: boolean;
+function Field({
+  label,
+  placeholder,
+  value,
+  onChange,
+  textarea,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  textarea?: boolean;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+    <label className="block">
+      <span className="mb-1.5 block text-[15px] font-semibold">{label}</span>
       {textarea ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2}
-          className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#1A1A1A] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]" />
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={3} className={inputClass} />
       ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#1A1A1A] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]" />
+        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputClass} />
       )}
-    </div>
-  );
-}
-
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1A1A1A] p-4 mb-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{title}</h2>
-      {children}
-    </div>
+    </label>
   );
 }

@@ -1,502 +1,317 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { ChatInput } from '@/components/app/ChatInput';
-import { ChatMessage } from '@/components/app/ChatMessage';
-import { Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Users } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { MessageCircle, Plus, Trash2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
+import { ChatInput } from '@/components/app/ChatInput';
+import { ChatMessage, type ChatSource } from '@/components/app/ChatMessage';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError } from '@/components/app/ui';
 
-interface Goal {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    color: string;
-    examples: string[];
+type Msg = { id: string; role: 'user' | 'assistant'; content: string; sources?: ChatSource[] };
+
+const MARK = '<!--SOURCES:';
+
+/** Splits the streamed text into the reply and the chapters it drew on. */
+function splitSources(raw: string): { text: string; sources?: ChatSource[] } {
+  const at = raw.indexOf(MARK);
+  if (at === -1) {
+    // Hide a marker that has only partly arrived.
+    const partial = raw.lastIndexOf('<!');
+    return { text: partial > -1 && raw.length - partial < MARK.length ? raw.slice(0, partial).trimEnd() : raw };
+  }
+  const text = raw.slice(0, at).trimEnd();
+  const end = raw.indexOf('-->', at);
+  if (end === -1) return { text };
+  try {
+    return { text, sources: JSON.parse(raw.slice(at + MARK.length, end)) };
+  } catch {
+    return { text };
+  }
 }
 
-interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    sources?: any[];
-    imagePreview?: string;
-}
+export const THREE_AM_STARTER =
+  "There's a conversation I keep replaying in my head. Can you walk me through it, one question at a time?";
 
-interface StrategicChatProps {
-    goal: Goal;
-    onBack: () => void;
-    resumeSessionId?: string;
-    initialMessages?: Message[];
-}
+/**
+ * The calm coach. Used by Talk It Through (/app/chat) and, with personId, as
+ * the "talk about [name]" chat on a person's page.
+ */
+export function CoachChat({
+  sessionId: initialSessionId,
+  personId,
+  personName,
+  starters,
+  onSessionCreated,
+  compact,
+}: {
+  sessionId?: string | null;
+  personId?: string;
+  personName?: string;
+  starters?: { label: string; text: string }[];
+  onSessionCreated?: (id: string) => void;
+  compact?: boolean;
+}) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
+  const [busy, setBusy] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(!!initialSessionId);
+  const [error, setError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
-interface PersonProfile {
-    id: string;
-    name: string;
-    relationshipType?: string;
-    traits?: {
-        communication?: { sensoryPreference?: string; emotionalPattern?: string; receptivity?: number; summary?: string };
-        triggers?: { defensive?: string[] };
-        _lastAnalysis?: { threat_score?: number; power_dynamics?: any; detected_tactics?: any[]; techniques_identified?: string[] };
-    };
-    keyTraitTags?: string[];
-    notes?: string;
-}
-
-export function StrategicChat({ goal, onBack, resumeSessionId, initialMessages }: StrategicChatProps) {
-    const { user } = useAuth();
-    const [messages, setMessages] = useState<Message[]>(initialMessages || []);
-    const [isLoading, setIsLoading] = useState(false);
-    const [activeSessionId, setActiveSessionId] = useState<string | null>(resumeSessionId || null);
-    const [tacticalGuidance, setTacticalGuidance] = useState<any>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    // People integration state
-    const [peopleProfiles, setPeopleProfiles] = useState<PersonProfile[]>([]);
-    const [selectedPerson, setSelectedPerson] = useState<PersonProfile | null>(null);
-    const [loadingPeople, setLoadingPeople] = useState(false);
-
-    const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
-        const token = await user?.getIdToken();
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    }, [user]);
-
-    // Fetch people profiles on mount
-    useEffect(() => {
-        const fetchPeople = async () => {
-            setLoadingPeople(true);
-            try {
-                const headers = await getHeaders();
-                const res = await fetch('/api/profiler/people', { headers });
-                if (res.ok) {
-                    const data = await res.json();
-                    setPeopleProfiles(data.profiles || []);
-                }
-            } catch (e) {
-                console.error('Failed to load people profiles:', e);
-            } finally {
-                setLoadingPeople(false);
-            }
-        };
-        fetchPeople();
-    }, [getHeaders]);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    // Initialize conversation with goal-specific introduction (only for NEW sessions)
-    useEffect(() => {
-        if (initialMessages && initialMessages.length > 0) return; // Skip init for resumed sessions
-        const initMessage: Message = {
-            id: 'init',
-            role: 'assistant',
-            content: `I'm your Strategic Communication Coach, focused on: **${goal.title}**\n\nI'll provide specific tactics, exact scripts, and real-time guidance to help you achieve your objective.\n\n**To get started, describe your specific situation:**\n\n• Who are you dealing with?\n• What's the context?\n• What outcome do you want?\n• What challenges are you facing?\n\nThe more specific you are, the more targeted my tactical guidance will be.`
-        };
-        setMessages([initMessage]);
-    }, [goal]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const handleSend = async (input: string, image?: { file: File; preview: string; base64: string }) => {
-        // If image is attached, add a description for the AI
-        let enrichedInput = input;
-        if (image) {
-            enrichedInput = `[User attached an image]\n${input || 'Please analyze this image and provide strategic guidance.'}`;
+  useEffect(() => {
+    if (!initialSessionId || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/conversations/messages?session_id=${encodeURIComponent(initialSessionId)}`);
+        if (!res.ok) {
+          if (!cancelled) setError(await friendlyError(res, 'We could not open this conversation.'));
+          return;
         }
-
-        // If a person is selected, prepend their profile context
-        if (selectedPerson) {
-            const comm = selectedPerson.traits?.communication;
-            const analysis = selectedPerson.traits?._lastAnalysis;
-            const triggers = selectedPerson.traits?.triggers?.defensive;
-            const traitTags = selectedPerson.keyTraitTags?.join(', ');
-
-            let profileContext = `[Context: I'm dealing with ${selectedPerson.name}`;
-            if (selectedPerson.relationshipType) profileContext += ` (${selectedPerson.relationshipType})`;
-            profileContext += '.';
-
-            if (comm) {
-                if (comm.emotionalPattern) profileContext += ` Emotional pattern: ${comm.emotionalPattern}.`;
-                if (comm.sensoryPreference) profileContext += ` Communication preference: ${comm.sensoryPreference}.`;
-                if (comm.receptivity) profileContext += ` Receptivity to influence: ${comm.receptivity}%.`;
-                if (comm.summary) profileContext += ` Summary: ${comm.summary}`;
-            }
-            if (triggers?.length) profileContext += ` Defensive triggers: ${triggers.join(', ')}.`;
-            if (traitTags) profileContext += ` Key traits: ${traitTags}.`;
-            if (analysis) {
-                if (analysis.threat_score != null) profileContext += ` Threat score: ${analysis.threat_score}/10.`;
-                if (analysis.power_dynamics) profileContext += ` Power dynamics: You ${analysis.power_dynamics.yourPower ?? '?'}/10, Them ${analysis.power_dynamics.theirPower ?? '?'}/10.`;
-                if (analysis.techniques_identified?.length) profileContext += ` Known techniques they use: ${analysis.techniques_identified.join(', ')}.`;
-            }
-            if (selectedPerson.notes) profileContext += ` Notes: ${selectedPerson.notes}`;
-            profileContext += ']\n\n';
-
-            enrichedInput = profileContext + enrichedInput;
-        }
-
-        const userMessage: Message = { id: Date.now().toString(), role: 'user', content: enrichedInput };
-        // Show the original input + image preview in the UI
-        const displayContent = image ? `📷 ${input || '(image attached)'}` : input;
-        const displayMessage: Message = { id: Date.now().toString(), role: 'user', content: displayContent, imagePreview: image?.preview };
-        setMessages(prev => [...prev, displayMessage]);
-        setIsLoading(true);
-
-        try {
-            // If image is attached, first extract text via vision API
-            let imageContext = '';
-            if (image?.base64) {
-                try {
-                    const extractRes = await fetch('/api/user/voice-profile/extract', {
-                        method: 'POST',
-                        body: (() => { const fd = new FormData(); fd.append('image', image.file); return fd; })(),
-                    });
-                    if (extractRes.ok) {
-                        const extractData = await extractRes.json();
-                        if (extractData.extractedText) {
-                            imageContext = `\n[Extracted text from the attached image: "${extractData.extractedText}"]\n`;
-                            userMessage.content = enrichedInput + imageContext;
-                        }
-                    }
-                } catch {}
-            }
-
-            const response = await fetch('/api/strategic-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [...messages, userMessage],
-                    goal: goal.id,
-                    goalTitle: goal.title,
-                    session_id: activeSessionId || undefined,
-                }),
-            });
-
-            // Track session id from response
-            const returnedSessionId = response.headers.get('X-Session-Id');
-            if (returnedSessionId && !activeSessionId) {
-                setActiveSessionId(returnedSessionId);
-            }
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            if (!response.body) {
-                throw new Error('No response body');
-            }
-            
-            setMessages(prev => [...prev, { id: 'assistant-placeholder', role: 'assistant', content: '' }]);
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            let done = false;
-            let buffer = '';
-            let fullContent = '';
-            
-            while (!done) {
-                const { value, done: readerDone } = await reader.read();
-                done = readerDone;
-                
-                if (value) {
-                    const chunk = decoder.decode(value, { stream: true });
-                    buffer += chunk;
-                    
-                    // Process complete lines
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || ''; // Keep incomplete line in buffer
-                    
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (!trimmed) continue;
-
-                        // Skip SSE comments (lines starting with :)
-                        if (trimmed.startsWith(':')) continue;
-
-                        // Handle server-sent events format
-                        if (trimmed.startsWith('data: ')) {
-                            const data = trimmed.slice(6);
-                            if (data === '[DONE]') continue;
-
-                            try {
-                                const json = JSON.parse(data);
-                                const content = json.choices?.[0]?.delta?.content || '';
-                                if (content) {
-                                    fullContent += content;
-                                }
-                            } catch (e) {
-                                // Skip non-JSON data — don't display raw SSE artifacts
-                            }
-                        } else if (!trimmed.includes('{"id":') && !trimmed.includes('"object":"chat.completion.chunk"')) {
-                            // Plain text content
-                            fullContent += trimmed + '\n';
-                        }
-                    }
-                    
-                    // Parse tactical guidance if present
-                    const guidanceMatch = fullContent.match(/<!--GUIDANCE:(.*?)-->/);
-                    if (guidanceMatch) {
-                        try {
-                            const guidance = JSON.parse(guidanceMatch[1]);
-                            setTacticalGuidance(guidance);
-                        } catch {}
-                    }
-                    
-                    // Strip guidance from displayed content
-                    const displayContent = fullContent.replace(/\n\n<!--GUIDANCE:.*?-->/, '');
-                    
-                    setMessages(prev => {
-                        const lastMessage = prev[prev.length - 1];
-                        if (lastMessage.role === 'assistant') {
-                            return [...prev.slice(0, -1), { ...lastMessage, content: displayContent }];
-                        }
-                        return prev;
-                    });
-                }
-            }
-            
-            // Save assistant message to DB from frontend (backend flush is unreliable)
-            if (activeSessionId && fullContent) {
-                const cleanContent = fullContent.replace(/<!--GUIDANCE:[\s\S]*?-->/, '').trim();
-                fetch('/api/conversations/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        session_id: activeSessionId,
-                        role: 'assistant',
-                        content: cleanContent,
-                    }),
-                }).catch(e => console.error('Failed to save assistant message:', e));
-            }
-
-        } catch (error) {
-            console.error('Strategic chat error:', error);
-            setMessages(prev => [...prev, {
-                id: 'error-' + Date.now(),
-                role: 'assistant',
-                content: 'Sorry, I encountered an error processing your request. Please try again.'
-            }]);
-        } finally {
-            setIsLoading(false);
-        }
+        const d = await res.json();
+        if (!cancelled)
+          setMessages(
+            (d.messages || [])
+              .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
+              .map((m: { id: string; role: 'user' | 'assistant'; content: string; metadata?: { sources?: ChatSource[] } }) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                sources: m.metadata?.sources,
+              }))
+          );
+      } catch {
+        if (!cancelled) setError('We could not open this conversation. Please check your connection.');
+      } finally {
+        if (!cancelled) setLoadingHistory(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
+  }, [initialSessionId, user]);
 
-    const progressScore = Math.min(100, Math.round((messages.filter(m => m.role === 'user').length / 8) * 100));
+  useEffect(() => {
+    if (messages.length) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages]);
 
-    return (
-        <div className="flex h-[calc(100vh-4rem)] gap-4 lg:gap-6">
-            {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
-                {/* Header */}
-                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-3 sm:p-4 mb-4 flex flex-wrap items-center gap-3 sm:gap-4">
-                    <button
-                        onClick={onBack}
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors"
-                    >
-                        <ArrowLeft className="h-5 w-5" />
-                    </button>
-                    
-                    <div className={`w-10 h-10 ${goal.color} rounded-lg flex items-center justify-center text-white`}>
-                        {goal.icon}
-                    </div>
-                    
-                    <div className="flex-1">
-                        <h2 className="font-mono uppercase text-[#D4A017] font-bold">
-                            {goal.title}
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{goal.description}</p>
-                    </div>
+  const send = useCallback(
+    async (text: string) => {
+      if (busy) return;
+      setError(null);
+      const userMsg: Msg = { id: `u${Date.now()}`, role: 'user', content: text };
+      const replyId = `a${Date.now()}`;
+      const history = [...messages, userMsg];
+      setMessages([...history, { id: replyId, role: 'assistant', content: '' }]);
+      setBusy(true);
+      try {
+        const res = await apiFetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: history.map((m) => ({ role: m.role, content: m.content })),
+            session_id: sessionId,
+            personId,
+          }),
+        });
+        if (!res.ok || !res.body) {
+          setError(await friendlyError(res, 'The coach could not answer just now. Please try again.'));
+          setMessages(history);
+          return;
+        }
+        const newId = res.headers.get('X-Session-Id');
+        if (newId && newId !== sessionId) {
+          setSessionId(newId);
+          onSessionCreated?.(newId);
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let raw = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          raw += decoder.decode(value, { stream: true });
+          const { text: shown, sources } = splitSources(raw);
+          setMessages((prev) => prev.map((m) => (m.id === replyId ? { ...m, content: shown, sources } : m)));
+        }
+      } catch {
+        setError('The connection dropped. Please try again.');
+        setMessages((prev) => prev.filter((m) => m.id !== replyId || m.content));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, messages, sessionId, personId, onSessionCreated]
+  );
 
-                    {progressScore > 0 && (
-                        <div className="text-right">
-                            <div className="text-lg font-bold text-green-400">{progressScore}%</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono uppercase">Progress</div>
-                        </div>
-                    )}
-                </div>
+  const empty = messages.length === 0 && !loadingHistory;
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg">
-                    {messages.map((msg) => (
-                        <div key={msg.id}>
-                            {msg.imagePreview && (
-                                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-1`}>
-                                    <img src={msg.imagePreview} alt="Attached" className="max-h-40 rounded-lg border border-gray-200 dark:border-[#333]" />
-                                </div>
-                            )}
-                            <ChatMessage role={msg.role} content={msg.content} sources={msg.sources} />
-                        </div>
-                    ))}
-                    {isLoading && messages[messages.length-1]?.role === 'user' && (
-                        <ChatMessage role="assistant" content="Analyzing your situation and preparing tactical guidance..." isLoading={true} />
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input */}
-                <div className="mt-4">
-                    <ChatInput 
-                        onSend={handleSend} 
-                        isLoading={isLoading} 
-                        placeholder="Describe your situation or ask for specific tactical guidance..."
-                    />
-                </div>
-            </div>
-
-            {/* Tactical Guidance Panel */}
-            <div className="hidden lg:block w-80 space-y-4">
-                {/* Live Guidance */}
-                {tacticalGuidance && (
-                    <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-4">
-                        <div className="flex items-center gap-2">
-                            <Target className="h-5 w-5 text-[#D4A017]" />
-                            <h3 className="font-mono uppercase text-[#D4A017] font-bold">Live Tactical Guidance</h3>
-                        </div>
-
-                        {tacticalGuidance.nextMove && (
-                            <div className="space-y-2">
-                                <h4 className="text-sm font-mono uppercase text-green-400">Recommended Next Move</h4>
-                                <div className="bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 border-green-400">
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">{tacticalGuidance.nextMove}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {tacticalGuidance.riskLevel && (
-                            <div className="space-y-2">
-                                <h4 className="text-sm font-mono uppercase text-yellow-400">Risk Assessment</h4>
-                                <div className={`bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded border-l-4 ${
-                                    tacticalGuidance.riskLevel === 'HIGH' ? 'border-red-400' :
-                                    tacticalGuidance.riskLevel === 'MEDIUM' ? 'border-yellow-400' : 'border-green-400'
-                                }`}>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">{tacticalGuidance.riskLevel} - {tacticalGuidance.riskExplanation}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {tacticalGuidance.techniques && (
-                            <div className="space-y-2">
-                                <h4 className="text-sm font-mono uppercase text-blue-400">Active Techniques</h4>
-                                <div className="flex flex-wrap gap-1">
-                                    {tacticalGuidance.techniques.map((technique: string, index: number) => (
-                                        <span key={index} className="text-xs bg-blue-400/10 text-blue-400 px-2 py-1 rounded">
-                                            {technique}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Goal Progress */}
-                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-[#D4A017]" />
-                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Session Progress</h3>
-                    </div>
-                    
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Goal Completion</span>
-                            <span className="font-bold">{progressScore}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-[#D4A017] transition-all duration-500"
-                                style={{ width: `${progressScore}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* People Profiles */}
-                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-[#D4A017]" />
-                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Person Context</h3>
-                    </div>
-
-                    <select
-                        value={selectedPerson?.id || ''}
-                        onChange={(e) => {
-                            const person = peopleProfiles.find(p => p.id === e.target.value) || null;
-                            setSelectedPerson(person);
-                        }}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#D4A017]"
-                    >
-                        <option value="">No person selected</option>
-                        {peopleProfiles.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
-
-                    {loadingPeople && (
-                        <p className="text-xs text-gray-500">Loading profiles...</p>
-                    )}
-
-                    {selectedPerson && (
-                        <div className="bg-gray-50 dark:bg-[#0A0A0A] rounded p-2 space-y-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                <span className="text-[#D4A017]">{selectedPerson.name}</span>
-                                {selectedPerson.relationshipType && ` - ${selectedPerson.relationshipType}`}
-                            </p>
-                            {selectedPerson.keyTraitTags && selectedPerson.keyTraitTags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedPerson.keyTraitTags.map((tag, i) => (
-                                        <span key={i} className="text-xs bg-[#D4A017]/10 text-[#D4A017] px-1.5 py-0.5 rounded">{tag}</span>
-                                    ))}
-                                </div>
-                            )}
-                            <p className="text-xs text-gray-500 italic">
-                                Their profile data will be included as context in your next message.
-                            </p>
-                        </div>
-                    )}
-
-                    {!loadingPeople && peopleProfiles.length === 0 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            No profiles yet.{' '}
-                            <Link href="/app/people" className="text-[#D4A017] hover:underline">
-                                Add people in the Profiler section &rarr;
-                            </Link>
-                        </p>
-                    )}
-                </div>
-
-                {/* Quick Tips */}
-                <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333] rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <Lightbulb className="h-5 w-5 text-[#D4A017]" />
-                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">Quick Tips</h3>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                        <p>• Be specific about your situation for better guidance</p>
-                        <p>• Ask for exact scripts when you need them</p>
-                        <p>• Describe the other person's behavior patterns</p>
-                        <p>• Share what tactics you've already tried</p>
-                    </div>
-                </div>
-
-                {/* Warnings */}
-                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-400" />
-                        <h3 className="font-mono uppercase text-red-400 font-bold">Important</h3>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-red-400">
-                        <p>• Use influence ethically and responsibly</p>
-                        <p>• Respect others' boundaries and autonomy</p>
-                        <p>• Focus on win-win outcomes when possible</p>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="flex flex-col gap-4">
+      {empty && starters && starters.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {starters.map((s) => (
+            <button
+              key={s.label}
+              onClick={() => send(s.text)}
+              className="min-h-[44px] rounded-xl border border-[color:var(--app-line)] bg-[color:var(--app-card)] px-4 py-3 text-left text-[15px] hover:bg-[color:var(--app-paper-2)]"
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
-    );
+      )}
+      {loadingHistory && <p className="text-[15px] text-[color:var(--app-muted)]">Opening your conversation...</p>}
+      {messages.length > 0 && (
+        <div className={`flex flex-col gap-3 ${compact ? 'max-h-[60vh] overflow-y-auto pr-1' : ''}`}>
+          {messages.map((m) => (
+            <ChatMessage key={m.id} role={m.role} content={m.content} sources={m.sources} isLoading={busy && m.role === 'assistant' && !m.content} />
+          ))}
+          <div ref={endRef} />
+        </div>
+      )}
+      {error && <Notice tone="error">{error}</Notice>}
+      <ChatInput
+        onSend={send}
+        isLoading={busy}
+        placeholder={personName ? `What's going on with ${personName}?` : messages.length ? 'Reply...' : 'Tell me what happened...'}
+      />
+    </div>
+  );
+}
+
+/** Kept so older imports still work. */
+export const StrategicChat = CoachChat;
+
+type Session = { id: string; title: string | null; session_type: string; updated_at: string; lastMessage: string | null };
+
+const STARTERS = [
+  { label: 'The conversation I keep replaying at 3 a.m.', text: THREE_AM_STARTER },
+  { label: 'Someone made me feel guilty and I gave in', text: 'Someone made me feel guilty and I gave in again. I want to understand what happened.' },
+  { label: "I'm being asked to do more than my share", text: "I keep being asked to do more than my share, and I don't know how to say no without a fight." },
+  { label: 'I want to ask for something I am owed', text: "There's something I'm owed (time, money, credit or respect) and I want to ask for it calmly." },
+];
+
+function when(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/** The full Talk It Through screen: past conversations plus the coach. */
+export function TalkItThroughView({ sessionId }: { sessionId?: string }) {
+  const { user } = useAuth();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [active, setActive] = useState<string | null>(sessionId || null);
+  const [chatKey, setChatKey] = useState(0);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/conversations');
+      if (!res.ok) return;
+      const d = await res.json();
+      setSessions((d.sessions || []).filter((s: Session) => s.session_type === 'coach' || s.session_type === 'general' || s.session_type === 'person'));
+    } catch {
+      /* the list is optional */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) void Promise.resolve().then(load);
+  }, [user, load]);
+
+  const startNew = () => {
+    setActive(null);
+    setChatKey((k) => k + 1);
+    if (typeof window !== 'undefined') window.history.replaceState(null, '', '/app/chat');
+  };
+
+  const remove = async (id: string) => {
+    if (!window.confirm('Delete this conversation? This cannot be undone.')) return;
+    const res = await apiFetch(`/api/conversations?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.ok) {
+      setSessions((s) => s.filter((x) => x.id !== id));
+      if (active === id) startNew();
+    }
+  };
+
+  return (
+    <div>
+      <PageHeader
+        kicker="Talk it through"
+        title="The conversation you keep replaying."
+        subtitle="Tell me what happened, in your own words. I'll ask one gentle question at a time, help you see what was going on, and find a calm thing you could say next time. Everything I suggest comes from the book."
+        right={
+          active ? (
+            <Button variant="ghost" onClick={startNew}>
+              <Plus className="h-4 w-4" /> New conversation
+            </Button>
+          ) : undefined
+        }
+      />
+      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+        <div className="min-w-0">
+          <CoachChat
+            key={chatKey}
+            sessionId={active}
+            starters={STARTERS}
+            onSessionCreated={(id) => {
+              setActive(id);
+              if (typeof window !== 'undefined') window.history.replaceState(null, '', `/app/chat/${id}`);
+              load();
+            }}
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <BookRef chapter={1} title="The 3 A.M. Replay" />
+          </div>
+          <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--app-muted)]">
+            This is a coach based on the book, not therapy. If you are ever in danger, call 911. US National Domestic Violence Hotline: 1-800-799-7233, or
+            text START to 88788.
+          </p>
+        </div>
+        <aside className="min-w-0">
+          <Card className="!p-4">
+            <Label>Your conversations</Label>
+            {sessions.length === 0 ? (
+              <p className="text-[14px] text-[color:var(--app-muted)]">Your past conversations will appear here.</p>
+            ) : (
+              <ul className="-mx-1 space-y-1">
+                {sessions.slice(0, 30).map((s) => (
+                  <li key={s.id} className="group flex items-center gap-1">
+                    <Link
+                      href={`/app/chat/${s.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActive(s.id);
+                        setChatKey((k) => k + 1);
+                        window.history.replaceState(null, '', `/app/chat/${s.id}`);
+                      }}
+                      className={`flex min-h-[44px] min-w-0 flex-1 items-start gap-2 rounded-lg px-2 py-2 hover:bg-[color:var(--app-paper-2)] ${
+                        active === s.id ? 'bg-[color:var(--app-paper-2)]' : ''
+                      }`}
+                    >
+                      <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-[color:var(--app-muted)]" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-[14px]">{s.title || 'Conversation'}</span>
+                        <span className="block text-[12px] text-[color:var(--app-muted)]">{when(s.updated_at)}</span>
+                      </span>
+                    </Link>
+                    <button
+                      onClick={() => remove(s.id)}
+                      aria-label="Delete conversation"
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-[color:var(--app-muted)] hover:bg-[color:var(--app-paper-2)]"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </aside>
+      </div>
+    </div>
+  );
 }

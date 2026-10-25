@@ -1,1089 +1,271 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRef } from 'react';
-import { ArrowLeft, BookOpen, Target, CheckCircle, XCircle, Lightbulb, MessageSquare, Swords, Link2, Sparkles, Book, Loader2, RefreshCw, ChevronDown, ChevronUp, Send, Eye, EyeOff } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { useAdmin } from '@/lib/hooks/useAdmin';
-import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
-import { getCategoryIcon } from '@/lib/category-icons';
-import { renderMarkdown } from '@/lib/markdown';
-const formatLabel = (s: string) => s.split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-import NextLink from 'next/link';
-// Scenarios are fetched dynamically from the API
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Check, Copy } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
+import { STATUS_LABEL, type SRStatus } from '@/lib/spaced-repetition';
 
-// ── Types ──
-
-interface ChunkItem {
-  id: string;
-  content: string;
-  bookTitle: string;
-  author: string;
-}
-
-interface TechniqueDetail {
-  id: string;
+type Tactic = {
+  slug: string;
   name: string;
-  category: string;
-  difficulty: number;
-  chunks: {
-    overview: ChunkItem[];
-    application: ChunkItem[];
-    example: ChunkItem[];
-    framework: ChunkItem[];
-    exercise: ChunkItem[];
-  };
-  books: { title: string; author: string }[];
-  relatedTechniques: string[];
-  useCases: string[];
-  riskLevel: string;
-}
+  family: string | null;
+  chapter: number;
+  chapter_title: string;
+  looks_like: string;
+  purpose: string;
+  warning_sign: string;
+  calm_reply: string;
+  note: string | null;
+  examples: string[];
+  harm: string | null;
+  works_on: string | null;
+  safety: boolean;
+};
 
-interface ConversationScriptLine {
-  speaker: string;
-  line: string;
-  annotation?: string;
-}
-
-interface ConversationExample {
-  context: string;
-  title: string;
-  script: ConversationScriptLine[];
-  result: string;
-  whyItWorked: string;
-}
-
-interface SynthesizedProfile {
-  description: string;
-  howTo: string[];
-  whenToUse: string;
-  whenNotToUse: string;
-  examples: { scenario: string; description: string }[];
-  conversationExamples?: ConversationExample[];
-}
-
-interface RoleplayMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  coaching?: {
-    score: number;
-    feedback: string;
-    idealResponse: string;
-    techniqueApplication: string;
-    turnNumber: number;
-    maxTurns: number;
-    summary?: {
-      overallScore: number;
-      strengths: string[];
-      improvements: string[];
-      keyTakeaway: string;
-    };
-  };
-}
-
-type PracticeContext = string; // taxonomy category ID or custom context
+type Fit = { read: string; reply: string; tip: string; safety: boolean; hotline: string | null };
 
 export default function TechniqueDetailClient({ techniqueId }: { techniqueId: string }) {
-  const [technique, setTechnique] = useState<TechniqueDetail | null>(null);
+  const [tactic, setTactic] = useState<Tactic | null>(null);
+  const [status, setStatus] = useState<SRStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const [mode, setMode] = useState<string>('learn');
-  const [synthesized, setSynthesized] = useState<SynthesizedProfile | null>(null);
-  const [synthesizing, setSynthesizing] = useState(false);
+  const [extra, setExtra] = useState<{ message: string; context: string | null }[]>([]);
+  const [exLoading, setExLoading] = useState(false);
+  const [exError, setExError] = useState<string | null>(null);
 
-  // Roleplay practice state
-  const [practiceContext, setPracticeContext] = useState<PracticeContext | null>(null);
-  const [roleplayMessages, setRoleplayMessages] = useState<RoleplayMessage[]>([]);
-  const [roleplayInput, setRoleplayInput] = useState('');
-  const [roleplayLoading, setRoleplayLoading] = useState(false);
-  const [roleplayError, setRoleplayError] = useState<string | null>(null);
-  const [roleplayEnded, setRoleplayEnded] = useState(false);
-  const [expandedCoaching, setExpandedCoaching] = useState<Record<number, boolean>>({});
-  const roleplayEndRef = useRef<HTMLDivElement>(null);
+  const [situation, setSituation] = useState('');
+  const [fit, setFit] = useState<Fit | null>(null);
+  const [fitLoading, setFitLoading] = useState(false);
+  const [fitError, setFitError] = useState<string | null>(null);
 
-  // Examples tab state
-  const [showBreakdown, setShowBreakdown] = useState<Record<number, boolean>>({});
-
-  const router = useRouter();
-  const { user } = useAuth();
-  const { categories: taxonomyCategories } = useTaxonomy();
-  const { isAdmin } = useAdmin();
-
-  // Fetch technique data
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/techniques?id=${techniqueId}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Technique not found');
-        return res.json();
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/techniques?id=${encodeURIComponent(techniqueId)}`);
+        if (res.status === 404) {
+          setNotFound(true);
+          return;
+        }
+        if (!res.ok) {
+          setError(await friendlyError(res, "We couldn't load this tactic. Please try again."));
+          return;
+        }
+        setTactic((await res.json()).tactic);
+      } catch {
+        setError("We couldn't reach the server. Please check your connection.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+    apiFetch('/api/spaced-repetition')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const card = d?.cards?.find((c: { tactic_slug: string }) => c.tactic_slug === techniqueId);
+        if (card) setStatus(card.status);
       })
-      .then(data => {
-        setTechnique(data.technique);
-      })
-      .catch(err => {
-        setError(err.message);
-      })
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, [techniqueId]);
 
-  // Find related training scenarios (fetched dynamically)
-  const [relevantScenarios, setRelevantScenarios] = useState<{ id: string; title: string; category: string; difficulty: number; description: string; techniques: string[] }[]>([]);
-
-  useEffect(() => {
-    if (!technique) return;
-    fetch('/api/scenarios/list')
-      .then(res => res.json())
-      .then(data => {
-        const all = data.scenarios || [];
-        setRelevantScenarios(all.filter((s: any) => s.techniques?.includes(technique.name)));
-      })
-      .catch(err => console.error('Failed to fetch scenarios:', err));
-  }, [technique]);
-
-  // Fetch synthesized profile (auto on mount, uses cache)
-  const fetchSynthesized = useCallback(async (force = false) => {
-    if (!technique) return;
-    setSynthesizing(true);
+  const copy = async (text: string, key: string) => {
     try {
-      const res = await fetch('/api/techniques/synthesize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ techniqueId: technique.id, force }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSynthesized(data.profile);
-      }
-    } catch (err) {
-      console.error('Synthesize failed:', err);
-    } finally {
-      setSynthesizing(false);
-    }
-  }, [technique]);
-
-  // Auto-generate summary on first visit
-  useEffect(() => {
-    if (technique && !synthesized && !synthesizing) {
-      fetchSynthesized();
-    }
-  }, [technique]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [chunksExpanded, setChunksExpanded] = useState(false);
-
-  // Parse coaching data from AI response
-  const parseCoaching = (text: string): { cleanText: string; coaching?: RoleplayMessage['coaching'] } => {
-    const coachingMatch = text.match(/<!--COACHING:([\s\S]*?)-->/);
-    if (!coachingMatch) return { cleanText: text };
-    try {
-      const coaching = JSON.parse(coachingMatch[1]);
-      const cleanText = text.replace(/<!--COACHING:[\s\S]*?-->/, '').trim();
-      return { cleanText, coaching };
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
     } catch {
-      return { cleanText: text.replace(/<!--COACHING:[\s\S]*?-->/, '').trim() };
+      /* clipboard not available */
     }
   };
 
-  // Send roleplay message (handles both initial scenario generation and subsequent messages)
-  const sendRoleplayMessage = async (userMessage?: string) => {
-    if (!technique || !practiceContext) return;
-    setRoleplayLoading(true);
-    setRoleplayError(null);
-
-    // Build messages array for the API
-    const apiMessages = userMessage
-      ? [...roleplayMessages.map(m => ({ role: m.role, content: m.content })), { role: 'user' as const, content: userMessage }]
-      : [];
-
-    // Add user message to local state immediately
-    if (userMessage) {
-      setRoleplayMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    }
-
+  const anotherExample = async () => {
+    if (!tactic || exLoading) return;
+    setExLoading(true);
+    setExError(null);
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 55000);
-
-      const res = await fetch('/api/technique-practice/roleplay', {
+      const res = await apiFetch('/api/technique-practice/roleplay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          techniqueId: technique.id,
-          techniqueName: technique.name,
-          context: practiceContext,
-          messages: apiMessages,
-        }),
-        signal: controller.signal,
+        body: JSON.stringify({ slug: tactic.slug }),
       });
-      clearTimeout(timeout);
-
       if (!res.ok) {
-        setRoleplayError('Failed to get AI response. Please try again.');
-        setRoleplayLoading(false);
+        setExError(await friendlyError(res, "We couldn't write an example just now. Please try again."));
         return;
       }
-
-      // Parse SSE stream
-      const reader = res.body?.getReader();
-      if (!reader) { setRoleplayLoading(false); return; }
-
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data: ')) continue;
-          const data = trimmed.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const json = JSON.parse(data);
-            const content = json.choices?.[0]?.delta?.content;
-            if (content) fullContent += content;
-          } catch {}
-        }
-      }
-
-      const { cleanText, coaching } = parseCoaching(fullContent);
-      const assistantMsg: RoleplayMessage = { role: 'assistant', content: cleanText, coaching };
-      setRoleplayMessages(prev => [...prev, assistantMsg]);
-
-      // Check if practice should end
-      if (coaching?.summary || (coaching?.turnNumber && coaching.turnNumber >= coaching.maxTurns)) {
-        setRoleplayEnded(true);
-      }
-
-      setTimeout(() => roleplayEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setRoleplayError('Request timed out. Please try again.');
-      } else {
-        setRoleplayError('Failed to connect. Please try again.');
-      }
+      const d = await res.json();
+      setExtra((x) => [...x, { message: d.example.message, context: d.example.context }]);
+    } catch {
+      setExError("We couldn't reach the server. Please check your connection.");
+    } finally {
+      setExLoading(false);
     }
-    setRoleplayLoading(false);
   };
 
-  const startPractice = () => {
-    setMode('practice');
-    setPracticeContext(null);
-    setRoleplayMessages([]);
-    setRoleplayInput('');
-    setRoleplayEnded(false);
-    setRoleplayError(null);
-    setExpandedCoaching({});
-  };
-
-  const selectPracticeContext = async (ctx: PracticeContext) => {
-    setPracticeContext(ctx);
-    // Trigger initial scenario generation
-    setRoleplayLoading(true);
-    setRoleplayError(null);
+  const fitIt = async () => {
+    if (!tactic || fitLoading || situation.trim().length < 10) return;
+    setFitLoading(true);
+    setFitError(null);
+    setFit(null);
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 55000);
-      const res = await fetch('/api/technique-practice/roleplay', {
+      const res = await apiFetch('/api/techniques/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          techniqueId: technique!.id,
-          techniqueName: technique!.name,
-          context: ctx,
-          messages: [],
-        }),
-        signal: controller.signal,
+        body: JSON.stringify({ slug: tactic.slug, situation: situation.trim() }),
       });
-      clearTimeout(timeout);
-
       if (!res.ok) {
-        setRoleplayError('Failed to generate scenario. Please try again.');
-        setRoleplayLoading(false);
+        setFitError(await friendlyError(res, "We couldn't put that together. Please try again."));
         return;
       }
-
-      const reader = res.body?.getReader();
-      if (!reader) { setRoleplayLoading(false); return; }
-      const decoder = new TextDecoder();
-      let fullContent = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data: ')) continue;
-          const data = trimmed.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const json = JSON.parse(data);
-            const content = json.choices?.[0]?.delta?.content;
-            if (content) fullContent += content;
-          } catch {}
-        }
-      }
-
-      const { cleanText, coaching } = parseCoaching(fullContent);
-      setRoleplayMessages([{ role: 'assistant', content: cleanText, coaching }]);
-    } catch (err: any) {
-      setRoleplayError(err.name === 'AbortError' ? 'Request timed out.' : 'Failed to connect.');
+      setFit(await res.json());
+    } catch {
+      setFitError("We couldn't reach the server. Please check your connection.");
+    } finally {
+      setFitLoading(false);
     }
-    setRoleplayLoading(false);
   };
 
-  const handleRoleplaySend = () => {
-    if (!roleplayInput.trim() || roleplayLoading || roleplayEnded) return;
-    const msg = roleplayInput.trim();
-    setRoleplayInput('');
-    sendRoleplayMessage(msg);
-  };
+  const back = (
+    <Link href="/app/techniques" className="mb-6 inline-flex min-h-[44px] items-center gap-2 text-[15px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]">
+      <ArrowLeft className="h-4 w-4" /> All tactics
+    </Link>
+  );
 
-  // ── Loading state ──
-  if (loading) {
+  if (loading) return <div className="mx-auto max-w-3xl">{back}<p className="text-[color:var(--app-muted)]">Loading...</p></div>;
+
+  if (notFound || !tactic) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 w-32 bg-gray-200 dark:bg-[#333] rounded" />
-          <div className="h-8 w-64 bg-gray-200 dark:bg-[#333] rounded" />
-          <div className="h-4 w-96 bg-gray-200 dark:bg-[#333] rounded" />
-          <div className="h-40 bg-gray-200 dark:bg-[#333] rounded-lg" />
-          <div className="h-40 bg-gray-200 dark:bg-[#333] rounded-lg" />
-        </div>
+      <div className="mx-auto max-w-3xl">
+        {back}
+        <Notice tone={error ? 'error' : 'info'}>
+          {error || "We couldn't find that tactic. The library now holds the 50 tactics from the book. Pick one from the list."}
+        </Notice>
       </div>
     );
   }
 
-  // ── Error state ──
-  if (error || !technique) {
-    return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">{error || 'Technique not found'}</p>
-        <button
-          onClick={() => router.push('/app/techniques')}
-          className="mt-4 px-6 py-2 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider"
-        >
-          Back to Techniques
-        </button>
-      </div>
-    );
-  }
+  const copyBtn = (text: string, k: string) => (
+    <button
+      type="button"
+      onClick={() => copy(text, k)}
+      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 text-[14px] text-[color:var(--app-muted)] hover:bg-[color:var(--app-paper-2)]"
+      aria-label="Copy reply"
+    >
+      {copied === k ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied === k ? 'Copied' : 'Copy'}
+    </button>
+  );
 
-  // ── Practice mode (Role-play) ──
-  if (mode === 'practice') {
-    // Context selection screen
-    if (!practiceContext) {
-      return (
-        <div className="max-w-4xl mx-auto space-y-6">
-          <button onClick={() => setMode('learn')} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Back to {technique.name}
-          </button>
-
-          <div className="text-center mb-2">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Practice {technique.name}</h2>
-            <p className="text-gray-500 dark:text-gray-400">Choose a context for your role-play simulation</p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {taxonomyCategories.map((cat) => {
-              const Icon = getCategoryIcon(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => selectPracticeContext(cat.id)}
-                  className="p-4 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] transition-all group text-left"
-                >
-                  <Icon className="h-6 w-6 text-[#D4A017] mb-2 group-hover:scale-110 transition-transform" />
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">{cat.name}</h3>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    // Loading initial scenario
-    if (roleplayLoading && roleplayMessages.length === 0) {
-      return (
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4A017] mx-auto" />
-          <p className="mt-4 text-gray-500 dark:text-gray-400">Setting up your role-play scenario...</p>
-          <p className="mt-1 text-xs text-gray-400">This can take up to 30 seconds</p>
-        </div>
-      );
-    }
-
-    if (roleplayError && roleplayMessages.length === 0) {
-      return (
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <p className="text-red-400 text-sm mb-4">{roleplayError}</p>
-          <div className="flex items-center justify-center gap-3">
-            <button onClick={() => selectPracticeContext(practiceContext)} className="px-6 py-2 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B830] transition-colors">
-              Try Again
-            </button>
-            <button onClick={() => setPracticeContext(null)} className="px-6 py-2 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg">
-              Pick Different Context
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    // Get the final summary if practice ended
-    const finalSummary = roleplayMessages.find(m => m.coaching?.summary)?.coaching?.summary;
-
-    return (
-      <div className="max-w-4xl mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button onClick={() => setMode('learn')} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Back to {technique.name}
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-[#D4A017] uppercase bg-[#D4A017]/10 px-2 py-1 rounded">
-              {taxonomyCategories.find(c => c.id === practiceContext)?.name || practiceContext}
-            </span>
-            {!roleplayEnded && (
-              <button
-                onClick={() => setRoleplayEnded(true)}
-                className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-              >
-                End Practice
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Chat messages */}
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] p-4 space-y-4 min-h-[300px] max-h-[60vh] overflow-y-auto">
-          {roleplayMessages.map((msg, i) => (
-            <div key={i}>
-              {/* Message bubble */}
-              <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[90%] sm:max-w-[80%] p-3 rounded-lg text-sm whitespace-pre-line ${
-                  msg.role === 'user'
-                    ? 'bg-[#D4A017]/20 text-gray-900 dark:text-white border border-[#D4A017]/30 rounded-br-none'
-                    : 'bg-gray-100 dark:bg-[#222222] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-[#333333] rounded-bl-none'
-                }`}>
-                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-                </div>
-              </div>
-
-              {/* Coaching feedback (shown after assistant messages that follow a user message) */}
-              {msg.role === 'assistant' && msg.coaching && msg.coaching.score > 0 && (
-                <div className="mt-2 ml-0">
-                  <button
-                    onClick={() => setExpandedCoaching(prev => ({ ...prev, [i]: !prev[i] }))}
-                    className="inline-flex items-center gap-2 text-xs text-[#D4A017] hover:text-[#E8B830] transition-colors"
-                  >
-                    <Lightbulb className="h-3 w-3" />
-                    Coaching Feedback (Score: {msg.coaching.score}/10)
-                    {expandedCoaching[i] ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  </button>
-
-                  {expandedCoaching[i] && (
-                    <div className="mt-2 p-3 bg-[#D4A017]/5 border border-[#D4A017]/20 rounded-lg text-sm space-y-2">
-                      <div className="text-gray-700 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.coaching.feedback) }} />
-                      {msg.coaching.idealResponse && (
-                        <div>
-                          <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Ideal Response</p>
-                          <p className="text-gray-600 dark:text-gray-400 text-xs italic">{msg.coaching.idealResponse.replace(/^["']+|["']+$/g, '')}</p>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        <span className="font-mono text-[#D4A017]">TECHNIQUE:</span> {msg.coaching.techniqueApplication}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-
-          {roleplayLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-[#222222] p-3 rounded-lg border border-gray-200 dark:border-[#333333] rounded-bl-none">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {roleplayError && roleplayMessages.length > 0 && (
-            <p className="text-red-400 text-xs text-center">{roleplayError}</p>
-          )}
-
-          <div ref={roleplayEndRef} />
-        </div>
-
-        {/* Summary card */}
-        {roleplayEnded && finalSummary && (
-          <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-[#D4A017]/30 p-6 space-y-4">
-            <h3 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Practice Summary
-            </h3>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full border-4 border-[#D4A017] flex items-center justify-center">
-                <span className="text-2xl font-bold text-[#D4A017]">{finalSummary.overallScore}</span>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Overall Score</p>
-                <p className="text-gray-900 dark:text-white font-medium">{finalSummary.keyTakeaway}</p>
-              </div>
-            </div>
-            {finalSummary.strengths.length > 0 && (
-              <div>
-                <h4 className="text-sm font-mono text-green-400 uppercase mb-2">Strengths</h4>
-                <ul className="space-y-1">
-                  {finalSummary.strengths.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {finalSummary.improvements.length > 0 && (
-              <div>
-                <h4 className="text-sm font-mono text-yellow-400 uppercase mb-2">Areas for Improvement</h4>
-                <ul className="space-y-1">
-                  {finalSummary.improvements.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                      <Lightbulb className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Input area or end buttons */}
-        {roleplayEnded ? (
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              onClick={() => startPractice()}
-              className="px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B830] transition-colors"
-            >
-              Try Another Context
-            </button>
-            <button
-              onClick={() => setMode('learn')}
-              className="px-6 py-2.5 bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded-lg"
-            >
-              Back to Learning
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={roleplayInput}
-              onChange={e => setRoleplayInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleRoleplaySend(); } }}
-              placeholder="Type your response..."
-              disabled={roleplayLoading}
-              className="flex-1 px-4 py-3 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#D4A017] focus:outline-none disabled:opacity-50"
-            />
-            <button
-              onClick={handleRoleplaySend}
-              disabled={roleplayLoading || !roleplayInput.trim()}
-              className="p-3 bg-[#D4A017] text-[#0A0A0A] rounded-lg hover:bg-[#E8B830] transition-colors disabled:opacity-50"
-            >
-              <Send className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // ── Learn / Examples modes ──
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <header>
-        <button onClick={() => router.push('/app/techniques')} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Techniques
-        </button>
+    <div className="mx-auto max-w-3xl">
+      {back}
+      <PageHeader
+        kicker={`Chapter ${tactic.chapter} · ${tactic.chapter_title}`}
+        title={tactic.name}
+        subtitle={tactic.looks_like}
+        right={status && status !== 'new' ? <span className="app-type rounded-md bg-[color:var(--app-paper-2)] px-2 py-1 text-[11px] uppercase tracking-wide">{STATUS_LABEL[status]}</span> : undefined}
+      />
 
-        <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
-          <p className="font-mono text-sm text-[#D4A017] uppercase">{formatLabel(technique.category)}</p>
-          <span className="text-gray-500 hidden sm:inline">-</span>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Difficulty: {formatLabel(String(technique.difficulty))}
-          </p>
-          {technique.riskLevel && technique.riskLevel !== 'unknown' && (
-            <>
-              <span className="text-gray-500 hidden sm:inline">-</span>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Risk: {formatLabel(technique.riskLevel)}</p>
-            </>
+      <div className="space-y-4">
+        <Card>
+          <Label>What it&apos;s for</Label>
+          <p className="text-[17px] leading-relaxed">{tactic.purpose}</p>
+        </Card>
+
+        <Card>
+          <Label>Warning sign</Label>
+          <p className="text-[17px] leading-relaxed">{tactic.warning_sign}</p>
+          {(tactic.harm || tactic.works_on) && (
+            <p className="mt-3 text-[14px] text-[color:var(--app-muted)]">
+              {tactic.harm && <>How much harm when used often: {tactic.harm}. </>}
+              {tactic.works_on && <>Works most on: {tactic.works_on.toLowerCase()}.</>}
+            </p>
           )}
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-wider">{technique.name}</h1>
+        </Card>
 
-        {/* Book source badges */}
-        {technique.books.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {technique.books.map((book, i) => (
-              <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono">
-                <Book className="h-3 w-3" />
-                {book.title} {book.author ? `by ${book.author}` : ''}
-              </span>
+        <Card>
+          <Label>You might hear</Label>
+          <ul className="space-y-2">
+            {tactic.examples.map((e) => (
+              <li key={e} className="app-serif text-[19px] leading-snug">
+                &ldquo;{e}&rdquo;
+              </li>
             ))}
+            {extra.map((e, i) => (
+              <li key={`x${i}`} className="app-serif text-[19px] leading-snug">
+                &ldquo;{e.message}&rdquo;
+                {e.context && <span className="ml-2 font-sans text-[13px] text-[color:var(--app-muted)]">({e.context})</span>}
+              </li>
+            ))}
+          </ul>
+          {exError && <div className="mt-3"><Notice tone="error">{exError}</Notice></div>}
+          <div className="mt-4">
+            <Button variant="ghost" onClick={anotherExample} loading={exLoading}>
+              Show me another example
+            </Button>
           </div>
+        </Card>
+
+        <Card tone="gold">
+          <div className="flex items-start justify-between gap-2">
+            <Label>A calm reply</Label>
+            {copyBtn(tactic.calm_reply, "book")}
+          </div>
+          <p className="app-serif text-[24px] leading-snug">&ldquo;{tactic.calm_reply}&rdquo;</p>
+          {tactic.note && <p className="mt-3 text-[16px] leading-relaxed text-[color:var(--app-muted)]">{tactic.note}</p>}
+          <div className="mt-4">
+            <BookRef chapter={tactic.chapter} title={tactic.chapter_title} />
+          </div>
+        </Card>
+
+        {tactic.safety && (
+          <Notice tone="warn">
+            If anyone&apos;s safety is at risk, get help first. For thoughts of self-harm, call or text 988 (Suicide and Crisis Lifeline). If you feel
+            unsafe with someone, the US National Domestic Violence Hotline is 1-800-799-7233, or text START to 88788. In immediate danger, call 911.
+          </Notice>
         )}
-      </header>
 
-      {/* Mode Tabs */}
-      <div className="flex space-x-2">
-        <button
-          onClick={() => setMode('learn')}
-          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-            mode === 'learn'
-              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
-              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
-          }`}
-        >
-          <BookOpen className="h-4 w-4 inline mr-2" />
-          Learn
-        </button>
-        <button
-          onClick={() => startPractice()}
-          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-            mode === 'practice'
-              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
-              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
-          }`}
-        >
-          <Target className="h-4 w-4 inline mr-2" />
-          Practice
-        </button>
-        <button
-          onClick={() => setMode('examples')}
-          className={`flex-1 py-2.5 px-3 sm:px-5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-            mode === 'examples'
-              ? 'bg-[#D4A017] text-[#0A0A0A] font-bold'
-              : 'bg-white dark:bg-[#1A1A1A] border border-gray-300 dark:border-[#444] text-gray-700 dark:text-gray-300 hover:border-[#D4A017]'
-          }`}
-        >
-          <MessageSquare className="h-4 w-4 inline mr-2" />
-          Examples
-        </button>
-      </div>
-
-      {mode === 'learn' && (
-        <>
-          {/* AI Summary Section */}
-          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-            {synthesizing && !synthesized ? (
-              /* Loading skeleton */
-              <div className="animate-pulse space-y-5">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 bg-[#D4A017]/30 rounded" />
-                  <div className="h-5 w-48 bg-gray-200 dark:bg-[#333] rounded" />
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-gray-200 dark:bg-[#333] rounded" />
-                  <div className="h-4 w-5/6 bg-gray-200 dark:bg-[#333] rounded" />
-                  <div className="h-4 w-4/6 bg-gray-200 dark:bg-[#333] rounded" />
-                </div>
-                <div className="h-4 w-32 bg-gray-200 dark:bg-[#333] rounded" />
-                <div className="space-y-3">
-                  {[1, 2, 3, 4].map(n => (
-                    <div key={n} className="flex items-start gap-3">
-                      <div className="h-6 w-6 bg-[#D4A017]/20 rounded-full flex-shrink-0" />
-                      <div className="h-4 w-full bg-gray-200 dark:bg-[#333] rounded" />
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="h-28 bg-gray-100 dark:bg-[#0A0A0A] rounded-lg" />
-                  <div className="h-28 bg-gray-100 dark:bg-[#0A0A0A] rounded-lg" />
-                </div>
-              </div>
-            ) : synthesized ? (
-              <div className="space-y-6">
-                <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Description
-                </h2>
-
-                {/* Description */}
-                <p className="text-gray-600 dark:text-gray-300">{synthesized.description}</p>
-
-                {/* How To */}
-                <div>
-                  <h3 className="font-mono text-md text-[#D4A017] uppercase mb-3">How to Use It</h3>
-                  <ul className="space-y-3">
-                    {synthesized.howTo.map((step, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="bg-[#D4A017] text-[#0A0A0A] w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
-                          {index + 1}
-                        </span>
-                        <span className="text-gray-600 dark:text-gray-300">{step}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* When to Use / When NOT */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-4 bg-gray-50 dark:bg-[#0A0A0A] rounded-lg border border-gray-200 dark:border-[#252525]">
-                    <h3 className="font-mono text-md text-green-400 uppercase mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      When to Use It
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{synthesized.whenToUse}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 dark:bg-[#0A0A0A] rounded-lg border border-gray-200 dark:border-[#252525]">
-                    <h3 className="font-mono text-md text-red-400 uppercase mb-3 flex items-center gap-2">
-                      <XCircle className="h-4 w-4" />
-                      When NOT to Use It
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{synthesized.whenNotToUse}</p>
-                  </div>
-                </div>
-
-                {/* Regenerate link — admin only */}
-                {isAdmin && (
-                  <div className="text-right">
-                    <button
-                      onClick={() => fetchSynthesized(true)}
-                      disabled={synthesizing}
-                      className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#D4A017] transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw className={`h-3 w-3 ${synthesizing ? 'animate-spin' : ''}`} />
-                      Regenerate
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-center text-gray-500 dark:text-gray-400 text-sm">Failed to load summary. <button onClick={() => fetchSynthesized()} className="text-[#D4A017] hover:underline">Try again</button></p>
-            )}
+        <Card>
+          <Label>Fit it to my situation</Label>
+          <p className="mb-3 text-[15px] text-[color:var(--app-muted)]">Tell us what happened in a sentence or two. We&apos;ll shape the calm reply to fit.</p>
+          <textarea
+            value={situation}
+            onChange={(e) => setSituation(e.target.value)}
+            rows={3}
+            maxLength={1500}
+            placeholder="e.g. My friend said a real friend would drive her to the airport at 4am."
+            className={inputClass}
+          />
+          <div className="mt-3">
+            <Button onClick={fitIt} loading={fitLoading} disabled={situation.trim().length < 10}>
+              Shape my reply
+            </Button>
           </div>
-
-          {/* Use cases */}
-          {technique.useCases.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Use Cases</h2>
-              <div className="flex flex-wrap gap-2">
-                {technique.useCases.map((uc, i) => (
-                  <span key={i} className="px-3 py-1.5 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] text-sm text-gray-600 dark:text-gray-300">
-                    {uc}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Collapsible Knowledge Base Chunks */}
-          {(technique.chunks.overview.length > 0 || technique.chunks.application.length > 0 || technique.chunks.framework.length > 0) && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <button
-                onClick={() => setChunksExpanded(!chunksExpanded)}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
-                  <Book className="h-5 w-5" />
-                  From the Knowledge Base
-                </h2>
-                {chunksExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
-              </button>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Raw excerpts from source books</p>
-
-              {chunksExpanded && (
-                <div className="mt-4 space-y-6">
-                  {technique.chunks.overview.length > 0 && (
-                    <div>
-                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Overview</h3>
-                      <div className="space-y-4">
-                        {technique.chunks.overview.map((chunk) => (
-                          <div key={chunk.id}>
-                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
-                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {technique.chunks.application.length > 0 && (
-                    <div>
-                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Application</h3>
-                      <div className="space-y-4">
-                        {technique.chunks.application.map((chunk) => (
-                          <div key={chunk.id}>
-                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
-                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {technique.chunks.framework.length > 0 && (
-                    <div>
-                      <h3 className="font-mono text-sm text-gray-500 dark:text-gray-400 uppercase mb-3">Framework</h3>
-                      <div className="space-y-4">
-                        {technique.chunks.framework.map((chunk) => (
-                          <div key={chunk.id}>
-                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line text-sm">{chunk.content}</p>
-                            <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          {fitError && <div className="mt-3"><Notice tone="error">{fitError}</Notice></div>}
+          {fit && (
+            <div className="mt-5 space-y-3 border-t border-[color:var(--app-line)] pt-4">
+              <p className="text-[16px] leading-relaxed">{fit.read}</p>
+              {fit.safety && fit.hotline && <Notice tone="warn">{fit.hotline}</Notice>}
+              <div className="rounded-lg bg-[color:var(--app-paper-2)] p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Label>You could say</Label>
+                  {copyBtn(fit.reply, "fit")}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Practice This Technique in Training Arena */}
-          {relevantScenarios.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4 flex items-center gap-2">
-                <Swords className="h-5 w-5" />
-                Practice This Technique
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                These training scenarios use {technique.name} as a key technique:
-              </p>
-              <div className="space-y-2">
-                {relevantScenarios.map((s) => (
-                  <NextLink
-                    key={s.id}
-                    href={`/app/training/${s.id}`}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] transition-colors group"
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#D4A017] transition-colors">
-                        {s.title}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-2">{formatLabel(s.category)}</span>
-                    </div>
-                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
-                      {'*'.repeat(s.difficulty)}
-                    </span>
-                  </NextLink>
-                ))}
+                <p className="app-serif text-[21px] leading-snug">&ldquo;{fit.reply}&rdquo;</p>
               </div>
+              {fit.tip && <p className="text-[15px] leading-relaxed text-[color:var(--app-muted)]">{fit.tip}</p>}
             </div>
           )}
+        </Card>
 
-          {/* Related Techniques */}
-          {technique.relatedTechniques.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4 flex items-center gap-2">
-                <Link2 className="h-5 w-5" />
-                Related Techniques
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {technique.relatedTechniques.map((name) => {
-                  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                  return (
-                    <NextLink key={name} href={`/app/techniques/${slug}`} className="px-3 py-2 bg-gray-50 dark:bg-[#222222] rounded-lg border border-gray-200 dark:border-[#333333] hover:border-[#D4A017] transition-colors text-sm text-gray-900 dark:text-white hover:text-[#D4A017]">
-                      {name}
-                    </NextLink>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {mode === 'examples' && (
-        <div className="space-y-6">
-          <h2 className="font-mono text-lg text-[#D4A017] uppercase flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Conversation Scripts
-          </h2>
-
-          {/* Breakdown toggle — global for all examples */}
-          {synthesized?.conversationExamples && synthesized.conversationExamples.length > 0 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {synthesized.conversationExamples.length} scenario{synthesized.conversationExamples.length !== 1 ? 's' : ''} showing this technique in action
-              </p>
-              <button
-                onClick={() => {
-                  const examples = synthesized?.conversationExamples ?? [];
-                  const allVisible = Object.values(showBreakdown).filter(Boolean).length === examples.length;
-                  const newState: Record<number, boolean> = {};
-                  examples.forEach((_, i) => { newState[i] = !allVisible; });
-                  setShowBreakdown(newState);
-                }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono uppercase rounded-lg border border-[#D4A017]/30 text-[#D4A017] hover:bg-[#D4A017]/10 transition-colors"
-              >
-                {Object.values(showBreakdown).filter(Boolean).length === (synthesized?.conversationExamples?.length ?? 0) ? (
-                  <><EyeOff className="h-3.5 w-3.5" /> Hide Technique Breakdown</>
-                ) : (
-                  <><Eye className="h-3.5 w-3.5" /> Show Technique Breakdown</>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* AI-generated conversation scripts */}
-          {synthesized?.conversationExamples && synthesized.conversationExamples.length > 0 ? (
-            <>
-              {synthesized.conversationExamples.map((example, exIdx) => {
-                const contextSlug = example.context?.toLowerCase().includes('work') || example.context?.toLowerCase().includes('career') ? 'career'
-                  : example.context?.toLowerCase().includes('personal') || example.context?.toLowerCase().includes('dating') || example.context?.toLowerCase().includes('relationship') ? 'dating'
-                  : example.context?.toLowerCase().includes('business') || example.context?.toLowerCase().includes('sales') ? 'business'
-                  : 'career';
-                const ContextIcon = getCategoryIcon(contextSlug);
-                const isBreakdownVisible = showBreakdown[exIdx] ?? false;
-
-                return (
-                  <div key={exIdx} className="bg-white dark:bg-[#1A1A1A] rounded-xl border-2 border-gray-200 dark:border-[#333333] overflow-hidden shadow-sm">
-                    {/* Card header — prominent with colored left accent */}
-                    <div className="p-4 border-b border-gray-200 dark:border-[#333333] bg-gray-50 dark:bg-[#222222] flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#D4A017]/10 flex items-center justify-center">
-                          <ContextIcon className="h-4 w-4 text-[#D4A017]" />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-mono uppercase text-gray-400 block">Scenario {exIdx + 1} of {synthesized?.conversationExamples?.length ?? 0}</span>
-                          <h3 className="text-sm font-bold text-gray-900 dark:text-white">{example.title}</h3>
-                        </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#D4A017]/10 text-[#D4A017] text-xs font-mono uppercase ml-2">{example.context}</span>
-                      </div>
-                    </div>
-
-                    {/* Script as chat bubbles */}
-                    <div className="p-4 space-y-3">
-                      {example.script.map((line, lineIdx) => {
-                        const isYou = line.speaker === 'You';
-                        return (
-                          <div key={lineIdx}>
-                            <div className={`flex ${isYou ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[88%] sm:max-w-[75%] space-y-1`}>
-                                <p className={`text-[10px] font-mono uppercase ${isYou ? 'text-right text-[#D4A017]' : 'text-left text-gray-400'}`}>
-                                  {line.speaker}
-                                </p>
-                                <div className={`p-3 rounded-lg text-sm ${
-                                  isYou
-                                    ? 'bg-[#D4A017]/15 text-gray-900 dark:text-white border border-[#D4A017]/25 rounded-br-none'
-                                    : 'bg-gray-100 dark:bg-[#222222] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-[#333333] rounded-bl-none'
-                                }`}>
-                                  {line.line}
-                                </div>
-                                {/* Annotation badge */}
-                                {isBreakdownVisible && line.annotation && (
-                                  <div className={`flex ${isYou ? 'justify-end' : 'justify-start'}`}>
-                                    <span className="inline-block px-2 py-1 bg-[#D4A017]/10 border border-[#D4A017]/20 rounded text-[11px] text-[#D4A017] font-mono">
-                                      {line.annotation}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Result + Why It Worked */}
-                    <div className="border-t border-gray-200 dark:border-[#333333]">
-                      {example.result && (
-                        <div className="px-4 py-3 bg-green-50 dark:bg-green-900/10 border-b border-gray-200 dark:border-[#333333]">
-                          <div className="flex items-start gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs font-mono text-green-600 dark:text-green-400 uppercase mb-0.5">Result</p>
-                              <p className="text-sm text-green-800 dark:text-green-300">{example.result}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {example.whyItWorked && (
-                        <div className="px-4 py-3">
-                          <p className="text-xs font-mono text-[#D4A017] uppercase mb-1">Why It Worked</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">{example.whyItWorked}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Regenerate — admin only */}
-              {isAdmin && (
-                <div className="text-right">
-                  <button
-                    onClick={() => fetchSynthesized(true)}
-                    disabled={synthesizing}
-                    className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#D4A017] transition-colors disabled:opacity-50"
-                  >
-                    <RefreshCw className={`h-3 w-3 ${synthesizing ? 'animate-spin' : ''}`} />
-                    Regenerate
-                  </button>
-                </div>
-              )}
-            </>
-          ) : synthesizing ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4A017] mx-auto" />
-              <p className="mt-4 text-gray-500 dark:text-gray-400">Generating conversation scripts...</p>
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <p className="text-gray-500 dark:text-gray-400 mb-3">No conversation scripts available yet.</p>
-              <button
-                onClick={() => fetchSynthesized(true)}
-                disabled={synthesizing}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg text-sm uppercase tracking-wider hover:bg-[#E8B030] transition-all disabled:opacity-50"
-              >
-                {synthesizing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Generate Conversation Scripts
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Exercise chunks */}
-          {technique.chunks.exercise.length > 0 && (
-            <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-              <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-4">Exercises</h2>
-              <div className="space-y-4">
-                {technique.chunks.exercise.map((chunk) => (
-                  <div key={chunk.id}>
-                    <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{chunk.content}</p>
-                    <p className="text-xs text-gray-500 mt-2 italic">Source: {chunk.bookTitle} by {chunk.author}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Button href={`/app/techniques?mode=train&slug=${tactic.slug}`}>Train on this one</Button>
+          <Button href="/app/training" variant="ghost">
+            Practice a scene
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

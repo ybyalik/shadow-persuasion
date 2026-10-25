@@ -1,0 +1,276 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { loadStripe, type Stripe as StripeJS } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { Lock } from 'lucide-react';
+
+const STRIPE_PK = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise: Promise<StripeJS | null> | null = STRIPE_PK ? loadStripe(STRIPE_PK) : null;
+
+const BOOK_CENTS = 6700;
+const BUMP_CENTS = 1700;
+const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+function PayForm({ email, total }: { email: string; total: number }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function pay(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setBusy(true);
+    setError(null);
+    const { error: submitErr } = await elements.submit();
+    if (submitErr) {
+      setError(submitErr.message || 'Please check your payment details.');
+      setBusy(false);
+      return;
+    }
+    const { error: confirmErr, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required',
+      confirmParams: { return_url: `${window.location.origin}/v2/upsell`, receipt_email: email },
+    });
+    if (confirmErr) {
+      setError(confirmErr.message || 'Payment failed. Please try again.');
+      setBusy(false);
+      return;
+    }
+    if (paymentIntent?.status === 'succeeded') {
+      router.push(`/v2/upsell?payment_intent=${paymentIntent.id}`);
+    } else {
+      setError('Payment was not completed. Please try again.');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={pay} className="space-y-5">
+      <PaymentElement options={{ layout: 'tabs' }} />
+      {error && <p className="text-sm text-red-700">{error}</p>}
+      <button type="submit" className="sp2-btn w-full" disabled={!stripe || busy}>
+        {busy ? 'Processing...' : `Pay ${money(total)}`}
+      </button>
+      <p className="flex items-center justify-center gap-2 text-xs text-[color:var(--sp2-muted)]">
+        <Lock className="h-3.5 w-3.5" /> Secure payment. 30-day money-back guarantee.
+      </p>
+    </form>
+  );
+}
+
+const US_STATES = 'AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY PR'.split(' ');
+type ShipOption = { level: string; label: string; estimate: string; cents: number };
+
+export default function V2CheckoutPage() {
+  const [email, setEmail] = useState('');
+  const [addr, setAddr] = useState({ name: '', street1: '', street2: '', city: '', state_code: '', postcode: '', phone_number: '' });
+  const [includeBump, setIncludeBump] = useState(false);
+  const [options, setOptions] = useState<ShipOption[] | null>(null);
+  const [level, setLevel] = useState('MAIL');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const shippingCents = options?.find((o) => o.level === level)?.cents ?? 0;
+  const total = BOOK_CENTS + (includeBump ? BUMP_CENTS : 0) + shippingCents;
+  const set = (k: keyof typeof addr) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setAddr((a) => ({ ...a, [k]: e.target.value }));
+    setOptions(null); // address changed: shipping must be re-quoted
+  };
+
+  // Changing the add-on or shipping after the payment form loaded means a new amount, so start over.
+  useEffect(() => {
+    setClientSecret(null);
+  }, [includeBump, level, options]);
+
+  async function start(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!stripePromise) {
+      console.error('[v2/checkout] Stripe publishable key is not configured');
+      setError('Checkout is temporarily unavailable. Please try again shortly.');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Step 1: price shipping for this address. Step 2 (next submit): start payment.
+      if (!options) {
+        const q = await fetch('/api/v2/shipping-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addr }),
+        });
+        const qd = await q.json().catch(() => ({}));
+        if (!q.ok) throw new Error(qd.error || "We couldn't calculate shipping. Please check your address.");
+        setOptions(qd.options);
+        setLevel('MAIL');
+        return;
+      }
+      const res = await fetch('/api/v2/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), includeBump, address: addr, shippingLevel: level }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not start checkout. Please try again.');
+      setClientSecret(data.clientSecret);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const elementsOptions = useMemo(
+    () =>
+      clientSecret
+        ? {
+            clientSecret,
+            appearance: {
+              theme: 'stripe' as const,
+              variables: { colorPrimary: '#1b1a17', fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '6px' },
+            },
+          }
+        : undefined,
+    [clientSecret]
+  );
+
+  return (
+    <main className="sp2-ui">
+      <header className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex items-center justify-between">
+        <Link href="/v2" className="text-sm font-semibold tracking-wide">
+          SHADOW PERSUASION
+        </Link>
+        <span className="flex items-center gap-1.5 text-xs text-[color:var(--sp2-muted)]">
+          <Lock className="h-3.5 w-3.5" /> Secure checkout
+        </span>
+      </header>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 grid md:grid-cols-[1fr_1.1fr] gap-10">
+        {/* Order summary */}
+        <section>
+          <p className="sp2-kicker mb-3">Your order</p>
+          <h1 className="font-[family-name:var(--font-sp2-serif)] text-[28px] sm:text-[32px] leading-tight font-semibold mb-6">
+            Shadow Persuasion: Paperback Edition
+          </h1>
+          <ul className="space-y-2 text-[15px] text-[color:var(--sp2-muted)] mb-8">
+            <li>The paperback, printed and shipped to your door</li>
+            <li>Instant access to the digital book while you wait</li>
+            <li>The printable 21-Day Reset Journal</li>
+            <li>Bonuses: The Tactic Spotter, Stop Shrinking, The Hard Conversation Planner</li>
+            <li>Playbooks, situation finder, and tactic reference</li>
+            <li>60 days of the Decoder</li>
+          </ul>
+
+          <label className="flex gap-3 rounded-lg border-2 border-dashed border-[color:var(--sp2-accent)] bg-white p-5 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 accent-[#8a5a2b]"
+              checked={includeBump}
+              onChange={(e) => setIncludeBump(e.target.checked)}
+            />
+            <span>
+              <span className="block font-semibold text-[15px]">Yes, add The Calm Reply Scripts for {money(BUMP_CENTS)}</span>
+              <span className="block mt-1 text-sm leading-relaxed text-[color:var(--sp2-muted)]">
+                100 word-for-word answers to guilt trips, gaslighting, the silent treatment, pushy requests, angry
+                outbursts and more, including short versions for text messages.
+              </span>
+            </span>
+          </label>
+
+          <div className="mt-8 border-t border-[color:var(--sp2-line)] pt-5 space-y-2 text-[15px]">
+            <div className="flex justify-between">
+              <span>Shadow Persuasion (paperback + digital)</span>
+              <span>{money(BOOK_CENTS)}</span>
+            </div>
+            {includeBump && (
+              <div className="flex justify-between">
+                <span>The Calm Reply Scripts</span>
+                <span>{money(BUMP_CENTS)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>{options ? money(shippingCents) : 'Calculated next'}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-[17px] pt-2 border-t border-[color:var(--sp2-line)]">
+              <span>Total</span>
+              <span>{money(total)}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Payment */}
+        <section className="rounded-xl border border-[color:var(--sp2-line)] bg-white p-6 sm:p-8 h-fit">
+          {!clientSecret ? (
+            <form onSubmit={start} className="space-y-3">
+              <h2 className="text-lg font-semibold">Where should we send your book?</h2>
+              <p className="text-xs text-[color:var(--sp2-muted)]">Shipping within the United States.</p>
+              <input className="sp2-input" type="email" placeholder="Email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input className="sp2-input" placeholder="Full name" autoComplete="name" maxLength={35} required value={addr.name} onChange={set('name')} />
+              <input className="sp2-input" placeholder="Street address" autoComplete="address-line1" maxLength={30} required value={addr.street1} onChange={set('street1')} />
+              <input className="sp2-input" placeholder="Apartment, suite (optional)" autoComplete="address-line2" maxLength={30} value={addr.street2} onChange={set('street2')} />
+              <div className="grid grid-cols-[1fr_90px_110px] gap-3">
+                <input className="sp2-input" placeholder="City" autoComplete="address-level2" maxLength={30} required value={addr.city} onChange={set('city')} />
+                <select className="sp2-input" required value={addr.state_code} onChange={set('state_code')} autoComplete="address-level1">
+                  <option value="">State</option>
+                  {US_STATES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+                <input className="sp2-input" placeholder="ZIP" autoComplete="postal-code" inputMode="numeric" maxLength={10} required value={addr.postcode} onChange={set('postcode')} />
+              </div>
+              <input className="sp2-input" type="tel" placeholder="Phone (for the courier)" autoComplete="tel" maxLength={20} required value={addr.phone_number} onChange={set('phone_number')} />
+
+              {options && (
+                <fieldset className="pt-2 space-y-2">
+                  <legend className="text-sm font-semibold mb-1">Shipping speed</legend>
+                  {options.map((o) => (
+                    <label key={o.level} className={`flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer ${level === o.level ? 'border-[color:var(--sp2-ink)]' : 'border-[color:var(--sp2-line)]'}`}>
+                      <span className="flex items-center gap-3">
+                        <input type="radio" name="ship" checked={level === o.level} onChange={() => setLevel(o.level)} />
+                        <span>
+                          <span className="block text-[15px] font-medium">{o.label}</span>
+                          <span className="block text-xs text-[color:var(--sp2-muted)]">{o.estimate}, including printing</span>
+                        </span>
+                      </span>
+                      <span className="text-[15px]">{money(o.cents)}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+
+              {error && <p className="text-sm text-red-700">{error}</p>}
+              <button type="submit" className="sp2-btn w-full" disabled={loading}>
+                {loading ? 'Loading...' : options ? 'Continue to payment' : 'Calculate shipping'}
+              </button>
+            </form>
+          ) : (
+            stripePromise &&
+            elementsOptions && (
+              <Elements stripe={stripePromise} options={elementsOptions}>
+                <p className="text-sm text-[color:var(--sp2-muted)] mb-4">
+                  Sending to <b className="text-[color:var(--sp2-ink)]">{email}</b>.{' '}
+                  <button type="button" className="underline" onClick={() => setClientSecret(null)}>
+                    Change
+                  </button>
+                </p>
+                <PayForm email={email.trim()} total={total} />
+              </Elements>
+            )
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

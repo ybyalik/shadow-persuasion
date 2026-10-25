@@ -169,7 +169,7 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto space-y-8">
       <header>
         <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">Settings</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Manage your profile and preferences</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Your account, your app access, and how replies should sound.</p>
       </header>
 
       {/* Account Info */}
@@ -187,7 +187,7 @@ export default function SettingsPage() {
             </div>
           )}
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{user?.displayName || 'Operator'}</p>
+            <p className="font-medium text-gray-900 dark:text-white">{user?.displayName || 'You'}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
       <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-5">
         <div className="flex items-center gap-3 mb-4">
           <CreditCard className="h-5 w-5 text-[#D4A017]" />
-          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Subscription & Billing</h2>
+          <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Your app access</h2>
         </div>
         {subLoading ? (
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -208,7 +208,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-[#333]">
                 <p className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-0.5">Plan</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">{subscription.plan || 'Pro'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">{subscription.plan === 'app_monthly' ? 'Monthly ($9.99)' : subscription.plan || 'Monthly'}</p>
               </div>
               <div className="p-3 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-[#333]">
                 <p className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-0.5">Status</p>
@@ -243,21 +243,21 @@ export default function SettingsPage() {
               {portalLoading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Opening Portal...</>
               ) : (
-                <><ExternalLink className="h-4 w-4" /> Manage Subscription</>
+                <><ExternalLink className="h-4 w-4" /> Manage or cancel</>
               )}
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400">No active subscription</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No monthly subscription. If your book came with 60 days of the app, you can see how many are left, and keep the app afterwards, on the Keep the app page.</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Account: {user?.email}
             </p>
             <a
-              href="/pricing"
+              href="/app/keep"
               className="block w-full py-2.5 bg-[#D4A017] text-[#0A0A0A] font-mono font-bold uppercase tracking-wider rounded-lg hover:bg-[#E8B830] transition-all text-center text-sm"
             >
-              Choose a Plan
+              Keep the app
             </a>
           </div>
         )}
@@ -270,7 +270,7 @@ export default function SettingsPage() {
           <h2 className="font-mono text-sm text-[#D4A017] uppercase tracking-wider font-bold">Your Voice Profile</h2>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
-          Every script, response, and recommendation will sound like YOU — not a robot.
+          Every calm reply and suggestion will sound like you, not a robot.
         </p>
 
         <div className="space-y-5">

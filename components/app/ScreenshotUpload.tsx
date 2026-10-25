@@ -1,43 +1,75 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
+
+export const MAX_SCREENSHOTS = 5;
 
 interface ScreenshotUploadProps {
-  onUpload: (file: File) => void;
+  files: File[];
+  onChange: (files: File[]) => void;
+  max?: number;
 }
 
-export function ScreenshotUpload({ onUpload }: ScreenshotUploadProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onUpload(acceptedFiles[0]);
-    }
-  }, [onUpload]);
+/** Add up to 5 screenshots of a conversation, with small previews you can remove. */
+export function ScreenshotUpload({ files, onChange, max = MAX_SCREENSHOTS }: ScreenshotUploadProps) {
+  const onDrop = useCallback(
+    (accepted: File[]) => {
+      if (!accepted.length) return;
+      onChange([...files, ...accepted].slice(0, max));
+    },
+    [files, onChange, max]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
-    multiple: false,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic'] },
+    multiple: true,
+    disabled: files.length >= max,
   });
 
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
+
   return (
-    <div
-      {...getRootProps()}
-      className={`p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors
-        ${isDragActive ? 'border-[#D4A017] bg-white dark:bg-[#1A1A1A]' : 'border-gray-600 hover:border-gray-500'}
-      `}
-    >
-      <input {...getInputProps()} />
-      <div className="flex flex-col items-center">
-        <UploadCloud className="h-12 w-12 mb-4 text-gray-500" />
-        {isDragActive ? (
-          <p className="text-lg font-semibold">Drop the screenshot here...</p>
-        ) : (
-          <p className="text-lg font-semibold">Drop a screenshot or click to upload</p>
-        )}
-        <p className="text-sm text-gray-500">Supports: JPG, PNG, WEBP</p>
-      </div>
+    <div>
+      {files.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-3">
+          {previews.map((src, i) => (
+            <div key={src} className="relative h-24 w-20 overflow-hidden rounded-lg border border-[color:var(--app-line)] bg-[color:var(--app-paper-2)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Screenshot ${i + 1}`} className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((_, j) => j !== i))}
+                aria-label={`Remove screenshot ${i + 1}`}
+                className="absolute right-0 top-0 flex h-11 w-11 items-start justify-end p-1"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--app-night)] text-[#efe9df]">
+                  <X className="h-3.5 w-3.5" />
+                </span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {files.length < max && (
+        <div
+          {...getRootProps()}
+          className={`flex min-h-[64px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-4 text-center text-[15px] transition-colors ${
+            isDragActive
+              ? 'border-[color:var(--app-accent)] bg-[color:var(--app-paper-2)]'
+              : 'border-[color:var(--app-line)] text-[color:var(--app-muted)] hover:border-[color:var(--app-accent)]'
+          }`}
+        >
+          <input {...getInputProps()} />
+          <ImagePlus className="h-5 w-5 shrink-0" />
+          <span>
+            {files.length ? `Add another screenshot (${files.length} of ${max})` : `Add screenshots of the conversation (up to ${max})`}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

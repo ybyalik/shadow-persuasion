@@ -1,0 +1,52 @@
+/* Shadow Persuasion v2 pages. Scoped under .sp2 so the rest of the site is untouched. */
+.sp2 {
+  --sp2-ink: #1b1a17;
+  --sp2-muted: #5f574b;
+  --sp2-paper: #f6f2ea;
+  --sp2-card: #ffffff;
+  --sp2-line: #e2dacb;
+  --sp2-accent: #8a5a2b;
+  --sp2-accent-dark: #6d4520;
+  --sp2-night: #15130f;
+  min-height: 100vh;
+  background: var(--sp2-paper);
+  color: var(--sp2-ink);
+  font-family: var(--font-sp2-serif), Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+.sp2 .sp2-ui { font-family: var(--font-inter), system-ui, sans-serif; }
+.sp2 .sp2-kicker {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sp2-accent);
+}
+.sp2 .sp2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-inter), system-ui, sans-serif; font-weight: 600; font-size: 16px;
+  padding: 15px 26px; border-radius: 6px; background: var(--sp2-ink); color: #fff;
+  transition: background 0.15s ease; text-decoration: none; border: 0; cursor: pointer;
+}
+.sp2 .sp2-btn:hover { background: #000; }
+.sp2 .sp2-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.sp2 .sp2-btn-ghost {
+  background: transparent; color: var(--sp2-ink); border: 1px solid var(--sp2-ink);
+}
+.sp2 .sp2-btn-ghost:hover { background: rgba(0, 0, 0, 0.04); }
+.sp2 .sp2-input {
+  width: 100%; font-family: var(--font-inter), system-ui, sans-serif; font-size: 16px;
+  padding: 13px 14px; border: 1px solid var(--sp2-line); border-radius: 6px; background: #fff; color: var(--sp2-ink);
+}
+.sp2 .sp2-input:focus { outline: 2px solid var(--sp2-accent); outline-offset: 1px; border-color: transparent; }
+
+/* Long-form reading (chapter page) */
+.sp2 .sp2-prose { font-size: 19px; line-height: 1.7; }
+.sp2 .sp2-prose p { margin: 0 0 1.05em; }
+.sp2 .sp2-prose h2 { font-size: 26px; line-height: 1.25; font-weight: 600; margin: 1.8em 0 0.6em; }
+.sp2 .sp2-prose blockquote {
+  margin: 1.4em 0; padding: 0.4em 0 0.4em 1em; border-left: 3px solid var(--sp2-accent);
+  font-style: italic; color: var(--sp2-muted);
+}
+.sp2 .sp2-prose strong { font-weight: 650; }
+@media (max-width: 640px) {
+  .sp2 .sp2-prose { font-size: 18px; }
+  .sp2 .sp2-prose h2 { font-size: 23px; }
+}

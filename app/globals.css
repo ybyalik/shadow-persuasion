@@ -22,3 +22,47 @@
 .bg-radial-gradient {
     background-image: radial-gradient(circle, var(--tw-gradient-stops));
 }
+/* ───────────── The app (/app), in the book's colors ─────────────
+   Light: warm paper, near-black ink, walnut accent, soft gold.
+   Dark: the book cover's night tones. Older pages that still use the original
+   gold (#D4A017) and black are recolored here so the whole app matches. */
+.sp-app {
+  --app-paper: #f4efe6;
+  --app-paper-2: #ebe3d3;
+  --app-card: #fbf8f2;
+  --app-line: #dcd2c0;
+  --app-ink: #1c1b18;
+  --app-muted: #5f574b;
+  --app-accent: #8a5a2b;
+  --app-gold: #c9a46b;
+  --app-night: #14110d;
+  --app-sage: #4f5b3a;
+  --app-oxblood: #7a2e22;
+  background: var(--app-paper);
+  color: var(--app-ink);
+}
+.dark .sp-app {
+  --app-paper: #0f0d0a;
+  --app-paper-2: #171410;
+  --app-card: #1b1813;
+  --app-line: #2e2921;
+  --app-ink: #efe9df;
+  --app-muted: #b3aa9b;
+  --app-accent: #c9a46b;
+  --app-night: #0b0a08;
+}
+.sp-app .font-serif, .sp-app .app-serif { font-family: var(--font-app-serif), Georgia, serif; }
+.sp-app .font-mono, .sp-app .app-type { font-family: var(--font-app-type), 'Courier New', monospace; }
+.sp-app h1.font-mono, .sp-app h2.font-mono {
+  font-family: var(--font-app-serif), Georgia, serif; text-transform: none; letter-spacing: -0.01em; font-weight: 600;
+}
+.sp-app h1.font-mono { font-size: 2rem; line-height: 1.1; }
+.sp-app [class~="bg-[#D4A017]"] { background-color: var(--app-gold) !important; color: #0b0a08; }
+.sp-app [class~="text-[#D4A017]"] { color: var(--app-accent) !important; }
+.sp-app [class~="border-[#D4A017]"] { border-color: var(--app-gold) !important; }
+.sp-app [class~="bg-[#FAFAF8]"], .sp-app [class~="bg-[#F4ECD8]"] { background-color: var(--app-paper) !important; }
+.sp-app [class~="bg-[#F5F2EB]"], .sp-app [class~="bg-[#EDE3D0]"] { background-color: var(--app-paper-2) !important; }
+.dark .sp-app [class~="dark:bg-[#0A0A0A]"] { background-color: var(--app-paper) !important; }
+.dark .sp-app [class~="dark:bg-[#1A1A1A]"], .dark .sp-app [class~="dark:bg-[#111]"] { background-color: var(--app-card) !important; }
+.sp-app .bg-white { background-color: var(--app-card); }
+.sp-app input:focus, .sp-app textarea:focus, .sp-app select:focus { outline-color: var(--app-accent); }

@@ -1,269 +1,159 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { Copy, Check, Lightbulb, Zap } from 'lucide-react';
-import { useTaxonomy } from '@/lib/hooks/useTaxonomy';
+/* Calm My Reply: type the reply you want to send, get three calmer versions
+   in your own voice, and see if the draft over-explains or apologizes. */
+
+import Link from 'next/link';
+import { useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
+import { CopyButton } from '@/components/app/EnhancedAnalysisResult';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
+import { CHAPTERS_V3, IS_V3 } from '@/lib/edition';
+import type { RewriteResult, RewriteFlag } from '@/lib/prompts/in-the-moment';
 
-interface RewriteResult {
-    versions: {
-        type: string;
-        description: string;
-        message: string;
-        explanation: string;
-        powerIncrease: number;
-        riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-    }[];
-    originalPowerScore: number;
-    confidence: number;
-}
+const FLAG_TITLE: Record<RewriteFlag['kind'], string> = {
+  'over-explains': 'Over-explaining',
+  apologizes: 'Apologizing for no reason',
+  'door-open': 'Leaving the door open',
+};
 
-export default function RewritePage() {
-    const [originalMessage, setOriginalMessage] = useState('');
-    const [goal, setGoal] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<RewriteResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+export default function CalmMyReplyPage() {
+  const [draft, setDraft] = useState('');
+  const [replyingTo, setReplyingTo] = useState('');
+  const [showReplyingTo, setShowReplyingTo] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<RewriteResult | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
-    const { categories: taxonomyCategories } = useTaxonomy();
-    const [goalFocused, setGoalFocused] = useState(false);
-    const goalRef = useRef<HTMLDivElement>(null);
+  const go = async () => {
+    if (!draft.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await apiFetch('/api/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft: draft.trim(), replyingTo: replyingTo.trim() }),
+      });
+      if (!res.ok) {
+        setError(await friendlyError(res));
+        return;
+      }
+      setResult(await res.json());
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    } catch {
+      setError('Could not reach the app. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Flatten all use cases for autocomplete
-    const allUseCases = useMemo(() =>
-      taxonomyCategories.flatMap(cat =>
-        cat.useCases.map(uc => ({ ...uc, categoryName: cat.name, emoji: cat.emoji }))
-      ), [taxonomyCategories]);
+  return (
+    <div className="mx-auto max-w-3xl">
+      <PageHeader
+        kicker="Before you send it"
+        title="Calm My Reply"
+        subtitle="Type the reply you want to send. You'll get three calmer versions that keep your meaning and sound like you, plus a heads-up if your draft is doing too much."
+      />
 
-    // Filter suggestions based on input
-    const suggestions = useMemo(() => {
-      if (!goal.trim()) return allUseCases.slice(0, 6); // show 6 popular when empty
-      const lower = goal.toLowerCase();
-      return allUseCases.filter(uc =>
-        uc.title.toLowerCase().includes(lower) ||
-        uc.categoryName.toLowerCase().includes(lower)
-      ).slice(0, 6);
-    }, [goal, allUseCases]);
+      <Card>
+        <label htmlFor="draft">
+          <Label>Your reply</Label>
+        </label>
+        <textarea
+          id="draft"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') go();
+          }}
+          rows={6}
+          placeholder="Write it the way you would send it, even if it's messy."
+          className={inputClass}
+        />
 
-    // Close dropdown on outside click
-    useEffect(() => {
-      const handler = (e: MouseEvent) => {
-        if (goalRef.current && !goalRef.current.contains(e.target as Node)) {
-          setGoalFocused(false);
-        }
-      };
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-    }, []);
+        {showReplyingTo ? (
+          <div className="mt-5">
+            <label htmlFor="replyingTo">
+              <Label>What you&apos;re answering (optional)</Label>
+            </label>
+            <textarea
+              id="replyingTo"
+              value={replyingTo}
+              onChange={(e) => setReplyingTo(e.target.value)}
+              rows={3}
+              placeholder="Paste their message so the new versions fit it."
+              className={inputClass}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowReplyingTo(true)}
+            className="mt-3 min-h-[44px] text-[15px] font-medium text-[color:var(--app-accent)] underline underline-offset-4"
+          >
+            + Add the message you&apos;re answering
+          </button>
+        )}
 
-    const handleRewrite = async () => {
-        if (!originalMessage.trim()) return;
-        
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-
-        try {
-            const response = await apiFetch('/api/rewrite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: originalMessage,
-                    goal: goal || 'General Improvement'
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to rewrite message');
-            }
-
-            const data = await response.json();
-            setResult(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCopy = async (text: string, idx: number) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedIdx(idx);
-        setTimeout(() => setCopiedIdx(null), 2000);
-    };
-
-    const handleReset = () => {
-        setResult(null);
-        setOriginalMessage('');
-        setGoal('');
-        setError(null);
-        setCopiedIdx(null);
-    };
-
-    const getRiskColor = (risk: string) => {
-        switch (risk) {
-            case 'LOW': return 'text-green-400 bg-green-400/10';
-            case 'MEDIUM': return 'text-yellow-400 bg-yellow-400/10';
-            case 'HIGH': return 'text-red-400 bg-red-400/10';
-            default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10';
-        }
-    };
-
-    return (
-        <div className="space-y-8">
-            <header>
-                <h1 className="text-2xl font-bold uppercase font-mono tracking-wider">
-                    Message Rewriter — Influence Optimization
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    Transform weak messages into psychologically optimized communications
-                </p>
-            </header>
-
-            {/* Input Section */}
-            <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
-                <div>
-                    <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
-                        Original Message
-                    </label>
-                    <textarea
-                        value={originalMessage}
-                        onChange={(e) => setOriginalMessage(e.target.value)}
-                        placeholder="Hey, how was your day? I had a pretty good day today. What are you up to?"
-                        className="w-full h-32 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 resize-none focus:outline-none focus:border-[#D4A017]"
-                    />
-                </div>
-
-                <div ref={goalRef} className="relative">
-                    <label className="block text-sm font-mono uppercase text-[#D4A017] mb-2">
-                        Goal (Optional)
-                    </label>
-                    <input
-                        type="text"
-                        value={goal}
-                        onChange={(e) => { setGoal(e.target.value); setGoalFocused(true); }}
-                        onFocus={() => setGoalFocused(true)}
-                        placeholder="What are you trying to achieve? e.g., get a raise, close a deal..."
-                        className="w-full bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A017]"
-                    />
-                    {goalFocused && suggestions.length > 0 && (
-                        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#444] rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-                            {suggestions.map((uc) => (
-                                <button
-                                    key={uc.id}
-                                    onClick={() => { setGoal(uc.title); setGoalFocused(false); }}
-                                    className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#333] transition-colors flex items-center gap-3"
-                                >
-                                    <span className="text-sm text-gray-900 dark:text-white">{uc.title}</span>
-                                    <span className="text-[10px] text-gray-400 ml-auto whitespace-nowrap">{uc.emoji} {uc.categoryName}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <button
-                    onClick={handleRewrite}
-                    disabled={!originalMessage.trim() || isLoading}
-                    className="w-full bg-[#D4A017] text-[#0A0A0A] font-mono uppercase py-3 px-4 rounded-md hover:bg-[#F4D03F] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                    {isLoading ? '[REWRITING...]' : '🔄 REWRITE MESSAGE'}
-                </button>
-            </div>
-
-            {/* Loading State */}
-            {isLoading && (
-                <div className="text-center p-10 border-2 border-dashed border-[#D4A017] rounded-lg animate-pulse">
-                    <p className="font-mono text-lg">[ANALYZING & OPTIMIZING...]</p>
-                </div>
-            )}
-
-            {/* Error State */}
-            {error && (
-                <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
-                    <p className="text-red-400">{error}</p>
-                </div>
-            )}
-
-            {/* Results */}
-            {result && (
-                <div className="space-y-6">
-                    {/* Metrics */}
-                    <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333]">
-                        <div className="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <div className="text-2xl font-bold text-[#D4A017]">{result.confidence}%</div>
-                                <div className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">Processing Confidence</div>
-                            </div>
-                            <div>
-                                <div className="text-2xl font-bold text-green-400">
-                                    +{Math.max(...result.versions.map(v => v.powerIncrease))}%
-                                </div>
-                                <div className="text-sm font-mono uppercase text-gray-500 dark:text-gray-400">Max Power Increase</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Rewritten Versions */}
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-mono uppercase text-[#D4A017]">
-                            Optimized Versions
-                        </h2>
-                        
-                        {result.versions.map((version, index) => (
-                            <div key={index} className="bg-white dark:bg-[#1A1A1A] p-6 rounded-lg border border-gray-200 dark:border-[#333333] space-y-4">
-                                {/* Header */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <h3 className="font-mono uppercase text-[#D4A017] font-bold">
-                                            {version.type}
-                                        </h3>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-mono ${getRiskColor(version.riskLevel)}`}>
-                                            {version.riskLevel} RISK
-                                        </span>
-                                    </div>
-                                    <div className="text-sm font-mono text-gray-500 dark:text-gray-400">
-                                        Power: +{version.powerIncrease}%
-                                    </div>
-                                </div>
-
-                                {/* Description */}
-                                <p className="text-sm text-gray-600 dark:text-gray-300">{version.description}</p>
-
-                                {/* Rewritten Message */}
-                                <div className="bg-gray-50 dark:bg-[#222222] p-4 rounded-md relative group">
-                                    <p className="text-gray-900 dark:text-white font-medium">{version.message}</p>
-                                    <button
-                                        onClick={() => handleCopy(version.message, index)}
-                                        className="absolute top-3 right-3 p-2 bg-gray-200 dark:bg-[#333333] rounded-md opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-gray-300 dark:hover:bg-[#444444]"
-                                    >
-                                        {copiedIdx === index ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                    </button>
-                                </div>
-
-                                {/* Explanation */}
-                                <div className="flex items-start gap-2 bg-[#FAFAF8] dark:bg-[#0A0A0A] p-3 rounded-md">
-                                    <Lightbulb className="h-4 w-4 text-[#D4A017] mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300">{version.explanation}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Reset Button */}
-                    <button
-                        onClick={handleReset}
-                        className="w-full py-3 border border-gray-200 dark:border-[#333333] rounded-lg font-mono uppercase text-gray-600 dark:text-gray-300 hover:border-[#D4A017] hover:text-[#D4A017] transition-colors"
-                    >
-                        Rewrite Another Message
-                    </button>
-                </div>
-            )}
+        <div className="mt-6">
+          <Button onClick={go} loading={loading} disabled={!draft.trim() || loading} className="w-full sm:w-auto">
+            {loading ? 'Calming it down...' : 'Calm my reply'}
+          </Button>
         </div>
-    );
+      </Card>
+
+      {error && (
+        <div className="mt-5">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+
+      <div ref={resultRef} className="scroll-mt-6">
+        {result && (
+          <div className="mt-8 space-y-4">
+            {result.flags.length > 0 ? (
+              <Card tone="gold">
+                <Label>Heads-up about your draft</Label>
+                <ul className="space-y-3">
+                  {result.flags.map((f, i) => (
+                    <li key={i}>
+                      <p className="text-[16px] font-semibold">{FLAG_TITLE[f.kind]}</p>
+                      <p className="text-[15px] leading-relaxed text-[color:var(--app-muted)]">{f.note}</p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4">
+                  {IS_V3 ? <BookRef chapter={3} title={CHAPTERS_V3[3]} /> : <BookRef title="Stop Shrinking (bonus guide)" />}
+                </div>
+              </Card>
+            ) : (
+              <Notice>Your draft already reads clearly. The versions below are small polishes.</Notice>
+            )}
+
+            {result.versions.map((v, i) => (
+              <Card key={i}>
+                <p className="app-type text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-accent)]">{v.style}</p>
+                <p className="mt-2 whitespace-pre-wrap text-[18px] leading-relaxed">{v.text}</p>
+                {v.changed && <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--app-muted)]">What changed: {v.changed}</p>}
+                <div className="mt-3">
+                  <CopyButton text={v.text} />
+                </div>
+              </Card>
+            ))}
+
+            <p className="text-[14px] leading-relaxed text-[color:var(--app-muted)]">
+              Want these to sound even more like you? Add a few of your own messages under{' '}
+              <Link href="/app/settings" className="underline underline-offset-4">
+                Settings
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

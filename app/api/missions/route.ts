@@ -1,108 +1,69 @@
+/**
+ * The 21-Day Reset (page: /app/field-ops).
+ *
+ * GET  -> all steps (24 in the v2 book, 21 in v3; see lib/edition.ts RESET), the person's finished steps with notes, today's step, streak.
+ *         ?tz=<browser getTimezoneOffset()> so the streak uses their own days.
+ * POST { day, note } -> marks a step done with its journal note, or updates the
+ *         note on a step already done (the original finish date is kept).
+ *
+ * People move at their own pace: any step can be finished, in any order.
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { searchKnowledge } from '@/lib/rag';
-import { RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { RESET_TOTAL } from '@/lib/progress';
+import { RESET } from '@/lib/edition';
+import { db, loadReset } from './reset-data';
 
-export const maxDuration = 60;
+const MAX_NOTE = 8000;
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
-
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    // Paid AI endpoint — require a logged-in user (cost abuse).
-    await requireAuth(req);
-
-    const body = await req.json();
-    const { action } = body;
-
-    if (action === 'grade') {
-      return handleGrade(body);
-    }
-
-    return apiError('Unknown action.', 400);
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Something went wrong. Please try again.', 500, '[MISSIONS]', error);
+    const { uid } = await requireAppUser(req);
+    const tz = parseInt(req.nextUrl.searchParams.get('tz') || '0', 10) || 0;
+    return NextResponse.json(await loadReset(uid, tz));
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('We could not load your reset just now. Please try again.', 500, '[reset:get]', err);
   }
 }
 
-async function handleGrade(body: any) {
-  const { mission, completion } = body;
-
-  if (!mission || !completion) {
-    return apiError('Mission and completion details are required.', 400);
-  }
-
-  // RAG search for the mission's technique
-  const ragContext = await searchKnowledge(
-    `${mission.technique} technique application execution examples`,
-    { count: 4 }
-  );
-
-  const systemPrompt = `${HANDLER_VOICE}
-You are an elite influence and persuasion coach grading a student's completion of a daily mission. Be encouraging but honest.
-
-The mission was:
-Title: ${mission.title}
-Description: ${mission.description}
-Technique: ${mission.technique}
-Difficulty: ${mission.difficulty}
-Max XP: ${mission.xpReward}
-
-${ragContext ? `${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE — USE THIS TO EVALUATE TECHNIQUE EXECUTION:\n${ragContext}\n` : ''}
-
-GRADING RUBRIC:
-- A+/A: Used the technique correctly AND adapted it creatively. Shows deep understanding.
-- B+/B: Used the technique correctly but mechanically. Textbook execution.
-- C+/C: Attempted but with execution errors (wrong timing, too obvious, missed setup).
-- D: Misidentified when/how to use the technique.
-- F: Did not attempt or completely wrong approach.
-
-Respond with a JSON object containing exactly these keys:
-- "grade": A letter grade (A+/A/B+/B/C+/C/D/F)
-- "feedback": 2-3 sentences of specific, tactical feedback on their execution. Reference specific concepts from the knowledge base.
-- "xpEarned": A number between 0 and ${mission.xpReward} based on how well they did. A+ = full XP, F = 0. Factor in the self-reported outcome.
-- "insight": One sentence of deeper insight or a tip for next time, citing a source from the knowledge base if applicable
-- "techniqueAccuracy": "correct_and_creative" | "correct_but_mechanical" | "attempted_with_errors" | "misapplied" | "not_attempted"`;
-
-  const userContent = `MISSION COMPLETION REPORT:
-What happened: ${completion.whatHappened}
-Did it work? ${completion.didItWork}
-Notes: ${completion.notes || 'None'}`;
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENROUTER_KEY}`,
-      'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-      'X-Title': 'Shadow Persuasion',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    return apiError('AI service is unavailable right now. Please try again.', 502, '[MISSIONS]', `OpenRouter ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
+export async function POST(req: NextRequest) {
   try {
-    const result = JSON.parse(content);
-    return NextResponse.json(result);
-  } catch {
-    return apiError('AI returned an invalid response. Please try again.', 502, '[MISSIONS]', content?.slice?.(0, 200));
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const day = Number(body?.day);
+    if (!Number.isInteger(day) || day < 1 || day > RESET_TOTAL) return apiError('Please pick a day of the reset.', 400);
+    const note = typeof body?.note === 'string' ? body.note.trim().slice(0, MAX_NOTE) : '';
+
+    const { data: existing } = await db
+      .from(RESET.progressTable)
+      .select('day_number, note')
+      .eq('user_id', uid)
+      .eq('day_number', day)
+      .maybeSingle();
+
+    const now = new Date().toISOString();
+    if (existing) {
+      // Editing a past note clears an old reflection that no longer matches it.
+      const changed = (existing.note || '') !== note;
+      const { error } = await db
+        .from(RESET.progressTable)
+        .update({ note: note || null, updated_at: now, ...(changed ? { reflection: null } : {}) })
+        .eq('user_id', uid)
+        .eq('day_number', day);
+      if (error) throw error;
+    } else {
+      const { error } = await db.from(RESET.progressTable).insert({ user_id: uid, day_number: day, note: note || null, completed_at: now, updated_at: now });
+      if (error) throw error;
+    }
+
+    const tz = parseInt(String(body?.tz ?? '0'), 10) || 0;
+    return NextResponse.json({ ok: true, ...(await loadReset(uid, tz)) });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('We could not save that just now. Your note is still on the screen, so please try again.', 500, '[reset:save]', err);
   }
 }

@@ -1,181 +1,310 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Route, Plus, Loader2, Check, Trophy, X, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Check, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
-import { usePeople, PersonPicker } from '@/components/app/PersonPicker';
+import { useAuth } from '@/lib/auth-context';
+import { CHAPTERS } from '@/lib/prompts/your-life';
+import { PersonPicker, usePeople } from '@/components/app/PersonPicker';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
 
-type Step = { label: string; detail: string; done: boolean; notes: string };
-type Campaign = {
+type Step = { label: string; detail: string; when: string; action: 'plan' | 'rehearse' | null; chapter: number | null; done: boolean; notes: string };
+type Goal = {
   id: string;
-  personName?: string | null;
+  personId: string | null;
+  personName: string | null;
   title: string;
   goal: string;
-  situation?: string | null;
-  status: string;
+  situation: string | null;
+  status: 'active' | 'done' | 'paused';
   steps: Step[];
+  progress: number;
+  createdAt: string;
 };
 
-export default function CampaignsPage() {
+const EXAMPLES = ["Get the raise I'm owed", 'Stop hosting every holiday', "Get my brother to share Dad's care", 'Stop lending money to my friend'];
+
+function stepLink(goal: Goal, step: Step) {
+  const params = new URLSearchParams({
+    who: goal.personName || '',
+    situation: `${goal.title}. ${goal.situation ? `${goal.situation} ` : ''}This step: ${step.detail}`.slice(0, 900),
+    goal: step.label,
+  });
+  if (goal.personId) params.set('person', goal.personId);
+  return step.action === 'rehearse' ? `/app/spar?${params}` : `/app/warroom?${params}`;
+}
+
+export default function GoalsPage() {
+  const { user } = useAuth();
   const people = usePeople();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  const [showForm, setShowForm] = useState(false);
-  const [personId, setPersonId] = useState('');
-  const [title, setTitle] = useState('');
-  const [goal, setGoal] = useState('');
-  const [situation, setSituation] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState('');
+  const [situation, setSituation] = useState('');
+  const [personId, setPersonId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
+  const [hotline, setHotline] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await apiFetch('/api/campaigns');
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && Array.isArray(data.campaigns)) setCampaigns(data.campaigns);
+      if (!res.ok) {
+        setError(await friendlyError(res, 'We could not load your goals.'));
+        return;
+      }
+      const d = await res.json();
+      setGoals(d.campaigns || []);
+      setOpen((o) => o ?? d.campaigns?.find((g: Goal) => g.status === 'active')?.id ?? null);
     } catch {
-      // non-critical
+      setError('We could not load your goals. Please check your connection.');
     } finally {
       setLoading(false);
     }
-  };
-  useEffect(() => { load(); }, []);
+  }, []);
+
+  useEffect(() => {
+    if (user) load();
+  }, [user, load]);
 
   const create = async () => {
-    if (!title.trim() || !goal.trim() || creating) return;
-    setCreating(true);
+    if (!title.trim()) {
+      setError('Give your goal a short name, like "Get the raise I\'m owed".');
+      return;
+    }
+    setSaving(true);
     setError(null);
     try {
       const res = await apiFetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, goal, situation, personId }),
+        body: JSON.stringify({ title: title.trim(), situation, personId }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data?.error || 'Could not create the campaign.'); return; }
-      setCampaigns((c) => [data.campaign, ...c]);
-      setOpenId(data.campaign.id);
-      setShowForm(false);
-      setTitle(''); setGoal(''); setSituation(''); setPersonId('');
-    } catch {
-      setError('Could not reach the server.');
-    } finally {
+      if (!res.ok) {
+        setError(await friendlyError(res, 'We could not write a plan just now. Please try again.'));
+        return;
+      }
+      const d = await res.json();
+      setGoals((g) => [d.campaign, ...g]);
+      setOpen(d.campaign.id);
+      setHotline(d.hotline || null);
       setCreating(false);
+      setTitle('');
+      setSituation('');
+      setPersonId('');
+    } catch {
+      setError('We could not save your goal. Please check your connection.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const persist = async (c: Campaign, patch: Partial<Campaign>) => {
-    const updated = { ...c, ...patch };
-    setCampaigns((list) => list.map((x) => (x.id === c.id ? updated : x)));
-    try {
-      await apiFetch('/api/campaigns', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: c.id, steps: updated.steps, status: updated.status }),
-      });
-    } catch {}
+  const update = async (goal: Goal, changes: Partial<Pick<Goal, 'steps' | 'status'>>) => {
+    const next = { ...goal, ...changes };
+    if (changes.steps) next.progress = Math.round((changes.steps.filter((s) => s.done).length / Math.max(1, changes.steps.length)) * 100);
+    setGoals((gs) => gs.map((g) => (g.id === goal.id ? next : g)));
+    const res = await apiFetch('/api/campaigns', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: goal.id, ...changes }),
+    });
+    if (!res.ok) {
+      setError(await friendlyError(res));
+      setGoals((gs) => gs.map((g) => (g.id === goal.id ? goal : g)));
+    }
   };
 
-  const toggleStep = (c: Campaign, i: number) => {
-    const steps = c.steps.map((s, idx) => (idx === i ? { ...s, done: !s.done } : s));
-    persist(c, { steps });
+  const toggleStep = (goal: Goal, i: number) => {
+    const steps = goal.steps.map((s, j) => (j === i ? { ...s, done: !s.done } : s));
+    const allDone = steps.every((s) => s.done);
+    update(goal, { steps, ...(allDone && goal.status === 'active' ? { status: 'done' as const } : !allDone && goal.status === 'done' ? { status: 'active' as const } : {}) });
   };
 
-  const remove = async (c: Campaign) => {
-    setCampaigns((list) => list.filter((x) => x.id !== c.id));
-    try { await apiFetch(`/api/campaigns?id=${c.id}`, { method: 'DELETE' }); } catch {}
+  const remove = async (goal: Goal) => {
+    if (!window.confirm(`Delete "${goal.title}"? This cannot be undone.`)) return;
+    const res = await apiFetch(`/api/campaigns?id=${encodeURIComponent(goal.id)}`, { method: 'DELETE' });
+    if (res.ok) setGoals((gs) => gs.filter((g) => g.id !== goal.id));
+    else setError(await friendlyError(res));
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <Route className="h-7 w-7 text-[#D4A017]" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#F4ECD8]">Campaigns</h1>
-        </div>
-        <button onClick={() => setShowForm((s) => !s)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#D4A017] px-4 py-2 text-sm font-semibold text-[#0A0A0A]">
-          <Plus className="h-4 w-4" /> New
-        </button>
-      </div>
-      <p className="text-gray-600 dark:text-gray-400 mb-6">
-        Some goals take more than one conversation. Set the goal, and I&apos;ll map the sequence of moves so you can work it over time.
-      </p>
+    <div className="max-w-4xl">
+      <PageHeader
+        kicker="Goals"
+        title="The bigger things that take a few weeks."
+        subtitle="Some things don't change in one conversation. Name what you want, and get a short plan of small steps, from getting ready to making the result stick."
+        right={
+          !creating ? (
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="h-4 w-4" /> New goal
+            </Button>
+          ) : undefined
+        }
+      />
 
-      {showForm && (
-        <div className="mb-6 rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1A1A1A] p-4 space-y-3">
-          {error && <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 text-sm text-red-700 dark:text-red-400">{error}</div>}
-          <PersonPicker people={people} value={personId} onChange={setPersonId} />
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Campaign title (e.g. Get promoted to Senior)"
-            className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#111] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]" />
-          <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="The goal (what does winning look like?)"
-            className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#111] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]" />
-          <textarea value={situation} onChange={(e) => setSituation(e.target.value)} placeholder="Any context (optional)" rows={2}
-            className="w-full rounded-lg border border-gray-300 dark:border-[#333] bg-white dark:bg-[#111] p-2.5 text-gray-900 dark:text-[#F4ECD8] focus:outline-none focus:ring-2 focus:ring-[#D4A017]" />
-          <button onClick={create} disabled={creating || !title.trim() || !goal.trim()}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D4A017] px-5 py-2.5 font-semibold text-[#0A0A0A] disabled:opacity-50">
-            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Route className="h-4 w-4" />}
-            {creating ? 'Mapping your moves…' : 'Create campaign'}
-          </button>
+      {creating && (
+        <Card className="mb-6">
+          <Label>A new goal</Label>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="g-title" className="mb-1.5 block text-[14px] font-medium">
+                What do you want?
+              </label>
+              <input id="g-title" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="Get the raise I'm owed" maxLength={160} />
+              <div className="mt-2 flex flex-wrap gap-2">
+                {EXAMPLES.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    onClick={() => setTitle(ex)}
+                    className="min-h-[36px] rounded-full border border-[color:var(--app-line)] px-3 text-[13px] hover:bg-[color:var(--app-paper-2)]"
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="g-sit" className="mb-1.5 block text-[14px] font-medium">
+                What&apos;s going on? <span className="font-normal text-[color:var(--app-muted)]">(optional, but it makes the plan fit you)</span>
+              </label>
+              <textarea
+                id="g-sit"
+                rows={3}
+                value={situation}
+                onChange={(e) => setSituation(e.target.value)}
+                className={inputClass}
+                placeholder="I've taken on two people's work since March. My review is in six weeks."
+              />
+            </div>
+            <PersonPicker people={people} value={personId} onChange={setPersonId} />
+          </div>
+          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => setCreating(false)}>
+              Cancel
+            </Button>
+            <Button onClick={create} loading={saving}>
+              {saving ? 'Writing your plan...' : 'Make my plan'}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {error && (
+        <div className="mb-6">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+      {hotline && (
+        <div className="mb-6">
+          <Notice tone="warn">Your safety comes first. {hotline}</Notice>
         </div>
       )}
 
       {loading ? (
-        <div className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin text-[#D4A017] mx-auto" /></div>
-      ) : campaigns.length === 0 ? (
-        <p className="text-center text-gray-400 py-12">No campaigns yet. Start one for a goal that needs more than a single conversation.</p>
+        <p className="text-[15px] text-[color:var(--app-muted)]">Loading your goals...</p>
+      ) : goals.length === 0 ? (
+        !creating && (
+          <Card className="text-center">
+            <p className="app-serif text-[24px] font-semibold">No goals yet.</p>
+            <p className="mx-auto mt-2 max-w-md text-[15px] text-[color:var(--app-muted)]">
+              Think of one thing you have been putting up with for too long. That is usually the right first goal.
+            </p>
+            <div className="mt-5">
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="h-4 w-4" /> New goal
+              </Button>
+            </div>
+          </Card>
+        )
       ) : (
-        <div className="space-y-3">
-          {campaigns.map((c) => {
-            const done = c.steps.filter((s) => s.done).length;
-            const open = openId === c.id;
+        <div className="space-y-4">
+          {goals.map((g) => {
+            const isOpen = open === g.id;
+            const doneCount = g.steps.filter((s) => s.done).length;
             return (
-              <div key={c.id} className={`rounded-xl border ${c.status === 'won' ? 'border-green-500/40' : 'border-gray-200 dark:border-[#333]'} bg-white dark:bg-[#1A1A1A]`}>
-                <button onClick={() => setOpenId(open ? null : c.id)} className="w-full flex items-center justify-between gap-3 p-4 text-left">
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-[#F4ECD8]">{c.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {c.personName ? `${c.personName} · ` : ''}{done}/{c.steps.length} moves done{c.status === 'won' ? ' · Won' : c.status === 'abandoned' ? ' · Dropped' : ''}
+              <Card key={g.id} className={g.status === 'paused' ? 'opacity-70' : ''}>
+                <button onClick={() => setOpen(isOpen ? null : g.id)} className="flex w-full items-start gap-3 text-left" aria-expanded={isOpen}>
+                  <div className="min-w-0 flex-1">
+                    <p className="app-type mb-1 text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-accent)]">
+                      {g.status === 'done' ? 'Done' : g.status === 'paused' ? 'Paused' : 'In progress'}
+                      {g.personName ? ` · with ${g.personName}` : ''}
                     </p>
+                    <p className="app-serif text-[22px] font-semibold leading-snug">{g.title}</p>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-[color:var(--app-paper-2)]" role="progressbar" aria-valuenow={g.progress} aria-valuemin={0} aria-valuemax={100}>
+                        <div className="h-full rounded-full bg-[color:var(--app-sage)] transition-all" style={{ width: `${g.progress}%` }} />
+                      </div>
+                      <span className="text-[13px] text-[color:var(--app-muted)]">
+                        {doneCount} of {g.steps.length} steps
+                      </span>
+                    </div>
                   </div>
-                  {open ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                  {isOpen ? <ChevronUp className="mt-1 h-5 w-5 flex-shrink-0" /> : <ChevronDown className="mt-1 h-5 w-5 flex-shrink-0" />}
                 </button>
 
-                {open && (
-                  <div className="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400"><span className="font-medium">Goal:</span> {c.goal}</p>
-                    <div className="space-y-2">
-                      {c.steps.map((s, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                          <button onClick={() => toggleStep(c, i)} className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${s.done ? 'bg-[#D4A017] border-[#D4A017]' : 'border-gray-300 dark:border-[#444]'}`}>
-                            {s.done && <Check className="h-3.5 w-3.5 text-[#0A0A0A]" />}
+                {isOpen && (
+                  <div className="mt-5">
+                    {g.situation && <p className="mb-4 text-[14px] text-[color:var(--app-muted)]">{g.situation}</p>}
+                    <ol className="space-y-3">
+                      {g.steps.map((s, i) => (
+                        <li key={i} className="flex gap-3 rounded-lg border border-[color:var(--app-line)] p-3">
+                          <button
+                            onClick={() => toggleStep(g, i)}
+                            aria-label={s.done ? `Mark "${s.label}" as not done` : `Mark "${s.label}" as done`}
+                            aria-pressed={s.done}
+                            className="-m-1 flex h-11 w-11 flex-shrink-0 items-center justify-center"
+                          >
+                            <span
+                              className={`flex h-6 w-6 items-center justify-center rounded-md border ${
+                                s.done ? 'border-[color:var(--app-sage)] bg-[color:var(--app-sage)] text-white' : 'border-[color:var(--app-line)] bg-[color:var(--app-card)]'
+                              }`}
+                            >
+                              {s.done && <Check className="h-4 w-4" />}
+                            </span>
                           </button>
-                          <div>
-                            <p className={`text-sm font-medium ${s.done ? 'line-through text-gray-400' : 'text-gray-900 dark:text-[#F4ECD8]'}`}>{i + 1}. {s.label}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{s.detail}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-[16px] font-semibold ${s.done ? 'text-[color:var(--app-muted)] line-through' : ''}`}>
+                              {s.when && <span className="app-type mr-2 text-[11px] font-normal uppercase tracking-[0.14em] text-[color:var(--app-accent)]">{s.when}</span>}
+                              {s.label}
+                            </p>
+                            {s.detail && <p className="mt-1 text-[15px] leading-relaxed text-[color:var(--app-muted)]">{s.detail}</p>}
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {s.action && (
+                                <Link
+                                  href={stepLink(g, s)}
+                                  className="inline-flex min-h-[40px] items-center rounded-lg border border-[color:var(--app-line)] px-3 text-[14px] font-medium hover:bg-[color:var(--app-paper-2)]"
+                                >
+                                  {s.action === 'rehearse' ? 'Rehearse it' : 'Plan this conversation'}
+                                </Link>
+                              )}
+                              {s.chapter && CHAPTERS[s.chapter] && <BookRef chapter={s.chapter} title={CHAPTERS[s.chapter]} />}
+                            </div>
                           </div>
-                        </div>
+                        </li>
                       ))}
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {c.status !== 'won' && (
-                        <button onClick={() => persist(c, { status: 'won' })} className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white">
-                          <Trophy className="h-3.5 w-3.5" /> Mark won
-                        </button>
+                    </ol>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {g.status !== 'done' && (
+                        <Button variant="ghost" onClick={() => update(g, { status: g.status === 'paused' ? 'active' : 'paused' })}>
+                          {g.status === 'paused' ? 'Pick it back up' : 'Pause this goal'}
+                        </Button>
                       )}
-                      {c.status === 'active' && (
-                        <button onClick={() => persist(c, { status: 'abandoned' })} className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-[#444] px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300">
-                          <X className="h-3.5 w-3.5" /> Drop
-                        </button>
+                      {g.status === 'done' && (
+                        <Button variant="ghost" onClick={() => update(g, { status: 'active' })}>
+                          Reopen
+                        </Button>
                       )}
-                      <button onClick={() => remove(c)} className="inline-flex items-center gap-1 rounded-lg border border-red-300 dark:border-red-900/50 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 ml-auto">
-                        <Trash2 className="h-3.5 w-3.5" /> Delete
-                      </button>
+                      <Button variant="ghost" onClick={() => remove(g)} className="text-[color:var(--app-oxblood)]">
+                        <Trash2 className="h-4 w-4" /> Delete
+                      </Button>
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>

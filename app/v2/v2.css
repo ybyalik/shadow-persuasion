@@ -1,0 +1,147 @@
+/* Shadow Persuasion v2 pages. Scoped under .sp2 so the rest of the site is untouched.
+
+   Design system (approved Oct 21, 2026):
+   - Looks like a well-printed book: warm paper, ink text, one walnut accent; gold only on dark.
+   - Reading text: Source Serif 4, 19px phone / 21px desktop. Headlines: EB Garamond, large.
+     Labels: Courier Prime. Forms: Inter. NOTHING on the page under 16px.
+   - Illustrations: one style only, two-colour linocut (public/v2/lino).
+   - Few boxes: thin rules and space instead of cards. Quiet motion; text never hidden by it. */
+.sp2 {
+  --sp2-ink: #1c1b18;
+  --sp2-muted: #4f483e;          /* secondary text: still 8:1 on paper */
+  --sp2-paper: #f4efe6;
+  --sp2-paper-2: #ece4d4;
+  --sp2-light: #faf6ee;          /* the "lighter paper" background */
+  --sp2-card: #fbf8f2;
+  --sp2-line: #d6cbb7;
+  --sp2-accent: #8a5a2b;         /* walnut: only 19px+ text on paper */
+  --sp2-accent-dark: #6d4520;
+  --sp2-gold: #c9a46b;           /* only on dark backgrounds */
+  --sp2-night: #1a1714;          /* tinted ink background */
+  --sp2-black: #12100d;
+  --sp2-oxblood: #7a2e22;
+  --sp2-sage: #4f5b3a;
+  min-height: 100vh;
+  background: var(--sp2-paper);
+  color: var(--sp2-ink);
+  font-family: var(--font-sp2-serif), Georgia, serif;
+  font-size: 19px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+@media (min-width: 768px) {
+  .sp2 { font-size: 21px; }
+}
+.sp2 h1, .sp2 h2, .sp2 .sp2-display { font-family: var(--font-sp2-display), Georgia, serif; font-weight: 500; text-wrap: balance; }
+.sp2 p { text-wrap: pretty; }
+.sp2 .sp2-ui { font-family: var(--font-sp2-ui), system-ui, sans-serif; }
+.sp2 .sp2-type { font-family: var(--font-sp2-type), 'Courier New', monospace; }
+
+/* Type scale (phone / desktop) */
+.sp2 .sp2-h1 { font-size: clamp(40px, 6.4vw, 72px); line-height: 1.04; letter-spacing: -0.012em; }
+.sp2 .sp2-h2 { font-size: clamp(34px, 4.6vw, 54px); line-height: 1.08; letter-spacing: -0.01em; }
+.sp2 .sp2-h3 { font-family: var(--font-sp2-serif), Georgia, serif; font-size: clamp(24px, 2.4vw, 30px); line-height: 1.2; font-weight: 600; }
+.sp2 .sp2-lead { font-size: clamp(21px, 2.1vw, 26px); line-height: 1.5; }
+.sp2 .sp2-body { font-size: inherit; line-height: 1.6; }
+.sp2 .sp2-body p + p { margin-top: 1em; }
+.sp2 .sp2-small { font-size: 17px; line-height: 1.5; }          /* the smallest text we use for sentences */
+.sp2 .sp2-quote { font-family: var(--font-sp2-display), Georgia, serif; font-style: italic; font-size: clamp(30px, 3.6vw, 44px); line-height: 1.2; }
+.sp2 .sp2-measure { max-width: 660px; }
+
+/* One small label per section, never in paragraphs */
+.sp2 .sp2-kicker {
+  font-family: var(--font-sp2-type), 'Courier New', monospace;
+  font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sp2-accent);
+}
+.sp2 .sp2-on-dark .sp2-kicker, .sp2 .sp2-kicker.on-dark { color: var(--sp2-gold); }
+
+/* Paper grain on backgrounds only */
+.sp2 .sp2-grain { position: relative; isolation: isolate; }
+.sp2 .sp2-grain::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.45;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+/* Highlighter and pencil marks (the "case file" look, done with real text) */
+.sp2 mark.sp2-hl {
+  background: linear-gradient(transparent 58%, rgba(201, 164, 107, 0.6) 58%);
+  color: inherit; padding: 0 2px;
+}
+.sp2 .sp2-circled { position: relative; white-space: nowrap; }
+.sp2 .sp2-circled::after {
+  content: ''; position: absolute; inset: -6px -10px; border: 2px solid var(--sp2-oxblood); border-radius: 50%;
+  transform: rotate(-2deg); opacity: 0.8; pointer-events: none;
+}
+.sp2 .sp2-redact { background: var(--sp2-ink); color: transparent; border-radius: 1px; padding: 0 3px; user-select: none; }
+.sp2 .sp2-note { font-family: var(--font-sp2-type), 'Courier New', monospace; font-size: 17px; line-height: 1.4; color: var(--sp2-oxblood); }
+
+/* Rules instead of boxes */
+.sp2 .sp2-rule { border-top: 1px solid var(--sp2-line); }
+
+/* Buttons: tall, plain, the price in the words */
+.sp2 .sp2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 60px; padding: 14px 32px; border-radius: 6px; border: 0; cursor: pointer; text-decoration: none;
+  font-family: var(--font-sp2-serif), Georgia, serif; font-weight: 600; font-size: 20px; line-height: 1.2;
+  background: var(--sp2-ink); color: var(--sp2-light);
+  transition: background-color 0.15s ease;
+}
+.sp2 .sp2-btn:hover { background: #000; }
+.sp2 .sp2-btn:focus-visible { outline: 3px solid var(--sp2-accent); outline-offset: 3px; }
+.sp2 .sp2-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.sp2 .sp2-btn-gold { background: var(--sp2-gold); color: var(--sp2-black); }
+.sp2 .sp2-btn-gold:hover { background: #d6b47e; }
+.sp2 .sp2-btn-ghost { background: transparent; color: var(--sp2-ink); border: 1.5px solid var(--sp2-ink); }
+.sp2 .sp2-btn-ghost:hover { background: rgba(0, 0, 0, 0.04); }
+.sp2 .sp2-btn-shine { } /* kept for old markup; shimmer effects are retired */
+
+.sp2 .sp2-input {
+  width: 100%; font-family: var(--font-sp2-ui), system-ui, sans-serif; font-size: 18px;
+  min-height: 54px; padding: 12px 14px; border: 1.5px solid var(--sp2-line); border-radius: 6px; background: #fff; color: var(--sp2-ink);
+}
+.sp2 .sp2-input::placeholder { color: #8b8274; }
+.sp2 .sp2-input:focus { outline: 2px solid var(--sp2-accent); outline-offset: 1px; border-color: transparent; }
+.sp2 .sp2-label { display: block; font-family: var(--font-sp2-ui), system-ui, sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+
+/* Linocut illustrations: printed straight onto the page's paper */
+.sp2 .sp2-lino { display: block; width: 100%; height: auto; }
+
+/* Long-form reading (chapter page) */
+.sp2 .sp2-prose { font-size: 21px; line-height: 1.65; }
+.sp2 .sp2-prose p { margin: 0 0 1em; }
+.sp2 .sp2-prose h2 { font-family: var(--font-sp2-display), Georgia, serif; font-size: 34px; line-height: 1.15; font-weight: 500; margin: 1.6em 0 0.5em; }
+.sp2 .sp2-prose blockquote {
+  margin: 1.4em 0; padding: 0.2em 0 0.2em 1em; border-left: 3px solid var(--sp2-accent);
+  font-style: italic; color: var(--sp2-muted);
+}
+.sp2 .sp2-prose strong { font-weight: 650; }
+.sp2 .sp2-prose > p:first-child { font-size: 1.25em; line-height: 1.45; }
+@media (max-width: 640px) {
+  .sp2 .sp2-prose { font-size: 19px; }
+  .sp2 .sp2-prose h2 { font-size: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp2 *, .sp2 *::before, .sp2 *::after { animation: none !important; transition: none !important; }
+}
+
+/* Prints fade softly into the paper instead of ending in a hard rectangle */
+.sp2 .sp2-soft {
+  -webkit-mask-image: radial-gradient(ellipse 75% 72% at 50% 50%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 72% at 50% 50%, #000 58%, transparent 100%);
+}
+.sp2 .sp2-soft-more {
+  -webkit-mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 38%, transparent 96%);
+  mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 38%, transparent 96%);
+}
+
+/* Warm light theme (test version /v6): terracotta replaces walnut and oxblood. */
+.sp2 .sp2-warm {
+  --sp2-accent: #9a4529;
+  --sp2-accent-dark: #7c3720;
+  --sp2-oxblood: #9a4529;
+}
+.sp2 .sp2-btn-warm { background: #a24a2c; color: #fff; }
+.sp2 .sp2-btn-warm:hover { background: #8a3d23; }

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
+import { aiChat, MODELS } from '@/lib/ai';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { uid: userId } = await requireAppUser(req);
 
     const formData = await req.formData();
     const file = formData.get('image') as File | null;
@@ -29,50 +28,37 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const base64 = `data:${file.type};base64,${Buffer.from(bytes).toString('base64')}`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Extract ONLY the text that was written by the user/sender in this screenshot. This is a message, email, text conversation, or DM. I need to learn this person's writing style and voice.
+    const { text } = await aiChat({
+      userId,
+      feature: 'voice-profile',
+      model: MODELS.fast,
+      temperature: 0,
+      maxTokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Extract ONLY the text that was written by the user (the sender) in this screenshot of a message, email, text conversation or DM. It is used to learn how this person writes.
 
 Rules:
-- Extract only what the USER wrote (not what others said to them)
-- Preserve their exact wording, punctuation, capitalization, and emoji usage
-- If it's a conversation, only include the user's messages (the ones they sent)
-- If you can't tell who the sender is, extract all text
-- Return ONLY the extracted text, nothing else — no labels, no commentary`,
-              },
-              { type: 'image_url', image_url: { url: base64 } },
-            ],
-          },
-        ],
-        max_tokens: 2000,
-      }),
+- Only the messages the user sent, not what others said to them.
+- Keep their exact wording, punctuation, capitalization and emoji.
+- If you cannot tell who the sender is, extract all text.
+- Return only the extracted text, with no labels or commentary.`,
+            },
+            { type: 'image_url', image_url: { url: base64 } },
+          ],
+        },
+      ],
     });
-
-    if (!response.ok) {
-      console.error('[VOICE_EXTRACT]', 'OpenRouter error:', response.status);
-      return NextResponse.json({ error: 'Failed to analyze image' }, { status: 502 });
-    }
-
-    const data = await response.json();
-    const extractedText = data.choices?.[0]?.message?.content || '';
+    const extractedText = text.trim();
 
     return NextResponse.json({ extractedText });
   } catch (error) {
-    console.error('[VOICE_EXTRACT]', error);
-    return NextResponse.json({ error: 'Failed to process image' }, { status: 500 });
+    const f = passthroughAuthError(error);
+    if (f) return f;
+    return apiError("We couldn't read that image. Please try another one.", 500, '[VOICE_EXTRACT]', error);
   }
 }

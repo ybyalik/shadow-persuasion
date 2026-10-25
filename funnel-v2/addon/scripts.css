@@ -1,0 +1,6 @@
+@page { size: Letter; margin: 0.8in 0.85in; }
+body { font-family: Georgia, serif; color:#1c1c1c; font-size: 12.5px; line-height:1.5; max-width: none; }
+h1 { font-size: 30px; font-weight: normal; margin: 0 0 6px; } h2 { font-size: 20px; font-weight: normal; margin: 26px 0 8px; border-bottom: 1px solid #ddd6c8; padding-bottom: 4px; }
+blockquote { margin: 4px 0 12px; padding: 6px 12px; background:#f4f0e8; border-left: 3px solid #8a6d3b; font-size: 13px; }
+p { margin: 6px 0; } hr { border: 0; border-top: 1px solid #ddd6c8; margin: 18px 0; }
+h2 { page-break-after: avoid; } p strong { page-break-after: avoid; }

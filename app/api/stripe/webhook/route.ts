@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { sendDeliveryEmail } from '@/lib/email';
 import type { ProductSlug } from '@/lib/pricing';
+import { fulfillSp2Order } from '@/lib/sp2/fulfill';
+import { SP2_FUNNEL, SP2_UPSELL_FUNNEL } from '@/lib/sp2/config';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -238,6 +240,12 @@ export async function POST(req: NextRequest) {
       case 'payment_intent.succeeded': {
         const intent = event.data.object as Stripe.PaymentIntent;
         const funnel = intent.metadata?.funnel;
+
+        // Shadow Persuasion v2 (book and its upsell) has its own fulfillment path.
+        if (funnel === SP2_FUNNEL || funnel === SP2_UPSELL_FUNNEL) {
+          await fulfillSp2Order(intent.id);
+          break;
+        }
 
         // Only handle our funnel payments. Subscription checkout flows through
         // `checkout.session.completed` above; we don't want to double-handle.

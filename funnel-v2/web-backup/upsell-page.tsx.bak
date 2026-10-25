@@ -1,0 +1,86 @@
+'use client';
+
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+function UpsellOffer() {
+  const router = useRouter();
+  const pi = useSearchParams().get('payment_intent') || '';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const thankYou = (upsellPi?: string) =>
+    `/v2/thank-you?payment_intent=${encodeURIComponent(pi)}${upsellPi ? `&upsell_pi=${encodeURIComponent(upsellPi)}` : ''}`;
+
+  async function accept() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/v2/upsell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentIntentId: pi }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error();
+      router.push(thankYou(data.upsellPaymentIntentId));
+    } catch {
+      setError("We couldn't add this to your order, and you haven't been charged for it. You can continue to your book below.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
+      <p className="sp2-kicker mb-3">Your book is confirmed. One more thing before you go.</p>
+      <h1 className="text-[30px] sm:text-[40px] leading-tight font-semibold mb-8">
+        Want a step-by-step plan for the conversations that matter most?
+      </h1>
+
+      <div className="grid sm:grid-cols-[180px_1fr] gap-6 sm:gap-8 items-start mb-8">
+        <div className="flex sm:flex-col gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/v2/covers/playbooks.jpg" alt="The Big Conversation Playbooks cover" className="w-1/2 sm:w-full rounded shadow-lg" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/v2/covers/pay.jpg" alt="The Raise and Pay Scripts cover" className="w-1/2 sm:w-full rounded shadow-lg" />
+        </div>
+        <div className="text-[18px] leading-relaxed text-[color:var(--sp2-muted)] space-y-5">
+          <p>
+            <b className="text-[color:var(--sp2-ink)]">The Big Conversation Playbooks</b>{' '}walk you through 15 of the
+            conversations that decide how you&apos;re treated: when someone takes credit for your work, telling your manager
+            you&apos;re at capacity, quitting a job, saying no to lending money, a parent who guilt-trips you, sharing the care
+            of an aging parent, ending a recurring fight, an apology, and more. Each one gives you an opening line, three
+            moves, calm replies for the pushback, and how to close it.
+          </p>
+          <p>
+            <b className="text-[color:var(--sp2-ink)]">The Raise and Pay Scripts</b>{' '}give you more than 50 word-for-word
+            scripts for asking for a raise, answering every common objection, negotiating a new offer, and following up in
+            writing. They work for hourly, salaried, public sector, small business and freelance work.
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[color:var(--sp2-line)] bg-white p-6 sm:p-8">
+        <p className="sp2-ui text-[15px] mb-5">
+          <b>The Big Conversations Pack: $47</b>, added to the card you just used. No need to enter your details again.
+        </p>
+        {error && <p className="sp2-ui text-sm text-red-700 mb-4">{error}</p>}
+        <div className="flex flex-col gap-3">
+          <button className="sp2-btn" disabled={busy || !pi} onClick={accept}>
+            {busy ? 'Adding...' : 'Yes, add the pack for $47'}
+          </button>
+          <button className="sp2-ui text-sm underline text-[color:var(--sp2-muted)] py-2" onClick={() => router.push(thankYou())}>
+            No thanks, take me to my book
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function V2UpsellPage() {
+  return (
+    <Suspense fallback={null}>
+      <UpsellOffer />
+    </Suspense>
+  );
+}

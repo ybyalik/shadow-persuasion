@@ -16,7 +16,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata = {
   title: 'Shadow Persuasion',
-  description: 'AI-Powered Dark Psychology Coaching',
+  description: 'See the tactics people use on you, answer them calmly, and take your power back.',
 };
 
 export default function RootLayout({
@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${ibmPlexMono.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >

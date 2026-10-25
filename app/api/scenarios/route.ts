@@ -1,141 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HANDLER_SYSTEM_PROMPT, RAG_ENFORCEMENT, HANDLER_VOICE } from '@/lib/prompts';
-import { supabase, searchKnowledge } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { aiChat, MODELS } from '@/lib/ai';
+import { getTactic, practiceDb as db, SCENE_COLS, scenePersona, type Scene } from '@/lib/prompts/practice';
 
-export const maxDuration = 60;
+export const maxDuration = 30;
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY!;
+/** After this many of the user's lines, the scene wraps up and the debrief is offered. */
+const MAX_USER_TURNS = 6;
 
+type Msg = { role: 'user' | 'assistant'; content: string };
+
+/**
+ * One turn of a Practice Scene. The AI (MODELS.fast) plays the other person.
+ * POST { scenarioId, messages } where messages start with the other person's
+ * opening line -> { reply, userTurns, suggestDebrief }
+ */
 export async function POST(req: NextRequest) {
   try {
-    // Require a logged-in user: this streams paid Claude Sonnet output, so
-    // anonymous callers must not be able to burn OpenRouter credits.
-    await requireAuth(req);
+    const { uid } = await requireAppUser(req);
+    const body = await req.json().catch(() => ({}));
+    const scenarioId = String(body.scenarioId ?? '');
+    const raw: unknown[] = Array.isArray(body.messages) ? body.messages : [];
+    const messages: Msg[] = raw
+      .map((m) => m as Partial<Msg>)
+      .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+      .map((m) => ({ role: m.role as Msg['role'], content: String(m.content).slice(0, 1200) }));
 
-    const { messages, scenarioId } = await req.json();
-
-    // messages may legitimately be an empty array for the opening turn (the
-    // client requests the AI's first in-character line), so only require that
-    // it is an array.
-    if (!Array.isArray(messages)) {
-      return NextResponse.json({ error: 'No messages provided.' }, { status: 400 });
+    if (!scenarioId) return NextResponse.json({ error: 'Please pick a scene.' }, { status: 400 });
+    if (!messages.length || messages[messages.length - 1].role !== 'user') {
+      return NextResponse.json({ error: 'Type what you would say first.' }, { status: 400 });
     }
-    if (!scenarioId || typeof scenarioId !== 'string') {
-      return NextResponse.json({ error: 'Scenario id is required.' }, { status: 400 });
-    }
-
-    const { data: scenario, error: scenarioError } = await supabase
-      .from('scenarios')
-      .select('*')
-      .eq('id', scenarioId)
-      .single();
-
-    if (scenarioError || !scenario) {
-      return NextResponse.json({ error: 'Scenario not found.' }, { status: 404 });
+    const userTurns = messages.filter((m) => m.role === 'user').length;
+    if (userTurns > MAX_USER_TURNS) {
+      return NextResponse.json({ error: "That's a full scene. Tap Finish to get your debrief." }, { status: 400 });
     }
 
-    // Extract latest user message for RAG search
-    const lastUserMessage = [...messages].reverse().find((m: any) => m.role === 'user');
+    const { data } = await db.from('scenarios').select(SCENE_COLS).eq('id', scenarioId).maybeSingle();
+    const scene = data as Scene | null;
+    if (!scene || !(scene.is_book || scene.user_id === uid)) {
+      return NextResponse.json({ error: "We couldn't find that scene." }, { status: 404 });
+    }
+    const tactic = scene.tactic_slug ? await getTactic(scene.tactic_slug) : null;
 
-    // Search knowledge base with scenario context + user message
-    const techniquesStr = Array.isArray(scenario.techniques) ? scenario.techniques.join(' ') : '';
-    const searchQuery = lastUserMessage
-      ? `${lastUserMessage.content} ${scenario.description} ${scenario.objective} ${techniquesStr}`
-      : `${scenario.objective} ${scenario.description} ${techniquesStr}`;
-    const ragContext = await searchKnowledge(searchQuery);
-    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUES FROM KNOWLEDGE BASE:\n${ragContext}` : '';
-
-    const scenarioPrompt = `You are role-playing a SCENARIO SIMULATION. The scenario is: "${scenario.title}".
-Description: ${scenario.description}
-Objective for the user: ${scenario.objective}
-Key techniques they should practice: ${Array.isArray(scenario.techniques) ? scenario.techniques.join(', ') : 'general influence techniques'}
-
-YOUR ROLE: Play the OTHER person in this scenario (e.g., the boss, the client, the date, the manipulator). Stay in character and respond realistically. Make it challenging but winnable.
-
-IMPORTANT RULES:
-1. Stay in character as the other party at all times
-2. React realistically to the user's influence attempts — don't give in too easily
-3. If they use techniques well, show gradual yielding
-4. If they make mistakes, push back harder
-
-After EACH of your in-character responses, append a coaching annotation on a new line in this exact format:
-<!--COACHING:{"feedback":"Brief evaluation of the user's last message","score":NUMBER_1_TO_10,"technique":"Name of primary technique used or attempted","tip":"Specific actionable suggestion for next message"}-->
-
-The coaching annotation must be valid JSON inside the COACHING comment. Score 1-10 where 10 is masterful. If this is the opening message (no user input yet), still include a coaching annotation with general guidance.`;
-
-    const systemContent = `${HANDLER_VOICE}\n${HANDLER_SYSTEM_PROMPT}\n\n${scenarioPrompt}${knowledgeContext}`;
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4',
-        messages: [
-          { role: 'system', content: systemContent },
-          ...messages.map((msg: any) => ({ role: msg.role, content: msg.content })),
-        ],
-        stream: true,
-      }),
+    const last = userTurns >= MAX_USER_TURNS;
+    const { text } = await aiChat({
+      userId: uid,
+      feature: 'scene:turn',
+      model: MODELS.fast,
+      temperature: 0.8,
+      maxTokens: 250,
+      messages: [
+        {
+          role: 'system',
+          content:
+            scenePersona(scene, tactic) +
+            (last ? '\n\nThis is your LAST reply in the scene. Bring it to a natural close in character (accept, grumble and accept, or end the conversation).' : ''),
+        },
+        ...messages.slice(-14),
+      ],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[SCENARIOS]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
-    }
-
-    if (!response.body) {
-      return NextResponse.json({ error: 'No response body from AI service' }, { status: 502 });
-    }
-
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader();
-        let buffer = '';
-        try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-              const data = trimmed.slice(6);
-              if (data === '[DONE]') continue;
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) controller.enqueue(encoder.encode(content));
-              } catch {}
-            }
-          }
-        } catch (e) {
-          console.error('[SCENARIOS]', 'Stream error:', e);
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
-    });
-
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Failed to get scenario response.', 500, '[SCENARIOS]', error);
+    const reply = text.replace(/—/g, ', ').trim();
+    if (!reply) return apiError("The other person didn't answer. Please try again.", 502, '[scenarios] empty reply');
+    return NextResponse.json({ reply, userTurns, suggestDebrief: userTurns >= 3 });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("We couldn't continue the scene. Please try again.", 500, '[scenarios]', err);
   }
 }

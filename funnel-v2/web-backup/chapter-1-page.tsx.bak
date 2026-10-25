@@ -1,0 +1,47 @@
+import Link from 'next/link';
+import { CHAPTER_ONE_HTML } from '@/lib/sp2/content.generated';
+
+export const metadata = { title: 'Chapter 1: The 3 A.M. Replay | Shadow Persuasion' };
+
+export default async function ChapterOnePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const { welcome } = await searchParams;
+  return (
+    <main>
+      <header className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex items-center justify-between">
+        <Link href="/v2" className="sp2-ui text-sm font-semibold tracking-wide">
+          SHADOW PERSUASION
+        </Link>
+        <Link href="/v2/checkout" className="sp2-ui text-sm underline underline-offset-4">
+          Get the full book
+        </Link>
+      </header>
+
+      <article className="max-w-[680px] mx-auto px-4 sm:px-6 pt-12 pb-16">
+        {welcome && (
+          <div className="sp2-ui mb-10 rounded-lg border border-[color:var(--sp2-line)] bg-white px-5 py-4 text-sm leading-relaxed">
+            You&apos;re in. We&apos;ve also emailed you a link to this chapter, so you can come back to it anytime.
+          </div>
+        )}
+        <p className="sp2-kicker mb-3">Free chapter</p>
+        <h1 className="text-[36px] sm:text-[46px] leading-[1.1] font-semibold mb-10">Chapter 1: The 3 A.M. Replay</h1>
+        <div className="sp2-prose" dangerouslySetInnerHTML={{ __html: CHAPTER_ONE_HTML }} />
+
+        <div className="mt-14 rounded-xl border border-[color:var(--sp2-line)] bg-white p-7 sm:p-9">
+          <p className="sp2-kicker mb-3">Keep going</p>
+          <h2 className="text-[26px] leading-tight font-semibold mb-3">The rest of the book is the practice.</h2>
+          <p className="text-[17px] leading-relaxed text-[color:var(--sp2-muted)] mb-6">
+            Chapter 2 looks at the contract you were handed before you could read it. Then comes the 3-day quick start,
+            the 21-day reset with its printable journal, the calm replies to the tactics people use on you, and the
+            playbooks for the people in your life. It also includes 60 days of the Decoder.
+          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <Link href="/v2/checkout" className="sp2-btn">
+              Get the full book for $47
+            </Link>
+            <span className="sp2-ui text-sm text-[color:var(--sp2-muted)]">30-day money-back guarantee</span>
+          </div>
+        </div>
+      </article>
+    </main>
+  );
+}

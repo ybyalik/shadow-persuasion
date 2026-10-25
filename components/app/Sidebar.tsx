@@ -3,29 +3,51 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, MessageSquare, Edit, Users, Swords, ClipboardList, BookOpen, Trophy, Upload, LogOut, Sun, Moon, ChevronUp, Settings, Menu, X, Shield, Mic, Target, Zap, Route } from 'lucide-react';
+import { Home, Search, MessageSquare, Edit, Users, Swords, ClipboardList, BookOpen, Trophy, Upload, LogOut, Sun, Moon, ChevronUp, Settings, Menu, X, Mic, Target, Zap, Route } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
 import { useAdmin } from '@/lib/hooks/useAdmin';
 
-const navItems = [
-  { href: '/app', icon: Home, label: 'Dashboard' },
-  { href: '/app/analyze', icon: Search, label: 'Analyze' },
-  { href: '/app/defense', icon: Shield, label: 'Defense' },
-  { href: '/app/assist', icon: Zap, label: 'Live Assist' },
-  { href: '/app/chat', icon: MessageSquare, label: 'Strategic Coach' },
-  { href: '/app/rewrite', icon: Edit, label: 'Message Optimizer' },
-  { href: '/app/people', icon: Users, label: 'People' },
-  { href: '/app/campaigns', icon: Route, label: 'Campaigns' },
-  { href: '/app/spar', icon: Mic, label: 'Live Sparring' },
-  { href: '/app/warroom', icon: Target, label: 'War Room' },
-  { href: '/app/training', icon: Swords, label: 'Training Arena' },
-  { href: '/app/field-ops', icon: ClipboardList, label: 'Field Ops' },
-  { href: '/app/techniques', icon: BookOpen, label: 'Techniques' },
-  { href: '/app/score', icon: Trophy, label: 'Persuasion Score' },
+// Grouped the way a reader uses the app: daily practice, help in the moment,
+// getting ready for a conversation, and the people and goals in their life.
+const navGroups = [
+  {
+    title: 'Every day',
+    items: [
+      { href: '/app', icon: Home, label: 'Today' },
+      { href: '/app/field-ops', icon: ClipboardList, label: 'The 21-Day Reset' },
+    ],
+  },
+  {
+    title: 'In the moment',
+    items: [
+      { href: '/app/analyze', icon: Search, label: 'Decode a Message' },
+      { href: '/app/assist', icon: Zap, label: 'Right Now' },
+      { href: '/app/rewrite', icon: Edit, label: 'Calm My Reply' },
+    ],
+  },
+  {
+    title: 'Get ready',
+    items: [
+      { href: '/app/warroom', icon: Target, label: 'Plan a Conversation' },
+      { href: '/app/spar', icon: Mic, label: 'Rehearse It' },
+      { href: '/app/training', icon: Swords, label: 'Practice Scenes' },
+      { href: '/app/techniques', icon: BookOpen, label: 'Spot the Tactic' },
+    ],
+  },
+  {
+    title: 'Your life',
+    items: [
+      { href: '/app/people', icon: Users, label: 'My People' },
+      { href: '/app/campaigns', icon: Route, label: 'Goals' },
+      { href: '/app/chat', icon: MessageSquare, label: 'Talk It Through' },
+      { href: '/app/score', icon: Trophy, label: 'My Progress' },
+    ],
+  },
 ];
 
-export function Sidebar() {
+
+export function Sidebar({ daysLeft }: { daysLeft?: number | null }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
@@ -49,33 +71,56 @@ export function Sidebar() {
   const linkClass = (href: string) =>
     `flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
       isActive(href)
-        ? 'bg-[#D4A017] text-[#0A0A0A]'
-        : 'text-gray-700 dark:text-gray-300 hover:bg-[#E5E2DB] dark:hover:bg-[#222222]'
+        ? 'bg-[color:var(--app-ink)] text-[color:var(--app-paper)]'
+        : 'text-[color:var(--app-ink)] hover:bg-[color:var(--app-paper-2)]'
     }`;
+
+  const nav = (close?: () => void) => (
+    <>
+      {navGroups.map((g) => (
+        <div key={g.title} className="mb-4">
+          <p className="app-type px-3 mb-1 text-[10.5px] uppercase tracking-[0.2em] text-[color:var(--app-muted)]">{g.title}</p>
+          <div className="space-y-0.5">
+            {g.items.map((item) => (
+              <Link key={item.href} href={item.href} onClick={close} className={linkClass(item.href)}>
+                <item.icon className="h-[18px] w-[18px]" />
+                <span className="text-[15px] font-medium">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+      {isAdmin && (
+        <Link href="/app/admin" onClick={close} className={linkClass('/app/admin')}>
+          <Upload className="h-[18px] w-[18px]" />
+          <span className="text-[15px] font-medium">Admin</span>
+        </Link>
+      )}
+    </>
+  );
+
+  const brand = (
+    <Link href="/app" className="block">
+      <span className="app-type text-[13px] tracking-[0.25em] text-[color:var(--app-accent)]">SHADOW PERSUASION</span>
+    </Link>
+  );
+
+  const daysPill =
+    typeof daysLeft === 'number' ? (
+      <Link href="/app/keep" className="mx-3 mb-3 block rounded-lg border border-[color:var(--app-gold)] px-3 py-2 text-[13px] leading-snug hover:bg-[color:var(--app-paper-2)]">
+        <b>{daysLeft} {daysLeft === 1 ? 'day' : 'days'}</b> of your included access left.{' '}
+        <span className="text-[color:var(--app-accent)] underline">Keep the app</span>
+      </Link>
+    ) : null;
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-[#F5F2EB] dark:bg-[#1A1A1A] p-4 border-r border-[#E5E2DB] dark:border-[#333333]">
+      <aside className="hidden md:flex flex-col w-[260px] sticky top-0 h-screen bg-[color:var(--app-paper-2)] p-4 border-r border-[color:var(--app-line)]">
         <div className="flex-1 overflow-y-auto">
-          <div className="mb-6 flex justify-center">
-            <img src="/logo.png" alt="Shadow Persuasion" className="w-36 dark:hidden" />
-            <img src="/logo-dark.png" alt="Shadow Persuasion" className="w-36 hidden dark:block" />
-          </div>
-          <nav className="space-y-1">
-            {navItems.map((item) => (
-              <Link key={item.label} href={item.href} className={linkClass(item.href)}>
-                <item.icon className="h-5 w-5" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link href="/app/admin" className={linkClass('/app/admin')}>
-                <Upload className="h-5 w-5" />
-                <span className="font-medium">Admin</span>
-              </Link>
-            )}
-          </nav>
+          <div className="mb-6 px-3 pt-1">{brand}</div>
+          {daysPill}
+          <nav>{nav()}</nav>
         </div>
 
         {/* Compact user footer with popup menu */}
@@ -95,14 +140,14 @@ export function Sidebar() {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#333] transition-colors"
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
               </button>
               <button
                 onClick={() => { signOut(); setMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#333] transition-colors"
               >
                 <LogOut className="h-4 w-4" />
-                Sign Out
+                Sign out
               </button>
             </div>
           )}
@@ -114,7 +159,7 @@ export function Sidebar() {
             {user?.photoURL ? (
               <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-[#D4A017] flex items-center justify-center text-[#0A0A0A] text-xs font-bold shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[color:var(--app-gold)] flex items-center justify-center text-[#0b0a08] text-xs font-bold shrink-0">
                 {(user?.displayName || user?.email || '?')[0].toUpperCase()}
               </div>
             )}
@@ -127,10 +172,9 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Top Header Bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-[#1A1A1A] border-b border-gray-200 dark:border-[#333] px-4 py-3 flex items-center justify-between">
-        <img src="/logo.png" alt="Shadow Persuasion" className="h-8 dark:hidden" />
-        <img src="/logo-dark.png" alt="Shadow Persuasion" className="h-8 hidden dark:block" />
-        <button onClick={() => setMobileMenuOpen(true)}>
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[color:var(--app-paper-2)] border-b border-[color:var(--app-line)] px-4 py-3.5 flex items-center justify-between">
+        {brand}
+        <button onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
           <Menu className="h-6 w-6 text-gray-700 dark:text-gray-300" />
         </button>
       </header>
@@ -141,7 +185,7 @@ export function Sidebar() {
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
           {/* Panel */}
-          <div className="absolute top-0 right-0 bottom-0 w-72 bg-white dark:bg-[#1A1A1A] border-l border-gray-200 dark:border-[#333] flex flex-col">
+          <div className="absolute top-0 right-0 bottom-0 w-72 bg-[color:var(--app-paper)] border-l border-[color:var(--app-line)] flex flex-col">
             {/* Close button */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#333]">
               <span className="font-mono text-sm font-bold text-gray-900 dark:text-white">Menu</span>
@@ -150,24 +194,9 @@ export function Sidebar() {
               </button>
             </div>
             {/* Nav items */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={linkClass(item.href)}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
-              {isAdmin && (
-                <Link href="/app/admin" onClick={() => setMobileMenuOpen(false)} className={linkClass('/app/admin')}>
-                  <Upload className="h-5 w-5" />
-                  <span className="font-medium">Admin</span>
-                </Link>
-              )}
+            <nav className="flex-1 overflow-y-auto p-4">
+              {daysPill}
+              {nav(() => setMobileMenuOpen(false))}
             </nav>
             {/* Bottom: user + settings + theme + signout */}
             <div className="p-4 border-t border-gray-200 dark:border-[#333] space-y-2">
@@ -176,7 +205,7 @@ export function Sidebar() {
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#D4A017] flex items-center justify-center text-[#0A0A0A] text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[color:var(--app-gold)] flex items-center justify-center text-[#0b0a08] text-xs font-bold">
                       {(user.displayName || user.email || '?')[0].toUpperCase()}
                     </div>
                   )}
@@ -188,10 +217,10 @@ export function Sidebar() {
               </Link>
               <button onClick={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222] rounded-lg">
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
               </button>
               <button onClick={() => { signOut(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-[#222] rounded-lg">
-                <LogOut className="h-4 w-4" /> Sign Out
+                <LogOut className="h-4 w-4" /> Sign out
               </button>
             </div>
           </div>

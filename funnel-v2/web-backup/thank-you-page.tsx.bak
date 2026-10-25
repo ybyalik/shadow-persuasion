@@ -1,0 +1,114 @@
+'use client';
+
+import Link from 'next/link';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+type Links = { name: string; url: string }[];
+
+function ThankYou() {
+  const params = useSearchParams();
+  const pi = params.get('payment_intent') || '';
+  const upsellPi = params.get('upsell_pi') || '';
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [email, setEmail] = useState('');
+  const [links, setLinks] = useState<Links>([]);
+
+  useEffect(() => {
+    if (!pi) {
+      setState('error');
+      return;
+    }
+    let cancelled = false;
+    const fulfill = async (id: string) => {
+      // Payment confirmation can lag a few seconds behind the redirect, so retry briefly.
+      for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
+        const res = await fetch('/api/v2/fulfill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: id }),
+        }).catch(() => null);
+        if (res?.ok) return res.json();
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      return null;
+    };
+    (async () => {
+      const [main, extra] = await Promise.all([fulfill(pi), upsellPi ? fulfill(upsellPi) : Promise.resolve(null)]);
+      if (cancelled) return;
+      if (!main) {
+        setState('error');
+        return;
+      }
+      setEmail(main.email);
+      setLinks([...(main.links || []), ...(extra?.links || [])]);
+      setState('ready');
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pi, upsellPi]);
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
+      <p className="sp2-kicker mb-3">Thank you</p>
+      <h1 className="text-[32px] sm:text-[42px] leading-tight font-semibold mb-5">Your paperback is on the way to the printer.</h1>
+      <p className="text-[18px] leading-relaxed text-[color:var(--sp2-muted)] mb-6">We&apos;ll email you a tracking link as soon as it ships. You don&apos;t have to wait to start: your digital copy and bonuses are below.</p>
+
+      {state === 'loading' && <p className="sp2-ui text-[color:var(--sp2-muted)]">Getting your downloads ready...</p>}
+
+      {state === 'error' && (
+        <p className="text-[18px] leading-relaxed text-[color:var(--sp2-muted)]">
+          Your downloads are on their way to your inbox. If they haven&apos;t arrived in a few minutes, check your spam
+          folder or reply to the receipt email and we&apos;ll sort it out.
+        </p>
+      )}
+
+      {state === 'ready' && (
+        <>
+          <p className="text-[18px] leading-relaxed text-[color:var(--sp2-muted)] mb-8">
+            We&apos;ve also emailed these links to <b className="text-[color:var(--sp2-ink)]">{email}</b>, so you can come
+            back to them anytime.
+          </p>
+          <div className="space-y-3 mb-10">
+            {links.map((l) => (
+              <a
+                key={l.name}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sp2-ui flex items-center justify-between rounded-lg border border-[color:var(--sp2-line)] bg-white px-5 py-4 font-semibold hover:border-[color:var(--sp2-ink)]"
+              >
+                <span>{l.name}</span>
+                <span className="text-sm text-[color:var(--sp2-accent)]">Download</span>
+              </a>
+            ))}
+          </div>
+          <div className="rounded-xl border border-[color:var(--sp2-line)] bg-white p-6 sm:p-8 text-[17px] leading-relaxed space-y-3">
+            <p className="font-semibold text-[19px]">Where to start</p>
+            <p>1. Read Chapter 1 and do the ten-minute replay exercise at the end.</p>
+            <p>2. Print the journal, or keep it open on screen. The three bonuses are short, so skim them now.</p>
+            <p>3. Start the 3-day quick start in Chapter 6 tomorrow morning.</p>
+            <p className="text-[color:var(--sp2-muted)]">
+              Your purchase includes 60 days of the Decoder. Reply to your download email and we&apos;ll set up your access.
+            </p>
+          </div>
+        </>
+      )}
+
+      <p className="sp2-ui mt-12 text-sm">
+        <Link href="/v2" className="underline">
+          Back to the book page
+        </Link>
+      </p>
+    </main>
+  );
+}
+
+export default function V2ThankYouPage() {
+  return (
+    <Suspense fallback={null}>
+      <ThankYou />
+    </Suspense>
+  );
+}

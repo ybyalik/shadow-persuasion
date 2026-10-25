@@ -1,293 +1,105 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DECODE_SYSTEM_PROMPT, RAG_ENFORCEMENT } from '@/lib/prompts';
-import { searchKnowledge } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
+import { readScreenshot } from '@/lib/ai';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
-import { getVoiceProfile } from '@/lib/voice-profile';
-import { createClient } from '@supabase/supabase-js';
+import { getPersonContext } from '@/lib/person-context';
+import { supabase } from '@/lib/rag';
+import { decodeMessage, pressureToScore, RELATIONS } from '@/lib/prompts/in-the-moment';
 
 export const maxDuration = 60;
 
-async function extractTextFromImage(base64Image: string): Promise<string> {
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-      'X-Title': 'Shadow Persuasion',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Extract ALL text from this screenshot. Return only the text content, preserving the conversation structure. Include who said what if it\'s a conversation. Also briefly summarize what influence or persuasion dynamics you see.',
-            },
-            { type: 'image_url', image_url: { url: base64Image } },
-          ],
-        },
-      ],
-      max_tokens: 2000,
-    }),
-  });
+const MAX_IMAGES = 5;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-  if (!response.ok) throw new Error('Failed to extract text from image');
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || '';
-}
-
-const COMPREHENSIVE_SYSTEM_PROMPT = `You are an expert conversation analyst specializing in psychological influence, power dynamics, manipulation detection, and strategic communication. You perform a COMPREHENSIVE analysis that covers both offensive insights (how to respond strategically) and defensive insights (detecting manipulation tactics).
-
-Address the user directly with "you" and "your". Refer to the other person as "they" or "them".
-
-You MUST respond with valid JSON in this exact format:
-{
-  "powerDynamics": {
-    "yourPower": <number 1-10>,
-    "theirPower": <number 1-10>,
-    "dynamicsDescription": "Detailed explanation of the power balance and dynamics"
-  },
-  "communicationStyle": {
-    "sensoryPreference": "Visual|Auditory|Kinesthetic|Mixed",
-    "emotionalState": "Brief description of their emotional state",
-    "receptivity": <number 1-100, how open they are to influence>
-  },
-  "threatScore": <number 1-10, how manipulative the message is. 0 if no manipulation detected>,
-  "tactics": [
-    {
-      "quote": "exact quoted text from the message",
-      "tactic": "Name of the manipulation tactic",
-      "category": "Urgency|Social Proof|Authority|Guilt|Misdirection|Scarcity|Fear|Flattery|Reciprocity|Anchoring",
-      "explanation": "How this tactic works psychologically",
-      "counterResponse": "Exact words to say to neutralize this tactic"
-    }
-  ],
-  "counterScript": "A complete response that neutralizes all manipulation tactics at once (empty string if no manipulation detected)",
-  "responseOptions": [
-    {
-      "type": "Strategy name (e.g. Authority Building, Rapport Enhancement, Frame Reorientation, Reciprocity Creation)",
-      "message": "Exact copy-pasteable response message",
-      "description": "Why this approach works in this situation",
-      "powerImpact": <percentage increase in influence>,
-      "riskLevel": "LOW|MEDIUM|HIGH",
-      "psychologyPrinciple": "The psychology principle being applied"
-    }
-  ],
-  "overallAssessment": "Comprehensive assessment combining strategic analysis and manipulation landscape",
-  "successProbability": <number 1-100>,
-  "techniques_identified": ["Array", "of", "technique", "names", "detected"]
-}
-
-Important rules:
-- Always provide exactly 4 responseOptions covering different strategic approaches
-- For tactics array: find EVERY manipulation tactic, even subtle ones. If no manipulation is present, return an empty array
-- threatScore: 0-3 = low/no manipulation, 4-6 = moderate, 7-10 = heavy manipulation
-- Be thorough and actionable. Response messages must be copy-pasteable
-- Focus on: Cialdini's principles, NLP patterns, power dynamics, frame control, emotional intelligence`;
-
+/**
+ * Decode a Message. Accepts JSON { text, relation?, goal?, personId? } or
+ * multipart form data with image_0..image_4 (plus the same optional fields).
+ * Returns { id, result, transcript }.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
-    const voiceContext = await getVoiceProfile(userId);
+    const { uid } = await requireAppUser(req);
 
-    let textContent = '';
-    let imageDataUrl: string | null = null;
-    let isImage = false;
-
-    // Context fields
-    let role = '';
+    let text = '';
+    let relation = '';
     let goal = '';
     let personId = '';
-    let personContext = '';
-    let backgroundContext = '';
+    let inputType: 'text' | 'image' = 'text';
 
     const contentType = req.headers.get('content-type') || '';
-
     if (contentType.includes('multipart/form-data')) {
-      // Image upload — supports multiple images (image_0, image_1, ... image_4)
-      const formData = await req.formData();
-      const imageFiles: File[] = [];
-      for (let i = 0; i < 5; i++) {
-        const file = formData.get(`image_${i}`) as File | null;
-        if (file) imageFiles.push(file);
+      const form = await req.formData();
+      const files: File[] = [];
+      for (let i = 0; i < MAX_IMAGES; i++) {
+        const f = form.get(`image_${i}`);
+        if (f instanceof File) files.push(f);
       }
-      // Fallback: single 'image' field for backwards compatibility
-      if (imageFiles.length === 0) {
-        const single = formData.get('image') as File | null;
-        if (single) imageFiles.push(single);
-      }
-      if (imageFiles.length === 0) {
-        return apiError('At least one image file is required.', 400);
-      }
+      const single = form.get('image');
+      if (!files.length && single instanceof File) files.push(single);
+      if (!files.length) return apiError('Please add at least one screenshot.', 400);
+      if (files.some((f) => !f.type.startsWith('image/'))) return apiError('Screenshots need to be images (PNG or JPG).', 400);
+      if (files.some((f) => f.size > MAX_IMAGE_BYTES)) return apiError('One of the screenshots is too large. Please use images under 8 MB.', 400);
 
-      // Process each image: convert to base64 and extract text
-      const imageDataUrls: string[] = [];
-      const extractedTexts: string[] = [];
-      for (let i = 0; i < imageFiles.length; i++) {
-        const bytes = await imageFiles[i].arrayBuffer();
-        const dataUrl = `data:${imageFiles[i].type};base64,${Buffer.from(bytes).toString('base64')}`;
-        imageDataUrls.push(dataUrl);
-        const extracted = await extractTextFromImage(dataUrl);
-        extractedTexts.push(`--- Screenshot ${i + 1} ---\n${extracted}`);
-      }
-
-      textContent = extractedTexts.join('\n\n');
-      imageDataUrl = imageDataUrls[0]; // primary image for analysis context
-
-      // Extract context fields from formData
-      role = (formData.get('role') as string) || '';
-      goal = (formData.get('goal') as string) || '';
-      personId = (formData.get('personId') as string) || '';
-      personContext = (formData.get('personContext') as string) || '';
-      backgroundContext = (formData.get('backgroundContext') as string) || '';
-
-      isImage = true;
+      const transcripts = await Promise.all(
+        files.map(async (f) => {
+          const dataUrl = `data:${f.type};base64,${Buffer.from(await f.arrayBuffer()).toString('base64')}`;
+          return readScreenshot({ userId: uid, feature: 'decode', imageDataUrl: dataUrl });
+        })
+      );
+      const typed = String(form.get('text') || '').trim();
+      text = [typed, ...transcripts.map((t, i) => (files.length > 1 ? `(Screenshot ${i + 1})\n${t}` : t))].filter(Boolean).join('\n\n');
+      relation = String(form.get('relation') || '');
+      goal = String(form.get('goal') || '');
+      personId = String(form.get('personId') || '');
+      inputType = 'image';
+      if (!text.trim()) return apiError("We couldn't read any words in that screenshot. Try a clearer one, or paste the message instead.", 400);
     } else {
-      // Text input
-      const body = await req.json();
-      const { text } = body;
-      if (!text || typeof text !== 'string') {
-        return apiError('Text to analyze is required.', 400);
-      }
-      textContent = text;
-
-      // Extract context fields from JSON body
-      role = body.role || '';
-      goal = body.goal || '';
-      personId = body.personId || '';
-      personContext = body.personContext || '';
-      backgroundContext = body.backgroundContext || '';
+      const body = await req.json().catch(() => ({}));
+      text = String(body?.text || '').trim();
+      relation = String(body?.relation || '');
+      goal = String(body?.goal || '');
+      personId = typeof body?.personId === 'string' ? body.personId : '';
+      if (!text) return apiError('Paste the message you want to decode.', 400);
     }
 
-    // If personId is provided, fetch the People profile from Supabase
-    if (personId && userId) {
-      try {
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-        const { data: profile } = await supabase
-          .from('user_profiles_people')
-          .select('name, relationship_type, traits, notes')
-          .eq('id', personId)
-          .eq('user_id', userId)
-          .single();
-        if (profile) {
-          const parts: string[] = [];
-          parts.push(`Name: ${profile.name}`);
-          if (profile.relationship_type) parts.push(`Relationship: ${profile.relationship_type}`);
-          if (profile.traits) {
-            const t = profile.traits;
-            if (t.communication?.sensoryPreference) parts.push(`Sensory preference: ${t.communication.sensoryPreference}`);
-            if (t.communication?.emotionalPattern) parts.push(`Emotional pattern: ${t.communication.emotionalPattern}`);
-            if (t.communication?.summary) parts.push(`Communication summary: ${t.communication.summary}`);
-            if (t.triggers?.defensive?.length) parts.push(`Known defensive triggers: ${t.triggers.defensive.join(', ')}`);
-            if (t._lastAnalysis) {
-              parts.push(`Previous threat score: ${t._lastAnalysis.threat_score}`);
-              if (t._lastAnalysis.techniques_identified?.length) {
-                parts.push(`Previously identified techniques: ${t._lastAnalysis.techniques_identified.join(', ')}`);
-              }
-            }
-          }
-          if (profile.notes) parts.push(`Notes: ${profile.notes}`);
-          personContext = parts.join('\n');
-        }
-      } catch (e) {
-        console.error('[ANALYZE] Failed to fetch person profile:', e);
-      }
+    relation = (RELATIONS as readonly string[]).includes(relation) ? relation : '';
+    goal = goal.trim().slice(0, 500);
+
+    let personSummary = '';
+    if (personId) {
+      const person = await getPersonContext(uid, personId);
+      if (person) personSummary = `${person.name}. ${person.summary}`;
+      else personId = '';
     }
 
-    // Build user context block
-    const contextParts: string[] = [];
-    if (role) {
-      const roleLabels: Record<string, string> = {
-        sender: 'the sender (left/blue side)',
-        receiver: 'the receiver (right/gray side)',
-        observer: 'an outside observer analyzing someone else\'s conversation',
-      };
-      contextParts.push(`- The user is ${roleLabels[role] || role} in this conversation`);
-    }
-    if (goal) contextParts.push(`- Their goal: ${goal}`);
-    if (personContext) contextParts.push(`- The other person: ${personContext}`);
-    if (backgroundContext) contextParts.push(`- Background: ${backgroundContext}`);
+    const result = await decodeMessage({ userId: uid, feature: 'decode', text, relation, goal, personSummary });
+    if (!result) return apiError("We couldn't decode that one. Please try again.", 502, '[decode] empty or invalid AI answer');
 
-    const userContextBlock = contextParts.length > 0
-      ? `\n\nUSER CONTEXT:\n${contextParts.join('\n')}\n\nUse this context to tailor your analysis. Address the user based on their role. Focus your response options on achieving their stated goal.`
-      : '';
+    // Save to history (best effort: the answer still shows if saving fails).
+    let id: string | null = null;
+    const { data: saved, error: saveErr } = await supabase
+      .from('analysis_history')
+      .insert({
+        user_id: uid,
+        person_id: personId || null,
+        input_text: text.slice(0, 10000),
+        input_type: inputType,
+        threat_score: pressureToScore(result.pressure),
+        tactics: result.tactic ? [{ tactic: result.tactic, explanation: result.whatsHappening }] : [],
+        response_options: result.replies,
+        overall_assessment: result.whatsHappening,
+        techniques_identified: result.tactic ? [result.tactic] : [],
+        full_result: { ...result, kind: 'decode-v2', relation: relation || null, goal: goal || null },
+      })
+      .select('id')
+      .single();
+    if (saveErr) console.error('[decode] history save failed', saveErr.message);
+    else id = saved?.id ?? null;
 
-    // RAG search using the actual content
-    const ragContext = await searchKnowledge(textContent);
-    const enhancedPrompt = COMPREHENSIVE_SYSTEM_PROMPT + voiceContext + userContextBlock + (ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n${ragContext}` : '');
-
-    // Build the analysis message
-    const userContent: any[] = [];
-
-    if (isImage && imageDataUrl) {
-      // For images, include both the image and extracted text for best results
-      userContent.push({ type: 'image_url', image_url: { url: imageDataUrl } });
-      userContent.push({
-        type: 'text',
-        text: `Perform a comprehensive analysis of this conversation screenshot. Here is the extracted text for reference:\n\n${textContent}\n\nProvide your full JSON analysis.`,
-      });
-    } else {
-      userContent.push({
-        type: 'text',
-        text: `Perform a comprehensive analysis of this text:\n\n${textContent}\n\nProvide your full JSON analysis.`,
-      });
-    }
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: enhancedPrompt },
-          { role: 'user', content: userContent },
-        ],
-        temperature: 0.3,
-        max_tokens: 3000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return apiError('AI service is unavailable right now. Please try again.', 502, '[ANALYZE]', `OpenRouter ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      return apiError('AI service is unavailable right now. Please try again.', 502, '[ANALYZE]');
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      return apiError('AI returned an invalid response. Please try again.', 502, '[ANALYZE]', content?.slice(0, 200));
-    }
-
-    // Include extracted text for image uploads so the frontend can display it
-    if (isImage) {
-      parsed.extractedText = textContent;
-    }
-
-    return NextResponse.json(parsed);
-  } catch (error) {
-    const authFail = passthroughAuthError(error);
-    if (authFail) return authFail;
-    return apiError('Failed to process analysis request.', 500, '[ANALYZE]', error);
+    return NextResponse.json({ id, result, transcript: inputType === 'image' ? text : null });
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError("Something went wrong while decoding. Please try again.", 500, '[decode]', err);
   }
 }

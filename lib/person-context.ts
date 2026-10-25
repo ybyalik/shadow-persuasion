@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Loads a saved person (from the People / Profiler feature) and turns their
  * stored profile into a short plain-English summary that can be dropped into a
- * prompt, so features like War Room and Live Sparring can be personalized to a
+ * prompt, so features like Plan a Conversation and Rehearse It can be personalized to a
  * specific person the user already knows. Always scoped to the caller's uid.
  */
 
@@ -55,6 +55,15 @@ export async function getPersonContext(
       if (pb.approach) parts.push(`Best approach: ${pb.approach}`);
       if (Array.isArray(pb.dos) && pb.dos.length) parts.push(`Do: ${pb.dos.slice(0, 4).join('; ')}.`);
       if (Array.isArray(pb.donts) && pb.donts.length) parts.push(`Avoid: ${pb.donts.slice(0, 4).join('; ')}.`);
+    }
+
+    if (Array.isArray(data.tactics) && data.tactics.length) {
+      const names = data.tactics.map((t: unknown) => (typeof t === 'string' ? t : (t as { name?: string })?.name)).filter(Boolean);
+      if (names.length) parts.push(`Pressure tactics they tend to use: ${names.slice(0, 6).join(', ')}.`);
+    }
+    if (Array.isArray(data.what_worked) && data.what_worked.length) {
+      const lines = data.what_worked.map((w: unknown) => (typeof w === 'string' ? w : (w as { reply?: string; text?: string })?.reply || (w as { text?: string })?.text)).filter(Boolean);
+      if (lines.length) parts.push(`Replies that have worked with them before: ${lines.slice(0, 3).join(' | ')}`);
     }
 
     if (data.next_recommended_action) parts.push(`Suggested next move with them: ${data.next_recommended_action}`);

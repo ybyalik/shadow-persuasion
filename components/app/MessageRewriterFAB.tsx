@@ -1,215 +1,85 @@
 'use client';
 
-import { useState } from 'react';
-import { Edit, X, Copy, Lightbulb } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+/* A small floating "Calm my reply" button with a quick panel.
+   Not mounted anywhere right now; uses the same /api/rewrite as the Calm My Reply page. */
 
-interface RewriteResult {
-    versions: {
-        type: string;
-        description: string;
-        message: string;
-        explanation: string;
-        powerIncrease: number;
-        riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-    }[];
-    originalPowerScore: number;
-    confidence: number;
-}
+import { useState } from 'react';
+import { MessageSquareText, X } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { CopyButton } from '@/components/app/EnhancedAnalysisResult';
+import { Button, Notice, friendlyError, inputClass } from '@/components/app/ui';
+import type { RewriteResult } from '@/lib/prompts/in-the-moment';
 
 export function MessageRewriterFAB() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [message, setMessage] = useState('');
-    const [goal, setGoal] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<RewriteResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<RewriteResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-    const goals = [
-        'Build Authority & Credibility',
-        'Create Urgency & Motivation', 
-        'Establish Rapport & Connection',
-        'Redirect Frame & Control',
-        'Generate Reciprocity & Obligation',
-        'Increase Intrigue & Interest'
-    ];
-
-    const handleQuickRewrite = async () => {
-        if (!message.trim()) return;
-        
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-
-        try {
-            const response = await fetch('/api/rewrite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    goal: goal || 'General Improvement'
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to rewrite message');
-            }
-
-            const data = await response.json();
-            setResult(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCopy = async (text: string) => {
-        await navigator.clipboard.writeText(text);
-    };
-
-    const getRiskColor = (risk: string) => {
-        switch (risk) {
-            case 'LOW': return 'text-green-400 bg-green-400/10';
-            case 'MEDIUM': return 'text-yellow-400 bg-yellow-400/10';
-            case 'HIGH': return 'text-red-400 bg-red-400/10';
-            default: return 'text-gray-500 dark:text-gray-400 bg-gray-400/10';
-        }
-    };
-
-    const openFullPage = () => {
-        setIsOpen(false);
-        router.push('/app/rewrite');
-    };
-
-    if (isOpen) {
-        return (
-            <div className="fixed inset-0 bg-black/30 dark:bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333] w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-[#333333]">
-                        <div>
-                            <h2 className="text-xl font-mono uppercase text-[#D4A017]">Quick Rewriter</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Optimize your message instantly</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={openFullPage}
-                                className="px-3 py-1 text-xs bg-gray-200 dark:bg-[#333333] text-gray-900 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-[#444444]"
-                            >
-                                Full Page
-                            </button>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-200 dark:bg-[#333333] rounded transition-colors"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6 space-y-4">
-                        {/* Input */}
-                        <div>
-                            <textarea
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Enter your message to optimize..."
-                                className="w-full h-24 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-3 text-gray-900 dark:text-white resize-none focus:outline-none focus:border-[#D4A017]"
-                            />
-                        </div>
-
-                        <div className="flex gap-4">
-                            <select
-                                value={goal}
-                                onChange={(e) => setGoal(e.target.value)}
-                                className="flex-1 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#333333] rounded-md p-2 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-[#D4A017]"
-                            >
-                                <option value="">Select goal...</option>
-                                {goals.map((g) => (
-                                    <option key={g} value={g}>{g}</option>
-                                ))}
-                            </select>
-
-                            <button
-                                onClick={handleQuickRewrite}
-                                disabled={!message.trim() || isLoading}
-                                className="px-6 py-2 bg-[#D4A017] text-[#0A0A0A] font-mono text-sm rounded hover:bg-[#F4D03F] disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Rewriting...' : 'Rewrite'}
-                            </button>
-                        </div>
-
-                        {/* Error */}
-                        {error && (
-                            <div className="bg-red-900/20 border border-red-500 rounded-lg p-3">
-                                <p className="text-red-400 text-sm">{error}</p>
-                            </div>
-                        )}
-
-                        {/* Results */}
-                        {result && (
-                            <div className="space-y-4 max-h-96 overflow-y-auto">
-                                {result.versions.slice(0, 2).map((version, index) => (
-                                    <div key={index} className="bg-gray-50 dark:bg-[#222222] p-4 rounded-lg space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-mono text-sm text-[#D4A017] uppercase">
-                                                    {version.type}
-                                                </h4>
-                                                <span className={`px-2 py-0.5 rounded text-xs font-mono ${getRiskColor(version.riskLevel)}`}>
-                                                    {version.riskLevel}
-                                                </span>
-                                            </div>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">+{version.powerIncrease}%</span>
-                                        </div>
-                                        
-                                        <div className="bg-gray-200 dark:bg-[#333333] p-3 rounded relative group">
-                                            <p className="text-gray-900 dark:text-white text-sm">{version.message}</p>
-                                            <button
-                                                onClick={() => handleCopy(version.message)}
-                                                className="absolute top-2 right-2 p-1 bg-gray-300 dark:bg-[#444444] rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <Copy className="h-3 w-3" />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex items-start gap-2">
-                                            <Lightbulb className="h-3 w-3 text-[#D4A017] mt-0.5 flex-shrink-0" />
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">{version.explanation}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                
-                                {result.versions.length > 2 && (
-                                    <button
-                                        onClick={openFullPage}
-                                        className="w-full py-2 text-sm text-[#D4A017] hover:text-[#F4D03F] border border-gray-200 dark:border-[#333333] rounded hover:border-[#D4A017] transition-colors"
-                                    >
-                                        View All {result.versions.length} Versions
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        );
+  const go = async () => {
+    if (!draft.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await apiFetch('/api/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft: draft.trim() }),
+      });
+      if (!res.ok) setError(await friendlyError(res));
+      else setResult(await res.json());
+    } catch {
+      setError('Could not reach the app. Please try again.');
+    } finally {
+      setLoading(false);
     }
+  };
 
+  if (!open) {
     return (
-        <button
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 bg-[#D4A017] text-[#0A0A0A] p-4 rounded-full shadow-lg hover:bg-[#F4D03F] transition-colors z-40 group"
-        >
-            <Edit className="h-6 w-6" />
-            <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Quick Message Rewriter
-            </div>
-        </button>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Calm my reply"
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--app-ink)] text-[color:var(--app-paper)] shadow-lg"
+      >
+        <MessageSquareText className="h-6 w-6" />
+      </button>
     );
+  }
+
+  return (
+    <div className="fixed inset-x-3 bottom-3 z-40 max-h-[80vh] overflow-y-auto rounded-xl border border-[color:var(--app-line)] bg-[color:var(--app-card)] p-4 shadow-xl sm:left-auto sm:right-5 sm:w-[400px]">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="app-serif text-[20px] font-semibold">Calm my reply</p>
+        <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="flex h-11 w-11 items-center justify-center">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={4} placeholder="Type the reply you want to send." className={inputClass} />
+      <Button onClick={go} loading={loading} disabled={!draft.trim() || loading} className="mt-3 w-full">
+        Calm it down
+      </Button>
+      {error && (
+        <div className="mt-3">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+      {result && (
+        <div className="mt-4 space-y-3">
+          {result.versions.map((v, i) => (
+            <div key={i} className="rounded-lg border border-[color:var(--app-line)] p-3">
+              <p className="app-type text-[11px] uppercase tracking-[0.16em] text-[color:var(--app-accent)]">{v.style}</p>
+              <p className="mt-1 text-[16px] leading-relaxed">{v.text}</p>
+              <div className="mt-2">
+                <CopyButton text={v.text} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

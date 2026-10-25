@@ -1,603 +1,286 @@
 'use client';
 
-import { formatWithCitations } from '@/lib/format-citations';
-import { renderMarkdown } from '@/lib/markdown';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Send, ChevronDown, ChevronUp, Award, Target, AlertTriangle, Lightbulb, TrendingUp, StopCircle, Loader2, X } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
-import { useTechniques } from '@/lib/hooks/useTechniques';
+import { ArrowLeft } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { BookRef, Button, Card, Label, Notice, PageHeader, friendlyError, inputClass } from '@/components/app/ui';
+import { DIFFICULTY_NAMES } from '@/components/app/ScenarioCard';
 
-type Scenario = {
+type Scene = {
   id: string;
   title: string;
   category: string;
   difficulty: number;
   description: string;
   objective: string;
-  techniques: string[];
+  chapter: number | null;
+  chapter_title: string | null;
+  tactic_slug: string | null;
+  other_person: string | null;
+  opening_line: string | null;
 };
 
-type CoachingData = {
-  feedback: string;
-  score: number;
-  technique: string;
-  tip: string;
+type Msg = { role: 'user' | 'assistant'; content: string };
+
+type Debrief = {
+  result: 'held' | 'mixed' | 'gave';
+  summary: string;
+  didWell: string;
+  betterLine: { instead: string; try: string };
+  tactic: string;
+  tacticSlug: string | null;
+  chapter: number | null;
+  chapterTitle: string | null;
+  safety: boolean;
+  hotline: string | null;
 };
 
-type Message = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  coaching?: CoachingData;
+const MAX_TURNS = 6;
+const RESULT_TITLE: Record<Debrief['result'], string> = {
+  held: 'You held your ground',
+  mixed: 'You partly held your ground',
+  gave: 'You gave ground this time',
 };
 
-type DebriefData = {
-  score: number;
-  techniquesUsed: { name: string; example: string; effectiveness: number }[];
-  missedOpportunities: { moment: string; technique: string; suggestedResponse: string }[];
-  turningPoints: { moment: string; impact: string; explanation: string }[];
-  suggestions: string[];
-};
-
-function parseCoaching(raw: string): { content: string; coaching?: CoachingData } {
-  const match = raw.match(/<!--COACHING:(.*?)-->/s);
-  if (!match) return { content: raw };
-  try {
-    const coaching = JSON.parse(match[1]);
-    const content = raw.replace(/\s*<!--COACHING:.*?-->/s, '').trim();
-    return { content, coaching };
-  } catch {
-    return { content: raw.replace(/\s*<!--COACHING:.*?-->/s, '').trim() };
-  }
-}
-
-function CoachingAnnotation({ coaching }: { coaching: CoachingData }) {
-  const [expanded, setExpanded] = useState(false);
-  const scoreColor = coaching.score >= 7 ? 'text-green-400' : coaching.score >= 4 ? 'text-yellow-400' : 'text-red-400';
-
-  return (
-    <div className="mt-2 border border-gray-200 dark:border-[#333] rounded-lg overflow-hidden bg-gray-50 dark:bg-[#111]">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-white dark:bg-[#1a1a1a] transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-3 w-3 text-[#D4A017]" />
-          <span className="text-[#D4A017] font-mono uppercase">Coaching</span>
-          <span className={`font-mono font-bold ${scoreColor}`}>{coaching.score}/10</span>
-          {coaching.technique && (
-            <span className="text-gray-500">| {coaching.technique}</span>
-          )}
-        </div>
-        {expanded ? <ChevronUp className="h-3 w-3 text-gray-500" /> : <ChevronDown className="h-3 w-3 text-gray-500" />}
-      </button>
-      {expanded && (
-        <div className="px-3 pb-3 space-y-2 text-sm border-t border-[#222]">
-          <div className="pt-2">
-            <span className="text-gray-500 dark:text-gray-400">Feedback:</span>
-            <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{formatWithCitations(coaching.feedback)}</p>
-          </div>
-          {coaching.tip && (
-            <div>
-              <span className="text-[#D4A017]">Tip:</span>
-              <p className="text-gray-600 dark:text-[#ccc] mt-0.5">{formatWithCitations(coaching.tip)}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ScoreRing({ score }: { score: number }) {
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color = score >= 70 ? '#22c55e' : score >= 40 ? '#eab308' : '#ef4444';
-
-  return (
-    <div className="relative w-28 h-28 flex-shrink-0">
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="#333" strokeWidth="6" />
-        <circle
-          cx="50" cy="50" r={radius} fill="none"
-          stroke={color} strokeWidth="6" strokeLinecap="round"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          className="transition-all duration-1000"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold" style={{ color }}>{score}</span>
-        <span className="text-[10px] text-gray-500 uppercase">Score</span>
-      </div>
-    </div>
-  );
-}
-
-function DebriefCard({ debrief, onClose }: { debrief: DebriefData; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 p-4">
-      <div className="bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-[#333] rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-6">
-            <ScoreRing score={debrief.score} />
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-[#E8E8E0] tracking-wider">Mission Debrief</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {debrief.score >= 70 ? 'Strong performance. You deployed techniques effectively.' :
-                 debrief.score >= 40 ? 'Decent showing. Room for improvement on technique application.' :
-                 'Needs work. Review the missed opportunities below.'}
-              </p>
-            </div>
-          </div>
-
-          {/* Techniques Used */}
-          {debrief.techniquesUsed.length > 0 && (
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-mono text-green-400 uppercase mb-3">
-                <Target className="h-4 w-4" /> Techniques Deployed
-              </h3>
-              <div className="space-y-2">
-                {debrief.techniquesUsed.map((t, i) => (
-                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-green-500/20">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-[#E8E8E0]">{t.name}</span>
-                      <span className="text-xs font-mono text-green-400">{t.effectiveness}/10</span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">&quot;{t.example}&quot;</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Missed Opportunities */}
-          {debrief.missedOpportunities.length > 0 && (
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-mono text-yellow-400 uppercase mb-3">
-                <AlertTriangle className="h-4 w-4" /> Missed Opportunities
-              </h3>
-              <div className="space-y-2">
-                {debrief.missedOpportunities.map((m, i) => (
-                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-yellow-500/20">
-                    <p className="text-sm text-gray-600 dark:text-[#ccc] mb-1">{formatWithCitations(m.moment)}</p>
-                    <p className="text-xs text-yellow-400">Should have used: <strong>{m.technique}</strong></p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">&quot;{m.suggestedResponse}&quot;</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Turning Points */}
-          {debrief.turningPoints.length > 0 && (
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-mono text-[#D4A017] uppercase mb-3">
-                <TrendingUp className="h-4 w-4" /> Key Turning Points
-              </h3>
-              <div className="space-y-2">
-                {debrief.turningPoints.map((tp, i) => (
-                  <div key={i} className="p-3 bg-white dark:bg-[#1a1a1a] rounded-lg border border-[#D4A017]/20">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-mono uppercase ${tp.impact === 'positive' ? 'text-green-400' : 'text-red-400'}`}>
-                        {tp.impact}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-[#ccc]">{formatWithCitations(tp.moment)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatWithCitations(tp.explanation)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Suggestions */}
-          {debrief.suggestions.length > 0 && (
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-mono text-blue-400 uppercase mb-3">
-                <Award className="h-4 w-4" /> Improvement Plan
-              </h3>
-              <ul className="space-y-1.5">
-                {debrief.suggestions.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-gray-600 dark:text-[#ccc]">
-                    <span className="text-blue-400 mt-0.5">&rarr;</span>
-                    <span>{formatWithCitations(s)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <button
-            onClick={onClose}
-            className="w-full py-3 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] transition-colors"
-          >
-            Close Debrief
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function TrainingScenarioPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const { user } = useAuth();
-  const { techniques: apiTechniques } = useTechniques();
-
-  const [scenario, setScenario] = useState<Scenario | null>(null);
-  const [scenarioLoading, setScenarioLoading] = useState(true);
-  const [mode, setMode] = useState<'briefing' | 'practice'>('briefing');
-  const [messages, setMessages] = useState<Message[]>([]);
+export default function ScenePage() {
+  const { id } = useParams<{ id: string }>();
+  const [scene, setScene] = useState<Scene | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [debrief, setDebrief] = useState<DebriefData | null>(null);
-  const [isDebriefing, setIsDebriefing] = useState(false);
-  const [debriefError, setDebriefError] = useState<string | null>(null);
-  const [scoreSaved, setScoreSaved] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [debrief, setDebrief] = useState<Debrief | null>(null);
+  const [debriefing, setDebriefing] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
 
-  // Fetch scenario from API
   useEffect(() => {
-    fetch('/api/scenarios/list')
-      .then(res => res.json())
-      .then(data => {
-        const found = (data.scenarios || []).find((s: Scenario) => s.id === id);
-        setScenario(found || null);
-      })
-      .catch(err => console.error('Failed to fetch scenario:', err))
-      .finally(() => setScenarioLoading(false));
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/scenarios/list?id=${encodeURIComponent(id)}`);
+        if (!res.ok) {
+          setLoadError(await friendlyError(res, "We couldn't load this scene."));
+          return;
+        }
+        const s: Scene = (await res.json()).scene;
+        setScene(s);
+        setMessages(s.opening_line ? [{ role: 'assistant', content: s.opening_line }] : []);
+      } catch {
+        setLoadError("We couldn't reach the server. Please check your connection.");
+      }
+    })();
   }, [id]);
 
-  const getHeaders = useCallback(async (): Promise<Record<string, string>> => {
-    const token = await user?.getIdToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, [user]);
-
-  // Save debrief score to practice_results when debrief is received
   useEffect(() => {
-    if (!debrief || scoreSaved) return;
-    const saveScore = async () => {
-      try {
-        const headers = await getHeaders();
-        await fetch('/api/practice-results', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body: JSON.stringify({
-            type: 'scenario',
-            reference_id: id,
-            score: debrief.score,
-            techniques_used: debrief.techniquesUsed.map(t => t.name),
-            feedback: {
-              suggestions: debrief.suggestions,
-              missedOpportunities: debrief.missedOpportunities,
-              turningPoints: debrief.turningPoints,
-            },
-          }),
-        });
-        setScoreSaved(true);
-      } catch (e) {
-        console.error('Failed to save practice result:', e);
-      }
-    };
-    saveScore();
-  }, [debrief, scoreSaved, id, getHeaders]);
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [messages, debrief]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const userTurns = messages.filter((m) => m.role === 'user').length;
+  const done = userTurns >= MAX_TURNS || !!debrief;
 
-  if (scenarioLoading) {
-    return (
-      <div className="max-w-4xl mx-auto py-12 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#D4A017] mx-auto" />
-        <p className="mt-4 text-gray-500 dark:text-gray-400">Loading scenario...</p>
-      </div>
-    );
-  }
-
-  if (!scenario) {
-    return (
-      <div className="max-w-4xl mx-auto py-12 text-center">
-        <h1 className="text-2xl font-bold text-red-400">Scenario not found</h1>
-        <Link href="/app/training" className="text-[#D4A017] hover:underline mt-4 inline-block">Back to Training Arena</Link>
-      </div>
-    );
-  }
-
-  const startPractice = async () => {
-    setMode('practice');
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/scenarios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [], scenarioId: scenario.id }),
-      });
-
-      if (!response.ok || !response.body) throw new Error('Failed to start scenario');
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        fullContent += decoder.decode(value, { stream: true });
-
-        const { content } = parseCoaching(fullContent);
-        setMessages([{ id: 'opening', role: 'assistant', content }]);
-      }
-
-      const { content, coaching } = parseCoaching(fullContent);
-      setMessages([{ id: 'opening', role: 'assistant', content, coaching }]);
-    } catch (error) {
-      console.error('Error starting scenario:', error);
-      setMessages([{ id: 'error', role: 'assistant', content: 'Failed to start the scenario. Please try again.' }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: input.trim() };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+  const send = async () => {
+    const text = input.trim();
+    if (!scene || !text || sending || done) return;
+    const next: Msg[] = [...messages, { role: 'user', content: text }];
+    setMessages(next);
     setInput('');
-    setIsLoading(true);
-
+    setSending(true);
+    setError(null);
     try {
-      const apiMessages = newMessages.map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await fetch('/api/scenarios', {
+      const res = await apiFetch('/api/scenarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, scenarioId: scenario.id }),
+        body: JSON.stringify({ scenarioId: scene.id, messages: next }),
       });
-
-      if (!response.ok || !response.body) throw new Error('Failed to get response');
-
-      const placeholder: Message = { id: `assistant-${Date.now()}`, role: 'assistant', content: '' };
-      setMessages(prev => [...prev, placeholder]);
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        fullContent += decoder.decode(value, { stream: true });
-
-        const { content } = parseCoaching(fullContent);
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { ...updated[updated.length - 1], content };
-          return updated;
-        });
+      if (!res.ok) {
+        setError(await friendlyError(res, "We couldn't continue the scene. Please try again."));
+        setMessages(messages);
+        setInput(text);
+        return;
       }
-
-      const { content, coaching } = parseCoaching(fullContent);
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { ...updated[updated.length - 1], content, coaching };
-        return updated;
-      });
-    } catch (error) {
-      console.error('Scenario chat error:', error);
-      setMessages(prev => [...prev, {
-        id: `error-${Date.now()}`, role: 'assistant',
-        content: 'An error occurred. Please try again.',
-      }]);
+      const d = await res.json();
+      setMessages([...next, { role: 'assistant', content: d.reply }]);
+    } catch {
+      setError("We couldn't reach the server. Please check your connection.");
+      setMessages(messages);
+      setInput(text);
     } finally {
-      setIsLoading(false);
+      setSending(false);
     }
   };
 
-  const requestDebrief = async () => {
-    setIsDebriefing(true);
+  const finish = async () => {
+    if (!scene || debriefing || userTurns === 0) return;
+    setDebriefing(true);
+    setError(null);
     try {
-      const apiMessages = messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await fetch('/api/scenarios/debrief', {
+      const res = await apiFetch('/api/scenarios/debrief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, scenarioId: scenario.id }),
+        body: JSON.stringify({ scenarioId: scene.id, messages }),
       });
-
-      if (!response.ok) throw new Error('Failed to get debrief');
-
-      const data = await response.json();
-      setDebrief(data);
-    } catch (error) {
-      console.error('Debrief error:', error);
-      setDebriefError('Failed to generate debrief. Please try again.');
-      setTimeout(() => setDebriefError(null), 5000);
+      if (!res.ok) {
+        setError(await friendlyError(res, "We couldn't write your debrief. Please try again."));
+        return;
+      }
+      setDebrief(await res.json());
+    } catch {
+      setError("We couldn't reach the server. Please check your connection.");
     } finally {
-      setIsDebriefing(false);
+      setDebriefing(false);
     }
   };
 
-  // Briefing mode
-  if (mode === 'briefing') {
-    return (
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header>
-          <p className="font-mono text-sm text-[#D4A017] uppercase">{scenario.category}</p>
-          <h1 className="text-3xl font-bold tracking-wider mt-1">{scenario.title}</h1>
-        </header>
+  const restart = () => {
+    if (!scene) return;
+    setMessages(scene.opening_line ? [{ role: 'assistant', content: scene.opening_line }] : []);
+    setDebrief(null);
+    setError(null);
+    setInput('');
+  };
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-            <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-2">Briefing</h2>
-            <p className="text-gray-600 dark:text-gray-300">{scenario.description}</p>
-            <h2 className="font-mono text-lg text-[#D4A017] uppercase mt-4 mb-2">Objective</h2>
-            <p className="text-gray-600 dark:text-gray-300">{scenario.objective}</p>
-          </div>
-          <div className="p-6 bg-white dark:bg-[#1A1A1A] rounded-lg border border-gray-200 dark:border-[#333333]">
-            <h2 className="font-mono text-lg text-[#D4A017] uppercase mb-2">Key Techniques</h2>
-            <ul className="space-y-2">
-              {scenario.techniques.map(name => {
-                const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                const match = apiTechniques.find(t => t.id === slug || t.name.toLowerCase() === name.toLowerCase());
-                return (
-                  <li key={name}>
-                    {match ? (
-                      <Link href={`/app/techniques/${match.id}`} className="text-base text-[#D4A017] hover:underline">{name}</Link>
-                    ) : (
-                      <span className="text-base text-gray-800 dark:text-[#E8E8E0]">{name}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
+  const back = (
+    <Link href="/app/training" className="mb-6 inline-flex min-h-[44px] items-center gap-2 text-[15px] text-[color:var(--app-muted)] hover:text-[color:var(--app-ink)]">
+      <ArrowLeft className="h-4 w-4" /> All scenes
+    </Link>
+  );
 
-        <div className="text-center">
-          <button
-            onClick={startPractice}
-            className="inline-block px-8 py-3 bg-[#D4A017] text-[#0A0A0A] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E8B030] transition-transform hover:scale-105"
-          >
-            Begin Operation
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loadError) return <div className="mx-auto max-w-3xl">{back}<Notice tone="error">{loadError}</Notice></div>;
+  if (!scene) return <div className="mx-auto max-w-3xl">{back}<p className="text-[color:var(--app-muted)]">Loading the scene...</p></div>;
 
-  // Practice mode
+  const other = scene.other_person || 'The other person';
+
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 border-b border-gray-200 dark:border-[#333]">
-        <div className="min-w-0">
-          <span className="font-mono text-sm text-[#D4A017] uppercase">{scenario.category}</span>
-          <h1 className="text-lg sm:text-xl font-bold tracking-wider truncate">{scenario.title}</h1>
+    <div className="mx-auto max-w-3xl">
+      {back}
+      <PageHeader kicker={`${scene.category} · ${DIFFICULTY_NAMES[scene.difficulty] ?? 'Medium'}`} title={scene.title} />
+
+      <Card className="mb-6 space-y-4">
+        <div>
+          <Label>What&apos;s happening</Label>
+          <p className="text-[16px] leading-relaxed">{scene.description}</p>
         </div>
-        <div className="flex gap-2 flex-wrap shrink-0">
-          <button
-            onClick={() => { setMode('briefing'); setMessages([]); setDebrief(null); setScoreSaved(false); }}
-            className="px-4 py-2 text-sm font-mono uppercase border border-gray-200 dark:border-[#333] rounded-lg hover:border-[#D4A017] transition-colors"
-          >
-            Restart
-          </button>
-          {messages.filter(m => m.role === 'user').length >= 1 && (
-            <button
-              onClick={requestDebrief}
-              disabled={isDebriefing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-mono uppercase bg-red-600/80 text-gray-900 dark:text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Talking with</Label>
+            <p className="text-[16px]">{other}</p>
+          </div>
+          <div>
+            <Label>Your goal</Label>
+            <p className="text-[16px]">{scene.objective}</p>
+          </div>
+        </div>
+        {scene.chapter && scene.chapter_title && <BookRef chapter={scene.chapter} title={scene.chapter_title} />}
+      </Card>
+
+      <div className="space-y-3" aria-live="polite">
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-[16px] leading-relaxed ${
+                m.role === 'user'
+                  ? 'rounded-br-md bg-[color:var(--app-ink)] text-[color:var(--app-paper)]'
+                  : 'rounded-bl-md border border-[color:var(--app-line)] bg-[color:var(--app-card)]'
+              }`}
             >
-              <StopCircle className="h-3.5 w-3.5" />
-              {isDebriefing ? 'Analyzing...' : 'End & Debrief'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Debrief Error Banner */}
-      {debriefError && (
-        <div className="mx-4 mt-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3 flex items-center justify-between">
-          <p className="text-sm text-red-700 dark:text-red-400">{debriefError}</p>
-          <button onClick={() => setDebriefError(null)} className="text-red-500 hover:text-red-700 ml-4">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id}>
-            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] sm:max-w-2xl rounded-lg ${
-                msg.role === 'user'
-                  ? 'p-4 bg-[#D4A017] text-[#0A0A0A]'
-                  : 'bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333333]'
-              }`}>
-                {msg.role === 'assistant' && (
-                  <div className="px-4 pt-3 pb-1">
-                    <span className="text-sm font-mono uppercase text-[#D4A017] tracking-wider">Counterpart</span>
-                  </div>
-                )}
-                <div className="px-4 pb-3">
-                  <div
-                    className={`text-base leading-relaxed ${msg.role === 'user' ? 'text-[#0A0A0A]' : 'text-gray-800 dark:text-[#E8E8E0]'}`}
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
-                  />
-                </div>
-              </div>
+              {m.role === 'assistant' && <p className="app-type mb-1 text-[11px] uppercase tracking-wide text-[color:var(--app-accent)]">{other}</p>}
+              {m.content}
             </div>
-            {/* Coaching annotation below assistant messages */}
-            {msg.role === 'assistant' && msg.coaching && (
-              <div className="max-w-2xl mt-1">
-                <CoachingAnnotation coaching={msg.coaching} />
-              </div>
-            )}
           </div>
         ))}
-        {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
-          <div className="flex justify-start">
-            <div className="bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#333] rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></div>
+        {sending && <p className="text-[14px] text-[color:var(--app-muted)]">{other} is typing...</p>}
+      </div>
+
+      {error && <div className="mt-4"><Notice tone="error">{error}</Notice></div>}
+
+      {!debrief && (
+        <div className="mt-6 space-y-3">
+          {!done ? (
+            <>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                rows={3}
+                maxLength={1200}
+                placeholder="Type what you would say..."
+                className={inputClass}
+                disabled={sending}
+              />
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={send} loading={sending} disabled={!input.trim()}>
+                  Say it
+                </Button>
+                {userTurns >= 2 && (
+                  <Button variant={userTurns >= 3 ? 'gold' : 'ghost'} onClick={finish} loading={debriefing} disabled={sending}>
+                    Finish and get my debrief
+                  </Button>
+                )}
               </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-4 border-t border-gray-200 dark:border-[#333333]">
-        <form
-          onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-          className="flex items-center space-x-2"
-        >
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Your response..."
-            rows={1}
-            className="flex-1 p-3 text-base bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-[#E8E8E0] placeholder-gray-500 rounded-lg border border-gray-200 dark:border-[#333333] focus:ring-2 focus:ring-[#D4A017] focus:outline-none resize-none"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            className="p-2 bg-[#D4A017] text-[#0A0A0A] rounded-full disabled:opacity-50"
-            disabled={isLoading || !input.trim()}
-          >
-            <Send className="h-5 w-5" />
-          </button>
-        </form>
-      </div>
-
-      {/* Debrief modal */}
-      {debrief && (
-        <DebriefCard debrief={debrief} onClose={() => setDebrief(null)} />
+              <p className="text-[14px] text-[color:var(--app-muted)]">
+                {userTurns < 2 ? 'A few back-and-forths is enough. Keep it short and calm.' : `You can keep going (up to ${MAX_TURNS} replies) or finish now.`}
+              </p>
+            </>
+          ) : (
+            <Button variant="gold" onClick={finish} loading={debriefing}>
+              Finish and get my debrief
+            </Button>
+          )}
+        </div>
       )}
+
+      {debrief && (
+        <Card tone="gold" className="mt-6 space-y-4">
+          <div>
+            <p className="app-type text-[12px] uppercase tracking-[0.18em] text-[color:var(--app-accent)]">Your debrief</p>
+            <h2 className="app-serif mt-1 text-[28px] font-semibold">{RESULT_TITLE[debrief.result]}</h2>
+            <p className="mt-2 text-[17px] leading-relaxed">{debrief.summary}</p>
+          </div>
+          {debrief.safety && debrief.hotline && <Notice tone="warn">{debrief.hotline}</Notice>}
+          {debrief.didWell && (
+            <div>
+              <Label>What you did well</Label>
+              <p className="text-[16px] leading-relaxed">{debrief.didWell}</p>
+            </div>
+          )}
+          {debrief.betterLine?.try && (
+            <div>
+              <Label>One better line</Label>
+              {debrief.betterLine.instead && <p className="mb-1 text-[15px] text-[color:var(--app-muted)]">Instead of &ldquo;{debrief.betterLine.instead}&rdquo;</p>}
+              <p className="app-serif text-[21px] leading-snug">&ldquo;{debrief.betterLine.try}&rdquo;</p>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-3 text-[15px]">
+            {debrief.tactic && (
+              <span>
+                The tactic:{' '}
+                {debrief.tacticSlug ? (
+                  <Link href={`/app/techniques/${debrief.tacticSlug}`} className="underline underline-offset-2">
+                    {debrief.tactic}
+                  </Link>
+                ) : (
+                  debrief.tactic
+                )}
+              </span>
+            )}
+            {debrief.chapter && debrief.chapterTitle && <BookRef chapter={debrief.chapter} title={debrief.chapterTitle} />}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={restart}>Try this scene again</Button>
+            <Button href="/app/training" variant="ghost">
+              Back to scenes
+            </Button>
+          </div>
+        </Card>
+      )}
+      <div ref={endRef} />
     </div>
   );
 }

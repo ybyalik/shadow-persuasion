@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/rag';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const limit = parseInt(req.nextUrl.searchParams.get('limit') || '20');
 
     const { data, error } = await supabase
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const body = await req.json();
 
     const { data, error } = await supabase
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 

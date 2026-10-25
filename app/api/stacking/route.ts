@@ -1,121 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchKnowledge } from '@/lib/rag';
-import { RAG_ENFORCEMENT } from '@/lib/prompts';
-import { getUserFromRequest } from '@/lib/auth-api';
-import { getVoiceProfile } from '@/lib/voice-profile';
+import { requireAppUser } from '@/lib/access';
+import { apiError, passthroughAuthError } from '@/lib/api-error';
 
-const SYSTEM_PROMPT = `You are a tactical influence strategist. Given a goal, create technique stacking sequences that combine multiple persuasion/influence techniques in optimal order for maximum impact.
-
-You MUST respond with valid JSON in this exact format:
-{
-  "primary": {
-    "name": "Stack name (e.g., 'The Velvet Hammer')",
-    "philosophy": "One sentence describing the approach philosophy",
-    "steps": [
-      {
-        "stepNumber": 1,
-        "technique": "Technique Name",
-        "action": "Exactly what to say or do at this step",
-        "rationale": "Why this technique at this point in the sequence",
-        "ifPositive": "Step N",
-        "ifResist": "Step M"
-      }
-    ]
-  },
-  "alternatives": [
-    {
-      "name": "Alternative stack name",
-      "philosophy": "Different approach philosophy (e.g., aggressive vs rapport-based)",
-      "steps": [same format as primary]
-    }
-  ]
-}
-
-Rules:
-- Primary stack should have 4-6 steps
-- Each alternative should have 4-6 steps
-- Include exactly 2 alternatives with different philosophies (e.g., "Aggressive" vs "Rapport-Based", or "Direct" vs "Indirect")
-- ifPositive and ifResist should reference step numbers as "Step N" or "End (success)" / "End (walk away)"
-- Use real, named persuasion techniques
-- Actions should be specific scripts, not vague advice
-- Rationale should explain the psychological sequence logic`;
-
-export const maxDuration = 60;
-
+/**
+ * The old "technique stacking" tool is retired: it planned influence moves on
+ * someone, which isn't what the app is for any more. Planning a hard
+ * conversation now lives in Plan a Conversation (/app/warroom).
+ */
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    const voiceContext = await getVoiceProfile(userId);
-
-    const { goal, requiredTechniques } = await req.json();
-
-    if (!goal || typeof goal !== 'string') {
-      return NextResponse.json(
-        { error: 'Goal is required.' },
-        { status: 400 }
-      );
-    }
-
-    const ragContext = await searchKnowledge(goal);
-    const knowledgeContext = ragContext ? `\n\n${RAG_ENFORCEMENT}\n\nRELEVANT TECHNIQUE KNOWLEDGE:\n${ragContext}` : '';
-
-    let requiredTechniquesInstruction = '';
-    if (Array.isArray(requiredTechniques) && requiredTechniques.length > 0) {
-      requiredTechniquesInstruction = `\n\nIMPORTANT: You MUST include these techniques in the stack: ${requiredTechniques.join(', ')}. Arrange them in optimal sequence with the other techniques you recommend.`;
-    }
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://shadow-persuasion.vercel.app',
-        'X-Title': 'Shadow Persuasion',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT + voiceContext + knowledgeContext + requiredTechniquesInstruction },
-          {
-            role: 'user',
-            content: `Create technique stacking sequences for this goal: "${goal}"`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.8,
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[STACKING]', 'OpenRouter error:', response.status, errorText);
-      return NextResponse.json({ error: 'AI service error' }, { status: 502 });
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      return NextResponse.json({ error: 'No response from AI' }, { status: 502 });
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      console.error('[STACKING]', 'Failed to parse AI response:', content?.slice(0, 200));
-      return NextResponse.json({ error: 'AI returned an invalid response. Please try again.' }, { status: 502 });
-    }
-    return NextResponse.json(parsed);
-  } catch (error) {
-    console.error('[STACKING]', error);
+    await requireAppUser(req);
     return NextResponse.json(
-      { error: 'Failed to process stacking request.' },
-      { status: 500 }
+      { error: 'This tool has moved. Use Plan a Conversation to get ready for a hard talk.', moved: '/app/warroom' },
+      { status: 410 }
     );
+  } catch (err) {
+    const f = passthroughAuthError(err);
+    if (f) return f;
+    return apiError('Something went wrong. Please try again.', 500, '[stacking]', err);
   }
 }

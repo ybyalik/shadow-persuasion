@@ -21,6 +21,7 @@ import {
   Box,
   FileText,
   LogOut,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useAdmin } from '@/lib/hooks/useAdmin';
@@ -28,6 +29,7 @@ import { useAdmin } from '@/lib/hooks/useAdmin';
 const NAV = [
   { href: '/app/admin',            label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/admin/members',    label: 'Members',   icon: Users },
+  { href: '/app/admin/access',     label: 'App access', icon: KeyRound },
   { href: '/app/admin/orders',     label: 'Orders',    icon: ShoppingBag },
   { href: '/app/admin/leads',      label: 'Leads',     icon: UserPlus },
   { href: '/app/admin/emails',     label: 'Emails',    icon: Mail },

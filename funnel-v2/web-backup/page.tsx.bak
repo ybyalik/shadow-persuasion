@@ -1,0 +1,309 @@
+import Link from 'next/link';
+import { SubscribeForm } from './_components/SubscribeForm';
+
+const PARTS = [
+  {
+    label: 'Part One',
+    title: 'Why you keep getting run over',
+    body: 'The rules you were raised with, the small signals that show people where to push, the voice in your head that argues for the other side, and the habit of caring so much about everyone else that you disappear.',
+  },
+  {
+    label: 'Part Two',
+    title: 'The reset',
+    body: 'A 3-day quick start for an early win, then 21 days of short daily drills, about fifteen minutes a day, with a printable journal. This is where things actually change.',
+  },
+  {
+    label: 'Part Three',
+    title: 'The tactics people use on you',
+    body: 'Guilt trips, rewriting the past, the silent treatment, charm and pressure, the slow squeeze, intimidation, scams, and how groups pull people in. For each one: what it looks like, what it is for, and the calm words that take its power away.',
+  },
+  {
+    label: 'Part Four',
+    title: 'Quiet power',
+    body: 'Reading what people really want, how you come across, being heard without a fight, asking for what you are owed, office politics done honestly, and making agreements stick.',
+  },
+];
+
+const REPLIES = [
+  {
+    they: '"After everything I\'ve done for you..."',
+    you: '"You\'ve done a lot for me, and I\'m grateful. I\'m still not able to do this."',
+  },
+  {
+    they: '"That never happened. You\'re too sensitive."',
+    you: '"I remember it differently. Either way, here\'s what I need going forward."',
+  },
+  {
+    they: 'Two days of silence after you disagreed.',
+    you: '"I can tell you\'re upset. When you\'re ready to talk about it, I\'m here." Then you carry on with your day.',
+  },
+  {
+    they: '"I need an answer right now."',
+    you: '"If it has to be decided right now, then my answer is no."',
+  },
+];
+
+const BONUSES = [
+  { img: '/v2/covers/journal.jpg', title: 'The 21-Day Reset Journal', body: 'A printable page for every day of the reset, plus your check-ins.' },
+  { img: '/v2/covers/spotter.jpg', title: 'The Tactic Spotter', body: '50 pressure tactics, the warning signs, and a calm reply for each.' },
+  { img: '/v2/covers/shrinking.jpg', title: 'Stop Shrinking', body: '24 phrases that make you sound small, and what to say instead.' },
+  { img: '/v2/covers/planner.jpg', title: 'The Hard Conversation Planner', body: 'Plan any difficult conversation in ten minutes, then debrief it.' },
+];
+
+const FAQ = [
+  {
+    q: 'Is this a book about manipulating people?',
+    a: 'No. Most of the book is about recognizing pressure and answering it calmly. The influence section comes last on purpose, and the final chapter draws a clear line between fair influence and manipulation, with simple tests to stay on the right side of it.',
+  },
+  {
+    q: "I've read plenty of self-help books. Why would this one be different?",
+    a: 'Understanding why you say yes rarely changes what you do in the moment. Practice does. The center of this book is a 21-day reset of small, specific drills, done first in low-stakes situations, so the new response is familiar by the time it matters.',
+  },
+  {
+    q: 'What exactly do I get?',
+    a: 'The paperback, printed and shipped to you (US only, shipping is added at checkout). Plus instant digital access to the book, the printable 21-Day Reset Journal, three bonus guides (The Tactic Spotter, Stop Shrinking, and The Hard Conversation Planner), and 60 days of the Decoder, all emailed right after you buy.',
+  },
+  {
+    q: 'Is this therapy?',
+    a: 'No. It is a practical self-help book about everyday pressure and communication. If you are in a relationship where you feel unsafe, please reach out for support. In the US, the National Domestic Violence Hotline is 1-800-799-7233, or text START to 88788.',
+  },
+  {
+    q: 'What if it is not for me?',
+    a: 'Email within 30 days and you get a full refund.',
+  },
+];
+
+function BuyButton({ label = 'Get the paperback for $67' }: { label?: string }) {
+  return (
+    <Link href="/v2/checkout" className="sp2-btn">
+      {label}
+    </Link>
+  );
+}
+
+export default function V2SalesPage() {
+  return (
+    <main>
+      {/* Header */}
+      <header className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 flex items-center justify-between">
+        <span className="sp2-ui text-sm font-semibold tracking-wide">SHADOW PERSUASION</span>
+        <Link href="/v2/checkout" className="sp2-ui text-sm underline underline-offset-4">
+          Get the book
+        </Link>
+      </header>
+
+      {/* Hero */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-14 grid md:grid-cols-[1fr_300px] gap-10 items-center">
+        <div>
+          <p className="sp2-kicker mb-5">For people who are done being the nice one</p>
+          <h1 className="text-[34px] sm:text-[50px] leading-[1.08] font-semibold tracking-tight">
+            You were taught to keep everyone comfortable. Nobody taught you what to do when people take advantage of it.
+          </h1>
+          <p className="mt-6 text-[19px] sm:text-[21px] leading-relaxed text-[color:var(--sp2-muted)]">
+            <i>Shadow Persuasion</i> shows you the exact tactics people use to get their way with you, the calm words that
+            stop each one, and a 21-day plan that changes how you answer people for good.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <BuyButton />
+            <a href="#free-chapter" className="sp2-btn sp2-btn-ghost">
+              Read Chapter 1 free
+            </a>
+          </div>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/v2/covers/book.jpg" alt="Shadow Persuasion book cover" className="w-[220px] sm:w-[260px] md:w-full mx-auto rounded shadow-2xl" />
+      </section>
+
+      {/* The replay */}
+      <section className="bg-[color:var(--sp2-night)] text-[#efe9df]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-[19px] leading-relaxed space-y-5">
+          <p className="sp2-kicker !text-[#c9a46b]">The 3 a.m. replay</p>
+          <p className="text-[26px] sm:text-[32px] leading-snug font-semibold text-white">
+            It usually starts a little after three.
+          </p>
+          <p>
+            A sentence surfaces, something someone said yesterday, or last week, or eleven years ago at a wedding. You
+            are back in the room. Same words. Same small pause before you answered, and the answer you gave, which was
+            polite and reasonable and wrong.
+          </p>
+          <p>
+            Then you rewrite it. In this version you stay calm and say the precise thing. By four o&apos;clock you have a
+            speech that would end the argument for good, and nobody to give it to.
+          </p>
+          <p>
+            The yes you didn&apos;t mean. The raise you didn&apos;t ask for. The joke at your expense you laughed along
+            with. The phone call that ended, again, with you apologizing for something they did.
+          </p>
+          <p className="text-white">If that sounds familiar, this book was written for you.</p>
+        </div>
+      </section>
+
+      {/* Not weakness */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-[19px] leading-relaxed space-y-5">
+        <p className="sp2-kicker">It isn&apos;t because you&apos;re weak</p>
+        <h2 className="text-[28px] sm:text-[36px] leading-tight font-semibold">
+          It&apos;s because you learned the rules too well.
+        </h2>
+        <p>
+          Somewhere early, you signed a contract nobody showed you. <i>Be agreeable and you&apos;ll be safe. Other
+          people&apos;s feelings are your job. Your needs are a burden. Conflict means something went wrong. If
+          you&apos;re good enough, you&apos;ll be treated fairly.</i>
+        </p>
+        <p>
+          Those rules made sense when you were small. They still run most of your conversations. And the people
+          around you have learned, mostly without thinking about it, exactly which buttons they press: a sigh, a
+          compliment before a request, a deadline that appears from nowhere, a silence that lasts until you apologize.
+        </p>
+        <p>
+          You don&apos;t need to become cold, and you don&apos;t need to become one of them. You need to see the move
+          while it&apos;s happening, and have a calm answer you can actually say out loud.
+        </p>
+      </section>
+
+      {/* Replies */}
+      <section className="bg-white border-y border-[color:var(--sp2-line)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <p className="sp2-kicker mb-3">A few of the calm replies inside</p>
+          <h2 className="text-[28px] sm:text-[34px] leading-tight font-semibold mb-10">
+            Short, calm, and hard to argue with.
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-5">
+            {REPLIES.map((r) => (
+              <div key={r.they} className="border border-[color:var(--sp2-line)] rounded-lg p-6 bg-[color:var(--sp2-paper)]">
+                <p className="sp2-ui text-xs uppercase tracking-widest text-[color:var(--sp2-muted)] mb-2">When they say</p>
+                <p className="text-[18px] mb-4">{r.they}</p>
+                <p className="sp2-ui text-xs uppercase tracking-widest text-[color:var(--sp2-accent)] mb-2">You say</p>
+                <p className="text-[18px] font-semibold leading-snug">{r.you}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What's inside */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <p className="sp2-kicker mb-3">What&apos;s inside</p>
+        <h2 className="text-[28px] sm:text-[36px] leading-tight font-semibold mb-4">
+          Protect yourself first. Then learn quiet power.
+        </h2>
+        <p className="text-[19px] leading-relaxed text-[color:var(--sp2-muted)] mb-10 max-w-3xl">
+          Influence comes last, on purpose. Influence in the hands of someone who still can&apos;t say no just turns into
+          people-pleasing with better technique.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {PARTS.map((p) => (
+            <div key={p.label} className="bg-white rounded-lg border border-[color:var(--sp2-line)] p-7">
+              <p className="sp2-kicker mb-2">{p.label}</p>
+              <h3 className="text-[22px] font-semibold mb-2">{p.title}</h3>
+              <p className="text-[17px] leading-relaxed text-[color:var(--sp2-muted)]">{p.body}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-8 text-[17px] leading-relaxed text-[color:var(--sp2-muted)] max-w-3xl">
+          Plus quick playbooks for the people who test you most: the boss, the coworker, the partner, the ex, aging
+          parents, adult siblings, in-laws, and the friend who always needs something. Every chapter covers work,
+          relationships, family and friends.
+        </p>
+      </section>
+
+      {/* Bonuses */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
+        <p className="sp2-kicker mb-3">Included free with the book</p>
+        <h2 className="text-[28px] sm:text-[34px] leading-tight font-semibold mb-8">The journal and three bonus guides</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+          {BONUSES.map((b) => (
+            <div key={b.title}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={b.img} alt={`${b.title} cover`} className="w-full rounded shadow-lg mb-3" />
+              <p className="font-semibold text-[17px] leading-snug">{b.title}</p>
+              <p className="text-[15px] leading-relaxed text-[color:var(--sp2-muted)] mt-1">{b.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Decoder */}
+      <section className="bg-[color:var(--sp2-night)] text-[#efe9df]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-[19px] leading-relaxed space-y-5">
+          <p className="sp2-kicker !text-[#c9a46b]">Included: 60 days of the Decoder</p>
+          <h2 className="text-[28px] sm:text-[34px] leading-tight font-semibold text-white">
+            Paste their message. See the tactic. Get a calm reply.
+          </h2>
+          <p>
+            Sometimes the hardest part is seeing what&apos;s happening. A message arrives and you feel guilty, or
+            confused, or rushed, and you can&apos;t say why. Paste it into the Decoder, or upload a screenshot of the
+            conversation, and it names the tactic being used and suggests a calm reply you can send or adapt.
+          </p>
+          <p className="text-[16px] text-[#bdb4a5]">
+            60 days are included with the book. After that it&apos;s $9.99 a month if you want to keep it, and you can
+            cancel anytime.
+          </p>
+        </div>
+      </section>
+
+      {/* Free chapter */}
+      <section id="free-chapter" className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20 scroll-mt-6">
+        <p className="sp2-kicker mb-3">Not sure yet?</p>
+        <h2 className="text-[28px] sm:text-[36px] leading-tight font-semibold mb-4">Read the first chapter free.</h2>
+        <p className="text-[19px] leading-relaxed text-[color:var(--sp2-muted)] mb-7">
+          &ldquo;The 3 A.M. Replay&rdquo; ends with a ten-minute exercise that helps you see the conversation you keep
+          replaying in a new light. Enter your email and you can start reading right away.
+        </p>
+        <SubscribeForm />
+      </section>
+
+      {/* Offer */}
+      <section className="bg-white border-y border-[color:var(--sp2-line)]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <div className="rounded-xl border border-[color:var(--sp2-line)] bg-[color:var(--sp2-paper)] p-7 sm:p-10">
+            <p className="sp2-kicker mb-3">Everything you get</p>
+            <h2 className="text-[28px] sm:text-[34px] leading-tight font-semibold mb-6">
+              Shadow Persuasion: How to Stop Being Used and Take Your Power Back
+            </h2>
+            <ul className="space-y-3 text-[18px] leading-relaxed mb-8">
+              <li>The paperback, about 250 pages, shipped to your door (US)</li>
+              <li>Instant digital copy of the book while you wait</li>
+              <li>The printable 21-Day Reset Journal</li>
+              <li>Three bonus guides: The Tactic Spotter, Stop Shrinking, and The Hard Conversation Planner</li>
+              <li>Playbooks for the people in your life, a situation finder, and a one-page tactic reference</li>
+              <li>60 days of the Decoder</li>
+            </ul>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+              <BuyButton label="Get the paperback for $67" />
+              <p className="sp2-ui text-sm text-[color:var(--sp2-muted)]">
+                Plus shipping. Instant digital access. 30-day money-back guarantee.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <h2 className="text-[28px] sm:text-[34px] leading-tight font-semibold mb-8">Questions</h2>
+        <div className="divide-y divide-[color:var(--sp2-line)] border-y border-[color:var(--sp2-line)]">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group py-5">
+              <summary className="cursor-pointer list-none flex justify-between gap-4 text-[19px] font-semibold">
+                {f.q}
+                <span className="sp2-ui text-[color:var(--sp2-accent)] group-open:rotate-45 transition-transform">+</span>
+              </summary>
+              <p className="mt-3 text-[17px] leading-relaxed text-[color:var(--sp2-muted)]">{f.a}</p>
+            </details>
+          ))}
+        </div>
+        <div className="mt-12 text-center">
+          <BuyButton />
+        </div>
+      </section>
+
+      <footer className="sp2-ui max-w-5xl mx-auto px-4 sm:px-6 py-10 text-xs text-[color:var(--sp2-muted)] flex flex-wrap gap-4 justify-between border-t border-[color:var(--sp2-line)]">
+        <span>&copy; {new Date().getFullYear()} Shadow Persuasion</span>
+        <span className="flex gap-4">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+        </span>
+      </footer>
+    </main>
+  );
+}

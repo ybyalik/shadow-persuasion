@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth-api';
+import { requireAppUser } from '@/lib/access';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
 
 const supabase = createClient(
@@ -13,7 +13,7 @@ const TABLE = 'saved_stacks';
 // GET: List the signed-in user's saved stacks
 export async function GET(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
 
     const { data, error } = await supabase
       .from(TABLE)
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 // POST: Save a new stack for the signed-in user
 export async function POST(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const body = await req.json();
 
     // Never let the client pick which user owns the row; always derive it
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete one of the signed-in user's stacks (by ?id=xxx)
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await requireAuth(req);
+    const userId = (await requireAppUser(req)).uid;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
