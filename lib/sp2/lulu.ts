@@ -22,7 +22,7 @@ export const LULU_FORMATS = {
 export type BookFormat = keyof typeof LULU_FORMATS;
 export const isBookFormat = (v: unknown): v is BookFormat => v === 'paperback' || v === 'hardcover';
 export const LULU_POD_PACKAGE_ID = LULU_FORMATS.paperback.podPackageId;
-export const LULU_PAGE_COUNT = 398;
+export const LULU_PAGE_COUNT = 346;
 
 /** The shipping speeds offered at checkout (US only). */
 export const LULU_SHIPPING_LEVELS = [

@@ -137,11 +137,3 @@
   mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 38%, transparent 96%);
 }
 
-/* Warm light theme (test version /v6): terracotta replaces walnut and oxblood. */
-.sp2 .sp2-warm {
-  --sp2-accent: #9a4529;
-  --sp2-accent-dark: #7c3720;
-  --sp2-oxblood: #9a4529;
-}
-.sp2 .sp2-btn-warm { background: #a24a2c; color: #fff; }
-.sp2 .sp2-btn-warm:hover { background: #8a3d23; }

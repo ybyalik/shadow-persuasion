@@ -5,7 +5,7 @@
  * reader what they are or what happened to them, and never promise custody wins, stopping
  * someone's behavior, a promotion, saving a marriage or healing trauma.
  *
- * Excerpts are copied word for word from book-v3/book-full-draft.md (draft 2, 25 October 2026).
+ * Excerpts are copied word for word from the chapter files in book-v3/drafts (after the deep edit, 25 October 2026).
  * If the book text changes, update them here. `ch` + `section` name the chapter and the exact
  * `##` heading; `sub` is the `###` heading inside it, when there is one.
  */
@@ -70,7 +70,7 @@ export const ANGLES: Angle[] = [
     ],
     routeIntro: 'If this sounds like your Sunday call, you don\'t have to read the book in order. Start with these chapters.',
     route: [
-      { ch: 26, section: 'The parent who still makes you feel small', title: 'The parent who still makes you feel small', why: 'Criticism dressed as concern, comparisons and favoritism, the phone call and the visit, a father-and-son example, and pushback after a limit.' },
+      { ch: 26, section: 'The parent who still makes you feel small', title: 'The parent who still makes you feel small', why: 'Criticism dressed as concern, comparisons, calls and visits, the hour after the call, a parent who says "come today", a father-and-son example, and how much contact you want.' },
       { ch: 3, section: 'Roles you inherited', title: 'Roles you inherited', why: 'The reliable one, the peacemaker, the fixer. Why nobody remembers agreeing to the role, least of all you.' },
       { ch: 6, section: 'What about narcissists?', title: 'What about narcissists?', why: 'Why you can judge what keeps happening, and decide what to do, without diagnosing anyone.' },
       { ch: 7, section: 'When past help is treated as a debt', title: 'When past help is treated as a debt', why: '"After everything I\'ve done for you," and how to honor the past and still say no.' },
@@ -106,11 +106,10 @@ export const ANGLES: Angle[] = [
         ch: 26,
         chapterTitle: 'Family, Friends, and the Roles That Stick',
         section: 'The parent who still makes you feel small',
-        sub: 'The phone call and the visit',
+        sub: 'Calls and visits',
         blocks: [
-          { kind: 'p', text: 'You\'re allowed to decide how long a call lasts, and to end it kindly.' },
-          { kind: 'say', lines: ['"I\'ve got about twenty minutes before I need to start dinner."', '"I need to go now. Love you. Talk Sunday."'] },
-          { kind: 'p', text: 'Holidays work the same way, but plan before you arrive. Decide how long you\'ll stay, where you\'ll sleep, and how you\'ll leave. Driving your own car is an underrated holiday tool. Tell people your plan early, in a matter-of-fact way: "We\'ll come for dinner on Christmas Day and head home around eight."' },
+          { kind: 'p', text: 'You\'re allowed to decide how long a call lasts, and to end it kindly: "I\'ve got about twenty minutes before I need to start dinner." Or, when it\'s time: "I need to go now. Love you. Talk Sunday."' },
+          { kind: 'p', text: 'Holidays work the same way, but plan before you arrive: how long you\'ll stay, where you\'ll sleep, and how you\'ll leave. Driving your own car is an underrated holiday tool. Tell people early, in a matter-of-fact way: "We\'ll come for dinner on Christmas Day and head home around eight."' },
         ],
       },
       {
@@ -119,8 +118,8 @@ export const ANGLES: Angle[] = [
         section: 'The parent who still makes you feel small',
         sub: 'How much contact you want',
         blocks: [
-          { kind: 'p', text: 'Some people stay close and handle each conversation as it comes. Some reduce contact: shorter calls, fewer visits, certain topics off the table. Some decide to step away entirely. Each of these is a real choice, with real costs, and only you can weigh them.' },
-          { kind: 'p', text: 'It can help to ask: what does each kind of contact cost me, and what does it give me? Is it safe? What could I live with in five years? You don\'t have to announce your choice, and you can change it later. Chapter 28, When They Still Say No, goes deeper into low contact and no contact.' },
+          { kind: 'p', text: 'Some people stay close and handle each conversation as it comes. Some reduce contact: shorter calls, fewer visits, certain topics off the table. Some step away entirely. Each is a real choice with real costs. Ask what each kind of contact costs you and gives you, and what you could live with in five years. You don\'t have to announce your choice, and you can change it later. Chapter 28, When They Still Say No, goes deeper into low contact and no contact.' },
+          { kind: 'p', text: 'If a family member threatens you, or controls your money or movements, that isn\'t ordinary family conflict. See Chapter 11.' },
         ],
       },
     ],
@@ -150,7 +149,7 @@ export const ANGLES: Angle[] = [
       'Keisha spent two weeks on the numbers. She found that her company was paying for three software tools that did the same job, and emailed a one-page summary to her manager, Glen.',
       'On Thursday, at the team meeting, a colleague clears his throat. "I\'ve been thinking we might have some overlap in our software." Glen nods. "Good thinking. Tyler, can you pull some numbers together?"',
       'The numbers already exist. They are sitting in Glen\'s inbox with Keisha\'s name at the top. She says nothing, and the meeting moves on to the parking situation.',
-      'Good work matters. It is also only part of the picture. Credit, projects, titles and pay are decided by busy people, based on what reaches them. Keisha\'s work was excellent. It just never reached the place where the decision was made.',
+      'Good work matters. But credit, projects, titles and pay are decided by busy people, based on what reaches them. Keisha\'s work was excellent. It just never reached the place where the decision was made.',
       'Shadow Persuasion shows how to fix that without becoming loud or political: protect credit before, during and after a meeting, find out what a promotion really requires, build allies, and ask for a raise with a clear case. No book can promise you the promotion. This one helps you make sure the people who decide have accurate information.',
     ],
     routeIntro: 'If this sounds like your last meeting, you don\'t have to read the book in order. Start with these chapters.',
@@ -172,7 +171,7 @@ export const ANGLES: Angle[] = [
         blocks: [
           { kind: 'p', text: 'Send your work to the person who decides, with your name on it, before it comes up. Then ask to present it yourself.' },
           { kind: 'say', lines: ['"I\'ve attached the software cost summary I put together. I\'d like to walk the team through it on Thursday. Could I have ten minutes?"'] },
-          { kind: 'p', text: 'Keisha didn\'t ask for time. Most people don\'t, because it feels pushy. It isn\'t. You are telling your manager what you have ready, which saves them work.' },
+          { kind: 'p', text: 'Asking for time can feel pushy. It isn\'t. You are telling your manager what you have ready, which saves them work.' },
         ],
       },
       {
@@ -183,7 +182,7 @@ export const ANGLES: Angle[] = [
         blocks: [
           { kind: 'p', text: 'Write to the person who decides. Keep it factual and friendly. Attach the original work.' },
           { kind: 'say', lines: ['"Hi Glen, following up on today\'s meeting. The software overlap Tyler mentioned is the one in my summary from Monday, attached again. It shows three tools doing the same job, at about $40,000 a year. I\'d be glad to lead the next step, and Tyler\'s welcome to join. Can we confirm who\'s taking it?"'] },
-          { kind: 'p', text: 'The note doesn\'t accuse Tyler. It puts the facts and the dates in one place, and it asks for a decision.' },
+          { kind: 'p', text: 'You can also have a quiet word with the colleague, about the future: "Next time you\'re building on something I\'ve done, could you mention it? Then I can back you up with the numbers."' },
         ],
       },
       {
@@ -191,8 +190,8 @@ export const ANGLES: Angle[] = [
         chapterTitle: 'Be Credible, Visible, and Clear',
         section: 'Good work and visible work are different',
         blocks: [
-          { kind: 'p', text: 'Here\'s the key difference. Being reliable is something you do. Being credible is what other people believe about you, based on what they\'ve seen. The two can drift far apart. A person can be excellent and invisible, or average and well known.' },
-          { kind: 'p', text: 'Many kind, capable people assume that the first leads to the second automatically. It usually doesn\'t. Busy people can\'t see what you do. They see what reaches them: a message, a meeting, a result with your name on it, a promise kept or broken.' },
+          { kind: 'p', text: 'Being reliable is something you do. Being credible is what other people believe about you, based on what they\'ve seen. The two can drift far apart. A person can be excellent and invisible, or average and well known.' },
+          { kind: 'p', text: 'Many kind, capable people assume the first leads to the second. It usually doesn\'t. Busy people can\'t see what you do. They see what reaches them: a message, a meeting, a result with your name on it, a promise kept or broken.' },
           { kind: 'p', text: 'You don\'t need to sell yourself. You need the people who make decisions to have accurate information.' },
         ],
       },
@@ -204,7 +203,7 @@ export const ANGLES: Angle[] = [
       'If you believe credit is being withheld because of your race, sex, age or another protected trait, or as payback for raising a concern, the book says to talk to HR or an employment lawyer.',
     ],
     buyLine: 'Ready for your work to carry your name?',
-    ps: 'Keisha didn\'t get the lead role. She did get her name in front of her manager\'s boss, and a written record. The book calls that a fair result for one conversation. The full exchange is in {ref}.',
+    ps: 'Keisha didn\'t get the lead role. She did get her name in front of her manager\'s boss, the presentation that carries the credit, and a written record of who does what. The full exchange is in {ref}.',
     psRef: { ch: 23, section: 'When someone repeats your idea in a meeting' },
     scenarioTab: 0,
     situation: [0, 0],
@@ -223,15 +222,15 @@ export const ANGLES: Angle[] = [
       'Darnell\'s sister, Yvonne, helped him move last summer. Now her car is in the shop, and she assumes he\'ll drive her to work every weekday.',
       '"After everything I did with your move, you can\'t do this?"',
       'Nobody here is a villain. The help was real. What changed is that a gift, given freely months ago, has come back as a debt, with a price nobody agreed to.',
-      'Chapter 7 starts with one question: what kind of thing is being asked of you? A duty is something you owe because of a role or a promise. A favor is a gift you can decline, even after years of giving it. An agreement is something two people both said yes to, with clear terms. Guilt pressure blurs the three.',
+      'Chapter 7 boils it down to one question: what kind of thing is being asked of you? A duty is something you owe because of a role or a promise. A favor is a gift you can decline, even after years of giving it. An agreement is something two people both said yes to, with clear terms. Guilt pressure blurs the three.',
       'Shadow Persuasion shows how to honor what someone did for you and still say no to today\'s request, how to take back a yes you gave too fast, and what to do when the answer is still no. It can\'t stop a relative from asking. It helps you decide what you actually owe.',
     ],
     routeIntro: 'If this sounds like your family, you don\'t have to read the book in order. Start with these chapters.',
     route: [
-      { ch: 7, section: 'Duties, favors, and agreements', title: 'Duties, favors, and agreements', why: 'Tell a real duty from a favor, and both from an agreement, with examples from money, holidays and caregiving.' },
+      { ch: 7, section: 'Duties, favors, and agreements', title: 'Duties, favors, and agreements', why: 'Tell a real duty from a favor, and both from an agreement, with examples from holidays and caregiving.' },
       { ch: 7, section: 'When past help is treated as a debt', title: 'When past help is treated as a debt', why: 'The ledger and the favor with a hidden price: what each sounds like, why it works, what to say.' },
       { ch: 7, section: 'Taking back a yes you gave too fast', title: 'Taking back a yes you gave too fast', why: 'Five steps for going back on a quick yes, with as little damage as possible.' },
-      { ch: 26, section: 'Caring for an aging parent without doing it all alone', title: 'When the same person does all the helping', why: 'Make the work visible, ask relatives for named commitments, and decide what to do when they won\'t help.' },
+      { ch: 26, section: 'Caring for an aging parent without doing it all alone', title: 'When the same person does all the helping', why: 'Let the parent have a say, give every task an owner and a backup, and decide what to do when relatives won\'t help.' },
       { ch: 24, section: 'When family or friends ask to borrow money', title: 'When family or friends ask to borrow money', why: 'The question to ask yourself before you answer, and the rule you\'re allowed to make about old loans.' },
       { ch: 3, section: 'The five clauses', title: 'The Good Person Contract', why: 'The unspoken rules that make a fair no feel like a betrayal.' },
       { ch: 28, section: 'Four paths, and what each one costs', title: 'When they still say no', why: 'If the pressure keeps coming: accept, escalate, step back or leave, and what each one costs.' },
@@ -257,7 +256,7 @@ export const ANGLES: Angle[] = [
           { kind: 'p', text: 'Why it works. It turns a relationship into an account. The past kindness becomes a debt, and the request in front of you becomes the payment. Saying no makes you feel ungrateful as well as unhelpful.' },
           { kind: 'p', text: 'What to say. Honor the past, then separate it from today.' },
           { kind: 'say', lines: ['"You\'ve done a lot for me, and I\'m grateful. I still can\'t do this."', '"I remember, and it meant a lot. This one doesn\'t work for me."'] },
-          { kind: 'p', text: 'What not to do. Don\'t start listing what you\'ve done for them. That agrees you\'re both keeping score, and invites a long argument about who owes whom.' },
+          { kind: 'p', text: 'What not to do. Don\'t start listing what you\'ve done for them. That agrees you\'re both keeping score.' },
         ],
       },
       {
@@ -326,7 +325,7 @@ export const ANGLES: Angle[] = [
         section: 'After a separation: when your ex still controls everything',
         sub: 'Keep messages brief and about the kids',
         blocks: [
-          { kind: 'p', text: 'A useful message to an ex is short, polite and about one practical thing. Leave out feelings, history, defenses and digs. Include the facts needed to handle the practical issue. Leave out insults and anything that doesn\'t help solve it.' },
+          { kind: 'p', text: 'A useful message to an ex is short, polite and about one practical thing. Include the facts needed to handle it. Leave out feelings, history, defenses and digs.' },
           { kind: 'p', text: 'Angela wrote her reply the next morning, after coffee.' },
           {
             kind: 'talk',
@@ -344,9 +343,9 @@ export const ANGLES: Angle[] = [
         section: 'After a separation: when your ex still controls everything',
         sub: 'When the messages keep coming',
         blocks: [
-          { kind: 'p', text: 'Some exes send ten messages in an hour, or bait you with comments about your new partner, your family or your past. You can leave personal digs unanswered and still deal with the practical matter. If you share children or have a court order, ask a family lawyer what communication is required and how to handle repeated unwanted contact.' },
+          { kind: 'p', text: 'Some exes send ten messages in an hour, or bait you with comments about your new partner, your family or your past. You can leave the digs unanswered and still deal with the practical matter.' },
           { kind: 'say', lines: ['"I\'m happy to talk about the pickup schedule. I\'m not going to discuss the past."', '"I\'ll answer messages about the kids. I won\'t respond to the rest."'] },
-          { kind: 'p', text: 'Say it once. After that, simply answer the logistics and leave the rest unanswered.' },
+          { kind: 'p', text: 'Say it once. After that, simply answer the logistics. If the contact won\'t stop, ask a family lawyer how to handle it.' },
         ],
       },
       {
@@ -368,7 +367,7 @@ export const ANGLES: Angle[] = [
       DANGER_LIMIT,
     ],
     buyLine: 'Ready to answer the schedule and leave the rest?',
-    ps: 'Craig replied twice more. Angela answered the logistics, asked him not to put the kids in the middle, and left his last line unanswered. The full exchange is in {ref}.',
+    ps: 'Craig replied twice more. Angela answered the logistics, asked him not to make the kids decide the schedule, and left his last line unanswered. The full exchange is in {ref}.',
     psRef: { ch: 25, section: 'After a separation: when your ex still controls everything' },
     scenarioTab: 2,
     situation: [1, 2],

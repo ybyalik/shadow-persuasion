@@ -39,6 +39,16 @@ const nextConfig: NextConfig = {
     ];
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // The ads plan names the favors angle /a/family; the page is /a/favor.
+      { source: '/a/family', destination: '/a/favor', statusCode: 301 },
+      // Retired test versions of the sales page.
+      { source: '/v3', destination: '/v2', statusCode: 301 },
+      { source: '/v4', destination: '/v2', statusCode: 301 },
+      { source: '/v6', destination: '/v2', statusCode: 301 },
+    ];
+  },
 };
 
 export default nextConfig;

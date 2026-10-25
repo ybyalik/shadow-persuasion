@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * Shared page blocks for the sales-page versions (/v2, the test versions /v3 to /v6, and the angle pages /a/[angle]).
+ * Shared page blocks for the sales-page versions (/v2, the parked test version /v5, and the angle pages /a/[angle]).
  * Server components: they only arrange the client pieces from ui, editorial and interactive.
  * Copy that differs between versions is passed in; the offer details stay identical everywhere.
  */
@@ -10,8 +10,6 @@ import { Lock } from 'lucide-react';
 import { BuyButton, BuyNote } from './ui';
 import { Mark, MarginNote, TornEdge } from './editorial';
 import { Faq } from './interactive';
-import { pageRefShort } from './pageRef';
-import type { Fascination } from './copy';
 
 const INK = '/v2/ink';
 
@@ -73,35 +71,6 @@ export function LetterHead({ children, kicker }: { children: React.ReactNode; ki
 /** A line pulled out of the letter, set large. */
 export function PullLine({ children }: { children: React.ReactNode }) {
   return <p className="max-w-[820px] mx-auto text-center sp2-display italic text-[32px] sm:text-[46px] leading-[1.18] my-14 sm:my-20">{children}</p>;
-}
-
-/** Page-numbered bullets ("fascinations"): each one a benefit with the answer held back. Shows "Ch. N" until page numbers are final. */
-export function Fascinations({ items, intro }: { items: Fascination[]; intro?: React.ReactNode }) {
-  return (
-    <div className="max-w-[860px] mx-auto">
-      {intro && <div className="text-center mb-10">{intro}</div>}
-      {items.map((b) => (
-        <div key={`${b.ch}:${b.section}`} className="sp2-rule flex gap-5 sm:gap-7 py-5">
-          <span className="sp2-type text-[18px] sm:text-[20px] text-[color:var(--sp2-oxblood)] whitespace-nowrap pt-1 min-w-[64px] sm:min-w-[76px]">{pageRefShort(b.ch, b.section)}</span>
-          <p className="text-[20px] sm:text-[21px] leading-[1.5]">{b.text}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** "You don't need..." list: objections answered before they are raised. */
-export function DoesntNeed({ items }: { items: [string, string][] }) {
-  return (
-    <div className="max-w-[860px] mx-auto grid sm:grid-cols-2 gap-x-12">
-      {items.map(([t, d]) => (
-        <div key={t} className="sp2-rule py-5">
-          <p className="sp2-display text-[26px] leading-tight">{t}</p>
-          <p className="text-[color:var(--sp2-muted)] mt-1">{d}</p>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 /** A short buy line placed between sections. */
