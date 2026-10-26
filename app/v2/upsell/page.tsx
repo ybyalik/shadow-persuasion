@@ -76,7 +76,6 @@ function UpsellOffer() {
           to do if they agree, partly agree, refuse or backtrack later, the follow-up message, and what you do next if agreement never comes.
         </p>
 
-        {/* NOTE: this photo still shows the previous edition's two guides; replace before launch (book-v3/launch-checklist.md). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/v2/img/upsell-pack.jpg" alt="The Applied Power Playbook Library" className="w-full rounded-xl shadow-2xl mb-6 md:mb-10" />
         <div className="md:hidden mb-10 text-center">

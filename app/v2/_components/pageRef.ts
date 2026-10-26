@@ -210,8 +210,12 @@ export function pageToken(ch: number, section: string): string {
   return `{{p:${ch}:${section}}}`;
 }
 
+/** Curly and straight apostrophes and quotes count as the same, so headings match however they were typed. */
+const norm = (s: string) => s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"');
+const normMap: Record<string, number> = Object.fromEntries(Object.entries(pageMap).map(([k, v]) => [norm(k), v]));
+
 function lookup(ch: number, section: string): number | undefined {
-  return pageMap[pageToken(ch, section)];
+  return pageMap[pageToken(ch, section)] ?? normMap[norm(pageToken(ch, section))];
 }
 
 /** Long form for running text: "Chapter 23, page 112", or "Chapter 23" until the page is known. */

@@ -8,7 +8,7 @@
   },
   {
    "heading": "How each reply is set up",
-   "html": "<ul>\n<li><strong>The situation</strong> in one line, as the heading.</li>\n<li><strong>The task:</strong> what the reply is for. Asking, declining, clarifying, trading, following up or repairing.</li>\n<li><strong>Three wording options.</strong> Usually warm, direct and final. “Final” never means a threat. It means closing the exchange or saying what you will do next. Requests, apologies and confirmations don’t need a harder version, so those get other options, such as a written or text version.</li>\n<li><strong>When it fits:</strong> when to use it, and when not to.</li>\n</ul>"
+   "html": "<ul>\n<li><strong>The situation</strong> in one line, as the heading.</li>\n<li><strong>The task:</strong> what the reply is for. Asking, declining, clarifying, trading, following up or repairing.</li>\n<li><strong>Three wording options</strong> for the same situation, built on the same facts and the same request. Usually warm, direct and final. “Final” never means a threat. It means closing the exchange or saying what you will do next. Requests, apologies and confirmations don’t need a harder version, so those get other options, such as a written or text version. When an option belongs to a later moment (after the meeting, later in private, after a second ask, or once you’ve both agreed), its label says so.</li>\n<li><strong>When it fits:</strong> when to use it, and when not to.</li>\n</ul>"
   },
   {
    "heading": "A few things that help",
@@ -16,7 +16,7 @@
   },
   {
    "heading": "When words are not the answer",
-   "html": "<p>There are no scripts in this book for threats, violence or fear, on purpose. If someone is threatening you, hurting you, following or tracking you, checking your phone, or controlling your money, a better sentence is not what will help. Confronting them, even with someone else in the room, is not a safety plan.</p>\n<p>Instead:</p>\n<ul>\n<li>Read Chapter 11, When Pressure Becomes Danger.</li>\n<li>In the US, contact the <strong>National Domestic Violence Hotline</strong>: call <strong>1-800-799-7233</strong>, or text <strong>START</strong> to <strong>88788</strong>. You don’t have to be sure it “counts.” Men contact them too.</li>\n<li>If you are in immediate danger, call <strong>911</strong>.</li>\n<li>If someone may be checking your phone, contact help from a device they can’t reach, such as a friend’s phone, a work phone or a library computer.</li>\n<li>If someone threatens you or your job at work, keep notes somewhere safe (not on work devices), and talk to HR or an employment lawyer.</li>\n<li>If you, or someone you are talking with, have thoughts of suicide or self-harm, that is a different kind of help. Call or text the <strong>988 Suicide and Crisis Lifeline</strong> (988 in the US). If someone threatens to hurt themselves to make you do something, take the threat seriously, contact 988 or 911, and see Chapter 11.</li>\n</ul>\n<p>Outside the US, local hotlines and support services exist in most countries.</p>"
+   "html": "<p>There are no scripts in this guide for threats, violence or fear, on purpose. If someone is threatening you, hurting you, following or tracking you, checking your phone, or controlling your money, a better sentence is not what will help. Confronting them, even with someone else in the room, is not a safety plan.</p>\n<p>Instead:</p>\n<ul>\n<li>Read Chapter 11, When Pressure Becomes Danger.</li>\n<li>In the US, contact the <strong>National Domestic Violence Hotline</strong>: call <strong>1-800-799-7233</strong>, or text <strong>START</strong> to <strong>88788</strong>. You don’t have to be sure it “counts.” Men contact them too.</li>\n<li>If you are in immediate danger, call <strong>911</strong>.</li>\n<li>If someone may be checking your phone, contact help from a device they can’t reach, such as a friend’s phone, a work phone or a library computer.</li>\n<li>If someone threatens you or your job at work, keep notes somewhere safe (not on work devices), and talk to HR or an employment lawyer.</li>\n<li>If you, or someone you are talking with, have thoughts of suicide or self-harm, that is a different kind of help. Call or text the <strong>988 Suicide and Crisis Lifeline</strong> (988 in the US). If someone threatens to hurt themselves to make you do something, take the threat seriously, contact 988 or 911, and see Chapter 11.</li>\n</ul>\n<p>Outside the US, local hotlines and support services exist in most countries.</p>"
   }
  ],
  "groups": [
@@ -165,7 +165,7 @@
     },
     {
      "label": "Direct",
-     "text": "The report went up without my name. I'd like to be credited on work I lead. Can we agree on that from now on?"
+     "text": "The analysis went up without my name. I'd like to be credited on work I lead. Can we agree on that from now on?"
     },
     {
      "label": "Final",
@@ -244,7 +244,7 @@
      "text": "Can we agree on the specific goals and a date to revisit this, and put both in an email?"
     },
     {
-     "label": "Final",
+     "label": "Final (once you've agreed goals and a date)",
      "text": "I understand. I'll send a note with what we agreed, and I'll bring it up again on that date."
     }
    ],
@@ -270,7 +270,7 @@
      "text": "I'm doing two roles' worth of work. Either we adjust my pay and title, or some of these duties move to someone else."
     },
     {
-     "label": "Final",
+     "label": "Final (if the raise is turned down)",
      "text": "If a raise isn't possible this year, I'd like to hand training back by March. Can we plan how?"
     }
    ],
@@ -289,7 +289,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I'm not available this weekend. I can have it finished first thing Tuesday."
+     "text": "I'm not available this weekend. I can pick it up first thing Monday."
     },
     {
      "label": "Direct",
@@ -322,7 +322,7 @@
     },
     {
      "label": "Final",
-     "text": "I'm not doing swaps this month. Please ask someone else."
+     "text": "I won't be covering this shift. Please ask someone else."
     }
    ],
    "whenItFits": "<p>A pattern of asks, not a real emergency. Don’t make up a conflict. A made-up reason can be checked, and it invites “Then how about next week?”</p>",
@@ -446,7 +446,7 @@
      "text": "I need to be in the planning meetings to do my part well. Can you add me back?"
     },
     {
-     "label": "Final",
+     "label": "Final (after a vague answer)",
      "text": "If there's a reason I'm being left out, I'd rather hear it directly so I can fix it."
     }
    ],
@@ -481,7 +481,7 @@
   {
    "number": 16,
    "title": "Taking back a yes you gave too fast at work",
-   "short": "Taking back a rushed yes at work",
+   "short": "Withdrawing a rushed yes at work",
    "group": "Work",
    "tasks": [
     "repairing",
@@ -501,8 +501,8 @@
      "text": "I'm stepping off the committee. I'll hand over my notes by Friday."
     }
    ],
-   "whenItFits": "<p>As early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn’t.</p>",
-   "whenItFitsText": "As early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn't."
+   "whenItFits": "<p>When you need to step out of the commitment completely. Do it as early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn’t. To keep part of a yes instead, see Reply 76.</p>",
+   "whenItFitsText": "When you need to step out of the commitment completely. Do it as early as possible, before others plan around you. Offering a handover makes it fair. Groveling doesn't. To keep part of a yes instead, see Reply 76."
   },
   {
    "number": 17,
@@ -540,19 +540,19 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I was short with you this morning. That wasn't fair to you. I'm sorry."
+     "text": "I was short with you this morning when you asked about the file. That wasn't fair to you. I'm sorry."
     },
     {
      "label": "Direct",
-     "text": "I'm sorry for how I spoke in the meeting. I still think the deadline is a problem, and I'd like to talk about it better."
+     "text": "I'm sorry I snapped earlier. Can we start again? What do you need from me on the file?"
     },
     {
      "label": "Short message",
-     "text": "Sorry about earlier. That was on me."
+     "text": "Sorry about earlier. That was on me. Happy to go through the file whenever suits you."
     }
    ],
-   "whenItFits": "<p>Apologize for how you said it, without dropping a point you still believe. Skip “but you” in the apology. That turns it into round two.</p>",
-   "whenItFitsText": "Apologize for how you said it, without dropping a point you still believe. Skip \"but you\" in the apology. That turns it into round two."
+   "whenItFits": "<p>Soon, ideally the same day. At work, a short apology and a fresh start on the task usually do more than a long talk. Skip “but you” in the apology. That turns it into round two.</p>",
+   "whenItFitsText": "Soon, ideally the same day. At work, a short apology and a fresh start on the task usually do more than a long talk. Skip \"but you\" in the apology. That turns it into round two."
   },
   {
    "number": 19,
@@ -598,7 +598,7 @@
      "text": "I can't take this on. The step-by-step guide is in the shared folder."
     },
     {
-     "label": "Final",
+     "label": "Final (if they keep coming)",
      "text": "I'm going to stop doing these for the team. I'll let our manager know so they get assigned properly."
     }
    ],
@@ -617,7 +617,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I've been doing the bills and the school forms for a long time. Could you take one of them?"
+     "text": "I've been doing the bills and the school forms for a long time. Could you take over the bills?"
     },
     {
      "label": "Direct",
@@ -642,14 +642,14 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I can tell you're upset. I'm here when you're ready to talk."
+     "text": "I can tell you're upset. When you're ready, could we talk tonight after dinner?"
     },
     {
      "label": "Direct",
      "text": "I'd like us to talk about yesterday, even if it's hard. Can we do it tonight after dinner?"
     },
     {
-     "label": "Final",
+     "label": "Final (if the silence goes on)",
      "text": "I'm not going to keep guessing. When you want to talk, tell me and I'll make the time."
     }
    ],
@@ -749,7 +749,7 @@
      "text": "It didn't land as a joke for me. Please don't say it again."
     },
     {
-     "label": "Final",
+     "label": "Final (if it happens again)",
      "text": "If it comes up again in front of people, I'm going to say so right then."
     }
    ],
@@ -767,7 +767,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I'd like to be part of decisions like this. Can we agree to talk first for anything over a set amount?"
+     "text": "I'd like to be part of decisions like this. Can we agree to talk first for anything over $500?"
     },
     {
      "label": "Direct",
@@ -796,7 +796,7 @@
     },
     {
      "label": "Direct",
-     "text": "I'll cover the kids this weekend if you take bedtime on Tuesdays and Thursdays."
+     "text": "I'll cover the kids on Saturday so you can go to the lake. In return, I'd like Thursday evenings for my class."
     },
     {
      "label": "Confirming",
@@ -817,11 +817,11 @@
    "options": [
     {
      "label": "Warm",
-     "text": "We're starting the same fight. Can we take a short break and come back to it?"
+     "text": "We're starting the same fight. Can we stop here and come back to it on Saturday?"
     },
     {
      "label": "Direct",
-     "text": "We keep having this one. Let's pick a calm time this weekend and actually solve it."
+     "text": "We keep having this one. Let's take a calm hour on Saturday and actually solve it."
     },
     {
      "label": "Final",
@@ -849,7 +849,7 @@
      "text": "Please lower your voice, or let's stop for now."
     },
     {
-     "label": "Final",
+     "label": "Final (if it keeps going)",
      "text": "I'm going to step out for a while. We can pick this up tomorrow."
     }
    ],
@@ -897,15 +897,15 @@
     },
     {
      "label": "Direct",
-     "text": "I'm sorry for how I spoke. I still want to talk about the money, but calmly this time."
+     "text": "What I said about your job was cruel, and it isn't what I think. I'm sorry."
     },
     {
      "label": "Short message",
-     "text": "I was out of line earlier. I'm sorry. Can we talk tonight?"
+     "text": "I was out of line last night. I'm sorry. When you're ready, I'd like to hear how it landed."
     }
    ],
-   "whenItFits": "<p>Name what you did, without explaining it away. A repair is about what you said, not a new round of who started it.</p>",
-   "whenItFitsText": "Name what you did, without explaining it away. A repair is about what you said, not a new round of who started it."
+   "whenItFits": "<p>Name the exact thing you said, without explaining it away. Then let them take the time they need; an apology doesn’t come with a deadline for forgiveness. A repair is about what you said, not a new round of who started it.</p>",
+   "whenItFitsText": "Name the exact thing you said, without explaining it away. Then let them take the time they need; an apology doesn't come with a deadline for forgiveness. A repair is about what you said, not a new round of who started it."
   },
   {
    "number": 33,
@@ -922,7 +922,7 @@
     },
     {
      "label": "Direct",
-     "text": "We've been passing like roommates. I'd like one evening a week that's ours, phones away."
+     "text": "We've been passing like roommates. I'd like Friday nights to be ours, phones away."
     },
     {
      "label": "Confirming",
@@ -969,7 +969,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I can do 6:30 this once. Next time I'll need a day's notice."
+     "text": "Sorry, I can't do 7 tonight. Next time, a day's notice gives me a chance to make a change work."
     },
     {
      "label": "Direct",
@@ -1020,15 +1020,15 @@
    "options": [
     {
      "label": "Warm",
-     "text": "Could I pick up the boxes from the garage this Saturday? Morning or afternoon works."
+     "text": "Could I pick up the tools and the desk from the garage on Saturday the 20th? Morning or afternoon works."
     },
     {
      "label": "Direct",
-     "text": "I still need the tools and the desk. Please have them ready by the 20th, and I'll bring someone to help carry."
+     "text": "I still need the tools and the desk. Please have them ready on Saturday the 20th. I'll bring someone to help carry."
     },
     {
      "label": "In writing",
-     "text": "Following up on my belongings. Can you confirm a date this month for me to collect them?"
+     "text": "Following up on the tools and the desk. Can you confirm that Saturday the 20th works for me to collect them?"
     }
    ],
    "whenItFits": "<p>Name the items and a date. If you feel unsafe collecting them, skip the script and read Chapter 11, When Pressure Becomes Danger; the National Domestic Violence Hotline (1-800-799-7233, text START to 88788) can talk through safer options, from a device your ex can’t access. In immediate danger, call 911. For disputes over ownership, talk to a lawyer.</p>",
@@ -1151,7 +1151,7 @@
     },
     {
      "label": "Direct",
-     "text": "I'm not able to help with the move. I'm keeping things simpler between us."
+     "text": "I'm not lending the car. I'm keeping things simpler between us."
     },
     {
      "label": "Final",
@@ -1381,7 +1381,7 @@
      "text": "I'm going to end the call here. We can try again another day."
     },
     {
-     "label": "Final",
+     "label": "Final (if you warned them before)",
      "text": "I said I'd hang up if this started again, so I'm going to. Talk soon."
     }
    ],
@@ -1403,10 +1403,10 @@
     },
     {
      "label": "Direct",
-     "text": "Please call first. If it's not a good time, I'll tell you and we'll pick another."
+     "text": "Please text first. If it's not a good time, I'll tell you and we'll pick another."
     },
     {
-     "label": "Final",
+     "label": "Final (when they're at the door)",
      "text": "I'm not able to have visitors right now. Let's plan for Saturday."
     }
    ],
@@ -1479,7 +1479,7 @@
     },
     {
      "label": "Direct",
-     "text": "I can do Tuesdays. I can't be on call every day."
+     "text": "I can do two Tuesdays a month. I can't be on call every day."
     },
     {
      "label": "Final",
@@ -1559,7 +1559,7 @@
     },
     {
      "label": "Final",
-     "text": "If you can't do them, I'll arrange a delivery service, and I'd like you to cover half the cost."
+     "text": "If you can't do them, tell me by Friday and I'll set up pharmacy delivery. Then I'd like us to talk about sharing the cost."
     }
    ],
    "whenItFits": "<p>Ask before you assume they don’t care. If medication or another essential need is affected, arrange safe cover now with your parent and the relevant service. Discuss costs separately; your sibling has not agreed to pay merely because you asked.</p>",
@@ -1681,7 +1681,7 @@
     },
     {
      "label": "Direct",
-     "text": "I'd like the furniture left where it is. Thanks for understanding."
+     "text": "Please leave the kitchen the way I've set it up. Thanks for understanding."
     },
     {
      "label": "Final (to your partner first)",
@@ -1835,7 +1835,7 @@
      "text": "It feels like things changed after I said no to the trip. I'd like to clear the air."
     },
     {
-     "label": "Final",
+     "label": "Final (if they don't reply)",
      "text": "I'll leave it with you. I'm here when you want to get in touch."
     }
    ],
@@ -1860,7 +1860,7 @@
      "text": "When plans get canceled on the day, I lose the evening. Can we only book things you're sure about?"
     },
     {
-     "label": "Final",
+     "label": "Final (if it keeps happening)",
      "text": "I'm going to stop setting up plans for a while. Reach out when things settle, and I'll be glad to hear from you."
     }
    ],
@@ -1886,7 +1886,7 @@
      "text": "Lately most of our calls are about the same problem. I'd love some that are just fun too."
     },
     {
-     "label": "Final",
+     "label": "Final (if it keeps going)",
      "text": "I care about you, and I can't be your main support for this. Would you think about talking to a counselor?"
     }
    ],
@@ -1904,15 +1904,15 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I'm not great at asking, but I could really use a hand moving on Saturday. Any chance you're free?"
+     "text": "I'm not great at asking, but I could really use a ride to the airport early on the 14th. Any chance you're free?"
     },
     {
      "label": "Direct",
-     "text": "I need a ride to the airport on the 14th, early. Could you do it? Totally fine if not."
+     "text": "I need a ride to the airport at 6 a.m. on the 14th. Could you do it? Totally fine if not."
     },
     {
      "label": "Text",
-     "text": "Big favor to ask, and no is a fine answer: could you water my plants next week?"
+     "text": "Big favor to ask, and no is a fine answer: could you drive me to the airport early on the 14th?"
     }
    ],
    "whenItFits": "<p>Asking balances friendships that run one way. Leave “no” open.</p>",
@@ -1934,11 +1934,11 @@
     },
     {
      "label": "Direct",
-     "text": "I agreed to a quick look at your resume, not a full rewrite. I'll send my notes tonight."
+     "text": "I agreed to help pack the kitchen, not to do the whole move. I'm there until noon."
     },
     {
      "label": "Final",
-     "text": "That's as far as I can go. Good luck with the rest."
+     "text": "Noon is as far as I can go. Good luck with the rest."
     }
    ],
    "whenItFits": "<p>Restate what you agreed to, and offer that part fully. The original yes was real. The extra wasn’t part of it.</p>",
@@ -1962,7 +1962,7 @@
      "text": "That wasn't funny to me.\" (Calm, then move on.)"
     },
     {
-     "label": "Final",
+     "label": "Final (if it happens again)",
      "text": "That's the second time I've asked. Please don't do it again."
     }
    ],
@@ -1988,7 +1988,7 @@
     },
     {
      "label": "Short message",
-     "text": "I messed up yesterday. I'm sorry. I'd like to make it up to you."
+     "text": "I messed up on Saturday. I'm sorry. I'd like to make it up to you."
     }
    ],
    "whenItFits": "<p>Own it, offer something concrete, and don’t ask them to make you feel better.</p>",
@@ -1996,8 +1996,8 @@
   },
   {
    "number": 76,
-   "title": "Taking back a yes you gave a friend too fast",
-   "short": "Taking back a rushed yes",
+   "title": "Scaling back a yes you gave a friend too fast",
+   "short": "Scaling back a rushed yes to a friend",
    "group": "Friends",
    "tasks": [
     "repairing",
@@ -2006,19 +2006,19 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I said yes to looking after the dog for two weeks before checking my schedule. I'm sorry, I can only do the first week."
+     "text": "I said yes to looking after Pepper for two weeks before I checked my calendar. I'm sorry. I can do the first week, through Sunday the 8th."
     },
     {
      "label": "Direct",
-     "text": "I need to take back my yes on hosting. I can't do it this year, and I wanted to tell you now so you have time to plan."
+     "text": "I can only take Pepper for the first week. I'm telling you now so you have time to find someone for the second."
     },
     {
-     "label": "Final",
-     "text": "I can't do it after all. I'm sorry for the trouble this causes."
+     "label": "Final (if they push for both weeks)",
+     "text": "One week is what I can do. I'm sorry for the trouble this causes."
     }
    ],
-   "whenItFits": "<p>Tell them early, and offer the part you can still do (Chapter 7).</p>",
-   "whenItFitsText": "Tell them early, and offer the part you can still do (Chapter 7)."
+   "whenItFits": "<p>When you can still keep part of the promise. Tell them early, and make the part you offer firm, with a date. To withdraw a yes completely, see Reply 16 (Chapter 22, Turn Agreement Into Action).</p>",
+   "whenItFitsText": "When you can still keep part of the promise. Tell them early, and make the part you offer firm, with a date. To withdraw a yes completely, see Reply 16 (Chapter 22, Turn Agreement Into Action)."
   },
   {
    "number": 77,
@@ -2056,7 +2056,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "Hi, I wanted to check on the money from January. When do you think you can pay it back?"
+     "text": "Hi, I wanted to check on the $300 from January. When do you think you can pay it back?"
     },
     {
      "label": "Direct",
@@ -2132,7 +2132,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "Could you bring the ladder back this weekend? I need it for the gutters."
+     "text": "Could you bring the drill back by Friday? I need it for a shelf this weekend."
     },
     {
      "label": "Direct",
@@ -2140,7 +2140,7 @@
     },
     {
      "label": "Text",
-     "text": "Hey, can I pick up my camping gear this week? Thursday or Friday?"
+     "text": "Hey, can I pick up my drill this week? Thursday or Friday?"
     }
    ],
    "whenItFits": "<p>Make returning it easy: offer a time or to collect it yourself. Most people simply forgot.</p>",
@@ -2182,14 +2182,14 @@
    "options": [
     {
      "label": "Warm",
-     "text": "Just a reminder that invoice 104 was due last Friday. Could you let me know when it's scheduled to be paid?"
+     "text": "Just a reminder that invoice 104 was due two weeks ago. Could you let me know when it's scheduled to be paid?"
     },
     {
      "label": "Direct",
      "text": "Invoice 104 is now two weeks overdue. Please pay by the 15th, or let me know if there's a problem with it."
     },
     {
-     "label": "Final",
+     "label": "Final (if it's still unpaid)",
      "text": "I'll pause new work on the project until the overdue invoice is paid."
     }
    ],
@@ -2208,7 +2208,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I love you, and I want you on your feet. I'm not going to send more this month."
+     "text": "I love you, and I want you on your feet. I'm not going to send more money."
     },
     {
      "label": "Direct",
@@ -2284,15 +2284,15 @@
    "options": [
     {
      "label": "Warm",
-     "text": "The new window still lets rain in at the bottom corner. When can you inspect it and arrange a fix?"
+     "text": "The fence still isn't finished: the gate and the back section are open. When can you come back to complete it?"
     },
     {
      "label": "Direct",
-     "text": "The fence isn't finished: the gate and the back section are still open. I'd like it completed by the 20th, as agreed."
+     "text": "The gate and the back section are still open. I'd like the fence completed by the 20th, as agreed."
     },
     {
-     "label": "In writing",
-     "text": "Following up on our call: you agreed to return Tuesday to finish the gate. Please confirm."
+     "label": "In writing (after a call)",
+     "text": "Following up on our call: you agreed to return Tuesday to finish the gate and the back section. Please confirm."
     }
    ],
    "whenItFits": "<p>Be specific, with a date. Keep photos and messages somewhere safe. For serious disputes, contact consumer protection or a qualified professional.</p>",
@@ -2313,15 +2313,15 @@
     },
     {
      "label": "Direct",
-     "text": "The heater stopped working after a week. I'd like either a full refund or a replacement. Which can you do?"
+     "text": "I was charged $89 twice for this order. I'd like the second charge refunded today. Can you do that?"
     },
     {
      "label": "By email",
      "text": "On the 3rd I was charged $89 twice for order 5521. Please refund the duplicate and confirm by email."
     }
    ],
-   "whenItFits": "<p>Say what happened and the outcome you want, in one breath. Offering two acceptable options gives the other person an easy yes.</p>",
-   "whenItFitsText": "Say what happened and the outcome you want, in one breath. Offering two acceptable options gives the other person an easy yes."
+   "whenItFits": "<p>Say what happened and the outcome you want, in one breath. For a faulty product, offering two outcomes you would accept (“a full refund or a replacement”) gives the other person an easy yes.</p>",
+   "whenItFitsText": "Say what happened and the outcome you want, in one breath. For a faulty product, offering two outcomes you would accept (\"a full refund or a replacement\") gives the other person an easy yes."
   },
   {
    "number": 89,
@@ -2366,7 +2366,7 @@
      "text": "My rate stays the same. I can reduce the scope, or we can spread the work over two months."
     },
     {
-     "label": "Final",
+     "label": "Final (if neither option works)",
      "text": "That price won't work for me. If anything changes, I'd be glad to hear from you."
     }
    ],
@@ -2384,19 +2384,19 @@
    "options": [
     {
      "label": "Warm",
-     "text": "Let me check my calendar, and I'll let you know tomorrow."
+     "text": "Thanks for thinking of me. I can't take that on this time."
     },
     {
      "label": "Direct",
-     "text": "I can't take that on this time."
+     "text": "I'm not able to do it. Please count me out."
     },
     {
      "label": "Final",
      "text": "I'm going to pass. I hope someone's able to step in."
     }
    ],
-   "whenItFits": "<p>Buying a day is fine if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure).</p>",
-   "whenItFitsText": "Buying a day is fine if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure)."
+   "whenItFits": "<p>If you need to check first, “Let me check my calendar, and I’ll let you know tomorrow” buys a day. Use it only if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure).</p>",
+   "whenItFitsText": "If you need to check first, \"Let me check my calendar, and I'll let you know tomorrow\" buys a day. Use it only if you really answer tomorrow (Chapter 27, Groups, Media, and Manufactured Pressure)."
   },
   {
    "number": 92,
@@ -2413,7 +2413,7 @@
     },
     {
      "label": "Direct",
-     "text": "I've given my answer. I'm going to step out of this thread for now."
+     "text": "I've given my answer. I'm going to step out of this thread until the weekend."
     },
     {
      "label": "Final",
@@ -2439,7 +2439,7 @@
     },
     {
      "label": "Direct",
-     "text": "I'll do one role, not three. Which matters most to you?"
+     "text": "I'll do one role, not three, and that's the newsletter."
     },
     {
      "label": "Final",
@@ -2461,7 +2461,7 @@
    "options": [
     {
      "label": "Warm",
-     "text": "I've loved chairing the committee. After this year, I'd like to step back and let someone new take over."
+     "text": "I've loved chairing the committee. At the end of June, I'd like to step back and let someone new take over."
     },
     {
      "label": "Direct",
@@ -2519,7 +2519,7 @@
      "text": "We seem stuck between two options. Can we vote, or agree who makes the call?"
     },
     {
-     "label": "Final",
+     "label": "Final (if it's still stuck)",
      "text": "Could we stop here, send the two options by email, and agree who will decide by Friday?"
     }
    ],
@@ -2544,7 +2544,7 @@
      "text": "Hang on, I'm not done."
     },
     {
-     "label": "Final",
+     "label": "Final (if it keeps happening)",
      "text": "I've been interrupted a few times. I'd like two minutes to finish."
     }
    ],
@@ -2616,7 +2616,7 @@
     },
     {
      "label": "Direct",
-     "text": "I'm sorry for the tone of my messages yesterday. I still think we need a new schedule, and I'd like to talk about it properly."
+     "text": "I'm sorry for the tone of my messages yesterday, to everyone here and especially to the coach. I'll take my questions about the schedule to him directly."
     },
     {
      "label": "Private message",

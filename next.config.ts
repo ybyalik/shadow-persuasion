@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
     return [
       // The ads plan names the favors angle /a/family; the page is /a/favor.
       { source: '/a/family', destination: '/a/favor', statusCode: 301 },
+      // Problem pages merged into one page per problem.
+      { source: '/p/:slug', destination: '/b/:slug', statusCode: 301 },
       // Retired test versions of the sales page.
       { source: '/v3', destination: '/v2', statusCode: 301 },
       { source: '/v4', destination: '/v2', statusCode: 301 },
