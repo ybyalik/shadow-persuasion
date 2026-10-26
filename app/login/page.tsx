@@ -253,7 +253,7 @@ function LoginPage() {
                 email address you bought the book with.
               </p>
               <Link
-                href="/v2"
+                href="/"
                 className="inline-block w-full text-center py-2.5 bg-[#D4A017] hover:bg-[#B8860B] text-[#0A0A0A] font-bold rounded-lg transition-colors text-sm tracking-wider"
               >
                 See the book

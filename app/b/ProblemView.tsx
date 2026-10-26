@@ -1,16 +1,22 @@
 /* eslint-disable @next/next/no-img-element */
 /**
  * The one page for one specific problem (ads go straight here). Copy: app/p/data/[slug].ts, type in app/p/problems.ts.
- * Every section is about this problem. Only the offer, guarantee, order cards and footer are shared with /v2.
+ * Order (agreed with ChatGPT after the 26 Oct page review): hero, the free tool, straight away what the book adds
+ * (bridge + page-numbered list), one short book passage, a compact offer and the first buy button. Then, for readers
+ * who need more: the moment it happens (timeline), why it keeps happening (loop), new tactic cards, more book pages,
+ * who it's for, the full offer, about the book, FAQ, close, and the free-chapter signup last.
+ * Extra section copy lives in app/p/sections/[slug].ts. Excerpts must stop before the scene the bridge or P.S. sells.
  */
 import { Fragment } from 'react';
-import { Footer, GuaranteeNight, Heading, Letter, Night, OrderCards, PsLink, PullLine, Sheet, StackList } from '../v2/_components/blocks';
-import { MarginNote } from '../v2/_components/editorial';
-import { StickyBuyBar } from '../v2/_components/interactive';
-import { BuyButton, BuyNote } from '../v2/_components/ui';
-import { pageRef, pageRefShort } from '../v2/_components/pageRef';
-import { SamplePage } from '../a/AngleView';
+import { AboutBook, Footer, OfferBox, GuaranteeNight, Heading, Letter, Night, OrderCards, PsLink, Sheet, StackList } from '../_sales/blocks';
+import { Mark, MarginNote } from '../_sales/editorial';
+import { ForYou, NiceLoop, StickyBuyBar, TacticRolodex } from '../_sales/interactive';
+import { SubscribeForm } from '../_sales/SubscribeForm';
+import { BuyButton, BuyNote } from '../_sales/ui';
+import { pageRef, pageRefShort } from '../_sales/pageRef';
+import { SamplePage } from './SamplePage';
 import type { Block, Problem } from '../p/problems';
+import type { ProblemSections } from '../p/sections';
 
 /** `**bold**` and `==highlight==` inside copy. */
 function Rich({ text }: { text: string }) {
@@ -24,6 +30,30 @@ function Rich({ text }: { text: string }) {
       )}
     </>
   );
+}
+
+/** `[[words]]` with a highlight, or a red brush underline when `under` is set. */
+function Hl({ text, under = false }: { text: string; under?: boolean }) {
+  const parts = text.split(/(\[\[[^\]]+\]\])/g);
+  return (
+    <>
+      {parts.map((s, i) =>
+        !s.startsWith('[[') ? <Fragment key={i}>{s}</Fragment>
+        : under ? (
+          <span key={i} className="relative inline-block italic">
+            {s.slice(2, -2)}
+            <Mark name="underline" red className="left-0 -bottom-3 w-full h-3" />
+          </span>
+        ) : <mark key={i} className="sp2-hl">{s.slice(2, -2)}</mark>,
+      )}
+    </>
+  );
+}
+
+/** A note with `{ref}` swapped for the page reference. */
+function RefNote({ text, ch, section }: { text: string; ch: number; section: string }) {
+  const [a, b] = text.split('{ref}');
+  return <>{a}{b !== undefined && <>{pageRef(ch, section)}{b}</>}</>;
 }
 
 function Blocks({ blocks, dark = false }: { blocks: Block[]; dark?: boolean }) {
@@ -45,7 +75,7 @@ function Blocks({ blocks, dark = false }: { blocks: Block[]; dark?: boolean }) {
             );
           case 'say':
             return (
-              <div key={i} className="mt-6 border-l-4 border-[color:var(--sp2-accent)] pl-5 sm:pl-6 space-y-3">
+              <div key={i} className="mt-6 bg-[#f1e7d3] rounded-[12px] px-5 sm:px-7 py-5 space-y-3">
                 {b.lines.map((l, j) => (
                   <p key={j} className="text-[20px] sm:text-[22px] leading-[1.45]">
                     {l.label && <span className="sp2-type text-[13px] tracking-[0.12em] uppercase text-[color:var(--sp2-oxblood)] mr-3">{l.label}</span>}
@@ -90,40 +120,39 @@ function Blocks({ blocks, dark = false }: { blocks: Block[]; dark?: boolean }) {
 }
 
 
-export function ProblemView({ p }: { p: Problem }) {
+export function ProblemView({ p, s }: { p: Problem; s: ProblemSections }) {
   const [psBefore, psAfter] = p.ps.split('{ref}');
+  const [proof, ...morePages] = p.excerpts;
   return (
-    <main className="bg-[color:var(--sp2-paper)] pb-24 md:pb-0">
-      {/* ═══ FIRST SCREEN: pain, promise, bullets, jump to the free tool ═══ */}
+    <main className="bg-[color:var(--sp2-paper)] pb-24">
+      {/* ═══ FIRST SCREEN: pain, promise, button to the free tool, the book photo ═══ */}
       <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
-        <div className="bg-[color:var(--sp2-oxblood)] text-white text-center sp2-type text-[13px] sm:text-[15px] tracking-[0.08em] uppercase px-4 py-2.5">{p.topBar}</div>
-        <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between">
+        <div className="bg-[color:var(--sp2-oxblood)] text-white text-center sp2-type text-[11px] sm:text-[15px] tracking-[0.06em] sm:tracking-[0.08em] uppercase px-3 py-2 sm:py-2.5">{p.topBar}</div>
+        <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between gap-6">
           <span className="sp2-type text-[16px] tracking-[0.14em] text-[color:var(--sp2-gold)]">SHADOW PERSUASION</span>
-          <a href="#tool" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)]">Skip to the free part</a>
+          <a href="#tool" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)] text-right">{p.topLink} ↓</a>
         </header>
-        <div className="relative max-w-[1320px] mx-auto px-5 sm:px-10 pt-8 sm:pt-14 pb-28 sm:pb-36 grid lg:grid-cols-12 gap-x-10 items-center">
-          <div className="lg:col-span-7 relative z-10">
+        <div className="relative max-w-[1320px] mx-auto px-5 sm:px-10 pt-5 sm:pt-14 pb-36 sm:pb-44 grid lg:grid-cols-12 gap-x-10 items-center">
+          <div className="lg:col-span-8 relative z-10">
             <h1 className="sp2-display font-medium leading-[1.0] tracking-[-0.015em]">
               {p.h1.map((l) => <span key={l} className="block text-[40px] sm:text-[60px] lg:text-[68px] text-[#faf6ee]">{l}</span>)}
               <span className="block italic text-[30px] sm:text-[44px] lg:text-[50px] text-[color:var(--sp2-gold)] mt-5 leading-[1.08]">{p.h1Gold}</span>
             </h1>
-            <p className="sp2-lead text-[#e6ddcf] mt-7 max-w-[36ch]">{p.lead}</p>
-            <div className="mt-7 flex flex-col gap-3">
-              <a href="#tool" className="sp2-btn sp2-btn-gold self-stretch sm:self-start">{p.cta} ↓</a>
+            {/* On phones the button comes before the photo, so the free tool is one tap away on the first screen. */}
+            <div className="mt-7 flex flex-col gap-3 lg:hidden">
+              <a href="#tool" className="sp2-btn sp2-btn-gold self-stretch">{p.cta} ↓</a>
               <span className="sp2-small text-[#d8cfc1]">{p.ctaNote}</span>
             </div>
-            <ul className="mt-9 space-y-3 max-w-[40ch]">
-              {p.bullets.map((b) => (
-                <li key={b} className="flex gap-3 text-[18px] sm:text-[20px] leading-[1.4] text-[#efe7da]"><span className="text-[color:var(--sp2-gold)] mt-0.5">✓</span><span><Rich text={b} /></span></li>
-              ))}
-            </ul>
-          </div>
-          <div className="hidden lg:block lg:col-span-5 relative z-10">
-            <div className="bg-[#fdfbf6] text-[#1c1b18] rounded-[6px] shadow-[0_40px_60px_rgba(0,0,0,0.5)] p-7 rotate-[2deg] text-[17px] leading-[1.55]">
-              <p className="sp2-type text-[13px] tracking-[0.12em] text-[color:var(--sp2-muted)] mb-3 uppercase">{p.teaser.label}</p>
-              {p.teaser.lines.map((l, i) => <p key={i} className={i ? 'mt-3' : ''}><Rich text={l} /></p>)}
-              {p.teaser.note && <p className="mt-4 text-[#d0211c] text-[24px] italic -rotate-[2deg] sp2-display">{p.teaser.note}</p>}
+            <img src="/v2/img/hero-opt-night.webp" alt="" aria-hidden className="lg:hidden w-[80%] mx-auto mt-8" />
+            <p className="sp2-lead text-[#e6ddcf] mt-7 max-w-[46ch]">{p.lead}</p>
+            <div className="mt-7 hidden lg:flex flex-col gap-3">
+              <a href="#tool" className="sp2-btn sp2-btn-gold self-start">{p.cta} ↓</a>
+              <span className="sp2-small text-[#d8cfc1]">{p.ctaNote}</span>
             </div>
+          </div>
+          {/* The book with a phone, glasses and tea, cut out; it drops past the torn edge onto the paper (same as the homepage) */}
+          <div className="hidden lg:block lg:col-span-4 relative z-10 lg:-mr-[5vw] lg:translate-y-[70px]">
+            <img src="/v2/img/hero-opt-night.webp" alt="The Shadow Persuasion book beside a phone, reading glasses and a cup of tea" className="w-full drop-shadow-[0_40px_40px_rgba(0,0,0,0.55)]" fetchPriority="high" />
           </div>
         </div>
         <div className="absolute bottom-0 inset-x-0 translate-y-[1px] pointer-events-none">
@@ -131,8 +160,8 @@ export function ProblemView({ p }: { p: Problem }) {
         </div>
       </section>
 
-      {/* ═══ THE FREE TOOL ═══ */}
-      <Sheet id="tool" className="pt-20 sm:pt-28 pb-20 scroll-mt-4">
+      {/* ═══ THE FREE TOOL, complete ═══ */}
+      <Sheet id="tool" className="pt-20 sm:pt-28 pb-16 scroll-mt-4">
         <div className="max-w-[860px] mx-auto">
           <Heading kicker={p.tool.kicker}>{p.tool.title}</Heading>
           <p className="sp2-lead mt-6 text-[color:var(--sp2-muted)] max-w-[36em]">{p.tool.intro}</p>
@@ -140,79 +169,135 @@ export function ProblemView({ p }: { p: Problem }) {
         </div>
       </Sheet>
 
-      {/* ═══ WHY IT KEEPS HAPPENING ═══ */}
-      <Night>
-        <div className="max-w-[860px] mx-auto">
-          <Heading kicker={p.why.kicker} dark>{p.why.title}</Heading>
-          <p className="sp2-lead mt-6 text-[#e6ddcf] max-w-[36em]">{p.why.intro}</p>
-          <div className="mt-10">
-            {p.why.items.map((it) => (
-              <div key={it.title} className="border-t border-white/15 py-5"><p className="sp2-display text-[26px] text-[#faf6ee]">{it.title}</p><p className="text-[19px] text-[#d8cfc1] mt-1"><Rich text={it.text} /></p></div>
-            ))}
-          </div>
-        </div>
-      </Night>
-
-
-      {/* ═══ WHAT THE FREE PART CAN'T DO → WHAT THE BOOK ADDS FOR THIS PROBLEM ═══ */}
-      <Sheet className="pt-24 pb-16">
+      {/* ═══ STRAIGHT AWAY: WHAT THE BOOK ADDS, ONE PASSAGE, THE FIRST OFFER ═══ */}
+      <Sheet className="pt-16 pb-16 !bg-[#efe6d6]">
         <Letter>
           <h2 className="sp2-display text-[34px] sm:text-[46px] leading-[1.08] mb-6">{p.bridge.title}</h2>
           <Blocks blocks={p.bridge.blocks} />
         </Letter>
-        <PullLine>{p.pull}</PullLine>
+      </Sheet>
+      {/* Page list as cards with a page-number tab (chosen 26 Oct), on a cream band */}
+      <Sheet className="pt-16 pb-20">
+        <Heading kicker={p.inside.kicker}>{p.inside.title}</Heading>
+        <p className="sp2-lead mt-6 text-[color:var(--sp2-muted)] max-w-[36em]">{p.inside.intro}</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-9 mt-12">
+          {p.inside.items.map((b, i) => (
+            <div key={i} className="relative bg-white border border-[color:var(--sp2-line)] rounded-[14px] px-6 pt-8 pb-6">
+              <span className="absolute -top-3 left-5 bg-[color:var(--sp2-oxblood)] text-white sp2-type text-[13px] tracking-[0.08em] px-2.5 py-1 rounded-[4px]">{pageRefShort(b.ch, b.section)}</span>
+              <p className="text-[17px] sm:text-[18px] leading-[1.5]"><Rich text={b.text} /></p>
+            </div>
+          ))}
+        </div>
+      </Sheet>
+      {proof && (
+        <Night edges={false}>
+          <div className="grid lg:grid-cols-[minmax(0,330px)_1fr] gap-10 lg:gap-14 items-center">
+            <div>
+              <p className="sp2-kicker on-dark">A page from the book</p>
+              <h2 className="sp2-display text-[40px] sm:text-[48px] leading-[1.05] text-[#faf6ee] mt-2">Read it before you buy it.</h2>
+              <p className="sp2-ui text-[16px] leading-relaxed text-[#d8cfc1] mt-4">Word for word from the book. The rest of this part is in the book.</p>
+            </div>
+            <SamplePage ex={proof} />
+          </div>
+        </Night>
+      )}
+      <Sheet className="pt-20 pb-24">
+        <div className="text-center max-w-[860px] mx-auto mb-16">
+          <img src="/v2/icons/book.png" alt="" aria-hidden className="w-10 mx-auto opacity-70" />
+          <p className="sp2-display italic text-[32px] sm:text-[42px] leading-[1.2] mt-5">&ldquo;{p.pull}&rdquo;</p>
+        </div>
+        <OfferBox note={`${p.startHere} This is one topic of many. The same book covers work, pay, clients, partners, exes and family, in 34 chapters.`} />
       </Sheet>
 
-      <Sheet className="pb-24">
-        <div className="max-w-[900px] mx-auto">
-          <Heading kicker={p.inside.kicker}>{p.inside.title}</Heading>
-          <p className="sp2-lead mt-6 text-[color:var(--sp2-muted)] max-w-[36em]">{p.inside.intro}</p>
-          <div className="mt-10">
-            {p.inside.items.map((b, i) => (
-              <div key={i} className="sp2-rule flex gap-6 py-6">
-                <span className="sp2-type text-[18px] sm:text-[20px] text-[color:var(--sp2-oxblood)] whitespace-nowrap pt-1 min-w-[64px]">{pageRefShort(b.ch, b.section)}</span>
-                <p className="text-[20px] sm:text-[21px] leading-[1.5]"><Rich text={b.text} /></p>
+      {/* ═══ FOR READERS WHO WANT MORE: WHY IT REPEATS ═══ */}
+      <Sheet className="pt-20 pb-24 !bg-[#efe6d6]">
+        <div className="grid lg:grid-cols-12 gap-x-12 gap-y-12 items-center">
+          <div className="lg:col-span-5 order-2 lg:order-1">
+            <NiceLoop steps={s.loop.steps} center={s.loop.center} />
+          </div>
+          <div className="lg:col-span-6 lg:col-start-7 order-1 lg:order-2">
+            <Heading kicker={s.loop.kicker}>{s.loop.title}</Heading>
+            <div className="sp2-body mt-8 max-w-[32em]">
+              {s.loop.body.map((t, i) => <p key={i}><Rich text={t} /></p>)}
+            </div>
+          </div>
+        </div>
+      </Sheet>
+
+      {/* ═══ MORE FROM THE BOOK: NEW MOVES, MORE PAGES ═══ */}
+      <Sheet className="pt-20 pb-24">
+        <div className="grid lg:grid-cols-12 gap-x-12">
+          <div className="lg:col-span-7">
+            <Heading kicker={s.tactics.kicker}>{s.tactics.title}</Heading>
+          </div>
+          <div className="lg:col-span-4 lg:col-start-9 lg:pt-16">
+            <p className="sp2-lead text-[color:var(--sp2-muted)]">{s.tactics.lead}</p>
+            <MarginNote className="mt-3">Tap any card for the calm reply.</MarginNote>
+          </div>
+        </div>
+        <div className="mt-14">
+          <TacticRolodex tactics={s.tactics.items} art={s.tactics.items.map((t) => t.art)} more={{ title: '43 pressure moves in all.', text: 'The Tactic Spotter bonus lists every one: what it sounds like, when it is a pattern, and one calm reply.' }} />
+        </div>
+      </Sheet>
+      {morePages.length > 0 && (
+        <Sheet className="pb-24">
+          <div className="max-w-[860px] mx-auto">
+            <Heading kicker="Real pages from the book">Read more before you buy it.</Heading>
+            <p className="sp2-lead mt-6 text-[color:var(--sp2-muted)] max-w-[34em]">Word for word, from the chapters on this exact situation.</p>
+            <div className="mt-12 space-y-12">
+              {morePages.map((ex, i) => <SamplePage key={i} ex={ex} i={i + 1} />)}
+            </div>
+          </div>
+        </Sheet>
+      )}
+      <Sheet className="pb-28">
+        <div className="grid lg:grid-cols-12 gap-x-12 gap-y-8 items-center">
+          <div className="lg:col-span-6 lg:-ml-[max(40px,calc((100vw-1320px)/2+40px))]">
+            <img src="/v2/lino/calm.jpg" alt="A woman by a window in the morning, calm" className="w-full sp2-soft" loading="lazy" />
+          </div>
+          <p className="lg:col-span-5 lg:col-start-8 sp2-display italic text-[34px] sm:text-[46px] leading-[1.15]">{s.reset.closeLine}</p>
+        </div>
+      </Sheet>
+
+      {/* ═══ IS IT FOR YOU ═══ */}
+      <Sheet className="pt-20 pb-24 !bg-[#efe6d6]">
+        <ForYou strike={false} lines={s.forYou.lines.map(([icon, t]) => [icon, <Hl key={t} text={t} />])} notFor={[]} />
+      </Sheet>
+      <Sheet className="pb-28">
+        <Heading kicker={s.alternatives.kicker}>{s.alternatives.title}</Heading>
+        <div className="grid md:grid-cols-2 gap-x-16 gap-y-12 mt-12">
+          <div>
+            {s.alternatives.items.map(([t, d]) => (
+              <div key={t} className="sp2-rule py-5">
+                <p className="font-semibold text-[color:var(--sp2-muted)]"><span className="text-[color:var(--sp2-oxblood)] mr-2" aria-hidden>&#10005;</span>{t}</p>
+                <p className="text-[color:var(--sp2-muted)] mt-1">{d}</p>
               </div>
             ))}
           </div>
-          <div className="mt-12 text-center">
-            <BuyButton className="w-full sm:w-auto" />
-            <BuyNote />
+          <div className="bg-white rounded-[14px] border border-[color:var(--sp2-line)] p-6 sm:p-8">
+            <p className="sp2-display text-[34px] leading-[1.1] mb-2">Shadow Persuasion:<br />The Hidden Rules of Power</p>
+            {s.alternatives.included.map((t) => (
+              <div key={t} className="sp2-rule flex gap-4 py-4 items-start">
+                <img src="/v2/ink/check.png" alt="" aria-hidden className="w-7 h-7 flex-shrink-0 mt-0.5" />
+                <span>{t}</span>
+              </div>
+            ))}
+            <div className="mt-8">
+              <BuyButton full />
+            </div>
           </div>
         </div>
       </Sheet>
 
-      {/* ═══ REAL PAGES FROM THE BOOK, ABOUT THIS PROBLEM ═══ */}
-      <Sheet className="pb-24">
-        <div className="max-w-[860px] mx-auto">
-          <Heading kicker="Real pages from the book">Read it before you buy it.</Heading>
-          <p className="sp2-lead mt-6 text-[color:var(--sp2-muted)] max-w-[34em]">Word for word, from the chapters on this exact situation.</p>
-          <div className="mt-12 space-y-12">
-            {p.excerpts.map((ex, i) => <SamplePage key={i} ex={ex} i={i} />)}
-          </div>
-        </div>
-      </Sheet>
-
-      {/* ═══ WHO IT'S FOR ═══ */}
-      <Night>
-        <div className="max-w-[900px] mx-auto grid md:grid-cols-2 gap-12">
-          <div>
-            <p className="sp2-kicker on-dark">This is for you if</p>
-            <ul className="mt-6 space-y-4">{p.forYou.map((t, i) => <li key={i} className="flex gap-3 text-[19px] sm:text-[20px] text-[#efe7da]"><span className="text-[color:var(--sp2-gold)]">✓</span><span><Rich text={t} /></span></li>)}</ul>
-          </div>
-          <div>
-            <p className="sp2-kicker on-dark">It&apos;s not for you if</p>
-            <ul className="mt-6 space-y-4">{p.notForYou.map((t, i) => <li key={i} className="flex gap-3 text-[19px] sm:text-[20px] text-[#d8cfc1]"><span className="text-[#ff5a4f]">✕</span><span><Rich text={t} /></span></li>)}</ul>
-          </div>
-        </div>
-      </Night>
-
-      {/* ═══ THE OFFER (shared) ═══ */}
-      <Sheet className="pt-24 pb-10">
+      {/* ═══ THE FULL OFFER ═══ */}
+      <Sheet className="pt-20 pb-10">
         <div className="max-w-3xl mx-auto text-center"><h2 className="sp2-display text-[40px] sm:text-[60px] leading-[1.02]">{p.offerTitle}</h2></div>
       </Sheet>
       <Sheet className="pb-24">
         <StackList />
+      </Sheet>
+      <Sheet className="pb-24">
+        <AboutBook />
       </Sheet>
       <GuaranteeNight />
       <Sheet id="order" className="pt-28 pb-24 scroll-mt-6">
@@ -242,7 +327,17 @@ export function ProblemView({ p }: { p: Problem }) {
         </div>
         <div className="max-w-3xl mx-auto mt-20 sp2-body">
           <p><span className="sp2-display italic text-[28px]">P.S.</span> {psBefore}{pageRef(p.psRef.ch, p.psRef.section)}{psAfter}</p>
-          <p><span className="sp2-display italic text-[28px]">P.P.S.</span> If the book isn&apos;t for you, email us within 30 days for a full refund. It costs you nothing to find out. <PsLink /></p>
+          <p><span className="sp2-display italic text-[28px]">P.P.S.</span> If the book isn&apos;t for you, email us within 30 days of delivery and send the book back for a full refund. <PsLink /></p>
+        </div>
+      </Sheet>
+
+      {/* ═══ LAST: THE FREE CHAPTER, FOR READERS NOT READY TO BUY ═══ */}
+      <Sheet id="free-chapter" className="pb-16 scroll-mt-6">
+        <div className="max-w-3xl mx-auto sp2-rule pt-12">
+          <p className="sp2-kicker">Not ready yet?</p>
+          <p className="sp2-display text-[30px] sm:text-[38px] leading-[1.1]">{s.freeChapter.title}</p>
+          <p className="text-[color:var(--sp2-muted)] mt-3 mb-6">{s.freeChapter.lead}</p>
+          <SubscribeForm />
         </div>
         <div className="max-w-3xl mx-auto mt-14 space-y-3">
           {p.limits.map((l, i) => <p key={i} className="sp2-small text-[color:var(--sp2-muted)]"><Rich text={l} /></p>)}

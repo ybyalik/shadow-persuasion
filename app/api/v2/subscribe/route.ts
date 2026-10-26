@@ -26,12 +26,17 @@ export async function POST(req: Request) {
 
     const { data: existing } = await sp2db
       .from('sp2_subscribers')
-      .select('id, status')
+      .select('id, status, first_name')
       .ilike('email', email)
       .maybeSingle();
 
-    // Already signed up: don't restart the sequence, just let them read.
+    // Already signed up: don't restart the sequence, but send the welcome email (with the chapter
+    // link) again, because the page they land on no longer shows the chapter. Never email someone
+    // who unsubscribed.
     if (existing) {
+      if (existing.status !== 'unsubscribed') {
+        await sendSequenceEmail({ to: email, firstName: existing.first_name ?? firstName, number: 1 });
+      }
       return NextResponse.json({ ok: true, alreadySubscribed: true });
     }
 

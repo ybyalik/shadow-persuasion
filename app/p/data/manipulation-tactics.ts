@@ -2,7 +2,7 @@
  * Problem page: manipulation tactics. The free cheat sheet is a short preview of the bonus
  * The Tactic Spotter (book-v3/bonuses/drafts/tactic-spotter.md): 9 of its 43 ordinary entries, with its
  * "what it sounds like", "concerning if" and "calm reply" lines, plus its "pattern, not a single moment" check.
- * The nine are an editorial pick, not the book's fixed list.
+ * The nine are an editorial pick, not the book's fixed list. Tactic cards (sections file) are 8 OTHER moves from Ch 7, 8, 10.
  */
 import type { Problem } from '../problems';
 
@@ -10,30 +10,16 @@ const DANGER_LIMIT = `If you are afraid of someone, start with Chapter 11, When 
 
 const problem: Problem = {
   slug: 'manipulation-tactics',
+  startHere: `Start with Chapters 7 to 10 for the tactics themselves.`,
   metaTitle: `Spot 9 Common Pressure Tactics, With a Calm Reply for Each: Free Cheat Sheet | Shadow Persuasion`,
   metaDescription: `A free cheat sheet: 9 pressure tactics from everyday conversations, what each one sounds like, when it becomes a pattern, and one calm reply for each. A preview of The Tactic Spotter, a bonus with Shadow Persuasion: The Hidden Rules of Power.`,
   topBar: `FREE CHEAT SHEET: 9 manipulation tactics, and a calm reply for each`,
-  h1: [`9 manipulation tactics`, `people use on you.`],
+  h1: [`9 manipulation tactics`, `partners, parents and bosses`, `use on you.`],
   h1Gold: `Spot each one in the moment, and have the calm reply ready.`,
   lead: `"If you loved me, you'd..." "That never happened." "I need an answer today." You hear these from partners, parents, bosses and friends. Here are 9 of them: what each sounds like, when it's a pattern and not a bad day, and one calm reply you can say word for word.`,
-  bullets: [
-    `"After everything I've done for you": the reply that stays grateful and still says no`,
-    `"If you loved me, you'd...": the one line that keeps your love and your no apart`,
-    `"That never happened": the reply that doesn't argue about the past`,
-    `"I need an answer today": the question that checks a fake deadline`,
-    `Silence after you say no: what to say once, then what to do instead of chasing`,
-  ],
-  cta: `YES! Show Me the 9 Tactics`,
+  topLink: `The 9 tactics`,
+  cta: `Read the free cheat sheet`,
   ctaNote: `Free. No sign-up. Screenshot it or print it.`,
-  teaser: {
-    label: `From the cheat sheet · "If you loved me"`,
-    lines: [
-      `**Sounds like:** "If you loved me, you'd do this." "I guess I'm not that important to you."`,
-      `**Watch for:** requests often become tests of love, and only agreeing counts as proof.`,
-      `**Calm reply:** ==\"I love you. I'm not going to do this.\"==`,
-    ],
-    note: `Then don't try to prove it some other way.`,
-  },
   tool: {
     kicker: `The free cheat sheet`,
     title: `9 tactics. What each sounds like. One calm reply.`,
@@ -50,7 +36,7 @@ const problem: Problem = {
           { title: `Your decision.`, text: `Pick a reply that works whether your guess about their motive is right or wrong.` },
         ],
       },
-      { kind: 'p', text: `Matching an entry is a reason to pay attention. **It is not proof of anything.** You don't need to read minds or diagnose anyone. Judge what people do, not what they are.` },
+      { kind: 'p', text: `A matching phrase is worth noticing. **On its own, it doesn't prove anything.** You don't need to read minds or diagnose anyone. Judge what people do, not what they are.` },
       { kind: 'note', text: `If any of these come with fear, threats or tracking, skip the replies. A calm line won't make that safe. Start with Chapter 11 and talk to a domestic violence advocate before changing how you respond.` },
 
       { kind: 'h', text: `Guilt and hidden debts` },
@@ -157,27 +143,17 @@ const problem: Problem = {
     ],
   },
   bridge: {
-    title: `The cheat sheet helps you spot the move. Holding your answer is the hard part.`,
+    title: `You can spot the 9. Here's what the book adds next.`,
     blocks: [
-      { kind: 'p', text: `Spotting "If you loved me" in the moment is a big step. Then comes the sigh, two days of silence, or "Your brother thinks you overreacted." One reply stops feeling like enough.` },
-      { kind: 'p', text: `This sheet has 9 entries. The full Tactic Spotter, one of three bonuses with the book, covers more than 40 pressure moves, plus a section on danger signs. And the book walks through each kind of pressure with real conversations:` },
-      {
-        kind: 'list',
-        items: [
-          { text: `Guilt, favors and hidden debts: how to tell a duty from a favor, and what to say when past help becomes a bill.`, ref: { ch: 7, section: 'Duties, favors, and agreements' } },
-          { text: `When the story keeps changing: flat denial, minimizing, blame-shifting, fog, rewriting the past.`, ref: { ch: 8, section: 'The common ways a story changes' } },
-          { text: `Silence used as pressure: five steps to respond without chasing, giving in or going cold.`, ref: { ch: 9, section: 'How to respond without chasing' } },
-          { text: `Charm, urgency and the slow squeeze: flattery before the ask, love-bombing, future faking, scope creep, the unreturned loan.`, ref: { ch: 10, section: 'Pleasant pressure' } },
-          { text: `How to tell a bad moment from a pattern, without diagnosing anyone.`, ref: { ch: 6, section: 'One moment tells you very little' } },
-          { text: `How to tell a hard conversation from a dangerous one, and why a better line isn't the answer there.`, ref: { ch: 11, section: 'A hard conversation, or a dangerous one' } },
-          { text: `If someone keeps refusing to accept your no: The No-Agreement Plan.`, ref: { ch: 28, section: 'Build your No-Agreement Plan' } },
-        ],
-      },
-      { kind: 'p', text: `What it won't do: no reply makes someone stop. The book helps you see the move, keep your answer, and decide what to do if it keeps happening.` },
+      { kind: 'p', text: `You now have 9 tactics, what each one sounds like, when it becomes a pattern, and one calm reply for each. That's enough to name the move the next time you hear it.` },
+      { kind: 'p', text: `Three things come next that the sheet doesn't cover.` },
+      { kind: 'p', text: `**The second round.** You give the calm reply, and they answer with a different move: "Your brother thinks you overreacted," or "I thought you were someone I could count on."` },
+      { kind: 'p', text: `**The moves that aren't on this sheet.** The full Tactic Spotter, one of three bonuses with the book, covers more than 40 pressure moves, plus a separate section on danger signs.` },
+      { kind: 'p', text: `**The move that keeps coming back.** How to decide your next step, instead of waiting for them to change.` },
+      { kind: 'p', text: `The book walks through each kind of pressure with worked conversations where the other person argues back. It can't make anyone stop. It helps you keep your answer and decide what to do next. Start with Part II tonight. The digital edition comes with your order.` },
     ],
   },
   pull: `Once you can name the move, you get to choose your answer.`,
-  finalCta: `See the full method for handling pressure tactics →`,
   limits: [
     `Matching a pattern isn't proof. The book judges behavior over time instead of diagnosing anyone, and it asks you to check whether you've used any of these moves yourself.`,
     `This isn't therapy or legal advice.`,
@@ -186,35 +162,21 @@ const problem: Problem = {
   inside: {
     kicker: `What the book adds for this problem`,
     title: `The 9 tactics are the start. Here's what comes next.`,
-    intro: `The cheat sheet gives you one reply for each move. The book shows each one in a real conversation, what to do when they push back, and how to tell a pattern from a bad day.`,
+    intro: `The cheat sheet gives you one reply for each move. These pages give you the words for the pushback, the moves the sheet leaves out, and how to tell a pattern from a bad day.`,
     items: [
       { ch: 7, section: 'When past help is treated as a debt', text: `"After everything I've done for you": why it makes a no feel ungrateful, the reply that honors the past, and the one thing never to say back.` },
       { ch: 7, section: 'When affection or character is made conditional', text: `"A real friend would do this" and "If you loved me": how to answer a test of your character or your love without defending your record.` },
-      { ch: 7, section: 'Taking back a yes you gave too fast', text: `Already said yes under guilt? The 5 steps to take it back, and Hector's Monday call to Gail, word for word.` },
-      { ch: 8, section: 'The common ways a story changes', text: `"That never happened." "It was a joke." "You made me do it." A short reply for each of 6 ways a story gets rewritten.` },
-      { ch: 8, section: 'Protecting your memory', text: `Starting to doubt your own memory? 4 steps that make it harder to shake, including how to stop arguing about the past and answer the decision.` },
+      { ch: 8, section: 'The common ways a story changes', text: `"That never happened." "It was a joke." "You made me do it." "Everyone agrees with me." A short reply for each of 6 ways a story gets rewritten.` },
+      { ch: 8, section: 'When the story spreads to other people', text: `"Mom's really hurt by what you said." What to do when the pressure arrives through a third person, or someone is telling others a damaging version of you.` },
+      { ch: 8, section: 'Protecting your memory', text: `Doubting your memory? 4 steps to record events, stop debating the past and focus on what needs deciding now.` },
       { ch: 9, section: 'How to respond without chasing', text: `The silent treatment after you say no: 5 steps that don't involve chasing, pleading or going silent back.` },
-      { ch: 10, section: 'Pleasant pressure', text: `Flattery right before the ask, love-bombing, "This price ends at midnight," and promises about later: how to take off the wrapping and answer the request.` },
-      { ch: 10, section: 'The slow squeeze', text: `When a small yes keeps growing: the ladder of small yeses, moving goalposts, "temporary" that never ends, and the loan that never comes back.` },
-      { ch: 6, section: 'One moment tells you very little', text: `Bad day or pattern? The 3 things to watch, so you don't accuse someone over one sigh, or excuse the tenth.` },
+      { ch: 10, section: 'Pleasant pressure', text: `Praise, overwhelming affection, urgent deadlines and future promises: how to judge the request without being swayed by what comes with it.` },
+      { ch: 10, section: 'The slow squeeze', text: `When agreeing leads to more: bigger requests, changing targets, extra duties, temporary arrangements that never end and unpaid loans.` },
+      { ch: 28, section: 'Build your No-Agreement Plan', text: `When the same move keeps coming back after your no: decide what you'll do if the answer stays no, before you need it.` },
       { ch: 11, section: 'A hard conversation, or a dangerous one', text: `The signs that mean a calm reply is the wrong tool, and what to do instead.` },
     ],
   },
   excerpts: [
-    {
-      ch: 7,
-      chapterTitle: 'Guilt, Favors, and Hidden Debts',
-      section: 'When affection or character is made conditional',
-      sub: '"If you loved me"',
-      blocks: [
-        { kind: 'p', text: `What it sounds like. "If you loved me, you'd do this." "I guess I'm not that important to you." "I'd do it for you without even thinking." It shows up between partners, between parents and adult children, and sometimes between close friends.` },
-        { kind: 'p', text: `Why it works. It turns a request into a test of love. Love is hard to measure, so the other person gets to decide what counts as proof. Agreeing proves you care. Refusing proves you don't.` },
-        { kind: 'p', text: `What to say. Keep the feeling and the request apart.` },
-        { kind: 'say', lines: [`"I love you. I'm not going to do this."`] },
-        { kind: 'p', text: `If it happens often, raise it at a calm time: "When you say 'if you loved me,' every request starts to feel like a test. I want to be able to say no without it meaning I don't love you."` },
-        { kind: 'p', text: `What not to do. Don't try to prove your love some other way to make up for the no. That confirms the idea that love has to be earned by agreeing.` },
-      ],
-    },
     {
       ch: 8,
       chapterTitle: 'When the Story Keeps Changing',
@@ -228,30 +190,22 @@ const problem: Problem = {
       ],
     },
     {
-      ch: 10,
-      chapterTitle: 'Charm, Urgency, and the Slow Squeeze',
-      section: 'Pleasant pressure',
+      ch: 6,
+      chapterTitle: 'A Bad Moment or a Pattern?',
+      section: 'The same behavior, three explanations',
       blocks: [
-        { kind: 'p', text: `Flattery before the ask. "You're the only one on the team I trust with this." "You're so generous, I knew I could ask." The praise may be sincere. It still doesn't change how much time or money you have. Thank them, then answer the request on its own: "That's kind of you. I can't take it on this week."` },
-        { kind: 'p', text: `Fake urgency. "This price ends at midnight." "I need an answer by end of day." "There's no time to think." Urgency shuts down careful thinking. Some deadlines are real: a flight fills up, a landlord has other applicants. So check. Ask what happens if you answer tomorrow, and who set the clock. If someone insists it must be decided right now and you can't check, you can say: "If it has to be decided now, my answer is no."` },
+        { kind: 'p', text: `Take Tom's line: "I never said I'd go." Here are three very different things it could mean.` },
+        { kind: 'p', text: `A misunderstanding. Tom said "sure" while watching a game and genuinely didn't take it in. When Joanne shows him the calendar entry, he says, "Huh. I must have tuned out. Okay, I'll come." The next time, he pays more attention.` },
+        { kind: 'p', text: `What helps here is a better system: a shared calendar, and a direct question before counting something as agreed.` },
+        { kind: 'p', text: `Ordinary conflict. Tom doesn't want to go because Carol makes digs about his job. "I never said I'd go" is a clumsy way out of a lunch he dreads. When Joanne asks, "Do you not want to go?" he admits it.` },
+        { kind: 'p', text: `Now it's a real disagreement about the lunch, and they can talk about that. Maybe he comes for an hour. Maybe she goes alone.` },
+        { kind: 'p', text: `Repeated pressure. It happens with many plans, not just this one. It almost always ends with Joanne apologizing. When she shows him a text where he agreed, he says she's twisting things. When she goes ahead with a plan on her own, he barely speaks to her for two days.` },
+        { kind: 'p', text: `What helps here is to stop debating memory, make decisions based on what actually happens, and get outside support. If there is fear in the house, safety comes before any of that.` },
+        { kind: 'p', text: `Joanne doesn't need to know what's happening inside Tom's head. Each explanation leads to a different next step, and what happens next will show her which one fits.` },
       ],
     },
   ],
-  forYou: [
-    `You say yes, then work out on the drive home what you just agreed to.`,
-    `"After everything I've done for you" or "If you loved me" makes your no disappear.`,
-    `You leave arguments unsure what was actually said, and start to doubt your memory.`,
-    `You want to know if it's a pattern or just a bad day before you accuse anyone.`,
-    `You want calm replies you can say out loud, not clever comebacks.`,
-  ],
-  notForYou: [
-    `You want to learn to manipulate people. Chapter 30 is about using power without becoming what you resent.`,
-    `You want a label to pin on someone after one argument. The book judges behavior over time.`,
-    `You want a line that makes them stop. No reply can promise that.`,
-    `You need therapy or legal advice. This is neither.`,
-    `There are threats, fear or tracking. A calm line won't make that safe. Start with Chapter 11 and a domestic violence advocate.`,
-  ],
-  offerTitle: `Get the book that names the move, and hands you the calm reply.`,
+  offerTitle: `Get the book for what to say when they keep pushing.`,
   faq: [
     { q: `Won't this make me suspicious of everyone?`, a: `It shouldn't. The book says one moment tells you very little. Everyone sighs, forgets or sulks sometimes. It asks you to watch three things over time: does it repeat, is there ever repair, and what happens when you say no. Matching a tactic is a reason to pay attention, not proof.` },
     { q: `What if I do some of these myself?`, a: `Most people do, sometimes. Chapter 6 has five questions to ask yourself, like "Do I go quiet to make a point?" Chapter 30 shows how to repair it when you're the one who got it wrong. You can change your part without taking the blame for theirs.` },
@@ -262,9 +216,9 @@ const problem: Problem = {
     { q: `Is this about narcissists?`, a: `Some readers come for that word. The book doesn't diagnose anyone. It looks at what people do: denial, blame that always lands on you, control, no repair, and punishment when you say no. You can act on those without a label.` },
     { q: `What's The Tactic Spotter?`, a: `One of three bonuses with the book. This free cheat sheet uses 9 of its entries. The full guide covers more than 40 pressure moves, each with other explanations to check first, when it becomes a pattern, and one calm reply, plus a section on danger signs.` },
   ],
-  closeLine: `Spot the move. Keep your answer.`,
-  ps: `Hector called Gail back on Monday morning. She tried the ledger again: "After everything this parish did for you." He didn't argue about what he owed. He said one sentence and offered his notes. The whole call is in {ref}.`,
-  psRef: { ch: 7, section: 'Taking back a yes you gave too fast' },
+  closeLine: `Notice pressure. Keep your decision.`,
+  ps: `In the book's worked example, Darnell's sister helped him move last summer. When her car went into the shop, she expected him to drive her to work every weekday, and reached for the ledger: "After everything I did with your move, you can't do this?" Then: "So you only take favors." Then: "Forget it." He didn't argue about what he owed, and he didn't give in. What he said each time, word for word, is in {ref}.`,
+  psRef: { ch: 26, section: 'Caring for an aging parent without doing it all alone' },
 };
 
 export default problem;

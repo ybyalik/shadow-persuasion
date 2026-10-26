@@ -13,6 +13,7 @@ const DANGER_LIMIT =
 
 const problem: Problem = {
   slug: 'gaslighting',
+  startHere: `Start with Chapter 8 for "that never happened."`,
   metaTitle: 'He Says "That Never Happened"? Do These 2 Things After Every Argument | Shadow Persuasion',
   metaDescription:
     'When he insists it never happened and you start doubting yourself: write it down soon, confirm agreements in writing, and the one reply to say instead of arguing. Free, from Chapter 8 of Shadow Persuasion: The Hidden Rules of Power.',
@@ -20,27 +21,13 @@ const problem: Problem = {
   h1: ['He says “that never happened”', 'and you start', 'doubting yourself?'],
   h1Gold: 'Do these 2 things after every argument.',
   lead: `Write it down soon. Confirm what you agreed in writing. Both come from Chapter 8, along with the one sentence to say when he insists it never happened.`,
-  bullets: [
-    `**Thing 1:** the few-line note to write soon after (a format you can copy)`,
-    `**Thing 2:** the one-line text that confirms what you agreed and asks for a reply`,
-    `**The one reply** to "That never happened," so you say it once and stop arguing`,
-    `The honest part: why a good record can also show you were wrong, and why that helps you`,
-  ],
-  cta: 'YES! Show Me the 2 Things',
+  topLink: 'The 2 things',
+  cta: 'Read the 2 free steps',
   ctaNote: 'Free. No sign-up. Start after the next argument.',
-  teaser: {
-    label: 'After every argument',
-    lines: [
-      `**1. Write it down soon.** "Tues. Mentioned Carol's lunch. T said 'I never said I'd go, you do this all the time.' I apologized. He was normal again by 9."`,
-      `**2. Confirm it in writing.** "Just confirming what we said on the phone: I'll have the kids from Saturday the 12th to Wednesday the 16th. Can you reply to confirm, or tell me if you have something different?"`,
-      `**Then say it once:** =="I remember it differently. Here's what I need now."==`,
-    ],
-    note: 'A few lines is plenty.',
-  },
   tool: {
     kicker: 'The 2 things',
     title: 'Do these 2 things after every argument.',
-    intro: 'Thing 1 protects your memory. Thing 2 protects what you agreed. Then one sentence replaces the argument about the past.',
+    intro: 'First, record what happened. Then confirm agreements in writing. Use one short reply instead of arguing about the past.',
     blocks: [
       { kind: 'p', text: `**Arguing about what happened is a different task from deciding what happens next.** You can say once how you remember it, and then move straight to the decision. You don't need his agreement about the past to make a clear choice about the present.` },
 
@@ -108,53 +95,55 @@ const problem: Problem = {
     ],
   },
   bridge: {
-    title: 'The 2 things protect your memory. They won’t stop the next rewrite.',
+    title: 'You have the 2 things and the one reply. Here is what the book adds.',
     blocks: [
-      { kind: 'p', text: `Some people keep rewriting no matter how calmly you confirm things. They deny messages that are right there. They tell a new version to someone else. In the book, Carla shows her brother the texts. Each time, the story moves.` },
+      { kind: 'p', text: `The note and confirmation text record what happened. The reply lets you stop debating the past. Some people keep rewriting anyway. Here is what you may face next, and what the free part doesn't cover:` },
+      {
+        kind: 'list',
+        items: [
+          { text: `**When he denies the texts you show him.** Then he tells a different story. More proof can lead to another argument.` },
+          { text: `**When his version reaches your family.** A relative calls to say you've been "difficult," or someone is sent to tell you how hurt he is.` },
+          { text: `**When you need to know if it keeps happening, or if part of it is you.** How to read your notes across weeks, and the honest questions to ask yourself before you decide.` },
+        ],
+      },
+      { kind: 'p', text: `Start with Chapter 8. The digital edition comes tonight.` },
       { kind: 'p', text: `What the book can't do: make anyone admit what happened. You can't stop someone rewriting the past. You can keep your own record, keep your replies short, and keep making decisions based on what you know.` },
     ],
   },
   pull: `You don't need their agreement about the past to make a clear choice about the present.`,
-  finalCta: 'See the full method for when the story keeps changing →',
   inside: {
     kicker: 'What the book adds',
     title: 'For when he keeps rewriting it.',
-    intro: 'The free part gives you the 2 things and the one reply. These pages cover what to do when that isn\'t enough.',
+    intro: 'Worked conversations and page references for what comes after the 2 things.',
     items: [
-      { ch: 8, section: 'When the story keeps changing anyway', text: `What to do when he denies the texts that are right there: Carla stopped sending proof, sent one message, and repeated one line.` },
-      { ch: 8, section: 'When the record shows you were wrong', text: `How Luis found out he had it wrong, the exact text he sent, and why correcting yourself is not the same as giving in.` },
-      { ch: 8, section: 'The common ways a story changes', text: `The 6 ways a story gets changed, from "That never happened" to "fog" (something you did in 2014), and a one-line answer for each.` },
-      { ch: 8, section: 'When the story spreads to other people', text: `When he tells your family a different version of you: what to say to the people who matter, and why a counter-campaign backfires.` },
-      { ch: 8, section: 'You don’t have to win the argument about the past', text: `Why arguing about what happened keeps you stuck, and how to move straight to the decision in front of you.` },
+      { ch: 8, section: 'When the story keeps changing anyway', text: `Carla's brother denied the March texts, then changed his story twice more. The one message she sent instead of more proof, the one line she repeated, and what happened by September.` },
+      { ch: 6, section: 'Joanne’s next step', text: `How Joanne raised it on a Sunday morning, not mid-fight. What she said when Tom answered "Because you were wrong," and why she went to the lunch alone.` },
+      { ch: 8, section: 'When the story spreads to other people', text: `When the family hears his account: whom to answer, why trying to turn everyone against him can backfire, and what Carla told her cousin.` },
+      { ch: 8, section: 'When the record shows you were wrong', text: `Luis's full exchange after he found he had it wrong: what he said to his ex, what she said back, and how they worked out the day he couldn't cover.` },
       { ch: 6, section: 'What about narcissists?', text: `What gaslighting is and isn't, why one disagreement doesn't count, and the 5 behaviors that make a pattern.` },
-      { ch: 6, section: 'Keep a simple record', text: `How to read your notes across weeks, not one night: does it repeat, is there ever repair, and what happens when you say no.` },
+      { ch: 6, section: 'Keep a simple record', text: `Review weeks of notes: does it repeat, do they admit mistakes or make amends, and what happens when you say no?` },
       { ch: 6, section: 'Is it them, or is it me?', text: `The hard check: 5 honest questions to ask yourself before you decide it's all him.` },
       { ch: 11, section: 'What helps instead', text: `When keeping notes isn't safe: shared devices, synced accounts, and why deleting your history or changing passwords can alert someone who's watching.` },
     ],
   },
   excerpts: [
     {
-      ch: 8,
-      chapterTitle: 'When the Story Keeps Changing',
-      section: 'Protecting your memory',
-      sub: '2. Confirm agreements in writing',
+      ch: 6,
+      chapterTitle: 'A Bad Moment or a Pattern?',
+      section: 'Joanne’s next step',
       blocks: [
-        { kind: 'p', text: `After a phone call or a meeting, send one short message that says what you understood and asks them to reply. A parent confirming a holiday plan made by phone might write:` },
-        { kind: 'say', lines: [`"Just confirming what we said on the phone: I'll have the kids from Saturday the 12th to Wednesday the 16th. Can you reply to confirm, or tell me if you have something different?"`] },
-        { kind: 'p', text: `Keep it neutral. Don't add "since you always forget." And remember that a message nobody answers records what you said. It doesn't prove the other person agreed.` },
-      ],
-    },
-    {
-      ch: 8,
-      chapterTitle: 'When the Story Keeps Changing',
-      section: 'The common ways a story changes',
-      blocks: [
-        { kind: 'p', text: `These are patterns to recognize, not labels to pin on anyone after one argument. They overlap, and you don't need to name which one you're facing.` },
-        { kind: 'p', text: `Flat denial. "That never happened." "I never said that." Answer once, then move on: "I remember it differently. Here's what I need now."` },
-        { kind: 'p', text: `Minimizing. "It was a joke." "You're too sensitive." They don't deny it happened. They deny it matters. You don't need them to agree it hurt: "Maybe it was meant as a joke. I'd still like you to stop."` },
-        { kind: 'p', text: `Blame-shifting. "You made me do it." "If you hadn't pushed, I wouldn't have yelled." Separate your part from theirs: "I'm happy to talk about what I said. I'm not taking responsibility for what you did."` },
-        { kind: 'p', text: `Fog. Long, circling answers. A new topic every time you get close to the point. Something you did in 2014. Pick one short sentence and keep coming back to it: "I want to come back to my question. Will you pay me back by Friday?"` },
-        { kind: 'p', text: `Rewriting the past. "You agreed to this." "We decided together." Your hesitant "I guess" becomes a firm yes. Correct it once, then focus on today: "I don't think I agreed to that. Either way, I'm not agreeing to it now."` },
+        { kind: 'p', text: `Over the next three days, Joanne reviewed earlier messages and made a few private notes. She found four disputed plans from the past month. Three ended with her apologizing. Once, Tom said, "Okay, maybe I forgot."` },
+        { kind: 'p', text: `It's mixed. She doesn't need to decide what Tom is. She decides what she'll do next: suggest a shared calendar, and only count plans once they've both said yes.` },
+        { kind: 'p', text: `She raises it on Sunday morning, not in the middle of a fight. She doesn't mention her notes. They're for her.` },
+        {
+          kind: 'talk',
+          lines: [
+            { who: 'Joanne', text: `"Can I talk to you about plans for a minute? Not the lunch. How we make plans."` },
+            { who: 'Tom', text: `"Here we go."` },
+            { who: 'Joanne', text: `"A few times lately, we've remembered plans differently. It ends in an argument, and I end up apologizing even when I'm not sure I was wrong."` },
+            { who: 'Tom', text: `"Because you were wrong. I never said I'd go to Carol's."` },
+          ],
+        },
       ],
     },
     {
@@ -162,29 +151,12 @@ const problem: Problem = {
       chapterTitle: 'When the Story Keeps Changing',
       section: 'When the story keeps changing anyway',
       blocks: [
+        { kind: 'p', text: `Some people keep rewriting no matter how calmly you confirm things. They deny messages that are right there. They tell a new version to someone else.` },
         { kind: 'p', text: `Carla's brother turned out to be one of them. In March, Ray texted to ask whether she would pay a third of their mother's home aide. She replied, "Yes, a third, starting April." By June he was saying she had agreed to half. She sent him the March texts. He wrote back, "That was before. You know we said half." A month later it was, "You promised to cover the summer." Each time she showed him the record, the story moved.` },
-        { kind: 'p', text: `So Carla stopped sending proof. She sent one message:` },
-        { kind: 'talk', lines: [{ who: 'Carla', text: `"I'm paying a third, as we agreed in writing in March. I'll keep paying it on the first of each month. If Mom needs more care now, I'm open to a new split. Let's set up a call and go through the aide's bills together."` }] },
-        { kind: 'p', text: `After that, when Ray said "You promised half," she answered, "I'm paying a third. I'm happy to set up that call." Nothing more. She paid on the first, every month. Ray still grumbled to the cousins. But the arguments got shorter, because she no longer joined them. In September he asked for the call. They went through the bills, and Carla agreed to add two hundred dollars a month while their mother recovered from a fall. She put the new amount in a text that evening. Ray replied, "Yes."` },
-        { kind: 'p', text: `You can't stop someone rewriting the past. You can keep your own record, keep your replies short, and keep making decisions based on what you know.` },
       ],
     },
   ],
-  forYou: [
-    `He says "that never happened" or "I never said that," and you walk away unsure of yourself.`,
-    `You've apologized for things you're not sure you did, just to end the argument.`,
-    `Plans you made out loud keep turning into something else later.`,
-    `You want something to do after the argument, not another checklist about him.`,
-    `You're willing to find out you were wrong sometimes, too.`,
-  ],
-  notForYou: [
-    `You want proof he's a narcissist. The book won't diagnose anyone.`,
-    `You want him to admit it. No record or reply can make that happen.`,
-    `You want to win the argument about the past. The book moves you to the decision instead.`,
-    `You need therapy or legal advice. If it touches your job, your money or your kids, the book points you to HR, a family lawyer or a mediator.`,
-    `He checks your phone, or you're afraid of him. Read Chapter 11 before you keep any record.`,
-  ],
-  offerTitle: 'Get the book for every time he says “that never happened.”',
+  offerTitle: 'Get the book for the next time he says “that never happened.”',
   faq: [
     {
       q: 'Is it gaslighting, or do we just remember things differently?',
@@ -196,7 +168,7 @@ const problem: Problem = {
     },
     {
       q: 'What if he denies the texts that are right there?',
-      a: `Some people keep rewriting no matter what you show them. Carla stopped sending proof. She sent one message saying what she would do, then repeated one short line. You can't stop someone rewriting the past. You can stop joining the argument.`,
+      a: `Some people keep rewriting no matter what you show them. Chapter 8 walks through what Carla did when her brother did exactly that, including the one message she sent instead of more proof. You can't stop someone rewriting the past. You can stop joining the argument.`,
     },
     {
       q: 'What if he never replies to my confirmation text?',
@@ -216,7 +188,7 @@ const problem: Problem = {
     },
   ],
   closeLine: 'You don’t need him to agree about the past to decide what happens next.',
-  ps: `Carla stopped sending proof. She sent one message, repeated one line, and paid on the first of every month. In September, her brother asked for the call. The whole story is in {ref}.`,
+  ps: `In the book's worked example, Carla stopped sending proof about her share of their mother's care costs. She sent one message, repeated one line, and paid on the first of every month. In September, her brother asked for the call she had offered. The whole story is in {ref}.`,
   psRef: { ch: 8, section: 'When the story keeps changing anyway' },
   limits: [
     `The book judges behavior instead of diagnosing anyone. One disagreement about the past is not gaslighting; the pattern is what matters.`,

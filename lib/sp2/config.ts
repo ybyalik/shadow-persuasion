@@ -2,7 +2,7 @@
  * Shadow Persuasion funnel settings (book: "Shadow Persuasion: The Hidden Rules of Power").
  *
  * Lives beside the original $7 funnel (lib/pricing.ts) without touching it.
- * Pages: /v2, /v5 (parked test version), /a/[angle], /v2/chapter-1, /v2/checkout, /v2/upsell, /v2/thank-you.
+ * Pages: / (the sales page), /b/[slug], /free-chapter (after signup), /read (the free chapter, linked only from email), /checkout, /upsell, /thank-you.
  * All amounts in cents.
  *
  * The product keys (sp2_book, sp2_book_hc, sp2_scripts, sp2_upsell) stay the same so old

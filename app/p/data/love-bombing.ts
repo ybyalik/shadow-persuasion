@@ -1,48 +1,33 @@
 import type { Problem } from '../problems';
 
 /**
- * Problem 7: love bombing. Owner-approved hook: "Showering you with gifts and 'I love you' after 3 weeks?" /
- * "5 signs it's love bombing, not love." The 5 signs are the ones Chapter 10's love-bombing paragraph lists
- * (Pleasant pressure). Never claim any sign or test tells you "for sure": the book says signs 1 to 3 (speed) prove
+ * Problem 7: love bombing. Hook: "New partner showering you with gifts and 'I love you' after 3 weeks?" /
+ * "5 signs to watch for." The book does not number five signs: the 5 here are drawn from Chapter 10's
+ * love-bombing paragraph (Pleasant pressure), so always say "drawn from Chapter 10". Never claim any sign or test tells you "for sure": the book says signs 1 to 3 (speed) prove
  * nothing alone, and to watch for weeks, not one reply. Also uses Chapter 10 (When pressure feels good, Slow it down,
  * What Shauna saw) and Chapter 25 (A new relationship that moves too fast).
  */
 const loveBombing: Problem = {
   slug: 'love-bombing',
-  metaTitle: 'Gifts and "I Love You" After 3 Weeks? 5 Signs It\'s Love Bombing, Not Love | Shadow Persuasion',
+  startHere: `Start with Chapter 10 for a relationship that moves too fast.`,
+  metaTitle: 'New Partner Showering You With Gifts and "I Love You" After 3 Weeks? 5 Signs to Watch For | Shadow Persuasion',
   metaDescription:
-    'Roses at work, texts all day, talk of moving in within weeks. The 5 signs of love bombing, why speed alone proves nothing, the words to say "slower," and what to watch for next. Free, from Chapter 10 of Shadow Persuasion: The Hidden Rules of Power.',
-  topBar: 'FREE: 5 signs it’s love bombing, not love (from Chapter 10)',
-  h1: ['Showering you with gifts', 'and “I love you”', 'after 3 weeks?'],
-  h1Gold: '5 signs it’s love bombing, not love.',
-  lead: `Roses at your office. Texts all day. "I've never felt like this with anyone." It can feel wonderful and rushed at the same time. Here are the 5 signs the book lists, and how to tell which ones count.`,
-  bullets: [
-    `The 5 signs: 3 are about **speed**, 2 are about **pressure**`,
-    `Why speed alone proves nothing (some people really do just fall fast)`,
-    `The exact words to say "slower" about the kids, a trip, moving in and money`,
-    `What to watch for in the weeks after you say it`,
-  ],
-  cta: 'YES! Show Me the 5 Signs',
+    'Roses at work, texts all day, talk of moving in within weeks. 5 signs of love bombing to watch for, why speed alone proves nothing, the words to say "slower," and what to watch for next. Free, from Chapter 10 of Shadow Persuasion: The Hidden Rules of Power.',
+  topBar: 'FREE: 5 love bombing signs to watch for, drawn from Chapter 10',
+  h1: ['New partner showering you', 'with gifts and “I love you”', 'after 3 weeks?'],
+  h1Gold: '5 signs to watch for, plus the exact words to say “slower.”',
+  lead: `Roses at your office. Texts all day. "I've never felt like this with anyone." It can feel wonderful and rushed at the same time. Here are 5 signs to watch for, drawn from Chapter 10, and how to tell which ones count.`,
+  topLink: 'The 5 signs',
+  cta: 'Read the 5 free signs',
   ctaNote: 'Free. No sign-up. Takes 3 minutes to read.',
-  teaser: {
-    label: 'The 5 signs, from Chapter 10',
-    lines: [
-      `**1.** Constant messages.`,
-      `**2.** Big gifts.`,
-      `**3.** Talk of moving in or a shared future within weeks.`,
-      `**4.** Hurt or anger when you slow down.`,
-      `**5.** Criticism or control once you're attached.`,
-    ],
-    note: 'Speed plus pressure. Not speed alone.',
-  },
   tool: {
     kicker: 'The 5 signs',
-    title: '5 signs it’s love bombing, not love.',
-    intro: `Read the 5 signs first. Then use the test that shows which kind you're looking at. No single sign settles it for sure. A few weeks of watching tells you a lot.`,
+    title: '5 signs to watch for.',
+    intro: `Gifts and constant texts don't settle it on their own. Read the 5 signs, then watch how they respond when you slow the pace. No single sign settles it for sure. A few weeks of watching tells you a lot.`,
     blocks: [
       {
         kind: 'p',
-        text: `The book defines love bombing as "an early flood of attention, affection and plans for the future that builds strong attachment before you really know the person." Here are the 5 signs from Chapter 10:`,
+        text: `The book defines love bombing as "an early flood of attention, affection and plans for the future that builds strong attachment before you really know the person." Here are 5 signs to watch for, drawn from that chapter:`,
       },
       {
         kind: 'steps',
@@ -51,12 +36,12 @@ const loveBombing: Problem = {
           { title: 'Big gifts.', text: 'A dozen roses at your office in week three. Gestures much bigger than how well you know each other.' },
           { title: 'Talk of moving in or a shared future within weeks.', text: 'Meeting the kids next weekend. A trip planned for March. All before you really know the person.' },
           { title: 'Hurt or anger when you slow down.', text: `You keep your Saturday plans, and their face changes. "Oh. I thought we were building something here."` },
-          { title: 'Criticism or control once you are attached.', text: 'Comments about your friends. Questions about where you were. The warmth starts coming with rules.' },
+          { title: 'Criticism or control once you are attached.', text: 'Comments about your friends. Questions about where you were. Affection depends on doing what they want.' },
         ],
       },
       {
         kind: 'p',
-        text: `Here's the part most lists leave out. Signs 1 to 3 are **speed**. Speed alone proves nothing. In the book's words, "Not everyone who falls fast is doing this. Some people are just enthusiastic." The warning sign is "speed combined with pressure." Signs 4 and 5 are the **pressure**. And you usually only see them after you slow down.`,
+        text: `Here's the part that matters most. Signs 1 to 3 are **speed**. Speed alone proves nothing. In the book's words, "Not everyone who falls fast is doing this. Some people are just enthusiastic." The warning sign is "speed combined with pressure." Signs 4 and 5 are the **pressure**. And you usually only see them after you slow down.`,
       },
       { kind: 'h', text: 'The one rule that tells them apart' },
       { kind: 'card', title: 'From Chapter 10', lines: [`**Enthusiasm leaves room for your pace, and pressure doesn't.**`] },
@@ -121,7 +106,7 @@ const loveBombing: Problem = {
   why: {
     kicker: 'Why it slips past smart people',
     title: 'Nobody guards against being liked.',
-    intro: 'Most people are on guard against anger and guilt. Very few are on guard against being liked. That is exactly why this kind of pressure works.',
+    intro: 'Most people are on guard against anger and guilt. Very few are on guard against being liked. That is part of why this kind of pressure works.',
     items: [
       { title: 'It feels like being chosen.', text: `Praise, attention and promises are lovely. They also make it easier to agree before you've thought. When your coworkers applaud the roses, "slow down" feels ungrateful.` },
       { title: 'Each step looks small.', text: `Meet the kids next weekend. A trip in March. A key. No single step looks like pressure. Together they can add up to something you'd never have agreed to on day one.` },
@@ -130,13 +115,24 @@ const loveBombing: Problem = {
     ],
   },
   bridge: {
-    title: 'The signs show you the pattern. Then you have to decide what to do with it.',
+    title: 'They accept some limits and keep pushing on one. Now what?',
     blocks: [
       {
         kind: 'p',
-        text: `Shauna said "slower." Kevin was fine about the kids and the trip. On Saturdays, he kept pushing: a text on Friday, tickets he bought without asking, a comment about her friends "taking up all your time."`,
+        text: `The 5 signs and the words for "slower" are the easy part. The hard part is mixed behavior: kind on most things, pushy on one. Here is what the book adds:`,
       },
-      { kind: 'p', text: 'Now what? Say it again? End it? Keep seeing him and watch? The 5 signs can\'t answer that. The book walks through it.' },
+      {
+        kind: 'p',
+        text: `**When they respect some limits but keep pushing on one.** Kevin agreed to wait on the kids and the trip, but kept pushing her to give up her Saturdays with friends. The book shows Shauna's final answer, and how she decided whether to keep seeing him.`,
+      },
+      {
+        kind: 'p',
+        text: `**When the pressure comes wrapped as a secret, a deadline or a promise.** "I've never told anyone this," then a request a week later. "There's no time to think." "Get me through this month and I'll pay you back." Each one gets its own answer.`,
+      },
+      {
+        kind: 'p',
+        text: `**When a rushed relationship turns controlling.** The signs to watch for, and why a calm reply is not the answer then.`,
+      },
       {
         kind: 'p',
         text: `What the book can't promise: it won't tell you whether someone loves you, or read their mind. It helps you set the pace and see clearly what they do with it.`,
@@ -144,41 +140,21 @@ const loveBombing: Problem = {
     ],
   },
   pull: 'Enthusiasm can wait. Pressure can\'t.',
-  finalCta: 'See the full method for spotting love bombing →',
   inside: {
     kicker: 'What the book adds',
-    title: 'Everything after the roses.',
-    intro: 'The free part gives you the signs and the test. These pages cover what comes next, from the first week to the first time they ask for money.',
+    title: 'What to decide once you\'ve seen how they handle "slower."',
+    intro: 'The free part gives you the signs and the test. These pages pick up from there, page by page.',
     items: [
-      { ch: 10, section: 'What Shauna saw', text: `What Shauna said when Kevin kept pushing on her Saturdays, and why she kept seeing him for now, with her eyes open.` },
-      { ch: 10, section: 'Pleasant pressure', text: `The four other kinds of pressure that feel good: flattery before the ask, fake urgency, borrowed intimacy ("I've never told anyone this") and future faking. Plus a line to answer each one.` },
-      { ch: 10, section: 'When pressure feels good', text: `Why being liked lowers your guard, and the one question to ask before you say yes to the kids, the trip or the key.` },
-      { ch: 10, section: 'Slow it down', text: `Why limits are easiest in the first weeks, and the one sentence for money, moving in and passwords.` },
-      { ch: 25, section: 'A new relationship that moves too fast', text: `What to say when a new partner expects a reply to every text during your workday, "My ex used to go quiet on me too" included.` },
-      { ch: 10, section: 'The slow squeeze', text: `Twenty dollars, then fifty, then two hundred. How small yeses add up, and the exact place to stop.` },
-      { ch: 6, section: 'What about narcissists?', text: `Is it love bombing or just a person who falls fast? The 5 behaviors that mark a pattern, and why you don't need to diagnose anyone to act.` },
+      { ch: 10, section: 'What Shauna saw', text: `The worked conversation with Kevin, and what Shauna decided after weeks of watching how he handled "slower."` },
+      { ch: 10, section: 'Pleasant pressure', text: `Praise right before a request, false deadlines, shared secrets and promises about the future: what each sounds like, and how to reply.` },
+      { ch: 10, section: 'The slow squeeze', text: `Twenty dollars, then fifty, then two hundred. How requests grow after you agree, and when to stop agreeing.` },
+      { ch: 25, section: 'A new relationship that moves too fast', text: `Linda's second answer, when Mitch says "My ex used to go quiet on me too," and why his next reply was a good sign.` },
       { ch: 25, section: 'Dating again, or going back', text: `Dating again after a relationship that left you doubting yourself, and what to ask when an ex says "I've changed."` },
+      { ch: 6, section: 'What about narcissists?', text: `Is it a narcissist? Why nobody can diagnose from a checklist, and the pattern you can judge instead: denial, blame, control, no repair, and punishment when you say no.` },
       { ch: 11, section: 'A hard conversation, or a dangerous one', text: `The signs that charm has turned into control (tracking your phone, controlling money, cutting you off from friends), and why a better line is not the answer then.` },
     ],
   },
   excerpts: [
-    {
-      ch: 10,
-      chapterTitle: 'Charm, Urgency, and the Slow Squeeze',
-      section: 'Pleasant pressure',
-      blocks: [
-        { kind: 'p', text: 'Love-bombing is an early flood of attention, affection and plans for the future that builds strong attachment before you really know the person. Constant messages. Big gifts. Talk of moving in or a shared future within weeks. Not everyone who falls fast is doing this. Some people are just enthusiastic. The warning sign is speed combined with pressure: they push for commitment faster than you\'re comfortable with, get hurt or angry when you slow down, or start to criticize or control you once you\'re attached.' },
-      ],
-    },
-    {
-      ch: 10,
-      chapterTitle: 'Charm, Urgency, and the Slow Squeeze',
-      section: 'Slow it down',
-      sub: '3. Watch how they respond to "slower"',
-      blocks: [
-        { kind: 'p', text: 'This is the most telling step. Genuine interest leaves room for your pace, even when the other person feels disappointed. Someone using pressure tends to push harder, sulk, or make you feel you\'ve ruined something. Watch what happens over several weeks, not one reply.' },
-      ],
-    },
     {
       ch: 10,
       chapterTitle: 'Charm, Urgency, and the Slow Squeeze',
@@ -200,20 +176,16 @@ const loveBombing: Problem = {
         { kind: 'p', text: 'No single message settles anything. But the whole picture is clear enough. He can respect a limit, and he respects some of hers. On the one that matters most to her, he keeps pushing after she\'s answered.' },
       ],
     },
-  ],
-  forYou: [
-    `It's been weeks, not months, and they already talk about moving in, meeting the kids or a trip.`,
-    `The gifts and attention feel wonderful and rushed at the same time.`,
-    `You moved plans you'd looked forward to, and you're not sure why.`,
-    `You're dating again after a divorce or a hard breakup and want to go slower without ending things.`,
-    `You want to know what to watch for, not a label to pin on them.`,
-  ],
-  notForYou: [
-    `You want a test that tells you for sure whether they love you. No sign or sentence can do that.`,
-    `You want them diagnosed. The book judges behavior, not people.`,
-    `You want a line that changes how they act. You can set your pace. You can't control what they do with it.`,
-    `You need therapy. This is a book, not treatment.`,
-    `You're afraid of them, or they already track your phone or control your money. Start with Chapter 11 and a domestic violence advocate, not a new limit.`,
+    {
+      ch: 10,
+      chapterTitle: 'Charm, Urgency, and the Slow Squeeze',
+      section: 'Pleasant pressure',
+      blocks: [
+        { kind: 'p', text: `Fake urgency. "This price ends at midnight." "I need an answer by end of day." "There's no time to think." Urgency shuts down careful thinking. Some deadlines are real: a flight fills up, a landlord has other applicants. So check. Ask what happens if you answer tomorrow, and who set the clock. If someone insists it must be decided right now and you can't check, you can say: "If it has to be decided now, my answer is no."` },
+        { kind: 'p', text: `Borrowed intimacy. "I've never told anyone this," followed a week later by a request. A shared secret creates a feeling of closeness and obligation. You can keep a confidence without owing a yes: "Thank you for trusting me with that. I can't help with this, though."` },
+        { kind: 'p', text: `Future faking. "Once this project's done, you'll get the promotion." "Get me through this month and I'll pay you back with interest." A promise about later is used to get you to accept something unfair now. One broken promise isn't the pattern. Look at whether promises keep replacing action while you're asked to give more. Ask for specifics: "That sounds good. Can we agree on a date and put it in writing?" And watch the track record.` },
+      ],
+    },
   ],
   offerTitle: 'Get the book that helps you spot love bombing before you move in, meet the kids or lend money.',
   faq: [
@@ -227,7 +199,7 @@ const loveBombing: Problem = {
     },
     {
       q: 'Will saying "slower" end the relationship?',
-      a: `You're not ending anything. You're setting the pace, warmly. Someone who's simply excited about you may be disappointed, then adjust, like Mitch did. Nobody can promise how a particular person will react. How they react is exactly what you're trying to learn.`,
+      a: `You're not ending anything. You're setting the pace, warmly. Someone who's simply excited about you may be disappointed, then adjust, like Mitch in the book's example. Nobody can promise how a particular person will react. How they react is exactly what you're trying to learn.`,
     },
     {
       q: 'What if they get hurt or angry when I slow down?',
@@ -247,7 +219,7 @@ const loveBombing: Problem = {
     },
   ],
   closeLine: 'Enthusiasm can wait. Pressure can’t. Say “slower” and watch.',
-  ps: 'Kevin agreed the kids and the trip could wait. On Saturdays, he kept pushing. Shauna learned more from how he handled "slower" than she did from the roses. The whole conversation, and what she decided, is in {ref}.',
+  ps: 'In the book\'s worked example, Kevin agreed the kids and the trip could wait. On Saturdays, he kept pushing. Shauna learned more from how he handled "slower" than she did from the roses. What she decided, and why, is in {ref}.',
   psRef: { ch: 10, section: 'What Shauna saw' },
   limits: [
     'This is not therapy, and no sign or test can tell you for sure what someone feels or intends. It helps you watch what they do over time.',

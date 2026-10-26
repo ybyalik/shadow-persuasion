@@ -42,8 +42,8 @@ function fillPlaceholders(s: string, vars: Record<string, string>): string {
 
 export function sp2Links() {
   return {
-    chapter_link: `${SP2_SITE_URL}/v2/chapter-1`,
-    book_link: `${SP2_SITE_URL}/v2?utm_source=email&utm_medium=sp2_sequence`,
+    chapter_link: `${SP2_SITE_URL}/read`,
+    book_link: `${SP2_SITE_URL}/?utm_source=email&utm_medium=sp2_sequence`,
   };
 }
 

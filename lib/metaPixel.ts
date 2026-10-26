@@ -2,8 +2,8 @@
  * Meta (Facebook) pixel, dormant until NEXT_PUBLIC_META_PIXEL_ID is set (in Vercel, then redeploy).
  * With no ID every function here does nothing and no Meta script is loaded.
  *
- * Events: PageView on funnel pages (FunnelTracker), InitiateCheckout on /v2/checkout,
- * Purchase (value + currency) on /v2/thank-you. Each event carries the landing variant
+ * Events: PageView on funnel pages (FunnelTracker), InitiateCheckout on /checkout,
+ * Purchase (value + currency) on /thank-you. Each event carries the landing variant
  * (lib/variant.ts) as a custom parameter, so ads can be compared by page.
  */
 

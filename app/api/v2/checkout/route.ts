@@ -1,5 +1,5 @@
 /**
- * POST /api/v2/checkout
+ * POST /api/checkout
  *
  * Starts a Stripe PaymentIntent for the v2 book (paperback $67 or hardcover $97,
  * digital book and bonuses included), optionally with the 100 Ready-to-Use Replies
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     try {
       const confirmed = await stripe.paymentIntents.confirm(intent.id, {
         confirmation_token: confirmationToken,
-        return_url: `${new URL(req.url).origin}/v2/upsell`,
+        return_url: `${new URL(req.url).origin}/upsell`,
       });
       return NextResponse.json({ ...base, status: confirmed.status });
     } catch (err) {

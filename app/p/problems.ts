@@ -6,7 +6,7 @@
  * Every hook and headline must pass research/problems/directness-test.md (in the shadow-persuasion research folder).
  * Every tool, reply and quote must come from the book (book-v3/drafts). Plain English, no em-dashes.
  */
-import type { Excerpt } from '../a/angles';
+import type { Excerpt } from '../b/SamplePage';
 import narcParent from './data/narcissistic-parent';
 import gaslighting from './data/gaslighting';
 import narcEx from './data/narcissistic-ex';
@@ -48,29 +48,25 @@ export type Problem = {
   h1Gold: string;
   /** One or two sentences under the headline. */
   lead: string;
-  /** 3 to 5 outcome bullets in the first screen. */
-  bullets: string[];
+  /** The small link at the top right that jumps to the free tool; names the deliverable, like "Read the 4 replies". */
+  topLink: string;
   /** Button text in the first screen, like "YES! Show Me the 4 Replies". It jumps to the tool. */
   cta: string;
   /** Reassurance under the button, like "Free. No sign-up. Use them on the next call." */
   ctaNote: string;
-  /** The card shown beside the headline on desktop: a real example of the tool. */
-  teaser: { label: string; lines: string[]; note?: string };
   tool: { kicker: string; title: string; intro: string; blocks: Block[] };
   why: { kicker: string; title: string; intro: string; items: { title: string; text: string }[] };
+  /** One line naming the chapter to read first, shown on the first offer, like "Start with Chapter 9 for the silent treatment." */
+  startHere: string;
   bridge: { title: string; blocks: Block[] };
   pull: string;
-  /** Button to the sales page, like "See the full method for dealing with a narcissistic parent →". */
-  finalCta: string;
   /** Honest limits and safety lines shown small near the end (one per entry). */
   limits: string[];
   /** What the book adds for THIS problem: page-numbered bullets (chapter + exact ## heading). */
   inside: { kicker: string; title: string; intro: string; items: { ch: number; section: string; text: string }[] };
-  /** 2 to 3 word-for-word passages from the book about this problem. */
+  /** 2 to 3 word-for-word passages from the book. The first one is shown right after the bridge as proof; each must
+   * stop before the scene the bridge, inside list or P.S. sells as book-only. */
   excerpts: Excerpt[];
-  /** Who this is for and not for, in this problem's terms. */
-  forYou: string[];
-  notForYou: string[];
   /** Headline over the offer, in this problem's terms, like "Get the book that answers her". */
   offerTitle: string;
   /** 5 to 8 questions this reader actually has about this problem. */

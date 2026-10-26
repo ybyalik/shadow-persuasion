@@ -19,7 +19,7 @@ export type Landing = { variant: string; utms: Utms; landedAt: string };
 /** What the checkout request carries. Every field is optional and checked again on the server. */
 export type Attribution = Partial<Record<'variant' | (typeof UTM_KEYS)[number], string>>;
 
-/** "/a/parent/" becomes "a/parent", "/" becomes "home". Only letters, digits, "/", "-" and "_" survive. */
+/** "/b/gaslighting/" becomes "b/gaslighting", "/" becomes "home". Only letters, digits, "/", "-" and "_" survive. */
 export function variantFromPath(pathname: string): string {
   const clean = pathname
     .toLowerCase()

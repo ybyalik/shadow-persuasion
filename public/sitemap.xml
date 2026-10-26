@@ -6,13 +6,9 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://shadowpersuasion.com/career</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://shadowpersuasion.com/privacy</loc>
   </url>
   <url>
-    <loc>https://shadowpersuasion.com/login</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://shadowpersuasion.com/terms</loc>
   </url>
 </urlset>

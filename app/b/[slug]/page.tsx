@@ -1,10 +1,11 @@
 /**
- * One page per specific problem: ads go straight here. Copy: app/p/data/[slug].ts. View: app/b/ProblemView.tsx.
+ * One page per specific problem: ads go straight here. Copy: app/p/data/[slug].ts and app/p/sections/[slug].ts. View: app/b/ProblemView.tsx.
  * Hidden from search engines.
  */
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PROBLEMS, getProblem } from '../../p/problems';
+import { SECTIONS } from '../../p/sections/index';
 import { ProblemView } from '../ProblemView';
 
 export const dynamicParams = false;
@@ -22,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProblemPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const p = getProblem(slug);
-  if (!p) notFound();
-  return <ProblemView p={p} />;
+  const s = SECTIONS[slug];
+  if (!p || !s) notFound();
+  return <ProblemView p={p} s={s} />;
 }
