@@ -36,7 +36,7 @@ function UpsellOffer() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch('/api/upsell', {
+      const res = await fetch('/api/v2/upsell', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentIntentId: pi }),

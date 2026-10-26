@@ -236,7 +236,7 @@ function Checkout({ initialFormat }: { initialFormat: Format }) {
         return { error: friendly || GENERIC_ERROR };
       }
       // attribution: which sales page this visit started on, plus UTM tags (lib/variant.ts).
-      const { ok, data } = await postJson('/api/checkout', { ...body, format, includeBump, confirmationTokenId: confirmationToken.id, attribution: getAttribution() });
+      const { ok, data } = await postJson('/api/v2/checkout', { ...body, format, includeBump, confirmationTokenId: confirmationToken.id, attribution: getAttribution() });
       if (!ok || typeof data.paymentIntentId !== 'string') {
         return { error: typeof data.error === 'string' ? data.error : 'Could not start checkout. Please try again.' };
       }
