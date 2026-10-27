@@ -1,5 +1,5 @@
 import { stripe } from '@/lib/stripe';
-import { SP2_FUNNEL, SP2_IS_TEST, SP2_PHYSICAL, SP2_UPSELL_FUNNEL, isSp2Slug, sp2TotalCents, type Sp2Slug } from './config';
+import { SP2_FUNNEL, SP2_IS_TEST, SP2_LEAD_FUNNEL, SP2_PHYSICAL, SP2_UPSELL_FUNNEL, isSp2Slug, sp2TotalCents, type Sp2Slug } from './config';
 import { startPrintJob } from './print';
 import { BOOK_ACCESS_DAYS, grantAccess } from '@/lib/access';
 import { sendSp2DeliveryEmail, sp2db, sp2DownloadLinks } from './server';
@@ -71,6 +71,13 @@ export async function fulfillSp2Order(paymentIntentId: string): Promise<Sp2Fulfi
         .from('sp2_subscribers')
         .update({ status: 'converted', converted_at: new Date().toISOString(), next_send_at: null, order_id: orderId ?? null })
         .ilike('email', email)
+        .neq('status', 'converted');
+      // And the cart-recovery reminders (app/api/cron/sp2-cart-recovery).
+      await sp2db
+        .from('checkout_leads')
+        .update({ status: 'converted', converted_at: new Date().toISOString(), order_id: orderId ?? null, stripe_payment_intent_id: intent.id })
+        .ilike('email', email)
+        .eq('funnel', SP2_LEAD_FUNNEL)
         .neq('status', 'converted');
     }
 

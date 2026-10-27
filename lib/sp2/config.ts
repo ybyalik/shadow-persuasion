@@ -12,6 +12,8 @@
 import { BOOK_EDITION, type BookEdition } from '@/lib/edition';
 
 export const SP2_FUNNEL = 'sp2_checkout';
+/** checkout_leads.funnel for emails typed at /checkout (cart-recovery reminders). */
+export const SP2_LEAD_FUNNEL = 'sp2';
 export const SP2_UPSELL_FUNNEL = 'sp2_upsell';
 
 export type Sp2Slug = 'sp2_book' | 'sp2_book_hc' | 'sp2_scripts' | 'sp2_upsell';

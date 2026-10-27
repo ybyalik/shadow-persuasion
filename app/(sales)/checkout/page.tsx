@@ -174,6 +174,21 @@ function Checkout({ initialFormat }: { initialFormat: Format }) {
   const baseCents = bookCents + (includeBump ? BUMP_CENTS : 0);
   const total = baseCents + shippingCents;
 
+  // Save the email once it looks complete, so someone who leaves without paying can get the
+  // three reminder emails (app/api/v2/lead, app/api/cron/sp2-cart-recovery). Never blocks checkout.
+  const savedLead = useRef('');
+  useEffect(() => {
+    const clean = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean)) return;
+    const key = `${clean}|${format}|${includeBump}`;
+    if (savedLead.current === key) return;
+    const t = setTimeout(() => {
+      savedLead.current = key;
+      postJson('/api/v2/lead', { email: clean, format, includeBump, attribution: getAttribution() }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [email, format, includeBump]);
+
   // Keep the wallet / card amount in step with the page.
   useEffect(() => {
     elements?.update({ amount: total });

@@ -5,6 +5,7 @@ import { SP2_EMAILS, type Sp2Email } from './content.generated';
 import { SP2_EMAILS_V3 } from './emails-v3.generated';
 import { byEdition } from '@/lib/edition';
 import { SP2_PRODUCTS, SP2_SITE_URL, sp2Describe, type Sp2Slug } from './config';
+import { CART_RECOVERY_EMAILS } from './cart-recovery-emails';
 
 export const sp2db = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,6 +106,56 @@ export async function sendSequenceEmail(opts: {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await logSend({ template_key: templateKey, to: opts.to, subject: email.subject, status: 'failed', error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+/* ───────────── Cart-recovery reminders ───────────── */
+
+/** Renders one reminder (1, 2 or 3) for someone who typed their email at /checkout and left. */
+export function renderCartRecoveryEmail(step: number, opts: { to: string; format?: string }) {
+  const email = CART_RECOVERY_EMAILS.find((e) => e.step === step);
+  if (!email) return null;
+  const unsubscribeUrl = buildUnsubscribeUrl(opts.to);
+  const format = opts.format === 'hardcover' ? '&format=hardcover' : '';
+  const vars = {
+    checkout_link: `${SP2_SITE_URL}/checkout?utm_source=email&utm_medium=recovery&utm_content=step_${step}${format}`,
+    chapter_link: `${SP2_SITE_URL}/read?utm_source=email&utm_medium=recovery&utm_content=step_${step}`,
+  };
+  const why = 'You’re getting this because you started an order at shadowpersuasion.com.';
+  const footerHtml = `<p style="margin-top:28px;padding-top:14px;border-top:1px solid #e6e0d5;font-size:12px;line-height:1.6;color:#8a7d68;">${why} <a href="${unsubscribeUrl}" style="color:#8a7d68;">Unsubscribe</a> anytime.</p>`;
+  return {
+    subject: email.subject,
+    unsubscribeUrl,
+    html: wrapHtml(fillPlaceholders(email.html, vars), email.preview, footerHtml),
+    text: `${fillPlaceholders(email.text, vars)}\n\n---\n${why}\nUnsubscribe: ${unsubscribeUrl}`,
+  };
+}
+
+export async function sendCartRecoveryEmail(step: number, opts: { to: string; format?: string }): Promise<{ ok: boolean; id?: string | null; error?: string }> {
+  const r = renderCartRecoveryEmail(step, opts);
+  const templateKey = `sp2_cart_${step}`;
+  if (!r) return { ok: false, error: 'no such email' };
+  if (!resend) return { ok: false, error: 'Resend not configured' };
+  if (await isUnsubscribed(opts.to)) {
+    await logSend({ template_key: templateKey, to: opts.to, subject: r.subject, status: 'skipped', error: 'recipient unsubscribed' });
+    return { ok: false, error: 'unsubscribed' };
+  }
+  try {
+    const res = await resend.emails.send({
+      from: buildFromAddress(null),
+      to: opts.to,
+      subject: r.subject,
+      html: r.html,
+      text: r.text,
+      headers: { 'List-Unsubscribe': `<${r.unsubscribeUrl}>` },
+    });
+    if (res.error) throw new Error(res.error.message);
+    await logSend({ template_key: templateKey, to: opts.to, subject: r.subject, status: 'sent', provider_id: res.data?.id ?? null });
+    return { ok: true, id: res.data?.id ?? null };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await logSend({ template_key: templateKey, to: opts.to, subject: r.subject, status: 'failed', error: msg });
     return { ok: false, error: msg };
   }
 }
