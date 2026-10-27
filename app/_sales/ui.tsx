@@ -41,29 +41,17 @@ export function StaggerItem({ children, className }: { children: React.ReactNode
   return <div className={className}>{children}</div>;
 }
 
-/** The site logo: the queen mark (logo-queen.png, used as a mask so it takes the text colour) and the name in Cinzel. */
-export function Logo({ href = '/', className = '' }: { href?: string | null; className?: string }) {
-  const inner = (
-    <>
-      <span
-        aria-hidden
-        className="block w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] bg-current shrink-0"
-        style={{ WebkitMask: 'url(/v2/img/logo-queen.png) center/contain no-repeat', mask: 'url(/v2/img/logo-queen.png) center/contain no-repeat' }}
-      />
-      <span className="text-[14px] sm:text-[15px] leading-[1.05] tracking-[0.06em]" style={{ fontFamily: 'var(--font-sp2-logo), serif' }}>
-        Shadow
-        <br />
-        Persuasion
-      </span>
-    </>
-  );
-  const cls = `inline-flex items-center gap-2.5 ${className}`;
+/** The site logo: the SP monogram and name (public/v2/img/logo-sp-*.webp). `tone` matches the header: cream on dark, ink on light. */
+export function Logo({ href = '/', tone = 'dark', className = '' }: { href?: string | null; tone?: 'dark' | 'light'; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  const img = <img src={`/v2/img/logo-sp-${tone}.webp`} alt="Shadow Persuasion" width={539} height={180} className="h-[42px] sm:h-[54px] w-auto block" />;
+  const cls = `inline-flex items-center ${className}`;
   return href ? (
     <Link href={href} className={cls} aria-label="Shadow Persuasion home">
-      {inner}
+      {img}
     </Link>
   ) : (
-    <span className={cls}>{inner}</span>
+    <span className={cls}>{img}</span>
   );
 }
 

@@ -65,7 +65,7 @@ function ThankYou() {
     <main className="pb-16">
       <section className="bg-[color:var(--sp2-paper)]">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-6 pb-14 sm:pb-20">
-          <Logo className="text-[color:var(--sp2-accent)]" />
+          <Logo tone="light" />
           <div className="grid md:grid-cols-[1.1fr_1fr] gap-10 items-center mt-10">
             <div>
               <p className="sp2-kicker">Thank you. You just took the first step.</p>

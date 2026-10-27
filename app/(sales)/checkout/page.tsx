@@ -132,7 +132,7 @@ function CheckoutShell() {
     <main className="sp2-ui min-h-screen bg-[color:var(--sp2-paper)] text-[17px]">
       <header className="sticky top-0 z-30 bg-[color:var(--sp2-black)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[56px] flex items-center justify-between gap-3">
-          <Logo className="text-[color:var(--sp2-gold)] py-2" />
+          <Logo className="py-2" />
           <span className="flex items-center gap-1.5 text-[16px] whitespace-nowrap text-white/80">
             <Lock className="h-4 w-4" aria-hidden /> Secure checkout
           </span>

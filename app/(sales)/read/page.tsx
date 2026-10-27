@@ -19,7 +19,7 @@ export default function FreeChapterPage() {
     <main>
       <header className="bg-[color:var(--sp2-paper)]">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-6 flex items-center justify-between">
-          <Logo className="text-[color:var(--sp2-accent)]" />
+          <Logo tone="light" />
           <Link href="/checkout" className="sp2-small underline underline-offset-4">
             Get the full book
           </Link>

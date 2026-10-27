@@ -129,7 +129,7 @@ export function ProblemView({ p, s }: { p: Problem; s: ProblemSections }) {
       <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
         <div className="bg-[color:var(--sp2-oxblood)] text-white text-center sp2-type text-[11px] sm:text-[15px] tracking-[0.06em] sm:tracking-[0.08em] uppercase px-3 py-2 sm:py-2.5">{p.topBar}</div>
         <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between gap-6">
-          <Logo className="text-[color:var(--sp2-gold)]" />
+          <Logo />
           <a href="#tool" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)] text-right">{p.topLink} ↓</a>
         </header>
         <div className="relative max-w-[1320px] mx-auto px-5 sm:px-10 pt-5 sm:pt-14 pb-36 sm:pb-44 grid lg:grid-cols-12 gap-x-10 items-center">

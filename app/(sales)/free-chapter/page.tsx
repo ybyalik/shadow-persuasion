@@ -30,7 +30,7 @@ export default function FreeChapterSentPage() {
       {/* ═══ CHECK YOUR EMAIL ═══ */}
       <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
         <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between">
-          <Logo className="text-[color:var(--sp2-gold)]" />
+          <Logo />
           <a href="#order" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)]">
             Get the book
           </a>
