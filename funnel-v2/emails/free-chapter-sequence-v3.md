@@ -6,9 +6,9 @@
 
 **From:** Nate Harlan
 
-**Assumes:** the free chapter is Chapter 4, "The Voice That Keeps You Stuck" (it opens with the 3 a.m. replay), served at /v2/chapter-1. If the funnel gives away a different chapter, change Emails 1 and 2.
+**Assumes:** the free chapter is Chapter 4, "The Voice That Keeps You Stuck" (it opens with the 3 a.m. replay), served at /read. If the funnel gives away a different chapter, change Emails 1 and 2.
 
-**Offer facts used (check before launch):** paperback $67 with US shipping included; the digital edition; The 21-Day Power Reset Journal; three bonuses (The Tactic Spotter, The Conversation Planner, The Power Map and Decision Cards); 60 days of the companion app, then $9.99 a month if you keep it, cancel anytime; 30-day money-back guarantee.
+**Offer facts used (check before launch):** paperback $67 with US shipping included; the digital edition; The 21-Day Power Reset Journal; three bonuses (The Tactic Spotter, The Conversation Planner, The Power Map and Decision Cards); hardcover $97 (same book and extras); 60 days of the companion app, never renewed automatically, $9.99 a month only if you choose to keep it; 30 days from delivery to return the book for a full refund; not available on Amazon.
 
 **Placeholders:** `{{first_name}}` (fallback: "there"), `{{chapter_link}}`, `{{book_link}}`. The unsubscribe link is added by the email system.
 
@@ -154,7 +154,7 @@ The book goes in this order, on purpose:
 
 Every technique in it is one you could explain openly to the person affected.
 
-It's $67 for the paperback, shipped free in the US, with the digital edition, The 21-Day Power Reset Journal and three bonuses included, so you can start right away. Plus 60 days of the companion app, and a 30-day money-back guarantee.
+It's $67 for the paperback, shipped free in the US, with the digital edition, The 21-Day Power Reset Journal and three bonuses included, so you can start right away. Plus 60 days of the companion app. If it isn't for you, you have 30 days from delivery to return the book for a full refund.
 
 [Get the full book]({{book_link}})
 
@@ -248,7 +248,7 @@ You paste in a message, or a screenshot of a conversation, and it tells you plai
 
 It's not therapy, and it won't tell you what someone is thinking. It helps you slow down and choose your answer.
 
-Your purchase includes 60 days of the app. After that it's $9.99 a month if you want to keep it, and you can cancel anytime.
+Your purchase includes 60 days of the app. It never renews on its own. If you want to keep it after that, it's $9.99 a month, and only if you choose it.
 
 [Get the book and the app]({{book_link}})
 
@@ -286,13 +286,15 @@ Nate
 
 Hi {{first_name}},
 
-The paperback is $67, shipped free in the US. That's more than most books, so here's what's included.
+The paperback is $67, shipped free in the US (or $97 for the hardcover, same book and extras). That's more than most books, so here's what's included.
 
 The paperback, plus the digital edition so you can start today. The 21-Day Power Reset Journal, with a page for every day. Three bonuses: The Tactic Spotter (common pressure moves and one calm reply for each), The Conversation Planner (prepare one hard conversation, start to finish) and The Power Map and Decision Cards (the book's eight tools, one card each). And 60 days of the companion app.
 
 The price is also a small commitment, on purpose. A cheap book is easy to buy and never open. This one is meant to be used.
 
-And there's a plain 30-day money-back guarantee. If it isn't useful, email me and you'll get a refund.
+And there's a plain guarantee. If it isn't useful, email me within 30 days of delivery and send the book back for a full refund.
+
+One more thing: it's only sold on our site, not on Amazon.
 
 If you're not ready, that's fine too. You'll keep getting these notes.
 
@@ -510,7 +512,7 @@ This is the last email in this series. After today you'll only hear from me occa
 
 Over the past two months I've sent you a handful of ideas: the pause before yes, duty versus favor, not arguing about the past, letting silence be someone else's choice, the Clean Ask, a plan for no, and a line between influence and manipulation.
 
-If even one of them has been useful, the book goes much further. It has the full 21-Day Power Reset with its journal, the eight tools, chapters for work, money, partners, exes and family, three bonuses, and 60 days of the companion app. It's $67 for the paperback, shipped free in the US, with everything digital included and a 30-day money-back guarantee.
+If even one of them has been useful, the book goes much further. It has the full 21-Day Power Reset with its journal, the eight tools, chapters for work, money, partners, exes and family, three bonuses, and 60 days of the companion app. It's $67 for the paperback, shipped free in the US, with everything digital included, and 30 days from delivery to return the book for a full refund.
 
 There's no deadline and no special offer. It'll be there whenever you're ready.
 

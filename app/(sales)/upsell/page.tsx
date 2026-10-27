@@ -1,6 +1,6 @@
 'use client';
 
-// The $47 one-click upsell: The Applied Power Playbook Library (lib/sp2/config.ts, sp2_upsell).
+// The $27 one-click upsell: The Applied Power Playbook Library (lib/sp2/config.ts, sp2_upsell).
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -77,10 +77,11 @@ function UpsellOffer() {
         </p>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/v2/img/upsell-pack.jpg" alt="The Applied Power Playbook Library" className="w-full rounded-xl shadow-2xl mb-6 md:mb-10" />
+        <img src="/v2/img/upsell-digital.jpg" alt="The Applied Power Playbook Library, a 121-page PDF, on a tablet and a phone" className="w-full rounded-xl shadow-2xl mb-4" />
+        <p className="sp2-ui text-[17px] text-[color:var(--sp2-muted)] mb-6 md:mb-10">Digital download: a 121-page PDF, emailed to you with your book. Read it on your phone, tablet or computer, or print the worksheets.</p>
         <div className="md:hidden mb-10 text-center">
           <button className="sp2-btn  w-full !py-4" disabled={busy || !pi} onClick={accept}>
-            {busy ? 'Adding...' : 'Yes, add it for $47'}
+            {busy ? 'Adding...' : 'Yes, add it for $27'}
           </button>
           <p className="sp2-ui text-[16px] text-[color:var(--sp2-muted)] mt-2">One click, on the card you just used. Details below.</p>
         </div>
@@ -108,10 +109,10 @@ function UpsellOffer() {
 
         <div className="rounded-xl border-2 border-[color:var(--sp2-ink)] bg-white p-6 sm:p-8 text-center shadow-[0_30px_60px_-40px_rgba(0,0,0,0.5)]">
           <p className="text-[22px] sm:text-[26px] font-semibold leading-snug">
-            Add The Applied Power Playbook Library for <span className="text-[color:var(--sp2-accent)]">$47</span>
+            Add The Applied Power Playbook Library for <span className="text-[color:var(--sp2-accent)]">$27</span>
           </p>
           <p className="sp2-ui text-[17px] text-[color:var(--sp2-muted)] mt-2 mb-6">
-            One click. It goes on the card you just used, so there is nothing to type. Emailed with your book.
+            One click. It goes on the card you just used, so there is nothing to type. A 121-page PDF, emailed with your book.
           </p>
           {error && <p className="sp2-ui text-[16px] text-[color:var(--sp2-oxblood)] mb-4">{error}</p>}
           <button className="sp2-btn  w-full sm:w-auto sm:min-w-[360px] !py-5 !text-[18px]" disabled={busy || !pi} onClick={accept}>

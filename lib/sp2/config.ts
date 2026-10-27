@@ -99,7 +99,7 @@ export const SP2_PRODUCTS: Record<Sp2Slug, { name: string; description: string; 
   sp2_upsell: {
     name: 'The Applied Power Playbook Library',
     description: '20 playbooks in four sections (work and pay, clients and money, relationships and family, endings and transitions), each taking one situation from preparation to follow-up.',
-    priceCents: 4700,
+    priceCents: 2700,
     downloads: sp2Downloads('sp2_upsell'),
   },
 };

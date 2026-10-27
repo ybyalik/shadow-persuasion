@@ -2,7 +2,7 @@
  * POST /api/upsell
  *
  * One-click upsell for the v2 funnel: charges the card saved at checkout for
- * The Applied Power Playbook Library ($47), then delivers it (lib/sp2/fulfill.ts).
+ * The Applied Power Playbook Library ($27), then delivers it (lib/sp2/fulfill.ts).
  * Replaces the old Playbooks + Vault upsell for v2 buyers.
  *
  * Body: { paymentIntentId }  (the original book payment)
