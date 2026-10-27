@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Logo } from '../../_sales/ui';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -132,9 +132,7 @@ function CheckoutShell() {
     <main className="sp2-ui min-h-screen bg-[color:var(--sp2-paper)] text-[17px]">
       <header className="sticky top-0 z-30 bg-[color:var(--sp2-black)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[56px] flex items-center justify-between gap-3">
-          <Link href="/" className="sp2-type text-[16px] tracking-[0.08em] sm:tracking-[0.2em] whitespace-nowrap text-[color:var(--sp2-gold)] py-3">
-            SHADOW PERSUASION
-          </Link>
+          <Logo className="text-[color:var(--sp2-gold)] py-2" />
           <span className="flex items-center gap-1.5 text-[16px] whitespace-nowrap text-white/80">
             <Lock className="h-4 w-4" aria-hidden /> Secure checkout
           </span>

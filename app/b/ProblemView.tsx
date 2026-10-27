@@ -12,7 +12,7 @@ import { AboutBook, Footer, OfferBox, GuaranteeNight, Heading, Letter, Night, Or
 import { Mark, MarginNote } from '../_sales/editorial';
 import { ForYou, NiceLoop, StickyBuyBar, TacticRolodex } from '../_sales/interactive';
 import { SubscribeForm } from '../_sales/SubscribeForm';
-import { BuyButton, BuyNote } from '../_sales/ui';
+import { BuyButton, BuyNote, Logo } from '../_sales/ui';
 import { pageRef, pageRefShort } from '../_sales/pageRef';
 import { SamplePage } from './SamplePage';
 import type { Block, Problem } from '../p/problems';
@@ -129,7 +129,7 @@ export function ProblemView({ p, s }: { p: Problem; s: ProblemSections }) {
       <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
         <div className="bg-[color:var(--sp2-oxblood)] text-white text-center sp2-type text-[11px] sm:text-[15px] tracking-[0.06em] sm:tracking-[0.08em] uppercase px-3 py-2 sm:py-2.5">{p.topBar}</div>
         <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between gap-6">
-          <span className="sp2-type text-[16px] tracking-[0.14em] text-[color:var(--sp2-gold)]">SHADOW PERSUASION</span>
+          <Logo className="text-[color:var(--sp2-gold)]" />
           <a href="#tool" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)] text-right">{p.topLink} ↓</a>
         </header>
         <div className="relative max-w-[1320px] mx-auto px-5 sm:px-10 pt-5 sm:pt-14 pb-36 sm:pb-44 grid lg:grid-cols-12 gap-x-10 items-center">

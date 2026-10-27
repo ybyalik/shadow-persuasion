@@ -4,6 +4,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Logo } from '../../_sales/ui';
 
 const SECTIONS = [
   {
@@ -54,7 +55,7 @@ function UpsellOffer() {
     <main className="pb-16">
       <div className="bg-[color:var(--sp2-black)] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="sp2-type text-[16px] tracking-[0.25em] text-[color:var(--sp2-gold)]">SHADOW PERSUASION</span>
+          <Logo href={null} className="text-[color:var(--sp2-gold)]" />
           <span className="sp2-ui text-[16px] text-white/85">Step 3 of 3: one optional add-on</span>
         </div>
         {/* progress */}

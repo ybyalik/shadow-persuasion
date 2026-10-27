@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Caveat, Courier_Prime, EB_Garamond, Inter, Source_Serif_4 } from 'next/font/google';
+import { Caveat, Cinzel, Courier_Prime, EB_Garamond, Inter, Source_Serif_4 } from 'next/font/google';
 import './sales.css';
 import { FunnelTracker } from '../_sales/FunnelTracker';
 
@@ -10,6 +10,8 @@ const display = EB_Garamond({ subsets: ['latin'], variable: '--font-sp2-display'
 const ui = Inter({ subsets: ['latin'], variable: '--font-sp2-ui', display: 'swap' });
 const hand = Caveat({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-hand', display: 'swap' });
 const type = Courier_Prime({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-sp2-type', display: 'swap' });
+// The logo's name (ui.tsx Logo).
+const logo = Cinzel({ subsets: ['latin'], weight: ['400'], variable: '--font-sp2-logo', display: 'swap' });
 
 // Hidden from search engines by default; the homepage (page.tsx) opts back in.
 export const metadata: Metadata = {
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function SalesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`sp2 ${serif.variable} ${display.variable} ${ui.variable} ${type.variable} ${hand.variable}`}>
+    <div className={`sp2 ${serif.variable} ${display.variable} ${ui.variable} ${type.variable} ${hand.variable} ${logo.variable}`}>
       {/* First, so the landing page is saved before any page's own tracking runs. */}
       <FunnelTracker />
       {children}

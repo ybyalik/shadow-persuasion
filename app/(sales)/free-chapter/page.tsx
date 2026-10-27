@@ -4,12 +4,11 @@
  * get it for free); it lives at /read, which is linked only from the welcome email. This page says
  * "check your email", then makes the case to buy the book now, with the same offer as the sales page.
  */
-import Link from 'next/link';
 import { FREE_CHAPTER_V3_TITLE } from '@/lib/sp2/free-chapter-v3.generated';
 import { IS_V3 } from '@/lib/edition';
 import { Footer, GuaranteeNight, Heading, OrderCards, Sheet, StackList } from '../../_sales/blocks';
 import { MarginNote } from '../../_sales/editorial';
-import { BuyButton, BuyNote } from '../../_sales/ui';
+import { BuyButton, BuyNote, Logo } from '../../_sales/ui';
 
 const FREE_TITLE = IS_V3 ? FREE_CHAPTER_V3_TITLE : 'The 3 A.M. Replay';
 
@@ -31,9 +30,7 @@ export default function FreeChapterSentPage() {
       {/* ═══ CHECK YOUR EMAIL ═══ */}
       <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
         <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between">
-          <Link href="/" className="sp2-type text-[16px] tracking-[0.14em] text-[color:var(--sp2-gold)]">
-            SHADOW PERSUASION
-          </Link>
+          <Logo className="text-[color:var(--sp2-gold)]" />
           <a href="#order" className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)]">
             Get the book
           </a>

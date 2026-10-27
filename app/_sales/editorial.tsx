@@ -9,6 +9,7 @@
  */
 
 import Link from 'next/link';
+import { Logo } from './ui';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
 import { pageRef } from './pageRef';
@@ -65,7 +66,7 @@ export function Hero({
   return (
     <section className="relative bg-[color:var(--sp2-night)] text-[#efe7da] sp2-grain">
       <header className="max-w-[1320px] mx-auto px-5 sm:px-10 pt-6 flex items-center justify-between">
-        <span className="sp2-type text-[16px] tracking-[0.14em] text-[color:var(--sp2-gold)]">SHADOW PERSUASION</span>
+        <Logo className="text-[color:var(--sp2-gold)]" />
         <Link href={href} className="sp2-small underline underline-offset-[6px] decoration-[color:var(--sp2-gold)]">
           Get the book
         </Link>

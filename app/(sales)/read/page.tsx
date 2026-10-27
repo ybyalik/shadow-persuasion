@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
+import { Logo } from '../../_sales/ui';
 import { CHAPTER_ONE_HTML } from '@/lib/sp2/content.generated';
 import { FREE_CHAPTER_V3_HTML, FREE_CHAPTER_V3_TITLE } from '@/lib/sp2/free-chapter-v3.generated';
 import { IS_V3 } from '@/lib/edition';
@@ -18,9 +19,7 @@ export default function FreeChapterPage() {
     <main>
       <header className="bg-[color:var(--sp2-paper)]">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-6 flex items-center justify-between">
-          <Link href="/" className="sp2-type text-[16px] tracking-[0.12em] text-[color:var(--sp2-accent)]">
-            SHADOW PERSUASION
-          </Link>
+          <Logo className="text-[color:var(--sp2-accent)]" />
           <Link href="/checkout" className="sp2-small underline underline-offset-4">
             Get the full book
           </Link>
