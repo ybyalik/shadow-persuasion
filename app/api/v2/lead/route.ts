@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       email,
       funnel: SP2_LEAD_FUNNEL,
       status: 'created',
+      is_test: SP2_IS_TEST,
       ...cart,
       ip_address: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
       user_agent: req.headers.get('user-agent') || null,

@@ -259,14 +259,15 @@ export async function GET(req: Request) {
     const bumpPaid = new Set<string>();
     const upsell1Paid = new Set<string>();
     for (const s of sessions) {
-      if (s.items.includes('book') && s.statusCounts.paid) bookPaid.add(s.email);
-      if (s.items.includes('briefing') && s.statusCounts.paid) bumpPaid.add(s.email);
-      if ((s.items.includes('playbooks') || s.items.includes('vault')) && s.statusCounts.paid) {
+      const book = ['book', 'sp2_book', 'sp2_book_hc'].some((i) => s.items.includes(i));
+      if (book && s.statusCounts.paid) bookPaid.add(s.email);
+      if ((s.items.includes('briefing') || s.items.includes('sp2_scripts')) && s.statusCounts.paid) bumpPaid.add(s.email);
+      if ((s.items.includes('playbooks') || s.items.includes('vault') || s.items.includes('sp2_upsell')) && s.statusCounts.paid) {
         upsell1Paid.add(s.email);
       }
     }
     const upsell2Taken = sessions.filter(
-      (s) => s.has_subscription && s.items.includes('book')
+      (s) => s.has_subscription && ['book', 'sp2_book', 'sp2_book_hc'].some((i) => s.items.includes(i))
     ).length;
 
     return NextResponse.json({

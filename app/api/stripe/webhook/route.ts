@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { sendDeliveryEmail } from '@/lib/email';
-import type { ProductSlug } from '@/lib/pricing';
 import { fulfillSp2Order } from '@/lib/sp2/fulfill';
 import { SP2_FUNNEL, SP2_UPSELL_FUNNEL } from '@/lib/sp2/config';
 
@@ -96,47 +94,6 @@ export async function POST(req: NextRequest) {
           subscriptionData.user_id = `stripe_${session.customer}`;
           const { error } = await supabase.from('subscriptions').insert(subscriptionData);
           if (error) console.error('[STRIPE WEBHOOK] Supabase insert error (checkout):', error);
-        }
-        break;
-      }
-
-      case 'customer.subscription.created': {
-        // Fires when a subscription is created via API (e.g. the /api/checkout/upsell-app
-        // one-click flow). Checkout Sessions already flow through
-        // `checkout.session.completed`, so we only handle the API-created case here.
-        const subscription = event.data.object as Stripe.Subscription;
-        const funnel = subscription.metadata?.funnel;
-        if (funnel !== 'upsell_app') {
-          // Not our funnel — let `checkout.session.completed` handle it above
-          break;
-        }
-
-        const customerId =
-          typeof subscription.customer === 'string'
-            ? subscription.customer
-            : subscription.customer.id;
-
-        // Pull email from customer
-        const customer = await stripe.customers.retrieve(customerId);
-        const customerEmail =
-          !customer.deleted && 'email' in customer ? customer.email || null : null;
-
-        const userId = `stripe_${customerId}`;
-        const { error } = await supabase.from('subscriptions').upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscription.id,
-            plan: subscription.metadata?.plan || 'monthly',
-            status: subscription.status === 'active' ? 'active' : subscription.status,
-            current_period_end: getSubscriptionPeriodEnd(subscription),
-            email: customerEmail,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        );
-        if (error) {
-          console.error('[STRIPE WEBHOOK] Supabase insert error (upsell sub.created):', error);
         }
         break;
       }
@@ -236,7 +193,7 @@ export async function POST(req: NextRequest) {
         break;
       }
 
-      /* ──────────────── One-time product flow (book funnel) ──────────────── */
+      /* ──────────────── One-time purchases (book, bump, upsell) ──────────────── */
       case 'payment_intent.succeeded': {
         const intent = event.data.object as Stripe.PaymentIntent;
         const funnel = intent.metadata?.funnel;
@@ -246,180 +203,7 @@ export async function POST(req: NextRequest) {
           await fulfillSp2Order(intent.id);
           break;
         }
-
-        // Only handle our funnel payments. Subscription checkout flows through
-        // `checkout.session.completed` above; we don't want to double-handle.
-        if (funnel !== 'book_checkout' && funnel !== 'upsell_playbooks') {
-          break;
-        }
-
-        const itemsCsv = intent.metadata?.items || '';
-        const items = itemsCsv.split(',').filter(Boolean) as ProductSlug[];
-        const email =
-          intent.receipt_email ||
-          (typeof intent.customer === 'string'
-            ? (await stripe.customers.retrieve(intent.customer).then((c) =>
-                !c.deleted && 'email' in c ? c.email || '' : ''
-              ))
-            : '');
-
-        const paymentMethodId =
-          typeof intent.payment_method === 'string'
-            ? intent.payment_method
-            : intent.payment_method?.id || null;
-
-        // Idempotency: Stripe can redeliver this event. If we already recorded
-        // this order as paid AND delivered, this is a duplicate — do nothing
-        // (otherwise we'd email the customer their downloads twice).
-        const { data: existingOrder } = await supabase
-          .from('orders')
-          .select('id, status, delivered_at')
-          .eq('stripe_payment_intent_id', intent.id)
-          .maybeSingle();
-
-        if (existingOrder?.status === 'paid' && existingOrder?.delivered_at) {
-          break;
-        }
-
-        // Flip the pre-created order row to paid. Use .select() so we can tell
-        // whether a row actually matched — an UPDATE that matches zero rows is
-        // NOT an error in Supabase, so we must check the count ourselves.
-        const { data: updatedRows, error: updateErr } = await supabase
-          .from('orders')
-          .update({
-            status: 'paid',
-            stripe_payment_method_id: paymentMethodId,
-          })
-          .eq('stripe_payment_intent_id', intent.id)
-          .select('id');
-
-        if (updateErr) {
-          console.error('[STRIPE WEBHOOK] Order update failed:', updateErr);
-        }
-
-        // Fallback: if no existing row matched (e.g. the checkout-time insert
-        // failed), create the paid order now so the sale is never lost.
-        const matched = (updatedRows?.length ?? 0) > 0;
-        if (!matched) {
-          const { error: insertErr } = await supabase.from('orders').upsert(
-            {
-              email: email || 'unknown@unknown.com',
-              stripe_customer_id:
-                typeof intent.customer === 'string' ? intent.customer : null,
-              stripe_payment_intent_id: intent.id,
-              items,
-              amount_cents: intent.amount,
-              currency: intent.currency,
-              status: 'paid',
-              stripe_payment_method_id: paymentMethodId,
-              metadata: { funnel },
-            },
-            { onConflict: 'stripe_payment_intent_id' }
-          );
-          if (insertErr) {
-            console.error('[STRIPE WEBHOOK] Order fallback insert failed:', insertErr);
-          }
-        }
-
-        // Mark the checkout lead as converted (or recovered if recovery emails
-        // had been sent prior). For book funnel, match by email + funnel;
-        // for upsell funnel there's no lead row so this is a no-op.
-        if (funnel === 'book_checkout' && email) {
-          const { data: lead } = await supabase
-            .from('checkout_leads')
-            .select('id, recovery_emails, status, utm_source, utm_medium, utm_campaign, metadata')
-            .eq('email', email.toLowerCase())
-            .eq('funnel', 'book_checkout')
-            .maybeSingle();
-
-          if (lead) {
-            const recoveryEmailsSent = Array.isArray(lead.recovery_emails)
-              ? lead.recovery_emails.length
-              : 0;
-
-            /**
-             * Decide which recovery email (if any) closed the sale.
-             *
-             * PRIMARY signal — UTMs. If the user clicked a recovery
-             * email CTA, the checkout page captured
-             *   utm_source='email', utm_medium='recovery',
-             *   utm_content='step_N'
-             * into sessionStorage and our lead endpoint stored them on
-             * the lead row. That's a hard confirmation they came from
-             * a specific email.
-             *
-             * FALLBACK — time-based 72h window. For legacy leads that
-             * don't have UTMs (e.g. the user already had a lead, we
-             * sent them a recovery email before this system shipped,
-             * and they converted without clicking the link), we credit
-             * the most recent email sent within 72h of conversion.
-             * Not perfect, but the best we can do when the click
-             * signal is missing.
-             *
-             * Status: `recovered` if the recovery sequence is
-             * credited (either signal); `converted` for organic
-             * (no emails sent at all).
-             */
-            let recoveredByStep: number | null = null;
-            const meta = (lead.metadata as { utm_content?: string } | null) || {};
-            const utmContent = meta.utm_content || null;
-            const isUtmRecovery =
-              lead.utm_source === 'email' &&
-              lead.utm_medium === 'recovery' &&
-              (lead.utm_campaign === 'cart_recovery' || !lead.utm_campaign);
-
-            if (isUtmRecovery && utmContent) {
-              const m = utmContent.match(/^step_(\d+)$/);
-              if (m) recoveredByStep = parseInt(m[1], 10);
-            }
-
-            if (recoveredByStep === null && recoveryEmailsSent > 0) {
-              const cutoff = Date.now() - 72 * 60 * 60 * 1000;
-              const recent = (lead.recovery_emails as Array<{ step: number; sent_at: string }>).filter(
-                (r) => r.sent_at && new Date(r.sent_at).getTime() >= cutoff
-              );
-              if (recent.length > 0) {
-                recoveredByStep = recent[recent.length - 1].step;
-              }
-            }
-
-            // status = 'recovered' if an email contributed (UTM match
-            // OR any email sent at all), otherwise 'converted'.
-            const emailContributed =
-              recoveredByStep !== null || recoveryEmailsSent > 0;
-            const newStatus = emailContributed ? 'recovered' : 'converted';
-
-            await supabase
-              .from('checkout_leads')
-              .update({
-                status: newStatus,
-                converted_at: new Date().toISOString(),
-                recovered_by_email_step: recoveredByStep,
-                stripe_payment_intent_id: intent.id,
-              })
-              .eq('id', lead.id);
-          }
-        }
-
-        // Deliver the goods LAST, and only mark the order delivered once the
-        // email actually sends. If it fails, return 500 so Stripe retries this
-        // event; the idempotency guard above stops a duplicate email once the
-        // send eventually succeeds.
-        if (email && items.length > 0) {
-          const result = await sendDeliveryEmail({ to: email, items });
-          if (result.ok) {
-            await supabase
-              .from('orders')
-              .update({ delivered_at: new Date().toISOString() })
-              .eq('stripe_payment_intent_id', intent.id);
-          } else {
-            console.error('[STRIPE WEBHOOK] Delivery email failed:', result.error);
-            return NextResponse.json(
-              { error: 'Delivery email failed, will retry' },
-              { status: 500 }
-            );
-          }
-        }
+        // Anything else (the old $7 book funnel was retired) is ignored.
         break;
       }
 

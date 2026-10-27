@@ -13,25 +13,28 @@ import {
   ShoppingBag,
   UserPlus,
   BookOpen,
-  Shuffle,
-  FolderTree,
   DollarSign,
+  Truck,
+  KeyRound,
+  Mail,
   TrendingUp,
   Activity,
   ArrowRight,
 } from 'lucide-react';
 
 type DashboardStats = {
-  ordersTotal: number;
   ordersPaid: number;
   ordersRefunded: number;
+  last24hOrders: number;
   revenueCents: number;
-  membersTotal: number;
-  membersActive: number;
+  last24hRevenueCents: number;
+  awaitingShipment: number;
+  appActive: number;
+  appKept: number;
+  signups: number;
+  signupsActive: number;
   booksTotal: number;
   chunksTotal: number;
-  last24hOrders: number;
-  last24hRevenueCents: number;
 };
 
 export default function AdminDashboardPage() {
@@ -62,50 +65,14 @@ export default function AdminDashboardPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <MetricCard
-          icon={DollarSign}
-          label="Revenue (All-Time)"
-          value={stats ? fmtDollars(stats.revenueCents) : '…'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Revenue (24h)"
-          value={stats ? fmtDollars(stats.last24hRevenueCents) : '…'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={ShoppingBag}
-          label="Total Orders"
-          value={stats ? String(stats.ordersTotal) : '…'}
-          sublabel={stats ? `${stats.ordersPaid} paid · ${stats.ordersRefunded} refunded` : undefined}
-          loading={loading}
-        />
-        <MetricCard
-          icon={Activity}
-          label="Orders (24h)"
-          value={stats ? String(stats.last24hOrders) : '…'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={Users}
-          label="Members"
-          value={stats ? String(stats.membersTotal) : '…'}
-          sublabel={stats ? `${stats.membersActive} active` : undefined}
-          loading={loading}
-        />
-        <MetricCard
-          icon={BookOpen}
-          label="Books Ingested"
-          value={stats ? String(stats.booksTotal) : '…'}
-          loading={loading}
-        />
-        <MetricCard
-          icon={Shuffle}
-          label="Technique Chunks"
-          value={stats ? String(stats.chunksTotal) : '…'}
-          loading={loading}
-        />
+        <MetricCard icon={DollarSign} label="Revenue (all time)" value={stats ? fmtDollars(stats.revenueCents) : '…'} sublabel="Book orders + upsell, incl. shipping" loading={loading} />
+        <MetricCard icon={TrendingUp} label="Revenue (24h)" value={stats ? fmtDollars(stats.last24hRevenueCents) : '…'} loading={loading} />
+        <MetricCard icon={ShoppingBag} label="Book orders" value={stats ? String(stats.ordersPaid) : '…'} sublabel={stats ? `${stats.last24hOrders} in 24h · ${stats.ordersRefunded} refunded` : undefined} loading={loading} />
+        <MetricCard icon={Truck} label="Waiting to ship" value={stats ? String(stats.awaitingShipment) : '…'} sublabel="Paid, not shipped yet" loading={loading} />
+        <MetricCard icon={Users} label="App users (active)" value={stats ? String(stats.appActive) : '…'} sublabel={stats ? `${stats.appKept} kept it at $9.99/mo` : undefined} loading={loading} />
+        <MetricCard icon={UserPlus} label="Free chapter signups" value={stats ? String(stats.signups) : '…'} sublabel={stats ? `${stats.signupsActive} still getting emails` : undefined} loading={loading} />
+        <MetricCard icon={BookOpen} label="Books the app uses" value={stats ? String(stats.booksTotal) : '…'} loading={loading} />
+        <MetricCard icon={Activity} label="Knowledge chunks" value={stats ? String(stats.chunksTotal) : '…'} loading={loading} />
       </div>
 
       {/* Navigation cards */}
@@ -114,42 +81,12 @@ export default function AdminDashboardPage() {
           // SECTIONS //
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <NavCard
-            href="/app/admin/members"
-            icon={Users}
-            title="Members"
-            body="All registered users, SaaS subscribers, activity metrics, plan management."
-          />
-          <NavCard
-            href="/app/admin/orders"
-            icon={ShoppingBag}
-            title="Orders"
-            body="Every one-time purchase, order bump + upsell tracking, refund actions."
-          />
-          <NavCard
-            href="/app/admin/leads"
-            icon={UserPlus}
-            title="Leads"
-            body="Checkout leads captured pre-payment, cart abandonment sequence, recovery stats."
-          />
-          <NavCard
-            href="/app/admin/books"
-            icon={BookOpen}
-            title="Books"
-            body="Upload PDFs, ingest chunks, browse the knowledge base."
-          />
-          <NavCard
-            href="/app/admin/techniques"
-            icon={Shuffle}
-            title="Techniques"
-            body="Find and merge duplicate technique names across the knowledge base."
-          />
-          <NavCard
-            href="/app/admin/taxonomy"
-            icon={FolderTree}
-            title="Taxonomy"
-            body="Manage categories and use cases that classify techniques."
-          />
+          <NavCard href="/app/admin/book-orders" icon={Truck} title="Book orders" body="Every book order, its print status at Lulu, tracking, and resend buttons." />
+          <NavCard href="/app/admin/leads" icon={UserPlus} title="Leads" body="People who typed their email at checkout but didn't pay, and the 3 reminder emails." />
+          <NavCard href="/app/admin/free-chapter" icon={BookOpen} title="Free chapter" body="Free-chapter signups and where each is in the 20-email series." />
+          <NavCard href="/app/admin/access" icon={KeyRound} title="App access" body="Who can use the app, until when, and what their AI use costs." />
+          <NavCard href="/app/admin/emails" icon={Mail} title="Emails" body="Every email the site sends, plus the send log and unsubscribes." />
+          <NavCard href="/app/admin/orders" icon={ShoppingBag} title="All payments" body="Every Stripe charge by customer, refunds, and older orders." />
         </div>
       </div>
     </div>

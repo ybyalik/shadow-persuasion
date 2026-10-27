@@ -203,18 +203,36 @@ function deliveryCopy(appUrl: string) {
   });
 }
 
-export async function sendSp2DeliveryEmail(opts: {
+type Rendered = { subject: string; html: string; text: string };
+
+/** Sends one rendered email through Resend and logs it under `templateKey`. */
+async function deliver(templateKey: string, to: string, r: Rendered): Promise<{ ok: boolean; error?: string }> {
+  if (!resend) return { ok: false, error: 'Resend not configured' };
+  try {
+    const res = await resend.emails.send({ from: buildFromAddress(null), to, subject: r.subject, html: r.html, text: r.text });
+    if (res.error) throw new Error(res.error.message);
+    await logSend({ template_key: templateKey, to, subject: r.subject, status: 'sent', provider_id: res.data?.id ?? null });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await logSend({ template_key: templateKey, to, subject: r.subject, status: 'failed', error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+type DeliveryOpts = {
   to: string;
   items: Sp2Slug[];
   links: { name: string; url: string }[];
   /** The private order-status page (book orders only). */
   orderUrl?: string | null;
-}): Promise<{ ok: boolean; error?: string }> {
+};
+
+export function renderSp2DeliveryEmail(opts: DeliveryOpts): Rendered {
   const isUpsell = opts.items.length === 1 && opts.items[0] === 'sp2_upsell';
   const appUrl = `${SP2_SITE_URL}/login?tab=signup&email=${encodeURIComponent(opts.to)}`;
   const copy = deliveryCopy(appUrl);
   const subject = isUpsell ? copy.upsellSubject : 'Your copy of Shadow Persuasion';
-  if (!resend) return { ok: false, error: 'Resend not configured' };
   const rows = opts.links
     .map((l) => `<p style="margin:10px 0;"><a href="${l.url}" style="color:#8a6d3b;font-weight:bold;">Download: ${l.name}</a></p>`)
     .join('');
@@ -229,34 +247,18 @@ ${opts.orderUrl ? `<p>You can check your order and shipping status any time here
   const text = `Thank you for getting ${sp2Describe(opts.items)}. Your downloads:\n\n${opts.links
     .map((l) => `${l.name}: ${l.url}`)
     .join('\n')}${isUpsell ? '' : `\n\nYour 60 days of the app start now. Create your login (use this email address): ${appUrl}`}${opts.orderUrl ? `\n\nYour order and shipping status: ${opts.orderUrl}` : ''}\n\nNate`;
-  try {
-    const res = await resend.emails.send({
-      from: buildFromAddress(null),
-      to: opts.to,
-      subject,
-      html: wrapHtml(body, 'Your downloads are inside.', ''),
-      text,
-    });
-    if (res.error) throw new Error(res.error.message);
-    await logSend({ template_key: 'sp2_delivery', to: opts.to, subject, status: 'sent', provider_id: res.data?.id ?? null });
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await logSend({ template_key: 'sp2_delivery', to: opts.to, subject, status: 'failed', error: msg });
-    return { ok: false, error: msg };
-  }
+  return { subject, html: wrapHtml(body, 'Your downloads are inside.', ''), text };
 }
 
+export function sendSp2DeliveryEmail(opts: DeliveryOpts) {
+  return deliver('sp2_delivery', opts.to, renderSp2DeliveryEmail(opts));
+}
+
+type ShippedOpts = { to: string; name?: string | null; trackingUrl?: string | null; carrier?: string | null; orderUrl?: string | null };
+
 /** "Your book is on its way" with the tracking link. */
-export async function sendSp2ShippedEmail(opts: {
-  to: string;
-  name?: string | null;
-  trackingUrl?: string | null;
-  carrier?: string | null;
-  orderUrl?: string | null;
-}): Promise<{ ok: boolean; error?: string }> {
+export function renderSp2ShippedEmail(opts: ShippedOpts): Rendered {
   const subject = 'Your copy of Shadow Persuasion is on its way';
-  if (!resend) return { ok: false, error: 'Resend not configured' };
   const first = opts.name?.trim().split(/\s+/)[0] || 'there';
   const track = opts.trackingUrl
     ? `<p><a href="${opts.trackingUrl}" style="color:#8a6d3b;font-weight:bold;">Track your package${opts.carrier ? ` (${opts.carrier})` : ''}</a></p>`
@@ -268,22 +270,18 @@ ${opts.orderUrl ? `<p>Your order page has the same details: <a href="${opts.orde
 <p>While you wait, your digital copy, the journal and the bonuses are all in your earlier download email.</p>
 <p>Nate</p>`;
   const text = `Hi ${first},\n\nYour copy of Shadow Persuasion has been printed and shipped.\n${opts.trackingUrl ? `Track it here: ${opts.trackingUrl}\n` : ''}${opts.orderUrl ? `Your order page: ${opts.orderUrl}\n` : ''}\nNate`;
-  try {
-    const res = await resend.emails.send({ from: buildFromAddress(null), to: opts.to, subject, html: wrapHtml(body, 'Your book has shipped.', ''), text });
-    if (res.error) throw new Error(res.error.message);
-    await logSend({ template_key: 'sp2_shipped', to: opts.to, subject, status: 'sent', provider_id: res.data?.id ?? null });
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await logSend({ template_key: 'sp2_shipped', to: opts.to, subject, status: 'failed', error: msg });
-    return { ok: false, error: msg };
-  }
+  return { subject, html: wrapHtml(body, 'Your book has shipped.', ''), text };
 }
 
+export function sendSp2ShippedEmail(opts: ShippedOpts) {
+  return deliver('sp2_shipped', opts.to, renderSp2ShippedEmail(opts));
+}
+
+type OrderLinksOpts = { to: string; orders: { date: string; description: string; url: string }[] };
+
 /** "Here are your order links": sent when someone looks up their order by email on /order. */
-export async function sendOrderLinksEmail(opts: { to: string; orders: { date: string; description: string; url: string }[] }): Promise<{ ok: boolean; error?: string }> {
+export function renderOrderLinksEmail(opts: OrderLinksOpts): Rendered {
   const subject = 'Your Shadow Persuasion order';
-  if (!resend) return { ok: false, error: 'Resend not configured' };
   const rows = opts.orders
     .map((o) => `<p style="margin:10px 0;"><a href="${o.url}" style="color:#8a6d3b;font-weight:bold;">View your order from ${o.date}</a><br><span style="color:#6b6257;font-size:14px;">${o.description}</span></p>`)
     .join('');
@@ -294,23 +292,19 @@ ${rows}
 <p>If you didn't ask for this, you can ignore it.</p>
 <p>Nate</p>`;
   const text = `Your order page${opts.orders.length > 1 ? 's' : ''}:\n\n${opts.orders.map((o) => `${o.date}: ${o.url}`).join('\n')}\n\nIf you didn't ask for this, you can ignore it.\n\nNate`;
-  try {
-    const res = await resend.emails.send({ from: buildFromAddress(null), to: opts.to, subject, html: wrapHtml(body, 'Your order page link.', ''), text });
-    if (res.error) throw new Error(res.error.message);
-    await logSend({ template_key: 'sp2_order_links', to: opts.to, subject, status: 'sent', provider_id: res.data?.id ?? null });
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await logSend({ template_key: 'sp2_order_links', to: opts.to, subject, status: 'failed', error: msg });
-    return { ok: false, error: msg };
-  }
+  return { subject, html: wrapHtml(body, 'Your order page link.', ''), text };
 }
 
+export function sendOrderLinksEmail(opts: OrderLinksOpts) {
+  return deliver('sp2_order_links', opts.to, renderOrderLinksEmail(opts));
+}
+
+type AppReminderOpts = { to: string; daysLeft: number; endsOn: string };
+
 /** "Your app access ends in N days" with the opt-in link to keep it. */
-export async function sendAppAccessReminder(opts: { to: string; daysLeft: number; endsOn: string }): Promise<{ ok: boolean; error?: string }> {
+export function renderAppAccessReminder(opts: AppReminderOpts): Rendered {
   const soon = opts.daysLeft <= 2;
   const subject = soon ? 'Your Shadow Persuasion app access ends in 2 days' : 'Ten days left on your Shadow Persuasion app';
-  if (!resend) return { ok: false, error: 'Resend not configured' };
   const keepUrl = `${SP2_SITE_URL}/app/keep`;
   const body = `<p>Hi,</p>
 <p>The 60 days of the app that came with your book end on <b>${opts.endsOn}</b>.</p>
@@ -319,14 +313,18 @@ export async function sendAppAccessReminder(opts: { to: string; daysLeft: number
 <p>Either way, the book and everything you downloaded are yours to keep.</p>
 <p>Nate</p>`;
   const text = `Hi,\n\nThe 60 days of the app that came with your book end on ${opts.endsOn}.\n\nTo keep it for $9.99 a month (cancel anytime): ${keepUrl}\nIf you do nothing, your access simply ends and your history stays saved.\n\nNate`;
-  try {
-    const res = await resend.emails.send({ from: buildFromAddress(null), to: opts.to, subject, html: wrapHtml(body, subject, ''), text });
-    if (res.error) throw new Error(res.error.message);
-    await logSend({ template_key: soon ? 'app_access_2d' : 'app_access_10d', to: opts.to, subject, status: 'sent', provider_id: res.data?.id ?? null });
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await logSend({ template_key: soon ? 'app_access_2d' : 'app_access_10d', to: opts.to, subject, status: 'failed', error: msg });
-    return { ok: false, error: msg };
-  }
+  return { subject, html: wrapHtml(body, subject, ''), text };
+}
+
+export function sendAppAccessReminder(opts: AppReminderOpts) {
+  return deliver(opts.daysLeft <= 2 ? 'app_access_2d' : 'app_access_10d', opts.to, renderAppAccessReminder(opts));
+}
+
+/** Free-chapter email `number` exactly as subscribers get it (admin preview). */
+export function renderSequenceEmail(number: number, to = 'reader@example.com'): Rendered | null {
+  const email = getSequenceEmail(number);
+  if (!email) return null;
+  const vars = { first_name: 'there', ...sp2Links() };
+  const footer = `<p style="margin-top:28px;padding-top:14px;border-top:1px solid #e6e0d5;font-size:12px;line-height:1.6;color:#8a7d68;">You're getting this because you downloaded the free chapter of Shadow Persuasion. <a href="${buildUnsubscribeUrl(to)}" style="color:#8a7d68;">Unsubscribe</a> anytime.</p>`;
+  return { subject: email.subject, html: wrapHtml(fillPlaceholders(email.html, vars), email.preview, footer), text: fillPlaceholders(email.text, vars) };
 }

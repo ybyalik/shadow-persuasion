@@ -1,93 +1,25 @@
 /**
- * GET  /api/admin/emails       — List every template
- * POST /api/admin/emails       — Create a brand-new template from scratch
- *
- * Admin-gated in the UI; the API itself trusts that only admins reach it
- * (matches the pattern used by the rest of /api/admin/*).
+ * GET /api/admin/emails             -> { emails: CatalogEntry[] }  every email the site sends (lib/sp2/email-catalog.ts)
+ * GET /api/admin/emails?key=<key>   -> { subject, html }           a preview built by the same code that sends it
  */
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/auth-api';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { emailCatalog, emailPreview } from '@/lib/sp2/email-catalog';
 
 export async function GET(req: Request) {
   try {
     await requireAdmin(req);
-    const { data, error } = await supabase
-      .from('email_templates')
-      .select(
-        'id, key, name, description, trigger_description, subject, from_name, from_email, provider, is_system, enabled, sequence_key, sequence_step, variables, created_at, updated_at'
-      )
-      .order('is_system', { ascending: false })
-      .order('sequence_key', { ascending: true, nullsFirst: false })
-      .order('sequence_step', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return NextResponse.json({ templates: data ?? [] });
-  } catch (err) {
-    const authFail = passthroughAuthError(err);
-    if (authFail) return authFail;
-    return apiError('Something went wrong. Please try again.', 500, '[admin/emails GET]', err);
-  }
-}
-
-/**
- * POST body: { key, name, description?, subject, body_html, body_text,
- *              from_name?, from_email?, variables? }
- *
- * `key` must be unique, lowercase_with_underscores. Created templates
- * are never `is_system` — only seed rows are, and they're inserted by
- * migration.
- */
-export async function POST(req: Request) {
-  try {
-    await requireAdmin(req);
-    const body = await req.json();
-    const key = String(body?.key || '').trim();
-    if (!/^[a-z0-9_]+$/.test(key)) {
-      return NextResponse.json(
-        { error: 'key must be lowercase letters, digits, underscores only' },
-        { status: 400 }
-      );
+    const key = new URL(req.url).searchParams.get('key');
+    if (key) {
+      const p = emailPreview(key);
+      return p ? NextResponse.json(p) : NextResponse.json({ error: 'No such email.' }, { status: 404 });
     }
-    const row: Record<string, unknown> = {
-      key,
-      name: String(body?.name || key),
-      description: body?.description ?? null,
-      trigger_description: body?.trigger_description ?? null,
-      subject: String(body?.subject || ''),
-      body_html: String(body?.body_html || ''),
-      body_text: String(body?.body_text || ''),
-      from_name: body?.from_name ?? null,
-      from_email: body?.from_email ?? null,
-      variables: Array.isArray(body?.variables) ? body.variables : [],
-      provider: 'resend',
-      is_system: false,
-      enabled: body?.enabled !== false,
-      is_transactional: body?.is_transactional === true,
-    };
-    // Sequence fields are optional — only include them if the caller
-    // explicitly set them, otherwise Postgres stores NULL (standalone).
-    if (typeof body?.sequence_key === 'string' && body.sequence_key.trim() !== '')
-      row.sequence_key = body.sequence_key.trim();
-    if (typeof body?.sequence_step === 'number') row.sequence_step = body.sequence_step;
-    if (typeof body?.delay_hours === 'number') row.delay_hours = body.delay_hours;
-    const { data, error } = await supabase
-      .from('email_templates')
-      .insert(row)
-      .select('*')
-      .single();
-    if (error) throw error;
-    return NextResponse.json({ template: data });
+    return NextResponse.json({ emails: emailCatalog() });
   } catch (err) {
     const authFail = passthroughAuthError(err);
     if (authFail) return authFail;
-    return apiError('Something went wrong. Please try again.', 500, '[admin/emails POST]', err);
+    return apiError('Could not load emails.', 500, '[admin/emails]', err);
   }
 }

@@ -16,10 +16,8 @@ import {
   UserPlus,
   BookOpen,
   Shuffle,
-  FolderTree,
   Mail,
   Box,
-  FileText,
   LogOut,
   KeyRound,
   Truck,
@@ -34,11 +32,10 @@ const NAV = [
   { href: '/app/admin/book-orders', label: 'Book orders', icon: Truck },
   { href: '/app/admin/orders',     label: 'Orders',    icon: ShoppingBag },
   { href: '/app/admin/leads',      label: 'Leads',     icon: UserPlus },
+  { href: '/app/admin/free-chapter', label: 'Free chapter', icon: BookOpen },
   { href: '/app/admin/emails',     label: 'Emails',    icon: Mail },
-  { href: '/app/admin/files',      label: 'Files',     icon: FileText },
   { href: '/app/admin/books',      label: 'Books',     icon: BookOpen },
   { href: '/app/admin/techniques', label: 'Techniques', icon: Shuffle },
-  { href: '/app/admin/taxonomy',   label: 'Taxonomy',  icon: FolderTree },
   { href: '/app/admin/book-mockup', label: 'Book Mockup', icon: Box },
 ];
 

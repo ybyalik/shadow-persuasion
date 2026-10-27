@@ -1,11 +1,12 @@
 /**
  * GET /api/admin/dashboard
  *
- * Returns top-level metrics for the admin dashboard:
- *   - Orders: total / paid / refunded / last 24h
- *   - Revenue: all-time / last 24h
- *   - Members: total / active
- *   - Knowledge base: books / chunks
+ * Top-level numbers for the admin dashboard, current site only (test orders excluded):
+ *   - Book orders: paid / refunded / last 24h, and how many are still waiting to ship
+ *   - Revenue: all-time / last 24h (book orders + upsell, as charged, including shipping)
+ *   - App: people with active access, and how many kept it at $9.99/mo
+ *   - Free chapter: signups / still receiving the email series
+ *   - Knowledge base the app answers from: books / chunks
  *
  * Server-gated by requireAdmin (verified Firebase token + admin email
  * check). The client-side useAdmin redirect is defense-in-depth only.
@@ -15,6 +16,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/auth-api';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { SP2_FUNNEL, SP2_UPSELL_FUNNEL } from '@/lib/sp2/config';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,13 +28,16 @@ const supabase = createClient(
 // silently capping (which would understate revenue / counts as sales grow).
 const PAGE_SIZE = 1000;
 
-async function fetchAllOrders() {
-  const rows: Array<{ email: string | null; amount_cents: number | null; status: string; created_at: string }> = [];
+/** Paid and refunded orders from the current site (book checkout + upsell), test orders excluded. */
+async function fetchSiteOrders() {
+  const rows: Array<{ email: string | null; amount_cents: number | null; status: string; created_at: string; metadata: Record<string, unknown> | null }> = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await supabase
       .from('orders')
-      .select('email, amount_cents, status, created_at')
+      .select('email, amount_cents, status, created_at, metadata')
       .eq('is_test', false)
+      .in('status', ['paid', 'refunded'])
+      .in('metadata->>funnel', [SP2_FUNNEL, SP2_UPSELL_FUNNEL])
       .order('created_at', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -70,64 +75,23 @@ export async function GET(req: Request) {
     // reflect real revenue / conversions only. The admin can still see
     // test orders individually in /app/admin/orders with the "Include
     // test orders" toggle. Paged so totals don't cap at 1000 rows.
-    const rawOrders = await fetchAllOrders();
+    const orders = await fetchSiteOrders();
+    const book = orders.filter((o) => o.metadata?.funnel === SP2_FUNNEL);
+    const paidBook = book.filter((o) => o.status === 'paid');
+    const paid = orders.filter((o) => o.status === 'paid');
+    const recent = paid.filter((o) => o.created_at >= yesterday);
+    const revenueCents = paid.reduce((sum, o) => sum + (o.amount_cents ?? 0), 0);
+    const last24hRevenueCents = recent.reduce((sum, o) => sum + (o.amount_cents ?? 0), 0);
 
-    // Bucket by email for customer-session semantics
-    const sessionsByEmail = new Map<string, {
-      firstAt: string;
-      hasPaid: boolean;
-      hasPending: boolean;
-      hasRefunded: boolean;
-      totalPaidCents: number;
-      paidInLast24h: boolean;
-    }>();
+    const nowIso = now.toISOString();
+    const [{ count: appActive }, { count: appKept }, { count: signups }, { count: signupsActive }, { data: openJobs }] = await Promise.all([
+      supabase.from('app_access').select('*', { count: 'exact', head: true }).gt('access_until', nowIso).or('is_test.is.null,is_test.eq.false'),
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('plan', 'app_monthly').in('status', ['active', 'trialing']).eq('is_test', false),
+      supabase.from('sp2_subscribers').select('*', { count: 'exact', head: true }).or('is_test.is.null,is_test.eq.false'),
+      supabase.from('sp2_subscribers').select('*', { count: 'exact', head: true }).eq('status', 'active').or('is_test.is.null,is_test.eq.false'),
+      supabase.from('sp2_print_jobs').select('status').eq('is_test', false).not('status', 'in', '(SHIPPED,DELIVERED,CANCELED)'),
+    ]);
 
-    for (const o of rawOrders) {
-      const email = (o.email || '').toLowerCase();
-      if (!email) continue;
-      const bucket = sessionsByEmail.get(email) || {
-        firstAt: o.created_at,
-        hasPaid: false,
-        hasPending: false,
-        hasRefunded: false,
-        totalPaidCents: 0,
-        paidInLast24h: false,
-      };
-      if (o.status === 'paid') {
-        bucket.hasPaid = true;
-        bucket.totalPaidCents += o.amount_cents ?? 0;
-        if (o.created_at >= yesterday) bucket.paidInLast24h = true;
-      } else if (o.status === 'pending') bucket.hasPending = true;
-      else if (o.status === 'refunded') bucket.hasRefunded = true;
-      if (o.created_at < bucket.firstAt) bucket.firstAt = o.created_at;
-      sessionsByEmail.set(email, bucket);
-    }
-
-    const sessions = Array.from(sessionsByEmail.values());
-    const paidSessions = sessions.filter((s) => s.hasPaid && !s.hasRefunded);
-    const refundedSessions = sessions.filter((s) => s.hasRefunded);
-    const recentSessions = sessions.filter((s) => s.paidInLast24h);
-
-    const revenueCents = paidSessions.reduce((sum, s) => sum + s.totalPaidCents, 0);
-    const last24hRevenueCents = recentSessions.reduce(
-      (sum, s) => sum + s.totalPaidCents,
-      0
-    );
-
-    // Members / subscriptions — exclude test subscriptions from dashboard counts
-    const { count: membersTotal } = await supabase
-      .from('subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_test', false);
-
-    const { count: membersActive } = await supabase
-      .from('subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .in('status', ['active', 'trialing'])
-      .eq('is_test', false);
-
-    // Knowledge base: total chunk count via an exact head count (not capped
-    // at 1000), and distinct book titles by paging through all rows.
     const { count: chunksCount } = await supabase
       .from('knowledge_chunks')
       .select('*', { count: 'exact', head: true });
@@ -138,17 +102,16 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       stats: {
-        // "ordersTotal" now = customer sessions (one per email), not raw Stripe
-        // charges. A single funnel completion that hits book+bump+upsell = 1.
-        ordersTotal: sessions.length,
-        ordersPaid: paidSessions.length,
-        ordersRefunded: refundedSessions.length,
-        rawChargesTotal: rawOrders.length,
+        ordersPaid: paidBook.length,
+        ordersRefunded: book.filter((o) => o.status === 'refunded').length,
+        last24hOrders: recent.filter((o) => o.metadata?.funnel === SP2_FUNNEL).length,
         revenueCents,
-        last24hOrders: recentSessions.length,
         last24hRevenueCents,
-        membersTotal: membersTotal ?? 0,
-        membersActive: membersActive ?? 0,
+        awaitingShipment: (openJobs ?? []).length,
+        appActive: appActive ?? 0,
+        appKept: appKept ?? 0,
+        signups: signups ?? 0,
+        signupsActive: signupsActive ?? 0,
         booksTotal: uniqueBooks,
         chunksTotal,
       },

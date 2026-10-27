@@ -154,7 +154,7 @@ export default function SendsPage() {
           onChange={(e) => setTemplate(e.target.value)}
           className="px-3 py-2 bg-gray-50 dark:bg-[#0A0A0A] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] text-sm font-mono focus:outline-none focus:border-[#D4A017]"
         >
-          <option value="all">All templates</option>
+          <option value="all">All emails</option>
           {templates.map((t) => (
             <option key={t.key} value={t.key}>
               {t.name}
@@ -210,12 +210,7 @@ export default function SendsPage() {
                   </td>
                   <td className="px-3 py-2.5">
                     {s.template_key ? (
-                      <Link
-                        href={`/app/admin/emails/${s.template_key}`}
-                        className="text-xs font-mono text-[#D4A017] hover:underline"
-                      >
-                        {s.template_key}
-                      </Link>
+                      <span className="text-xs font-mono text-[#D4A017]">{s.template_key}</span>
                     ) : (
                       <span className="text-xs font-mono text-gray-400 dark:text-[#F4ECD8]/40">—</span>
                     )}

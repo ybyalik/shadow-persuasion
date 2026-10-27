@@ -123,17 +123,21 @@ type OrderDetail = {
 };
 
 const ITEM_LABELS: Record<string, string> = {
-  book: 'Shadow Persuasion (Book)',
+  sp2_book: 'Shadow Persuasion: The Hidden Rules of Power (paperback)',
+  sp2_book_hc: 'Shadow Persuasion: The Hidden Rules of Power (hardcover)',
+  sp2_scripts: '100 Ready-to-Use Replies',
+  sp2_upsell: 'The Applied Power Playbook Library',
+  book: 'Shadow Persuasion (old edition)',
   briefing: 'The Pre-Conversation Briefing',
   playbooks: 'The Situation Playbooks',
   vault: 'The Shadow Persuasion Vault',
 };
 
 // Inline pricing for the recurring plans so the subscription card can
-// show its amount. Must stay in sync with lib/pricing and the upsell-app
-// API. (Plan amounts are not stored on the subscriptions row — Stripe
-// holds the Price object, we just stamp the plan key.)
+// show its amount (Stripe holds the price; the row only stores the plan key).
+// app_monthly is the $9.99 keep-the-app plan (api/app/keep-checkout); the rest are old plans.
 const PLAN_PRICING: Record<string, { cents: number; intervalLabel: string }> = {
+  app_monthly: { cents: 999, intervalLabel: '/mo' },
   weekly:  { cents: 995,   intervalLabel: '/wk'  },
   monthly: { cents: 3495,  intervalLabel: '/mo'  },
   yearly:  { cents: 19595, intervalLabel: '/yr'  },

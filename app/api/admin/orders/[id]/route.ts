@@ -6,8 +6,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { stripe } from '@/lib/stripe';
-import { sendDeliveryEmail } from '@/lib/email';
-import type { ProductSlug } from '@/lib/pricing';
+import { SP2_FUNNEL, SP2_UPSELL_FUNNEL, isSp2Slug } from '@/lib/sp2/config';
+import { sendSp2DeliveryEmail, sp2DownloadLinks } from '@/lib/sp2/server';
+import { orderStatusUrl } from '@/lib/sp2/order-link';
 import { requireAdmin } from '@/lib/auth-api';
 import { passthroughAuthError } from '@/lib/api-error';
 import { escapeLike } from '@/lib/db-utils';
@@ -300,18 +301,23 @@ export async function POST(
         if (!order.email) {
           return NextResponse.json({ error: 'Order has no email' }, { status: 400 });
         }
-        const items = (order.items as ProductSlug[]) ?? [];
+        const items = (order.items as string[]) ?? [];
         if (items.length === 0) {
           return NextResponse.json({ error: 'Order has no items' }, { status: 400 });
         }
-        const result = await sendDeliveryEmail({ to: order.email, items });
-        if (!result.ok) {
-          return NextResponse.json(
-            { error: result.error || 'Email failed' },
-            { status: 500 }
-          );
+        const funnel = (order.metadata as Record<string, unknown> | null)?.funnel;
+        if (funnel !== SP2_FUNNEL && funnel !== SP2_UPSELL_FUNNEL) {
+          return NextResponse.json({ error: 'This is an order from the old site; its downloads are no longer sent.' }, { status: 400 });
         }
-        return NextResponse.json({ ok: true, emailId: result.id });
+        const sp2Items = (items as string[]).filter(isSp2Slug);
+        const sent = await sendSp2DeliveryEmail({
+          to: order.email,
+          items: sp2Items,
+          links: await sp2DownloadLinks(sp2Items),
+          orderUrl: funnel === SP2_FUNNEL ? orderStatusUrl(order.stripe_payment_intent_id) : null,
+        });
+        if (!sent.ok) return NextResponse.json({ error: sent.error || 'Email failed' }, { status: 500 });
+        return NextResponse.json({ ok: true });
       }
 
       case 'mark_delivered': {

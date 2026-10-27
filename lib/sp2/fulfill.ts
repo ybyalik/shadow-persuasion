@@ -73,13 +73,27 @@ export async function fulfillSp2Order(paymentIntentId: string): Promise<Sp2Fulfi
         .update({ status: 'converted', converted_at: new Date().toISOString(), next_send_at: null, order_id: orderId ?? null })
         .ilike('email', email)
         .neq('status', 'converted');
-      // And the cart-recovery reminders (app/api/cron/sp2-cart-recovery).
-      await sp2db
+      // And the cart-recovery reminders (app/api/cron/sp2-cart-recovery). A purchase after a
+      // reminder went out counts as "recovered", credited to the last reminder sent.
+      const { data: lead } = await sp2db
         .from('checkout_leads')
-        .update({ status: 'converted', converted_at: new Date().toISOString(), order_id: orderId ?? null, stripe_payment_intent_id: intent.id })
+        .select('id, status')
         .ilike('email', email)
         .eq('funnel', SP2_LEAD_FUNNEL)
-        .neq('status', 'converted');
+        .maybeSingle();
+      if (lead && lead.status !== 'converted' && lead.status !== 'recovered') {
+        const step = Number(String(lead.status).match(/^recovery_sent_(\d)$/)?.[1] || 0);
+        await sp2db
+          .from('checkout_leads')
+          .update({
+            status: step ? 'recovered' : 'converted',
+            recovered_by_email_step: step || null,
+            converted_at: new Date().toISOString(),
+            order_id: orderId ?? null,
+            stripe_payment_intent_id: intent.id,
+          })
+          .eq('id', lead.id);
+      }
     }
 
     // The paperback includes 60 days of the companion app, counted from purchase.

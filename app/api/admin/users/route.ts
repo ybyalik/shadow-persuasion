@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/auth-api';
 import { passthroughAuthError } from '@/lib/api-error';
+import { stripe } from '@/lib/stripe';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -194,39 +195,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req);
-    const { action, userId, plan, status } = await req.json();
+    const { action, userId } = await req.json();
 
     if (!userId) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 });
     }
 
-    if (action === 'grant') {
-      // Grant or change a subscription manually (no Stripe involved)
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert({
-          user_id: userId,
-          plan: plan || 'monthly',
-          status: 'active',
-          current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
-
-      if (error) throw error;
-      return NextResponse.json({ success: true, action: 'granted', plan: plan || 'monthly' });
-    }
-
-    if (action === 'change_plan') {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ plan, updated_at: new Date().toISOString() })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      return NextResponse.json({ success: true, action: 'plan_changed', plan });
-    }
-
+    // App access is granted from App access (+30 days); here the only action is cancelling a paid plan.
     if (action === 'revoke') {
+      const { data: sub } = await supabase.from('subscriptions').select('stripe_subscription_id').eq('user_id', userId).maybeSingle();
+      // Stop the charges in Stripe first, so a cancelled row never keeps billing.
+      if (sub?.stripe_subscription_id) await stripe.subscriptions.cancel(sub.stripe_subscription_id);
       const { error } = await supabase
         .from('subscriptions')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
@@ -234,16 +213,6 @@ export async function POST(req: NextRequest) {
 
       if (error) throw error;
       return NextResponse.json({ success: true, action: 'revoked' });
-    }
-
-    if (action === 'activate') {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ status: 'active', updated_at: new Date().toISOString() })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      return NextResponse.json({ success: true, action: 'activated' });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

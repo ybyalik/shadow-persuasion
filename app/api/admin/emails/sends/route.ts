@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/auth-api';
 import { apiError, passthroughAuthError } from '@/lib/api-error';
+import { emailCatalog } from '@/lib/sp2/email-catalog';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,11 +75,8 @@ export async function GET(req: Request) {
       .eq('status', 'failed')
       .gte('created_at', weekAgo);
 
-    // Distinct template keys for the filter dropdown
-    const { data: templates } = await supabase
-      .from('email_templates')
-      .select('key, name')
-      .order('name');
+    // Filter options: every email the site sends, named as on the Emails page
+    const templates = emailCatalog().map((e) => ({ key: e.key, name: `${e.group}: ${e.name}` }));
 
     return NextResponse.json({
       sends: sends ?? [],

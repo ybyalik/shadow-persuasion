@@ -1,7 +1,7 @@
 /**
  * Shadow Persuasion funnel settings (book: "Shadow Persuasion: The Hidden Rules of Power").
  *
- * Lives beside the original $7 funnel (lib/pricing.ts) without touching it.
+ * The original $7 funnel and its products were retired in October 2026.
  * Pages: / (the sales page), /b/[slug], /free-chapter (after signup), /read (the free chapter, linked only from email), /checkout, /upsell, /thank-you.
  * All amounts in cents.
  *

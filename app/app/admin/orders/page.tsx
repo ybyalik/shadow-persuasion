@@ -56,6 +56,11 @@ type Funnel = {
 };
 
 const ITEM_LABELS: Record<string, { label: string; color: string }> = {
+  sp2_book:    { label: 'Paperback',   color: 'bg-[#D4A017] text-black' },
+  sp2_book_hc: { label: 'Hardcover',   color: 'bg-[#B8860B] text-black' },
+  sp2_scripts: { label: '100 Replies', color: 'bg-[#5C3A1E] text-[#F4ECD8]' },
+  sp2_upsell:  { label: 'Playbooks',   color: 'bg-[#8B0000] text-[#F4ECD8]' },
+  // Old product (before the new edition)
   book:      { label: 'Book',       color: 'bg-[#D4A017] text-black' },
   briefing:  { label: 'Bump',       color: 'bg-[#5C3A1E] text-[#F4ECD8]' },
   playbooks: { label: 'Playbooks',  color: 'bg-[#8B0000] text-[#F4ECD8]' },
@@ -173,7 +178,7 @@ function OrdersPage() {
             subvalue={conversionRates ? `${conversionRates.upsell1.toFixed(0)}%` : '-'}
           />
           <FunnelCard
-            label="Upsell #2 (SaaS)"
+            label="App kept ($9.99/mo)"
             value={funnel.upsell2Takers}
             subvalue={conversionRates ? `${conversionRates.upsell2.toFixed(0)}%` : '-'}
           />
@@ -224,10 +229,11 @@ function OrdersPage() {
             className="px-3 py-2 bg-white dark:bg-[#0A0A0A] border border-gray-300 dark:border-[#D4A017]/30 text-gray-900 dark:text-[#F4ECD8] text-sm font-mono focus:outline-none focus:border-[#D4A017]"
           >
             <option value="all">All</option>
-            <option value="book">Book</option>
-            <option value="briefing">Briefing (bump)</option>
-            <option value="playbooks">Playbooks</option>
-            <option value="vault">Vault</option>
+            <option value="sp2_book">Paperback</option>
+            <option value="sp2_book_hc">Hardcover</option>
+            <option value="sp2_scripts">100 Replies (bump)</option>
+            <option value="sp2_upsell">Playbook Library (upsell)</option>
+            <option value="book">Old edition book</option>
           </select>
         </div>
         <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-[#F4ECD8]/70 self-end pb-2">

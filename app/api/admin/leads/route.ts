@@ -9,6 +9,7 @@
  *           (default 'all')
  *   search: email substring (optional)
  *   from, to: ISO date range (optional)
+ *   funnel: 'sp2' (the current site's /checkout, default) | 'all' (adds the old /checkout/book leads)
  *   limit: max 500 (default 200)
  *   offset: pagination (default 0)
  *
@@ -39,8 +40,10 @@ export async function GET(req: Request) {
     // was flagged via the mark-test action). Off by default so the
     // metrics on this page stay real.
     const includeTest = url.searchParams.get('includeTest') === '1';
+    const funnel = url.searchParams.get('funnel') === 'all' ? null : 'sp2';
 
     let query = supabase.from('checkout_leads').select('*', { count: 'exact' });
+    if (funnel) query = query.eq('funnel', funnel);
     if (!includeTest) query = query.eq('is_test', false);
     if (status !== 'all') query = query.eq('status', status);
     if (search) query = query.ilike('email', `%${search}%`);
@@ -53,10 +56,12 @@ export async function GET(req: Request) {
 
     // Stats across the FULL dataset (excluding test leads always —
     // these numbers drive the KPI cards, so keep them real).
-    const { data: allLeads } = await supabase
+    let statsQuery = supabase
       .from('checkout_leads')
       .select('status, recovered_by_email_step, amount_cents, created_at, converted_at')
       .eq('is_test', false);
+    if (funnel) statsQuery = statsQuery.eq('funnel', funnel);
+    const { data: allLeads } = await statsQuery;
 
     const all = allLeads ?? [];
     const total = all.length;

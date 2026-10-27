@@ -205,7 +205,7 @@ export default function MembersPage() {
                     <td className="px-3 py-2.5 text-right text-gray-900 dark:text-[#F4ECD8] font-mono text-xs">{u.total_sessions}</td>
                     <td className="px-3 py-2.5 text-right text-gray-900 dark:text-[#F4ECD8] font-mono text-xs">{u.total_messages}</td>
                     <td className="px-3 py-2.5 text-gray-900 dark:text-[#F4ECD8] capitalize text-xs">
-                      {u.subscription_plan || <span className="text-gray-400 dark:text-[#F4ECD8]/40">Free</span>}
+                      {u.subscription_plan === 'app_monthly' ? 'App $9.99/mo' : u.subscription_plan || <span className="text-gray-400 dark:text-[#F4ECD8]/40">None</span>}
                     </td>
                     <td className="px-3 py-2.5">
                       <span className={`inline-block px-1.5 py-0.5 text-[10px] font-mono uppercase ${
@@ -242,53 +242,32 @@ export default function MembersPage() {
                             View
                           </Link>
                         )}
-                        {u.subscription_status !== 'active' ? (
-                          <select
-                            className="text-[10px] bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/30 px-1 py-0.5 text-gray-900 dark:text-[#F4ECD8] font-mono"
-                            defaultValue=""
-                            onChange={async (e) => {
-                              const plan = e.target.value;
-                              if (!plan) return;
-                              if (!confirm(`Grant ${plan} access to ${(u.email || u.user_id.slice(0, 8))}?`)) {
-                                e.target.value = ''; return;
-                              }
-                              await act(u.user_id, 'grant', plan);
-                              e.target.value = '';
+                        {u.email && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Give ${u.email} 30 more days of app access?`)) return;
+                              const res = await apiFetch('/api/admin/app-access', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: u.email, days: 30 }),
+                              });
+                              alert(res.ok ? 'Done. See App access for the new end date.' : 'That did not work. Try again from App access.');
                             }}
+                            className="text-[10px] text-[#D4A017] px-1.5 py-0.5 border border-[#D4A017]/40 font-mono"
                           >
-                            <option value="">Grant…</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                          </select>
-                        ) : (
-                          <>
-                            <select
-                              className="text-[10px] bg-white dark:bg-[#111] border border-gray-300 dark:border-[#D4A017]/30 px-1 py-0.5 text-gray-900 dark:text-[#F4ECD8] font-mono"
-                              defaultValue=""
-                              onChange={async (e) => {
-                                const plan = e.target.value;
-                                if (!plan) return;
-                                if (!confirm(`Change to ${plan}?`)) { e.target.value = ''; return; }
-                                await act(u.user_id, 'change_plan', plan);
-                                e.target.value = '';
-                              }}
-                            >
-                              <option value="">Plan…</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="monthly">Monthly</option>
-                              <option value="yearly">Yearly</option>
-                            </select>
-                            <button
-                              onClick={async () => {
-                                if (!confirm('Revoke access?')) return;
-                                await act(u.user_id, 'revoke');
-                              }}
-                              className="text-[10px] text-red-400 hover:text-red-300 px-1.5 py-0.5 border border-red-500/30"
-                            >
-                              Revoke
-                            </button>
-                          </>
+                            +30 days app
+                          </button>
+                        )}
+                        {u.subscription_status === 'active' && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm('Cancel this paid subscription?')) return;
+                              await act(u.user_id, 'revoke');
+                            }}
+                            className="text-[10px] text-red-400 hover:text-red-300 px-1.5 py-0.5 border border-red-500/30"
+                          >
+                            Cancel plan
+                          </button>
                         )}
                       </div>
                     </td>

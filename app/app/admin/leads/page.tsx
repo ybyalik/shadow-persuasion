@@ -64,6 +64,7 @@ export default function LeadsPage() {
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [includeTest, setIncludeTest] = useState(false);
+  const [showOld, setShowOld] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -71,6 +72,7 @@ export default function LeadsPage() {
     if (status !== 'all') params.set('status', status);
     if (search) params.set('search', search);
     if (includeTest) params.set('includeTest', '1');
+    if (showOld) params.set('funnel', 'all');
     params.set('limit', '500');
     try {
       const res = await apiFetch(`/api/admin/leads?${params.toString()}`);
@@ -86,7 +88,7 @@ export default function LeadsPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, includeTest]);
+  }, [status, includeTest, showOld]);
 
   const fmt$ = (cents: number) => `$${(cents / 100).toFixed(2)}`;
   const fmtDate = (iso: string) =>
@@ -121,7 +123,7 @@ export default function LeadsPage() {
             Checkout Leads
           </h1>
           <p className="text-sm text-gray-600 dark:text-[#F4ECD8]/60 mt-2">
-            Captured emails from <code className="font-mono text-xs">/checkout/book</code> before payment. Recovery sequence runs hourly via cron.
+            Emails typed at checkout by people who didn&apos;t pay yet. Up to 3 reminder emails go out (1 hour, 1 day, 3 days); &ldquo;Recovered&rdquo; means they bought after a reminder. Free-chapter signups are under Free chapter.
           </p>
         </div>
         <button
@@ -238,6 +240,10 @@ export default function LeadsPage() {
             className="accent-[#D4A017]"
           />
           Include test leads
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-[#F4ECD8]/70 self-end pb-2">
+          <input type="checkbox" checked={showOld} onChange={(e) => setShowOld(e.target.checked)} className="accent-[#D4A017]" />
+          Include old site leads
         </label>
         <button
           onClick={load}

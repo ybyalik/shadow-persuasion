@@ -14,6 +14,8 @@ export default function AppAccessPage() {
   const [includeTest, setIncludeTest] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [newDays, setNewDays] = useState('60');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,6 +57,32 @@ export default function AppAccessPage() {
           </button>
         </div>
       </div>
+
+      <form
+        className="flex flex-wrap items-end gap-2 mb-6"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const email = newEmail.trim().toLowerCase();
+          if (!email) return;
+          setMsg(null);
+          const res = await apiFetch('/api/admin/app-access', { method: 'POST', body: JSON.stringify({ email, days: Number(newDays) }), headers: { 'Content-Type': 'application/json' } });
+          setMsg(res.ok ? `Gave ${email} ${newDays} days of the app. They sign in with that email.` : 'Could not give access.');
+          if (res.ok) setNewEmail('');
+          load();
+        }}
+      >
+        <label className="text-sm">
+          Give app access to any email
+          <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="name@example.com" className="block mt-1 w-72 border rounded px-2 py-1.5 bg-transparent" />
+        </label>
+        <label className="text-sm">
+          Days
+          <select value={newDays} onChange={(e) => setNewDays(e.target.value)} className="block mt-1 border rounded px-2 py-1.5 bg-transparent">
+            {['30', '60', '90', '365'].map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </label>
+        <button type="submit" className="text-sm border rounded-lg px-3 py-2">Give access</button>
+      </form>
 
       {totals && (
         <div className="grid sm:grid-cols-3 gap-4 mb-6">
