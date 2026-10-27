@@ -77,7 +77,7 @@ function UpsellOffer() {
         </p>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/v2/img/upsell-digital.jpg" alt="The Applied Power Playbook Library, a 121-page PDF, on a tablet and a phone" className="w-full rounded-xl shadow-2xl mb-4" />
+        <img src="/v2/img/upsell-digital.jpg" alt="The Applied Power Playbook Library, a 121-page PDF, shown on a tablet" className="w-full rounded-xl shadow-2xl mb-4" />
         <p className="sp2-ui text-[17px] text-[color:var(--sp2-muted)] mb-6 md:mb-10">Digital download: a 121-page PDF, emailed to you with your book. Read it on your phone, tablet or computer, or print the worksheets.</p>
         <div className="md:hidden mb-10 text-center">
           <button className="sp2-btn  w-full !py-4" disabled={busy || !pi} onClick={accept}>
