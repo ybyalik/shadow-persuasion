@@ -9,6 +9,7 @@
 import type Stripe from 'stripe';
 import { SP2_IS_TEST } from './config';
 import { LULU_FORMATS, createPrintJob, getPrintJob, isBookFormat, ordersEnabled, trackingOf, type BookFormat, type LuluAddress, type LuluPrintJob, type LuluShippingLevel } from './lulu';
+import { orderStatusUrl } from './order-link';
 import { sp2FormatOf } from './config';
 import { sendSp2ShippedEmail, sp2db } from './server';
 
@@ -134,7 +135,7 @@ async function maybeSendShippedEmail(rowId: string) {
     .update({ shipped_email_sent_at: new Date().toISOString() })
     .eq('id', rowId)
     .is('shipped_email_sent_at', null)
-    .select('email, shipping_address, tracking_urls, carrier_name');
+    .select('email, shipping_address, tracking_urls, carrier_name, stripe_payment_intent_id');
   const row = claimed?.[0];
   if (!row) return;
   const sent = await sendSp2ShippedEmail({
@@ -142,8 +143,27 @@ async function maybeSendShippedEmail(rowId: string) {
     name: (row.shipping_address as LuluAddress)?.name,
     trackingUrl: Array.isArray(row.tracking_urls) ? row.tracking_urls[0] : null,
     carrier: row.carrier_name,
+    orderUrl: row.stripe_payment_intent_id ? orderStatusUrl(row.stripe_payment_intent_id) : null,
   });
   if (!sent.ok) await sp2db.from('sp2_print_jobs').update({ shipped_email_sent_at: null }).eq('id', rowId);
+}
+
+/** Admin: send the "on its way" email again (clears the sent mark first). */
+export async function resendShippedEmail(rowId: string) {
+  await sp2db.from('sp2_print_jobs').update({ shipped_email_sent_at: null }).eq('id', rowId);
+  await maybeSendShippedEmail(rowId);
+  const { data } = await sp2db.from('sp2_print_jobs').select('shipped_email_sent_at').eq('id', rowId).maybeSingle();
+  return Boolean(data?.shipped_email_sent_at);
+}
+
+/** Admin: try sending a failed order to Lulu again, with a fresh set of attempts. */
+export async function retrySendToLulu(paymentIntentId: string) {
+  await sp2db
+    .from('sp2_print_jobs')
+    .update({ attempts: 0, error: null })
+    .eq('stripe_payment_intent_id', paymentIntentId)
+    .in('status', ['pending', 'dry_run', 'send_failed']);
+  await sendToLulu(paymentIntentId);
 }
 
 /** Refreshes one job from Lulu (used by the daily check). */

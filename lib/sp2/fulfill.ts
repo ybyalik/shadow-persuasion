@@ -1,5 +1,6 @@
 import { stripe } from '@/lib/stripe';
 import { SP2_FUNNEL, SP2_IS_TEST, SP2_LEAD_FUNNEL, SP2_PHYSICAL, SP2_UPSELL_FUNNEL, isSp2Slug, sp2TotalCents, type Sp2Slug } from './config';
+import { orderStatusUrl } from './order-link';
 import { startPrintJob } from './print';
 import { BOOK_ACCESS_DAYS, grantAccess } from '@/lib/access';
 import { sendSp2DeliveryEmail, sp2db, sp2DownloadLinks } from './server';
@@ -110,7 +111,8 @@ export async function fulfillSp2Order(paymentIntentId: string): Promise<Sp2Fulfi
         .is('delivered_at', null)
         .select('id');
       if (claimed && claimed.length > 0) {
-        const sent = await sendSp2DeliveryEmail({ to: email, items, links });
+        const isBookOrder = funnel === SP2_FUNNEL;
+        const sent = await sendSp2DeliveryEmail({ to: email, items, links, orderUrl: isBookOrder ? orderStatusUrl(intent.id) : null });
         if (!sent.ok) {
           await sp2db.from('orders').update({ delivered_at: null }).eq('stripe_payment_intent_id', intent.id);
         }

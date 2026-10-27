@@ -207,6 +207,8 @@ export async function sendSp2DeliveryEmail(opts: {
   to: string;
   items: Sp2Slug[];
   links: { name: string; url: string }[];
+  /** The private order-status page (book orders only). */
+  orderUrl?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   const isUpsell = opts.items.length === 1 && opts.items[0] === 'sp2_upsell';
   const appUrl = `${SP2_SITE_URL}/login?tab=signup&email=${encodeURIComponent(opts.to)}`;
@@ -221,11 +223,12 @@ export async function sendSp2DeliveryEmail(opts: {
 <p>Thank you for getting <i>${sp2Describe(opts.items)}</i>. Here are your downloads:</p>
 ${rows}
 ${guidance}
+${opts.orderUrl ? `<p>You can check your order and shipping status any time here: <a href="${opts.orderUrl}" style="color:#8a6d3b;font-weight:bold;">your order page</a>. It's private to you, so keep this email.</p>` : ''}
 <p>These links stay active for a year. If you have any trouble, just reply.</p>
 <p>Nate</p>`;
   const text = `Thank you for getting ${sp2Describe(opts.items)}. Your downloads:\n\n${opts.links
     .map((l) => `${l.name}: ${l.url}`)
-    .join('\n')}${isUpsell ? '' : `\n\nYour 60 days of the app start now. Create your login (use this email address): ${appUrl}`}\n\nNate`;
+    .join('\n')}${isUpsell ? '' : `\n\nYour 60 days of the app start now. Create your login (use this email address): ${appUrl}`}${opts.orderUrl ? `\n\nYour order and shipping status: ${opts.orderUrl}` : ''}\n\nNate`;
   try {
     const res = await resend.emails.send({
       from: buildFromAddress(null),
@@ -250,6 +253,7 @@ export async function sendSp2ShippedEmail(opts: {
   name?: string | null;
   trackingUrl?: string | null;
   carrier?: string | null;
+  orderUrl?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   const subject = 'Your copy of Shadow Persuasion is on its way';
   if (!resend) return { ok: false, error: 'Resend not configured' };
@@ -260,9 +264,10 @@ export async function sendSp2ShippedEmail(opts: {
   const body = `<p>Hi ${first},</p>
 <p>Your copy of <i>Shadow Persuasion</i> has been printed and shipped.</p>
 ${track}
+${opts.orderUrl ? `<p>Your order page has the same details: <a href="${opts.orderUrl}" style="color:#8a6d3b;">view your order</a>.</p>` : ''}
 <p>While you wait, your digital copy, the journal and the bonuses are all in your earlier download email.</p>
 <p>Nate</p>`;
-  const text = `Hi ${first},\n\nYour copy of Shadow Persuasion has been printed and shipped.\n${opts.trackingUrl ? `Track it here: ${opts.trackingUrl}\n` : ''}\nNate`;
+  const text = `Hi ${first},\n\nYour copy of Shadow Persuasion has been printed and shipped.\n${opts.trackingUrl ? `Track it here: ${opts.trackingUrl}\n` : ''}${opts.orderUrl ? `Your order page: ${opts.orderUrl}\n` : ''}\nNate`;
   try {
     const res = await resend.emails.send({ from: buildFromAddress(null), to: opts.to, subject, html: wrapHtml(body, 'Your book has shipped.', ''), text });
     if (res.error) throw new Error(res.error.message);
@@ -271,6 +276,32 @@ ${track}
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await logSend({ template_key: 'sp2_shipped', to: opts.to, subject, status: 'failed', error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+/** "Here are your order links": sent when someone looks up their order by email on /order. */
+export async function sendOrderLinksEmail(opts: { to: string; orders: { date: string; description: string; url: string }[] }): Promise<{ ok: boolean; error?: string }> {
+  const subject = 'Your Shadow Persuasion order';
+  if (!resend) return { ok: false, error: 'Resend not configured' };
+  const rows = opts.orders
+    .map((o) => `<p style="margin:10px 0;"><a href="${o.url}" style="color:#8a6d3b;font-weight:bold;">View your order from ${o.date}</a><br><span style="color:#6b6257;font-size:14px;">${o.description}</span></p>`)
+    .join('');
+  const body = `<p>Hi,</p>
+<p>Someone (hopefully you) asked for the order page for this email address. Here ${opts.orders.length > 1 ? 'are your orders' : 'is your order'}:</p>
+${rows}
+<p>Each page shows where your book is and its tracking, and lets you get your download links again. They're private to you.</p>
+<p>If you didn't ask for this, you can ignore it.</p>
+<p>Nate</p>`;
+  const text = `Your order page${opts.orders.length > 1 ? 's' : ''}:\n\n${opts.orders.map((o) => `${o.date}: ${o.url}`).join('\n')}\n\nIf you didn't ask for this, you can ignore it.\n\nNate`;
+  try {
+    const res = await resend.emails.send({ from: buildFromAddress(null), to: opts.to, subject, html: wrapHtml(body, 'Your order page link.', ''), text });
+    if (res.error) throw new Error(res.error.message);
+    await logSend({ template_key: 'sp2_order_links', to: opts.to, subject, status: 'sent', provider_id: res.data?.id ?? null });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await logSend({ template_key: 'sp2_order_links', to: opts.to, subject, status: 'failed', error: msg });
     return { ok: false, error: msg };
   }
 }
