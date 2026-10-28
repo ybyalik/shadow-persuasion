@@ -93,7 +93,7 @@ export async function sendSequenceEmail(opts: {
 
   try {
     const res = await resend.emails.send({
-      from: buildFromAddress(null),
+      from: buildFromAddress(),
       to: opts.to,
       subject: email.subject,
       html,
@@ -143,7 +143,7 @@ export async function sendCartRecoveryEmail(step: number, opts: { to: string; fo
   }
   try {
     const res = await resend.emails.send({
-      from: buildFromAddress(null),
+      from: buildFromAddress(),
       to: opts.to,
       subject: r.subject,
       html: r.html,
@@ -209,7 +209,7 @@ type Rendered = { subject: string; html: string; text: string };
 async function deliver(templateKey: string, to: string, r: Rendered): Promise<{ ok: boolean; error?: string }> {
   if (!resend) return { ok: false, error: 'Resend not configured' };
   try {
-    const res = await resend.emails.send({ from: buildFromAddress(null), to, subject: r.subject, html: r.html, text: r.text });
+    const res = await resend.emails.send({ from: buildFromAddress(), to, subject: r.subject, html: r.html, text: r.text });
     if (res.error) throw new Error(res.error.message);
     await logSend({ template_key: templateKey, to, subject: r.subject, status: 'sent', provider_id: res.data?.id ?? null });
     return { ok: true };
